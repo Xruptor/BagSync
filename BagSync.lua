@@ -198,11 +198,7 @@ function BagSync:GUILDBANKFRAME_OPENED()
 
 	local numTabs = GetNumGuildBankTabs()
 	for tab = 1, numTabs do
-		if IsTabViewable(tab) then
-			QueryGuildBankTab(tab)
-			--query the tab information from the server (item list)
-			--it fires off GUILDBANKBAGSLOTS_CHANGED when item data is available
-		end
+		QueryGuildBankTab(tab)
 	end
 end
 
