@@ -544,25 +544,23 @@ function BagSync:ScanGuildBank()
 	local numTabs = GetNumGuildBankTabs()
 	
 	for tab = 1, numTabs do
-		if IsTabViewable(tab) then
-			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
+		for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
+		
+			local link = GetGuildBankItemLink(tab, slot)
+			local index = GetTag('guild', tab, slot)
 			
-				local link = GetGuildBankItemLink(tab, slot)
-				local index = GetTag('guild', tab, slot)
+			if link then
+				local linkItem = ToShortLink(link)
+				local _, count = GetGuildBankItemInfo(tab, slot);
+				count = count > 1 and count or nil
 				
-				if link then
-					local linkItem = ToShortLink(link)
-					local _, count = GetGuildBankItemInfo(tab, slot);
-					count = count > 1 and count or nil
-					
-					if (linkItem and count) then
-						BS_GD[BS_DB.guild][index] = format('%s,%d', linkItem, count)
-					else
-						BS_GD[BS_DB.guild][index] = linkItem
-					end
+				if (linkItem and count) then
+					BS_GD[BS_DB.guild][index] = format('%s,%d', linkItem, count)
 				else
-					BS_GD[BS_DB.guild][index] = nil
+					BS_GD[BS_DB.guild][index] = linkItem
 				end
+			else
+				BS_GD[BS_DB.guild][index] = nil
 			end
 		end
 	end
