@@ -1,0 +1,23 @@
+<Bindings>
+  <Binding name="BAGSYNCTOGGLESEARCH" header="BAGSYNC">
+	if BagSync_SearchFrame:IsVisible() then
+		BagSync_SearchFrame:Hide()
+	else
+		BagSync_SearchFrame:Show()
+	end
+  </Binding>
+   <Binding name="BAGSYNCTOGGLETOKENS" header="BAGSYNC">
+	if BagSync_TokensFrame:IsVisible() then
+		BagSync_TokensFrame:Hide()
+	else
+		BagSync_TokensFrame:Show()
+	end
+  </Binding>
+   <Binding name="BAGSYNCTOGGLEPROFILES" header="BAGSYNC">
+	if BagSync_ProfilesFrame:IsVisible() then
+		BagSync_ProfilesFrame:Hide()
+	else
+		BagSync_ProfilesFrame:Show()
+	end
+  </Binding>
+</Bindings>

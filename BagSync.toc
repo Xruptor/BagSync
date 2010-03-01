@@ -1,0 +1,17 @@
+## Interface: 30300
+## Title: BagSync
+## Notes: BagSync tracks your characters items and displays it within tooltips.
+## Author: Derkyle
+## Version: 3.5
+## SavedVariables: BagSyncDB, BagSyncOpt, BagSyncGUILD_DB, BagSyncTOKEN_DB
+
+localization\localization.lua
+Libs\LibStub.lua
+Libs\tekKonfigScroll.lua
+Libs\tekKonfigDropdown.lua
+Libs\LibItemSearch-1.0.lua
+
+BagSync_Search.lua
+BagSync_Tokens.lua
+BagSync_Profiles.lua
+BagSync.lua
