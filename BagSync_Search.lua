@@ -189,6 +189,7 @@ function bgSearch:LoadSlider()
 	end)
 end
 
+--do search routine
 function bgSearch:DoSearch()
 	if not BagSync or not BagSyncDB then return end
 	local searchStr = bgSearch.SEARCHBTN:GetText()
