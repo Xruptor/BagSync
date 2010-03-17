@@ -13,7 +13,7 @@
 	SVN of wowace to work on it.  The last revision done on the old BagSync was r50203.11 (29 Sep 2007).
 	Note: This addon has been completely rewritten. 
 
-	Author: Derkyle
+	Author: Xruptor
 
 --]]
 
