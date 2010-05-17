@@ -19,19 +19,23 @@ if ( GetLocale() == "zhCN" ) then
 	BAGSYNC_BINDING_SEARCH = 'Toggle Search'
 	BAGSYNC_BINDING_TOKEN = 'Toggle Tokens'
 	BAGSYNC_BINDING_PROFILES = 'Toggle Profiles'
-	BAGSYNC_DATABASE_FIX_ALERT = "A FixDB has been performed on BagSync!  The database is now optimized!"
+	BAGSYNC_DATABASE_FIX_ALERT = 'A FixDB has been performed on BagSync!  The database is now optimized!'
+	BAGSYNC_SWITCH_ON = 'ON'
+	BAGSYNC_SWITCH_OFF = 'OFF'
 	BAGSYNC_SLASH_CMD1 = '[itemname]'
 	BAGSYNC_SLASH_CMD2 = 'search'
 	BAGSYNC_SLASH_CMD3 = 'gold'
 	BAGSYNC_SLASH_CMD4 = 'tokens'
 	BAGSYNC_SLASH_CMD5 = 'profiles'
 	BAGSYNC_SLASH_CMD6 = 'fixdb'
+	BAGSYNC_SLASH_CMD7 = 'total'
 	BAGSYNC_SLASH1 = '/bgs '..BAGSYNC_SLASH_CMD1..' - Does a quick search for an item'
 	BAGSYNC_SLASH2 = '/bgs '..BAGSYNC_SLASH_CMD2..' - Opens the search window'
 	BAGSYNC_SLASH3 = '/bgs '..BAGSYNC_SLASH_CMD3..' - Displays a tooltip with the amount of gold on each character.'
 	BAGSYNC_SLASH4 = '/bgs '..BAGSYNC_SLASH_CMD4..' - Opens the tokens/currency window.'
 	BAGSYNC_SLASH5 = '/bgs '..BAGSYNC_SLASH_CMD5..' - Opens the profiles window.'
 	BAGSYNC_SLASH6 = '/bgs '..BAGSYNC_SLASH_CMD6..' - Runs the database fix (FixDB) on BagSync.'
+	BAGSYNC_SLASH7 = '/bgs '..BAGSYNC_SLASH_CMD7..' - Toggles the [Total] display in tooltips and gold display.'
 	
 elseif ( GetLocale() == "ruRU" )  then
 	--thanks to senryo from WOWInterface
@@ -51,19 +55,23 @@ elseif ( GetLocale() == "ruRU" )  then
 	BAGSYNC_BINDING_SEARCH = 'Toggle Search'
 	BAGSYNC_BINDING_TOKEN = 'Toggle Tokens'
 	BAGSYNC_BINDING_PROFILES = 'Toggle Profiles'
-	BAGSYNC_DATABASE_FIX_ALERT = "A FixDB has been performed on BagSync!  The database is now optimized!"
+	BAGSYNC_DATABASE_FIX_ALERT = 'A FixDB has been performed on BagSync!  The database is now optimized!'
+	BAGSYNC_SWITCH_ON = 'ON'
+	BAGSYNC_SWITCH_OFF = 'OFF'
 	BAGSYNC_SLASH_CMD1 = '[itemname]'
 	BAGSYNC_SLASH_CMD2 = 'search'
 	BAGSYNC_SLASH_CMD3 = 'gold'
 	BAGSYNC_SLASH_CMD4 = 'tokens'
 	BAGSYNC_SLASH_CMD5 = 'profiles'
 	BAGSYNC_SLASH_CMD6 = 'fixdb'
+	BAGSYNC_SLASH_CMD7 = 'total'
 	BAGSYNC_SLASH1 = '/bgs '..BAGSYNC_SLASH_CMD1..' - Does a quick search for an item'
 	BAGSYNC_SLASH2 = '/bgs '..BAGSYNC_SLASH_CMD2..' - Opens the search window'
 	BAGSYNC_SLASH3 = '/bgs '..BAGSYNC_SLASH_CMD3..' - Displays a tooltip with the amount of gold on each character.'
 	BAGSYNC_SLASH4 = '/bgs '..BAGSYNC_SLASH_CMD4..' - Opens the tokens/currency window.'
 	BAGSYNC_SLASH5 = '/bgs '..BAGSYNC_SLASH_CMD5..' - Opens the profiles window.'
 	BAGSYNC_SLASH6 = '/bgs '..BAGSYNC_SLASH_CMD6..' - Runs the database fix (FixDB) on BagSync.'
+	BAGSYNC_SLASH7 = '/bgs '..BAGSYNC_SLASH_CMD7..' - Toggles the [Total] display in tooltips and gold display.'
 	
 elseif ( GetLocale() == "zhTW" ) then
 
@@ -82,19 +90,23 @@ elseif ( GetLocale() == "zhTW" ) then
 	BAGSYNC_BINDING_SEARCH = 'Toggle Search'
 	BAGSYNC_BINDING_TOKEN = 'Toggle Tokens'
 	BAGSYNC_BINDING_PROFILES = 'Toggle Profiles'
-	BAGSYNC_DATABASE_FIX_ALERT = "A FixDB has been performed on BagSync!  The database is now optimized!"
+	BAGSYNC_DATABASE_FIX_ALERT = 'A FixDB has been performed on BagSync!  The database is now optimized!'
+	BAGSYNC_SWITCH_ON = 'ON'
+	BAGSYNC_SWITCH_OFF = 'OFF'
 	BAGSYNC_SLASH_CMD1 = '[itemname]'
 	BAGSYNC_SLASH_CMD2 = 'search'
 	BAGSYNC_SLASH_CMD3 = 'gold'
 	BAGSYNC_SLASH_CMD4 = 'tokens'
 	BAGSYNC_SLASH_CMD5 = 'profiles'
 	BAGSYNC_SLASH_CMD6 = 'fixdb'
+	BAGSYNC_SLASH_CMD7 = 'total'
 	BAGSYNC_SLASH1 = '/bgs '..BAGSYNC_SLASH_CMD1..' - Does a quick search for an item'
 	BAGSYNC_SLASH2 = '/bgs '..BAGSYNC_SLASH_CMD2..' - Opens the search window'
 	BAGSYNC_SLASH3 = '/bgs '..BAGSYNC_SLASH_CMD3..' - Displays a tooltip with the amount of gold on each character.'
 	BAGSYNC_SLASH4 = '/bgs '..BAGSYNC_SLASH_CMD4..' - Opens the tokens/currency window.'
 	BAGSYNC_SLASH5 = '/bgs '..BAGSYNC_SLASH_CMD5..' - Opens the profiles window.'
 	BAGSYNC_SLASH6 = '/bgs '..BAGSYNC_SLASH_CMD6..' - Runs the database fix (FixDB) on BagSync.'
+	BAGSYNC_SLASH7 = '/bgs '..BAGSYNC_SLASH_CMD7..' - Toggles the [Total] display in tooltips and gold display.'
 	
 elseif ( GetLocale() == "frFR" ) then
 	--thanks to cacahuete from WOWInterface
@@ -114,19 +126,23 @@ elseif ( GetLocale() == "frFR" ) then
 	BAGSYNC_BINDING_SEARCH = 'Toggle Search'
 	BAGSYNC_BINDING_TOKEN = 'Toggle Tokens'
 	BAGSYNC_BINDING_PROFILES = 'Toggle Profiles'
-	BAGSYNC_DATABASE_FIX_ALERT = "A FixDB has been performed on BagSync!  The database is now optimized!"
+	BAGSYNC_DATABASE_FIX_ALERT = 'A FixDB has been performed on BagSync!  The database is now optimized!'
+	BAGSYNC_SWITCH_ON = 'ON'
+	BAGSYNC_SWITCH_OFF = 'OFF'
 	BAGSYNC_SLASH_CMD1 = '[itemname]'
 	BAGSYNC_SLASH_CMD2 = 'search'
 	BAGSYNC_SLASH_CMD3 = 'gold'
 	BAGSYNC_SLASH_CMD4 = 'tokens'
 	BAGSYNC_SLASH_CMD5 = 'profiles'
 	BAGSYNC_SLASH_CMD6 = 'fixdb'
+	BAGSYNC_SLASH_CMD7 = 'total'
 	BAGSYNC_SLASH1 = '/bgs '..BAGSYNC_SLASH_CMD1..' - Does a quick search for an item'
 	BAGSYNC_SLASH2 = '/bgs '..BAGSYNC_SLASH_CMD2..' - Opens the search window'
 	BAGSYNC_SLASH3 = '/bgs '..BAGSYNC_SLASH_CMD3..' - Displays a tooltip with the amount of gold on each character.'
 	BAGSYNC_SLASH4 = '/bgs '..BAGSYNC_SLASH_CMD4..' - Opens the tokens/currency window.'
 	BAGSYNC_SLASH5 = '/bgs '..BAGSYNC_SLASH_CMD5..' - Opens the profiles window.'
 	BAGSYNC_SLASH6 = '/bgs '..BAGSYNC_SLASH_CMD6..' - Runs the database fix (FixDB) on BagSync.'
+	BAGSYNC_SLASH7 = '/bgs '..BAGSYNC_SLASH_CMD7..' - Toggles the [Total] display in tooltips and gold display.'
 	
 elseif ( GetLocale() == "koKR" ) then
 	--thanks to zinzzalimp from WOWInterface
@@ -146,19 +162,23 @@ elseif ( GetLocale() == "koKR" ) then
 	BAGSYNC_BINDING_SEARCH = 'Toggle Search'
 	BAGSYNC_BINDING_TOKEN = 'Toggle Tokens'
 	BAGSYNC_BINDING_PROFILES = 'Toggle Profiles'
-	BAGSYNC_DATABASE_FIX_ALERT = "A FixDB has been performed on BagSync!  The database is now optimized!"
+	BAGSYNC_DATABASE_FIX_ALERT = 'A FixDB has been performed on BagSync!  The database is now optimized!'
+	BAGSYNC_SWITCH_ON = 'ON'
+	BAGSYNC_SWITCH_OFF = 'OFF'
 	BAGSYNC_SLASH_CMD1 = '[itemname]'
 	BAGSYNC_SLASH_CMD2 = 'search'
 	BAGSYNC_SLASH_CMD3 = 'gold'
 	BAGSYNC_SLASH_CMD4 = 'tokens'
 	BAGSYNC_SLASH_CMD5 = 'profiles'
 	BAGSYNC_SLASH_CMD6 = 'fixdb'
+	BAGSYNC_SLASH_CMD7 = 'total'
 	BAGSYNC_SLASH1 = '/bgs '..BAGSYNC_SLASH_CMD1..' - 빠른 아이템 찾기'
 	BAGSYNC_SLASH2 = '/bgs '..BAGSYNC_SLASH_CMD2..' - 검색창 열기'
 	BAGSYNC_SLASH3 = '/bgs '..BAGSYNC_SLASH_CMD3..' - 툴팁에 각 케릭터의 골드량을 표시합니다.'
 	BAGSYNC_SLASH4 = '/bgs '..BAGSYNC_SLASH_CMD4..' - 문장/화폐창을 엽니다'
 	BAGSYNC_SLASH5 = '/bgs '..BAGSYNC_SLASH_CMD5..' - 프로필 창을 엽니다.'
 	BAGSYNC_SLASH6 = '/bgs '..BAGSYNC_SLASH_CMD6..' - Runs the database fix (FixDB) on BagSync.'
+	BAGSYNC_SLASH7 = '/bgs '..BAGSYNC_SLASH_CMD7..' - Toggles the [Total] display in tooltips and gold display.'
 	
 else
 
@@ -177,18 +197,22 @@ else
 	BAGSYNC_BINDING_SEARCH = 'Toggle Search'
 	BAGSYNC_BINDING_TOKEN = 'Toggle Tokens'
 	BAGSYNC_BINDING_PROFILES = 'Toggle Profiles'
-	BAGSYNC_DATABASE_FIX_ALERT = "A FixDB has been performed on BagSync!  The database is now optimized!"
+	BAGSYNC_DATABASE_FIX_ALERT = 'A FixDB has been performed on BagSync!  The database is now optimized!'
+	BAGSYNC_SWITCH_ON = 'ON'
+	BAGSYNC_SWITCH_OFF = 'OFF'
 	BAGSYNC_SLASH_CMD1 = '[itemname]'
 	BAGSYNC_SLASH_CMD2 = 'search'
 	BAGSYNC_SLASH_CMD3 = 'gold'
 	BAGSYNC_SLASH_CMD4 = 'tokens'
 	BAGSYNC_SLASH_CMD5 = 'profiles'
 	BAGSYNC_SLASH_CMD6 = 'fixdb'
+	BAGSYNC_SLASH_CMD7 = 'total'
 	BAGSYNC_SLASH1 = '/bgs '..BAGSYNC_SLASH_CMD1..' - Does a quick search for an item'
 	BAGSYNC_SLASH2 = '/bgs '..BAGSYNC_SLASH_CMD2..' - Opens the search window'
 	BAGSYNC_SLASH3 = '/bgs '..BAGSYNC_SLASH_CMD3..' - Displays a tooltip with the amount of gold on each character.'
 	BAGSYNC_SLASH4 = '/bgs '..BAGSYNC_SLASH_CMD4..' - Opens the tokens/currency window.'
 	BAGSYNC_SLASH5 = '/bgs '..BAGSYNC_SLASH_CMD5..' - Opens the profiles window.'
 	BAGSYNC_SLASH6 = '/bgs '..BAGSYNC_SLASH_CMD6..' - Runs the database fix (FixDB) on BagSync.'
+	BAGSYNC_SLASH7 = '/bgs '..BAGSYNC_SLASH_CMD7..' - Toggles the [Total] display in tooltips and gold display.'
 	
 end

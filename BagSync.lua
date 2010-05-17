@@ -135,6 +135,15 @@ function BagSync:PLAYER_LOGIN()
 			elseif c and c:lower() == BAGSYNC_SLASH_CMD6 then
 				self:FixDB_Data()
 				return true
+			elseif c and c:lower() == BAGSYNC_SLASH_CMD7 then
+				if BagSyncOpt.showTotal then
+					BagSyncOpt.showTotal = false
+					print("|cFFFF0000BagSync: "..BAGSYNC_SEARCH_TOTAL.." "..BAGSYNC_SWITCH_OFF)
+				else
+					BagSyncOpt.showTotal = true
+					print("|cFFFF0000BagSync: "..BAGSYNC_SEARCH_TOTAL.." "..BAGSYNC_SWITCH_ON)
+				end
+				return true
 			elseif c and c:lower() ~= "" then
 				--do an item search
 				if BagSync_SearchFrame then
@@ -153,6 +162,7 @@ function BagSync:PLAYER_LOGIN()
 		DEFAULT_CHAT_FRAME:AddMessage(BAGSYNC_SLASH4)
 		DEFAULT_CHAT_FRAME:AddMessage(BAGSYNC_SLASH5)
 		DEFAULT_CHAT_FRAME:AddMessage(BAGSYNC_SLASH6)
+		DEFAULT_CHAT_FRAME:AddMessage(BAGSYNC_SLASH7)
 	end
 	
 	DEFAULT_CHAT_FRAME:AddMessage("|cFF99CC33BagSync|r [v|cFFDF2B2B"..ver.."|r] loaded: /bgs, /bagsync")
@@ -249,6 +259,7 @@ function BagSync:StartupDB()
 	BS_DB = BagSyncDB[currentRealm][currentPlayer]
 	
 	BagSyncOpt = BagSyncOpt or {}
+	if BagSyncOpt.showTotal == nil then BagSyncOpt.showTotal = true end
 	
 	BagSyncGUILD_DB = BagSyncGUILD_DB or {}
 	BagSyncGUILD_DB[currentRealm] = BagSyncGUILD_DB[currentRealm] or {}
@@ -679,8 +690,15 @@ function BagSync:ShowMoneyTooltip()
 	
 	table.sort(usrData, function(a,b) return (a.name < b.name) end)
 	
+	local gldTotal = 0
+	
 	for i=1, table.getn(usrData) do
 		tooltip:AddDoubleLine(usrData[i].name, self:buildMoneyString(usrData[i].gold, false), 1, 1, 1, 1, 1, 1)
+		gldTotal = gldTotal + usrData[i].gold
+	end
+	if BagSyncOpt.showTotal then
+		tooltip:AddLine(" ")
+		tooltip:AddDoubleLine("|cfff4a460"..BAGSYNC_SEARCH_TOTAL.."|r", self:buildMoneyString(gldTotal, false), 1, 1, 1, 1, 1, 1)
 	end
 	
 	tooltip:AddLine(" ")
