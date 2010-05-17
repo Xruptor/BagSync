@@ -28,6 +28,10 @@ local BS_TD
 local MAX_GUILDBANK_SLOTS_PER_TAB = 98
 local doTokenUpdate = 0
 
+local SILVER = '|cffc7c7cf%s|r'
+local MOSS = '|cFF80FF00%s|r'
+local TTL_C = '|cFFF4A460%s|r'
+
 local BagSync = CreateFrame("frame", "BagSync", UIParent)
 
 BagSync:SetScript('OnEvent', function(self, event, ...)
@@ -696,9 +700,9 @@ function BagSync:ShowMoneyTooltip()
 		tooltip:AddDoubleLine(usrData[i].name, self:buildMoneyString(usrData[i].gold, false), 1, 1, 1, 1, 1, 1)
 		gldTotal = gldTotal + usrData[i].gold
 	end
-	if BagSyncOpt.showTotal then
+	if BagSyncOpt.showTotal and gldTotal > 0 then
 		tooltip:AddLine(" ")
-		tooltip:AddDoubleLine("|cfff4a460"..BAGSYNC_SEARCH_TOTAL.."|r", self:buildMoneyString(gldTotal, false), 1, 1, 1, 1, 1, 1)
+		tooltip:AddDoubleLine(format(TTL_C, BAGSYNC_SEARCH_TOTAL), self:buildMoneyString(gldTotal, false), 1, 1, 1, 1, 1, 1)
 	end
 	
 	tooltip:AddLine(" ")
@@ -827,9 +831,6 @@ hooksecurefunc("BackpackTokenFrame_Update", BagSync.ScanTokens)
 -- (Special thanks to tuller)
 ------------------------
 
-local SILVER = '|cffc7c7cf%s|r'
-local MOSS = '|cFF80FF00%s|r'
-
 local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount)
 	local info
 	local total = invCount + bankCount + equipCount + guildCount + mailboxCount
@@ -897,7 +898,7 @@ local function AddOwners(frame, link)
 		for i = 1, #lastDisplayed do
 			local ename, ecount  = strsplit('@', lastDisplayed[i])
 			if ename and ecount then
-				frame:AddDoubleLine(format(MOSS, ename), ecount)
+				frame:AddDoubleLine(ename, ecount)
 			end
 		end
 		frame:Show()
@@ -910,7 +911,8 @@ local function AddOwners(frame, link)
 	
 	--this is so we don't scan the same guild multiple times
 	local previousGuilds = {}
-
+	local grandTotal = 0
+	
 	--loop through our characters
 	for k, v in pairs(BagSyncDB[currentRealm]) do
 		local infoString
@@ -958,12 +960,20 @@ local function AddOwners(frame, link)
 		end
 		
 		infoString = CountsToInfoString(invCount or 0, bankCount or 0, equipCount or 0, guildCount or 0, mailboxCount or 0)
-
+		grandTotal = grandTotal + ((invCount or 0) + (bankCount or 0) + (equipCount or 0) + (guildCount or 0) + (mailboxCount or 0))
+		
 		if infoString and infoString ~= '' then
 			frame:AddDoubleLine(format(MOSS, k), infoString)
-			table.insert(lastDisplayed, (k or 'Unknown').."@"..(infoString or 'unknown'))
+			table.insert(lastDisplayed, format(MOSS,(k or 'Unknown')).."@"..(infoString or 'unknown'))
 		end
 		
+	end
+	
+	--show grand total if we have something
+	--don't show total if there is only one item
+	if BagSyncOpt.showTotal and grandTotal > 0 and getn(lastDisplayed) > 1 then
+		frame:AddDoubleLine(format(TTL_C, BAGSYNC_SEARCH_TOTAL), format(SILVER, grandTotal))
+		table.insert(lastDisplayed, format(TTL_C, BAGSYNC_SEARCH_TOTAL).."@"..format(SILVER, grandTotal))
 	end
 
 	frame:Show()
