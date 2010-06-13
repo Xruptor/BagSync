@@ -179,6 +179,42 @@ elseif ( GetLocale() == "koKR" ) then
 	BAGSYNC_SLASH5 = '/bgs '..BAGSYNC_SLASH_CMD5..' - 프로필 창을 엽니다.'
 	BAGSYNC_SLASH6 = '/bgs '..BAGSYNC_SLASH_CMD6..' - Runs the database fix (FixDB) on BagSync.'
 	BAGSYNC_SLASH7 = '/bgs '..BAGSYNC_SLASH_CMD7..' - Toggles the [Total] display in tooltips and gold display.'
+
+elseif ( GetLocale() == "deDE" ) then
+	--thanks to Schnubby from WOWInterface
+
+	BAGSYNC_NUM_BAGS = 'Taschen: %d'
+	BAGSYNC_NUM_BANK = 'Bank: %d'
+	BAGSYNC_EQUIPPED = 'Angelegt: %d'
+	BAGSYNC_NUM_GUILDBANK = 'Gilde: %d'
+	BAGSYNC_NUM_MAILBOX = 'Post: %d'
+	BAGSYNC_SEARCH = 'Suche'
+	BAGSYNC_SEARCH_TOTAL = 'Gesamt:'
+	BAGSYNC_TOKENS = 'Abzeichen'
+	BAGSYNC_PROFILES = 'Profile'
+	BAGSYNC_PROFILES_TT = 'Wähle ein Profil zum löschen aus.\nINFO: Dies ist nicht umkehrbar!'
+	BAGSYNC_PROFILES_DELETE = 'Löschen'
+	BAGSYNC_PROFILES_CONFIRM = 'Bestätigen'
+	BAGSYNC_BINDING_SEARCH = 'Öffne/Schließe Suche'
+	BAGSYNC_BINDING_TOKEN = 'Öffne/Schließe Abzeichen'
+	BAGSYNC_BINDING_PROFILES = 'Öffne/Schließe Profile'
+	BAGSYNC_DATABASE_FIX_ALERT = 'Die Funktion FixDB wurde ausgeführt! Die Datenbank wurde optimiert!'
+	BAGSYNC_SWITCH_ON = 'An'
+	BAGSYNC_SWITCH_OFF = 'Aus'
+	BAGSYNC_SLASH_CMD1 = '[itemname]'
+	BAGSYNC_SLASH_CMD2 = 'search'
+	BAGSYNC_SLASH_CMD3 = 'gold'
+	BAGSYNC_SLASH_CMD4 = 'tokens'
+	BAGSYNC_SLASH_CMD5 = 'profiles'
+	BAGSYNC_SLASH_CMD6 = 'fixdb'
+	BAGSYNC_SLASH_CMD7 = 'total'
+	BAGSYNC_SLASH1 = '/bgs '..BAGSYNC_SLASH_CMD1..' - Nach einem Item suchen'
+	BAGSYNC_SLASH2 = '/bgs '..BAGSYNC_SLASH_CMD2..' - Öffnet das Suchfenster'
+	BAGSYNC_SLASH3 = '/bgs '..BAGSYNC_SLASH_CMD3..' - Zeigt einen Tooltip mit dem Gold eines jeden Charakters.'
+	BAGSYNC_SLASH4 = '/bgs '..BAGSYNC_SLASH_CMD4..' - Öffnet das Abzeichenfenster.'
+	BAGSYNC_SLASH5 = '/bgs '..BAGSYNC_SLASH_CMD5..' - Öffnet das Profilfenster.'
+	BAGSYNC_SLASH6 = '/bgs '..BAGSYNC_SLASH_CMD6..' - Führt eine Reparatur der Datenbank (FixDB) aus.'
+	BAGSYNC_SLASH7 = '/bgs '..BAGSYNC_SLASH_CMD7..' - Zeigt/Verbirgt die [Gesamt] Anzeige in Tooltips für Items und in der Goldanzeige.'
 	
 else
 
