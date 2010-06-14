@@ -53,7 +53,7 @@ function BagSync:PLAYER_LOGIN()
 	 BINDING_NAME_BAGSYNCTOGGLETOKENS = BAGSYNC_BINDING_TOKEN
 	 BINDING_NAME_BAGSYNCTOGGLEPROFILES = BAGSYNC_BINDING_PROFILES
   
-	local ver = tonumber(GetAddOnMetadata("BagSync","Version")) or 0
+	local ver = GetAddOnMetadata("BagSync","Version") or 0
 	
 	--initiate the db
 	self:StartupDB()
