@@ -111,10 +111,10 @@ elseif ( GetLocale() == "zhTW" ) then
 elseif ( GetLocale() == "frFR" ) then
 	--thanks to cacahuete from WOWInterface
 	
-    BAGSYNC_NUM_BAGS = 'Sacs: %d'
-    BAGSYNC_NUM_BANK = 'Banque: %d'
-    BAGSYNC_EQUIPPED = 'Équipé: %d'
-    BAGSYNC_NUM_GUILDBANK = 'Guilde: %d'
+	BAGSYNC_NUM_BAGS = 'Sacs: %d'
+	BAGSYNC_NUM_BANK = 'Banque: %d'
+	BAGSYNC_EQUIPPED = 'Équipé: %d'
+	BAGSYNC_NUM_GUILDBANK = 'Guilde: %d'
 	BAGSYNC_NUM_MAILBOX = 'Mailbox: %d'
 	BAGSYNC_SEARCH = 'Search'
 	BAGSYNC_SEARCH_TOTAL = 'Total:'
