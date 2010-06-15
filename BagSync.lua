@@ -399,7 +399,7 @@ end
 
 --special thanks to tuller :)
 local function ToShortLink(link)
-	if link then
+	if link and type(link) == "string" then
 		local a,b,c,d,e,f,g,h = link:match('(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+)')
 		if(b == '0' and b == c and c == d and d == e and e == f and f == g) then
 			return a
@@ -758,11 +758,11 @@ function BagSync:ScanTokens()
 		return
 	end
 
-	--local currTokens = {}
 	local lastHeader
 	
 	for i=1, GetCurrencyListSize() do
 		local name, isHeader, isExpanded, _, _, count, extraCurrencyType, icon, itemID = GetCurrencyListInfo(i)
+		--extraCurrencyType = 1 for arena points, 2 for honor points; 0 otherwise (an item-based currency). 
 		if name then
 			if(isHeader and not isExpanded) then
 				ExpandCurrencyList(i,1)
@@ -778,20 +778,38 @@ function BagSync:ScanTokens()
 					BS_TD[itemID].icon = icon
 					BS_TD[itemID].header = lastHeader
 					BS_TD[itemID][currentPlayer] = count
-					--currTokens[itemID] = true
 				end
 			end
 		end
 	end
 	
-	--remove old data
-	--if BS_TD then
-	--	for k, v in pairs(BS_TD) do
-	--		if not currTokens[k] and BS_TD[k][currentPlayer] then
-	--			BS_TD[k][currentPlayer] = nil
-	--		end
-	--	end
-	--end
+end
+
+function BagSync:AddTokenTooltip(self)
+	if not self:GetParent().index then return end
+	local _, _, _, _, _, _, _, _, itemID = GetCurrencyListInfo(self:GetParent().index)
+
+	if not BS_TD then return end
+	if not BS_TD[itemID] then return end
+	
+	tmp = {}
+	for k, v in pairs(BS_TD[itemID]) do
+		if k ~= "name" and k ~= "icon" and k ~= "header" then
+			if v > 0 then
+				table.insert(tmp, { name=k, count=v} )
+			end
+		end
+	end
+	
+	if #tmp > 0 then
+		table.sort(tmp, function(a,b) return (a.name < b.name) end)
+
+		GameTooltip:AddLine(' ')
+		for i=1, #tmp do
+			GameTooltip:AddDoubleLine(format(MOSS, tmp[i].name), format(SILVER, tmp[i].count))
+		end
+		GameTooltip:Show()
+	end
 end
 
 function BagSync:PLAYER_REGEN_ENABLED()
@@ -823,6 +841,18 @@ function BagSync:IsInArena()
 	end
 	return true
 end
+
+--display in currency window tooltip, this is from Blizzard_TokenUI
+hooksecurefunc("TokenFrame_Update", function()
+	local buttons = TokenFrameContainer.buttons
+	for i = 1, #buttons do
+		local button = buttons[i]
+		if not button.hookedOnEnter then
+			button.LinkButton:HookScript("OnEnter", function(self) BagSync:AddTokenTooltip(self) end)
+			button.hookedOnEnter = true
+		end
+	end
+end)
 
 hooksecurefunc("BackpackTokenFrame_Update", BagSync.ScanTokens)
 
@@ -886,6 +916,10 @@ end
 
 local function AddOwners(frame, link)
 	local itemLink = ToShortLink(link)
+	if not itemLink then
+		frame:Show()
+		return
+	end
 
 	--ignore the hearthstone
 	if itemLink and tonumber(itemLink) and tonumber(itemLink) == 6948 then
@@ -990,5 +1024,4 @@ end
 
 HookTip(GameTooltip)
 HookTip(ItemRefTooltip)
---HookTip(ShoppingTooltip1)
---HookTip(ShoppingTooltip2)
+

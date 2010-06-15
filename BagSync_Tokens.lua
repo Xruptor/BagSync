@@ -199,7 +199,8 @@ function bgTokens:DoTokens()
 			
 			tmp = {}
 			for q, r in pairs(v) do
-				if q ~= "name" and q ~= "icon" and q ~= "header" then
+				if q ~= "name" and q ~= "icon" and q ~= "header" and r > 0 then
+					--only show counts that are greater then zero
 					table.insert(tmp, { name=q, count=r} )
 				end
 			end
