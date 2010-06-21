@@ -266,3 +266,4 @@ else
 	BAGSYNC_SLASH8 = '/bgs '..BAGSYNC_SLASH_CMD8..' - Toggles the [Guild Name] display in tooltips.'
 	
 end
+
