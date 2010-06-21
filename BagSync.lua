@@ -530,7 +530,12 @@ function BagSync:SaveEquipment()
 			count = count > 1 and count or nil
 
 			if (linkItem and count) then
-				BS_DB[index] = format('%s,%d', linkItem, count)
+				--check for ranged slot ammo, don't add twice
+				if slot == GetInventorySlotInfo("AmmoSlot") and count <= 1 then
+					BS_DB[index] = format('%s,%d', linkItem, count)
+				elseif slot ~= GetInventorySlotInfo("AmmoSlot") then
+					BS_DB[index] = format('%s,%d', linkItem, count)
+				end
 			else
 				BS_DB[index] = linkItem
 			end
