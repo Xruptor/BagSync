@@ -29,6 +29,7 @@ if ( GetLocale() == "zhCN" ) then
 	BAGSYNC_SLASH_CMD5 = 'profiles'
 	BAGSYNC_SLASH_CMD6 = 'fixdb'
 	BAGSYNC_SLASH_CMD7 = 'total'
+	BAGSYNC_SLASH_CMD8 = 'guildname'
 	BAGSYNC_SLASH1 = '/bgs '..BAGSYNC_SLASH_CMD1..' - Does a quick search for an item'
 	BAGSYNC_SLASH2 = '/bgs '..BAGSYNC_SLASH_CMD2..' - Opens the search window'
 	BAGSYNC_SLASH3 = '/bgs '..BAGSYNC_SLASH_CMD3..' - Displays a tooltip with the amount of gold on each character.'
@@ -36,6 +37,7 @@ if ( GetLocale() == "zhCN" ) then
 	BAGSYNC_SLASH5 = '/bgs '..BAGSYNC_SLASH_CMD5..' - Opens the profiles window.'
 	BAGSYNC_SLASH6 = '/bgs '..BAGSYNC_SLASH_CMD6..' - Runs the database fix (FixDB) on BagSync.'
 	BAGSYNC_SLASH7 = '/bgs '..BAGSYNC_SLASH_CMD7..' - Toggles the [Total] display in tooltips and gold display.'
+	BAGSYNC_SLASH8 = '/bgs '..BAGSYNC_SLASH_CMD8..' - Toggles the [Guild Name] display in tooltips.'
 	
 elseif ( GetLocale() == "ruRU" )  then
 	--thanks to senryo from WOWInterface
@@ -65,6 +67,7 @@ elseif ( GetLocale() == "ruRU" )  then
 	BAGSYNC_SLASH_CMD5 = 'profiles'
 	BAGSYNC_SLASH_CMD6 = 'fixdb'
 	BAGSYNC_SLASH_CMD7 = 'total'
+	BAGSYNC_SLASH_CMD8 = 'guildname'
 	BAGSYNC_SLASH1 = '/bgs '..BAGSYNC_SLASH_CMD1..' - Does a quick search for an item'
 	BAGSYNC_SLASH2 = '/bgs '..BAGSYNC_SLASH_CMD2..' - Opens the search window'
 	BAGSYNC_SLASH3 = '/bgs '..BAGSYNC_SLASH_CMD3..' - Displays a tooltip with the amount of gold on each character.'
@@ -72,6 +75,7 @@ elseif ( GetLocale() == "ruRU" )  then
 	BAGSYNC_SLASH5 = '/bgs '..BAGSYNC_SLASH_CMD5..' - Opens the profiles window.'
 	BAGSYNC_SLASH6 = '/bgs '..BAGSYNC_SLASH_CMD6..' - Runs the database fix (FixDB) on BagSync.'
 	BAGSYNC_SLASH7 = '/bgs '..BAGSYNC_SLASH_CMD7..' - Toggles the [Total] display in tooltips and gold display.'
+	BAGSYNC_SLASH8 = '/bgs '..BAGSYNC_SLASH_CMD8..' - Toggles the [Guild Name] display in tooltips.'
 	
 elseif ( GetLocale() == "zhTW" ) then
 
@@ -100,6 +104,7 @@ elseif ( GetLocale() == "zhTW" ) then
 	BAGSYNC_SLASH_CMD5 = 'profiles'
 	BAGSYNC_SLASH_CMD6 = 'fixdb'
 	BAGSYNC_SLASH_CMD7 = 'total'
+	BAGSYNC_SLASH_CMD8 = 'guildname'
 	BAGSYNC_SLASH1 = '/bgs '..BAGSYNC_SLASH_CMD1..' - Does a quick search for an item'
 	BAGSYNC_SLASH2 = '/bgs '..BAGSYNC_SLASH_CMD2..' - Opens the search window'
 	BAGSYNC_SLASH3 = '/bgs '..BAGSYNC_SLASH_CMD3..' - Displays a tooltip with the amount of gold on each character.'
@@ -107,6 +112,7 @@ elseif ( GetLocale() == "zhTW" ) then
 	BAGSYNC_SLASH5 = '/bgs '..BAGSYNC_SLASH_CMD5..' - Opens the profiles window.'
 	BAGSYNC_SLASH6 = '/bgs '..BAGSYNC_SLASH_CMD6..' - Runs the database fix (FixDB) on BagSync.'
 	BAGSYNC_SLASH7 = '/bgs '..BAGSYNC_SLASH_CMD7..' - Toggles the [Total] display in tooltips and gold display.'
+	BAGSYNC_SLASH8 = '/bgs '..BAGSYNC_SLASH_CMD8..' - Toggles the [Guild Name] display in tooltips.'
 	
 elseif ( GetLocale() == "frFR" ) then
 	--thanks to cacahuete from WOWInterface
@@ -136,6 +142,7 @@ elseif ( GetLocale() == "frFR" ) then
 	BAGSYNC_SLASH_CMD5 = 'profiles'
 	BAGSYNC_SLASH_CMD6 = 'fixdb'
 	BAGSYNC_SLASH_CMD7 = 'total'
+	BAGSYNC_SLASH_CMD8 = 'guildname'
 	BAGSYNC_SLASH1 = '/bgs '..BAGSYNC_SLASH_CMD1..' - Does a quick search for an item'
 	BAGSYNC_SLASH2 = '/bgs '..BAGSYNC_SLASH_CMD2..' - Opens the search window'
 	BAGSYNC_SLASH3 = '/bgs '..BAGSYNC_SLASH_CMD3..' - Displays a tooltip with the amount of gold on each character.'
@@ -143,6 +150,7 @@ elseif ( GetLocale() == "frFR" ) then
 	BAGSYNC_SLASH5 = '/bgs '..BAGSYNC_SLASH_CMD5..' - Opens the profiles window.'
 	BAGSYNC_SLASH6 = '/bgs '..BAGSYNC_SLASH_CMD6..' - Runs the database fix (FixDB) on BagSync.'
 	BAGSYNC_SLASH7 = '/bgs '..BAGSYNC_SLASH_CMD7..' - Toggles the [Total] display in tooltips and gold display.'
+	BAGSYNC_SLASH8 = '/bgs '..BAGSYNC_SLASH_CMD8..' - Toggles the [Guild Name] display in tooltips.'
 	
 elseif ( GetLocale() == "koKR" ) then
 	--thanks to zinzzalimp from WOWInterface
@@ -172,6 +180,7 @@ elseif ( GetLocale() == "koKR" ) then
 	BAGSYNC_SLASH_CMD5 = 'profiles'
 	BAGSYNC_SLASH_CMD6 = 'fixdb'
 	BAGSYNC_SLASH_CMD7 = 'total'
+	BAGSYNC_SLASH_CMD8 = 'guildname'
 	BAGSYNC_SLASH1 = '/bgs '..BAGSYNC_SLASH_CMD1..' - 빠른 아이템 찾기'
 	BAGSYNC_SLASH2 = '/bgs '..BAGSYNC_SLASH_CMD2..' - 검색창 열기'
 	BAGSYNC_SLASH3 = '/bgs '..BAGSYNC_SLASH_CMD3..' - 툴팁에 각 케릭터의 골드량을 표시합니다.'
@@ -179,7 +188,8 @@ elseif ( GetLocale() == "koKR" ) then
 	BAGSYNC_SLASH5 = '/bgs '..BAGSYNC_SLASH_CMD5..' - 프로필 창을 엽니다.'
 	BAGSYNC_SLASH6 = '/bgs '..BAGSYNC_SLASH_CMD6..' - Runs the database fix (FixDB) on BagSync.'
 	BAGSYNC_SLASH7 = '/bgs '..BAGSYNC_SLASH_CMD7..' - Toggles the [Total] display in tooltips and gold display.'
-
+	BAGSYNC_SLASH8 = '/bgs '..BAGSYNC_SLASH_CMD8..' - Toggles the [Guild Name] display in tooltips.'
+	
 elseif ( GetLocale() == "deDE" ) then
 	--thanks to Schnubby from WOWInterface
 
@@ -208,6 +218,7 @@ elseif ( GetLocale() == "deDE" ) then
 	BAGSYNC_SLASH_CMD5 = 'profiles'
 	BAGSYNC_SLASH_CMD6 = 'fixdb'
 	BAGSYNC_SLASH_CMD7 = 'total'
+	BAGSYNC_SLASH_CMD8 = 'guildname'
 	BAGSYNC_SLASH1 = '/bgs '..BAGSYNC_SLASH_CMD1..' - Nach einem Item suchen'
 	BAGSYNC_SLASH2 = '/bgs '..BAGSYNC_SLASH_CMD2..' - Öffnet das Suchfenster'
 	BAGSYNC_SLASH3 = '/bgs '..BAGSYNC_SLASH_CMD3..' - Zeigt einen Tooltip mit dem Gold eines jeden Charakters.'
@@ -215,6 +226,7 @@ elseif ( GetLocale() == "deDE" ) then
 	BAGSYNC_SLASH5 = '/bgs '..BAGSYNC_SLASH_CMD5..' - Öffnet das Profilfenster.'
 	BAGSYNC_SLASH6 = '/bgs '..BAGSYNC_SLASH_CMD6..' - Führt eine Reparatur der Datenbank (FixDB) aus.'
 	BAGSYNC_SLASH7 = '/bgs '..BAGSYNC_SLASH_CMD7..' - Zeigt/Verbirgt die [Gesamt] Anzeige in Tooltips für Items und in der Goldanzeige.'
+	BAGSYNC_SLASH8 = '/bgs '..BAGSYNC_SLASH_CMD8..' - Toggles the [Guild Name] display in tooltips.'
 	
 else
 
@@ -243,6 +255,7 @@ else
 	BAGSYNC_SLASH_CMD5 = 'profiles'
 	BAGSYNC_SLASH_CMD6 = 'fixdb'
 	BAGSYNC_SLASH_CMD7 = 'total'
+	BAGSYNC_SLASH_CMD8 = 'guildname'
 	BAGSYNC_SLASH1 = '/bgs '..BAGSYNC_SLASH_CMD1..' - Does a quick search for an item'
 	BAGSYNC_SLASH2 = '/bgs '..BAGSYNC_SLASH_CMD2..' - Opens the search window'
 	BAGSYNC_SLASH3 = '/bgs '..BAGSYNC_SLASH_CMD3..' - Displays a tooltip with the amount of gold on each character.'
@@ -250,5 +263,6 @@ else
 	BAGSYNC_SLASH5 = '/bgs '..BAGSYNC_SLASH_CMD5..' - Opens the profiles window.'
 	BAGSYNC_SLASH6 = '/bgs '..BAGSYNC_SLASH_CMD6..' - Runs the database fix (FixDB) on BagSync.'
 	BAGSYNC_SLASH7 = '/bgs '..BAGSYNC_SLASH_CMD7..' - Toggles the [Total] display in tooltips and gold display.'
+	BAGSYNC_SLASH8 = '/bgs '..BAGSYNC_SLASH_CMD8..' - Toggles the [Guild Name] display in tooltips.'
 	
 end

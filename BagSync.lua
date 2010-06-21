@@ -31,6 +31,7 @@ local doTokenUpdate = 0
 local SILVER = '|cffc7c7cf%s|r'
 local MOSS = '|cFF80FF00%s|r'
 local TTL_C = '|cFFF4A460%s|r'
+local GN_C = '|cFF65B8C0%s|r'
 
 local BagSync = CreateFrame("frame", "BagSync", UIParent)
 
@@ -148,6 +149,15 @@ function BagSync:PLAYER_LOGIN()
 					print("|cFFFF0000BagSync: "..BAGSYNC_SEARCH_TOTAL.." "..BAGSYNC_SWITCH_ON)
 				end
 				return true
+			elseif c and c:lower() == BAGSYNC_SLASH_CMD8 then
+				if BagSyncOpt.showGuildNames then
+					BagSyncOpt.showGuildNames = false
+					print("|cFFFF0000BagSync: "..BAGSYNC_SLASH_CMD8.." "..BAGSYNC_SWITCH_OFF)
+				else
+					BagSyncOpt.showGuildNames = true
+					print("|cFFFF0000BagSync: "..BAGSYNC_SLASH_CMD8.." "..BAGSYNC_SWITCH_ON)
+				end
+				return true
 			elseif c and c:lower() ~= "" then
 				--do an item search
 				if BagSync_SearchFrame then
@@ -167,6 +177,7 @@ function BagSync:PLAYER_LOGIN()
 		DEFAULT_CHAT_FRAME:AddMessage(BAGSYNC_SLASH5)
 		DEFAULT_CHAT_FRAME:AddMessage(BAGSYNC_SLASH6)
 		DEFAULT_CHAT_FRAME:AddMessage(BAGSYNC_SLASH7)
+		DEFAULT_CHAT_FRAME:AddMessage(BAGSYNC_SLASH8)
 	end
 	
 	DEFAULT_CHAT_FRAME:AddMessage("|cFF99CC33BagSync|r [v|cFFDF2B2B"..ver.."|r] loaded: /bgs, /bagsync")
@@ -264,6 +275,7 @@ function BagSync:StartupDB()
 	
 	BagSyncOpt = BagSyncOpt or {}
 	if BagSyncOpt.showTotal == nil then BagSyncOpt.showTotal = true end
+	if BagSyncOpt.showGuildNames == nil then BagSyncOpt.showGuildNames = false end
 	
 	BagSyncGUILD_DB = BagSyncGUILD_DB or {}
 	BagSyncGUILD_DB[currentRealm] = BagSyncGUILD_DB[currentRealm] or {}
@@ -892,7 +904,7 @@ local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, m
 		end
 	end
 
-	if guildCount > 0 then
+	if guildCount > 0 and not BagSyncOpt.showGuildNames then
 		local count = BAGSYNC_NUM_GUILDBANK:format(guildCount)
 		if info then
 			info = strjoin(', ', info, count)
@@ -917,6 +929,21 @@ local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, m
 		end
 		return format(MOSS, info)
 	end
+end
+
+--sort by key element rather then value
+local function pairsByKeys (t, f)
+	local a = {}
+		for n in pairs(t) do table.insert(a, n) end
+		table.sort(a, f)
+		local i = 0      -- iterator variable
+		local iter = function ()   -- iterator function
+			i = i + 1
+			if a[i] == nil then return nil
+			else return a[i], t[a[i]]
+			end
+		end
+	return iter
 end
 
 local function AddOwners(frame, link)
@@ -1006,6 +1033,17 @@ local function AddOwners(frame, link)
 			table.insert(lastDisplayed, format(MOSS,(k or 'Unknown')).."@"..(infoString or 'unknown'))
 		end
 		
+	end
+	
+	--show guildnames last
+	if BagSyncOpt.showGuildNames then
+		for k, v in pairsByKeys(previousGuilds) do
+			--only print stuff higher then zero
+			if v > 0 then
+				frame:AddDoubleLine(format(GN_C, k), format(SILVER, v))
+				table.insert(lastDisplayed, format(GN_C, k).."@"..format(SILVER, v))
+			end
+		end
 	end
 	
 	--show grand total if we have something
