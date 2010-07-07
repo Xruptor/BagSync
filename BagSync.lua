@@ -158,6 +158,15 @@ function BagSync:PLAYER_LOGIN()
 					print("|cFFFF0000BagSync: "..BAGSYNC_SLASH_CMD8.." "..BAGSYNC_SWITCH_ON)
 				end
 				return true
+			elseif c and c:lower() == BAGSYNC_SLASH_CMD9 then
+				if BagSyncOpt.enableThrottle then
+					BagSyncOpt.enableThrottle = false
+					print("|cFFFF0000BagSync: "..BAGSYNC_SLASH_CMD9.." "..BAGSYNC_SWITCH_OFF)
+				else
+					BagSyncOpt.enableThrottle = true
+					print("|cFFFF0000BagSync: "..BAGSYNC_SLASH_CMD9.." "..BAGSYNC_SWITCH_ON)
+				end
+				return true
 			elseif c and c:lower() ~= "" then
 				--do an item search
 				if BagSync_SearchFrame then
@@ -170,17 +179,12 @@ function BagSync:PLAYER_LOGIN()
 		end
 
 		DEFAULT_CHAT_FRAME:AddMessage("BAGSYNC")
-		DEFAULT_CHAT_FRAME:AddMessage(BAGSYNC_SLASH1)
-		DEFAULT_CHAT_FRAME:AddMessage(BAGSYNC_SLASH2)
-		DEFAULT_CHAT_FRAME:AddMessage(BAGSYNC_SLASH3)
-		DEFAULT_CHAT_FRAME:AddMessage(BAGSYNC_SLASH4)
-		DEFAULT_CHAT_FRAME:AddMessage(BAGSYNC_SLASH5)
-		DEFAULT_CHAT_FRAME:AddMessage(BAGSYNC_SLASH6)
-		DEFAULT_CHAT_FRAME:AddMessage(BAGSYNC_SLASH7)
-		DEFAULT_CHAT_FRAME:AddMessage(BAGSYNC_SLASH8)
+		for i=1, 9 do
+			DEFAULT_CHAT_FRAME:AddMessage(_G["BAGSYNC_SLASH"..i])
+		end
 	end
 	
-	DEFAULT_CHAT_FRAME:AddMessage("|cFF99CC33BagSync|r [v|cFFDF2B2B"..ver.."|r] loaded: /bgs, /bagsync")
+	DEFAULT_CHAT_FRAME:AddMessage("|cFF99CC33BagSync|r [v|cFFDF2B2B"..ver.."|r] loaded:   /bgs, /bagsync")
 	
 	--we deleted someone with the Profile Window, display name of user deleted
 	if BagSyncOpt.delName then
@@ -276,6 +280,7 @@ function BagSync:StartupDB()
 	BagSyncOpt = BagSyncOpt or {}
 	if BagSyncOpt.showTotal == nil then BagSyncOpt.showTotal = true end
 	if BagSyncOpt.showGuildNames == nil then BagSyncOpt.showGuildNames = false end
+	if BagSyncOpt.enableThrottle == nil then BagSyncOpt.enableThrottle = true end
 	
 	BagSyncGUILD_DB = BagSyncGUILD_DB or {}
 	BagSyncGUILD_DB[currentRealm] = BagSyncGUILD_DB[currentRealm] or {}
@@ -981,11 +986,12 @@ local function AddOwners(frame, link)
 	
 	--loop through our characters
 	for k, v in pairs(BagSyncDB[currentRealm]) do
+
 		local infoString
 		local invCount, bankCount, equipCount, guildCount, mailboxCount = 0, 0, 0, 0, 0
 		
 		--now count the stuff for the user
-		for q, r in pairs(BagSyncDB[currentRealm][k]) do
+		for q, r in pairs(v) do
 			if itemLink then
 				local dblink, dbcount = strsplit(',', r)
 				if dblink then
@@ -1004,7 +1010,7 @@ local function AddOwners(frame, link)
 			end
 		end
 		
-		local guildN = BagSyncDB[currentRealm][k].guild or nil
+		local guildN = v.guild or nil
 		
 		--check the guild bank if the character is in a guild
 		if BS_GD and guildN and BS_GD[guildN] then
@@ -1060,7 +1066,24 @@ local function HookTip(tooltip)
 	tooltip:HookScript('OnTooltipSetItem', function(self, ...)
 		local itemLink = select(2, self:GetItem())
 		if itemLink and GetItemInfo(itemLink) then
-			AddOwners(self, itemLink)
+			local itemName = GetItemInfo(itemLink)
+			if BagSyncOpt.enableThrottle then
+				if not self.BagSyncThrottle then self.BagSyncThrottle = GetTime() end
+				if not self.BagSyncPrevious then self.BagSyncPrevious = itemName end
+				
+				if itemName ~= self.BagSyncPrevious then
+					self.BagSyncPrevious = itemName
+					self.BagSyncThrottle = GetTime()
+				end
+				if self:GetName() == "GameTooltip" and (GetTime() - self.BagSyncThrottle) >= 0.05 then
+					AddOwners(self, itemLink)
+					self.BagSyncThrottle = GetTime()
+				elseif self:GetName() ~= "GameTooltip" then
+					AddOwners(self, itemLink)
+				end
+			else
+				AddOwners(self, itemLink)
+			end
 		end
 	end)
 end
