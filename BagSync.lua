@@ -1064,7 +1064,7 @@ end
 
 local function HookTip(tooltip)
 	tooltip:HookScript('OnTooltipSetItem', function(self, ...)
-		local itemLink = select(2, self:GetItem())
+		local _, itemLink = self:GetItem()
 		if itemLink and GetItemInfo(itemLink) then
 			local itemName = GetItemInfo(itemLink)
 			if BagSyncOpt.enableThrottle then
