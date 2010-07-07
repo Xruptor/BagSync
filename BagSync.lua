@@ -1077,7 +1077,6 @@ local function HookTip(tooltip)
 				end
 				if self:GetName() == "GameTooltip" and (GetTime() - self.BagSyncThrottle) >= 0.05 then
 					AddOwners(self, itemLink)
-					self.BagSyncThrottle = GetTime()
 				elseif self:GetName() ~= "GameTooltip" then
 					AddOwners(self, itemLink)
 				end
