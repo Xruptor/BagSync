@@ -18,7 +18,7 @@
 	I kindof half want to make a full parser for this
 --]]
 
-local MAJOR, MINOR = "LibItemSearch-1.0", 1
+local MAJOR, MINOR = "LibItemSearch-1.0", 2
 local ItemSearch = LibStub:NewLibrary(MAJOR, MINOR)
 if not ItemSearch then return end
 
@@ -320,6 +320,11 @@ ItemSearch:RegisterTypedSearch{
 
 --[[ equipment set search ]]--
 
+local function IsWardrobeLoaded()
+	local name, title, notes, enabled, loadable, reason, security = GetAddOnInfo('Wardrobe')
+	return enabled
+end
+
 local function findEquipmentSetByName(search)
 	local startsWithSearch = '^' .. search
 	local partialMatch = nil
@@ -334,6 +339,22 @@ local function findEquipmentSetByName(search)
 
 		if lSetName:match(startsWithSearch) then
 			partialMatch = setName
+		end
+	end
+
+	-- Wardrobe Support
+	if Wardrobe then
+		for i, outfit in ipairs( Wardrobe.CurrentConfig.Outfit) do
+			local setName = outfit.OutfitName
+			local lSetName = setName:lower()
+
+			if lSetName == search then
+				return setName
+			end
+
+			if lSetName:match(startsWithSearch) then
+				partialMatch = setName
+			end
 		end
 	end
 
@@ -360,6 +381,23 @@ local function isItemInEquipmentSet(itemLink, setName)
 	return false
 end
 
+local function isItemInWardrobeSet(itemLink, setName)
+	if not Wardrobe then return false end
+
+	local itemName = (GetItemInfo(itemLink))
+	for i, outfit in ipairs(Wardrobe.CurrentConfig.Outfit) do
+		if outfit.OutfitName == setName then
+			for j, item in pairs(outfit.Item) do
+				if item and (item.IsSlotUsed == 1) and (item.Name == itemName) then
+					return true
+				end
+			end
+		end
+	end
+
+	return false
+end
+
 ItemSearch:RegisterTypedSearch{
 	id = 'equipmentSet',
 
@@ -369,6 +407,11 @@ ItemSearch:RegisterTypedSearch{
 
 	findItem = function(self, itemLink, search)
 		local setName = findEquipmentSetByName(search)
+		if not setName then
+			return false
+		end
+
 		return isItemInEquipmentSet(itemLink, setName)
+			or isItemInWardrobeSet(itemLink, setName)
 	end,
 }
