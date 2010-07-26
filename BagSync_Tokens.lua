@@ -1,3 +1,4 @@
+local L = BAGSYNC_L
 local tokensTable = {}
 local tRows, tAnchor = {}
 local currentPlayer = UnitName('player')
@@ -29,7 +30,7 @@ bgTokens:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 
 local addonTitle = bgTokens:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
 addonTitle:SetPoint("CENTER", bgTokens, "TOP", 0, -20)
-addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..BAGSYNC_TOKENS..")|r")
+addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L["Tokens"]..")|r")
 
 local closeButton = CreateFrame("Button", nil, bgTokens, "UIPanelCloseButton");
 closeButton:SetPoint("TOPRIGHT", bgTokens, -15, -8);

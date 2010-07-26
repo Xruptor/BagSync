@@ -1,3 +1,4 @@
+local L = BAGSYNC_L
 local searchTable = {}
 local rows, anchor = {}
 local currentPlayer = UnitName('player')
@@ -52,15 +53,15 @@ bgSearch:SetBackdrop({
 bgSearch:SetBackdropColor(0,0,0,1)
 bgSearch:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 
-bgSearch.SEARCHBTN = createEditBox("$parentEdit1", (BAGSYNC_SEARCH..":"), bgSearch, 60, -50)
+bgSearch.SEARCHBTN = createEditBox("$parentEdit1", (L["Search"]..":"), bgSearch, 60, -50)
 
 local addonTitle = bgSearch:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
 addonTitle:SetPoint("CENTER", bgSearch, "TOP", 0, -20)
-addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..BAGSYNC_SEARCH..")|r")
+addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L["Search"]..")|r")
 
 local totalC = bgSearch:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
 totalC:SetPoint("RIGHT", bgSearch.SEARCHBTN, 70, 0)
-totalC:SetText("|cFFFFFFFF"..BAGSYNC_SEARCH_TOTAL.." 0|r")
+totalC:SetText("|cFFFFFFFF"..L["Total:"].." 0|r")
 bgSearch.totalC = totalC
 		
 local closeButton = CreateFrame("Button", nil, bgSearch, "UIPanelCloseButton");
@@ -70,7 +71,7 @@ bgSearch:SetScript("OnShow", function(self) self:LoadSlider(); end)
 bgSearch:SetScript("OnHide", function(self)
 	searchTable = {}
 	self.SEARCHBTN:SetText("")
-	self.totalC:SetText("|cFFFFFFFF"..BAGSYNC_SEARCH_TOTAL.." 0|r")
+	self.totalC:SetText("|cFFFFFFFF"..L["Total:"].." 0|r")
 end)
 
 bgSearch:SetScript("OnMouseDown", function(frame, button)
@@ -251,7 +252,7 @@ function bgSearch:DoSearch()
 		table.sort(searchTable, function(a,b) return (a.name < b.name) end)
 	end
 	
-	bgSearch.totalC:SetText("|cFFFFFFFF"..BAGSYNC_SEARCH_TOTAL.." "..count.."|r")
+	bgSearch.totalC:SetText("|cFFFFFFFF"..L["Total:"].." "..count.."|r")
 	
 	bgSearch:LoadSlider()
 end

@@ -17,6 +17,7 @@
 
 --]]
 
+local L = BAGSYNC_L
 local lastItem
 local lastDisplayed = {}
 local currentPlayer = UnitName('player')
@@ -50,9 +51,9 @@ if IsLoggedIn() then BagSync:PLAYER_LOGIN() else BagSync:RegisterEvent('PLAYER_L
 function BagSync:PLAYER_LOGIN()
 	
 	 BINDING_HEADER_BAGSYNC = "BagSync"
-	 BINDING_NAME_BAGSYNCTOGGLESEARCH = BAGSYNC_BINDING_SEARCH
-	 BINDING_NAME_BAGSYNCTOGGLETOKENS = BAGSYNC_BINDING_TOKEN
-	 BINDING_NAME_BAGSYNCTOGGLEPROFILES = BAGSYNC_BINDING_PROFILES
+	 BINDING_NAME_BAGSYNCTOGGLESEARCH = L["Toggle Search"]
+	 BINDING_NAME_BAGSYNCTOGGLETOKENS = L["Toggle Tokens"]
+	 BINDING_NAME_BAGSYNCTOGGLEPROFILES = L["Toggle Profiles"]
   
 	local ver = GetAddOnMetadata("BagSync","Version") or 0
 	
@@ -113,58 +114,75 @@ function BagSync:PLAYER_LOGIN()
 		local a,b,c=strfind(msg, "(%S+)"); --contiguous string of non-space characters
 		
 		if a then
-			if c and c:lower() == BAGSYNC_SLASH_CMD2 then
+			if c and c:lower() == L["search"] then
 				if BagSync_SearchFrame:IsVisible() then
 					BagSync_SearchFrame:Hide()
 				else
 					BagSync_SearchFrame:Show()
 				end
 				return true
-			elseif c and c:lower() == BAGSYNC_SLASH_CMD3 then
+			elseif c and c:lower() == L["gold"] then
 				self:ShowMoneyTooltip()
 				return true
-			elseif c and c:lower() == BAGSYNC_SLASH_CMD4 then
+			elseif c and c:lower() == L["tokens"] then
 				if BagSync_TokensFrame:IsVisible() then
 					BagSync_TokensFrame:Hide()
 				else
 					BagSync_TokensFrame:Show()
 				end
 				return true
-			elseif c and c:lower() == BAGSYNC_SLASH_CMD5 then
+			elseif c and c:lower() == L["profiles"] then
 				if BagSync_ProfilesFrame:IsVisible() then
 					BagSync_ProfilesFrame:Hide()
 				else
 					BagSync_ProfilesFrame:Show()
 				end
 				return true
-			elseif c and c:lower() == BAGSYNC_SLASH_CMD6 then
+			elseif c and c:lower() == L["fixdb"] then
 				self:FixDB_Data()
 				return true
-			elseif c and c:lower() == BAGSYNC_SLASH_CMD7 then
+			elseif c and c:lower() == L["total"] then
+				lastDisplayed = {}
+				lastItem = nil
 				if BagSyncOpt.showTotal then
 					BagSyncOpt.showTotal = false
-					print("|cFFFF0000BagSync: "..BAGSYNC_SEARCH_TOTAL.." "..BAGSYNC_SWITCH_OFF)
+					print("|cFFFF0000BagSync: "..L["Total:"].." "..L["OFF"])
 				else
 					BagSyncOpt.showTotal = true
-					print("|cFFFF0000BagSync: "..BAGSYNC_SEARCH_TOTAL.." "..BAGSYNC_SWITCH_ON)
+					print("|cFFFF0000BagSync: "..L["Total:"].." "..L["ON"])
 				end
 				return true
-			elseif c and c:lower() == BAGSYNC_SLASH_CMD8 then
+			elseif c and c:lower() == L["guildname"] then
+				lastDisplayed = {}
+				lastItem = nil
 				if BagSyncOpt.showGuildNames then
 					BagSyncOpt.showGuildNames = false
-					print("|cFFFF0000BagSync: "..BAGSYNC_SLASH_CMD8.." "..BAGSYNC_SWITCH_OFF)
+					print("|cFFFF0000BagSync: "..L["guildname"]..": "..L["OFF"])
 				else
 					BagSyncOpt.showGuildNames = true
-					print("|cFFFF0000BagSync: "..BAGSYNC_SLASH_CMD8.." "..BAGSYNC_SWITCH_ON)
+					print("|cFFFF0000BagSync: "..L["guildname"]..": "..L["ON"])
 				end
 				return true
-			elseif c and c:lower() == BAGSYNC_SLASH_CMD9 then
+			elseif c and c:lower() == L["throttle"] then
+				lastDisplayed = {}
+				lastItem = nil
 				if BagSyncOpt.enableThrottle then
 					BagSyncOpt.enableThrottle = false
-					print("|cFFFF0000BagSync: "..BAGSYNC_SLASH_CMD9.." "..BAGSYNC_SWITCH_OFF)
+					print("|cFFFF0000BagSync: "..L["throttle"]..": "..L["OFF"])
 				else
 					BagSyncOpt.enableThrottle = true
-					print("|cFFFF0000BagSync: "..BAGSYNC_SLASH_CMD9.." "..BAGSYNC_SWITCH_ON)
+					print("|cFFFF0000BagSync: "..L["throttle"]..": "..L["ON"])
+				end
+				return true
+			elseif c and c:lower() == L["guild"] then
+				lastDisplayed = {}
+				lastItem = nil
+				if BagSyncOpt.enableGuild then
+					BagSyncOpt.enableGuild = false
+					print("|cFFFF0000BagSync: "..L["guild"]..": "..L["OFF"])
+				else
+					BagSyncOpt.enableGuild = true
+					print("|cFFFF0000BagSync: "..L["guild"]..": "..L["ON"])
 				end
 				return true
 			elseif c and c:lower() ~= "" then
@@ -179,16 +197,24 @@ function BagSync:PLAYER_LOGIN()
 		end
 
 		DEFAULT_CHAT_FRAME:AddMessage("BAGSYNC")
-		for i=1, 9 do
-			DEFAULT_CHAT_FRAME:AddMessage(_G["BAGSYNC_SLASH"..i])
-		end
+		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs [itemname] - Does a quick search for an item"])
+		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs search - Opens the search window"])
+		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs gold - Displays a tooltip with the amount of gold on each character."])
+		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs tokens - Opens the tokens/currency window."])
+		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs profiles - Opens the profiles window."])
+		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs fixdb - Runs the database fix (FixDB) on BagSync."])
+		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs total - Toggles the [Total] display in tooltips and gold display."])
+		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs guildname - Toggles the [Guild Name] display in tooltips."])
+		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs throttle - Toggles the throttle when displaying tooltips. (ON = Prevents Lag)."])
+		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs guild - Toggles the displaying of guild information."])
+		
 	end
 	
-	DEFAULT_CHAT_FRAME:AddMessage("|cFF99CC33BagSync|r [v|cFFDF2B2B"..ver.."|r] loaded:   /bgs, /bagsync")
+	DEFAULT_CHAT_FRAME:AddMessage("|cFF99CC33BagSync|r [v|cFFDF2B2B"..ver.."|r]   /bgs, /bagsync")
 	
 	--we deleted someone with the Profile Window, display name of user deleted
 	if BagSyncOpt.delName then
-		print("|cFFFF0000BagSync: "..BAGSYNC_PROFILES.." "..BAGSYNC_PROFILES_DELETE.." ["..BagSyncOpt.delName.."]!|r")
+		print("|cFFFF0000BagSync: "..L["Profiles"].." "..L["Delete"].." ["..BagSyncOpt.delName.."]!|r")
 		BagSyncOpt.delName = nil
 	end
 	
@@ -281,6 +307,7 @@ function BagSync:StartupDB()
 	if BagSyncOpt.showTotal == nil then BagSyncOpt.showTotal = true end
 	if BagSyncOpt.showGuildNames == nil then BagSyncOpt.showGuildNames = false end
 	if BagSyncOpt.enableThrottle == nil then BagSyncOpt.enableThrottle = true end
+	if BagSyncOpt.enableGuild == nil then BagSyncOpt.enableGuild = true end
 	
 	BagSyncGUILD_DB = BagSyncGUILD_DB or {}
 	BagSyncGUILD_DB[currentRealm] = BagSyncGUILD_DB[currentRealm] or {}
@@ -389,7 +416,7 @@ function BagSync:FixDB_Data()
 		end
 	end
 	
-	DEFAULT_CHAT_FRAME:AddMessage("|cFF99CC33BagSync:|r |cFFFF9900"..BAGSYNC_DATABASE_FIX_ALERT.."|r")
+	DEFAULT_CHAT_FRAME:AddMessage("|cFF99CC33BagSync:|r |cFFFF9900"..L["A FixDB has been performed on BagSync!  The database is now optimized!"].."|r")
 end
 
 ----------------------
@@ -724,7 +751,7 @@ function BagSync:ShowMoneyTooltip()
 	end
 	if BagSyncOpt.showTotal and gldTotal > 0 then
 		tooltip:AddLine(" ")
-		tooltip:AddDoubleLine(format(TTL_C, BAGSYNC_SEARCH_TOTAL), self:buildMoneyString(gldTotal, false), 1, 1, 1, 1, 1, 1)
+		tooltip:AddDoubleLine(format(TTL_C, L["Total:"]), self:buildMoneyString(gldTotal, false), 1, 1, 1, 1, 1, 1)
 	end
 	
 	tooltip:AddLine(" ")
@@ -888,11 +915,11 @@ local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, m
 	local total = invCount + bankCount + equipCount + guildCount + mailboxCount
 
 	if invCount > 0 then
-		info = BAGSYNC_NUM_BAGS:format(invCount)
+		info = L["Bags: %d"]:format(invCount)
 	end
 
 	if bankCount > 0 then
-		local count = BAGSYNC_NUM_BANK:format(bankCount)
+		local count = L["Bank: %d"]:format(bankCount)
 		if info then
 			info = strjoin(', ', info, count)
 		else
@@ -901,7 +928,7 @@ local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, m
 	end
 
 	if equipCount > 0 then
-		local count = BAGSYNC_EQUIPPED:format(equipCount)
+		local count = L["Equipped: %d"]:format(equipCount)
 		if info then
 			info = strjoin(', ', info, count)
 		else
@@ -909,8 +936,8 @@ local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, m
 		end
 	end
 
-	if guildCount > 0 and not BagSyncOpt.showGuildNames then
-		local count = BAGSYNC_NUM_GUILDBANK:format(guildCount)
+	if guildCount > 0 and BagSyncOpt.enableGuild and not BagSyncOpt.showGuildNames then
+		local count = L["Guild: %d"]:format(guildCount)
 		if info then
 			info = strjoin(', ', info, count)
 		else
@@ -919,7 +946,7 @@ local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, m
 	end
 	
 	if mailboxCount > 0 then
-		local count = BAGSYNC_NUM_MAILBOX:format(mailboxCount)
+		local count = L["Mailbox: %d"]:format(mailboxCount)
 		if info then
 			info = strjoin(', ', info, count)
 		else
@@ -1010,29 +1037,31 @@ local function AddOwners(frame, link)
 			end
 		end
 		
-		local guildN = v.guild or nil
-		
-		--check the guild bank if the character is in a guild
-		if BS_GD and guildN and BS_GD[guildN] then
-			--check to see if this guild has already been done through this run (so we don't do it multiple times)
-			if not previousGuilds[guildN] then
-				--we only really need to see this information once per guild
-				local tmpCount = 0
-				for q, r in pairs(BS_GD[guildN]) do
-					if itemLink then
-						local dblink, dbcount = strsplit(',', r)
-						if dblink and dblink == itemLink then
-							guildCount = guildCount + (dbcount or 1)
-							tmpCount = tmpCount + (dbcount or 1)
+		if BagSyncOpt.enableGuild then
+			local guildN = v.guild or nil
+			
+			--check the guild bank if the character is in a guild
+			if BS_GD and guildN and BS_GD[guildN] then
+				--check to see if this guild has already been done through this run (so we don't do it multiple times)
+				if not previousGuilds[guildN] then
+					--we only really need to see this information once per guild
+					local tmpCount = 0
+					for q, r in pairs(BS_GD[guildN]) do
+						if itemLink then
+							local dblink, dbcount = strsplit(',', r)
+							if dblink and dblink == itemLink then
+								guildCount = guildCount + (dbcount or 1)
+								tmpCount = tmpCount + (dbcount or 1)
+							end
 						end
 					end
+					previousGuilds[guildN] = tmpCount
 				end
-				previousGuilds[guildN] = tmpCount
 			end
 		end
 		
 		infoString = CountsToInfoString(invCount or 0, bankCount or 0, equipCount or 0, guildCount or 0, mailboxCount or 0)
-		grandTotal = grandTotal + ((invCount or 0) + (bankCount or 0) + (equipCount or 0) + (guildCount or 0) + (mailboxCount or 0))
+		grandTotal = grandTotal + (invCount or 0) + (bankCount or 0) + (equipCount or 0) + (guildCount or 0) + (mailboxCount or 0)
 		
 		if infoString and infoString ~= '' then
 			frame:AddDoubleLine(format(MOSS, k), infoString)
@@ -1042,7 +1071,7 @@ local function AddOwners(frame, link)
 	end
 	
 	--show guildnames last
-	if BagSyncOpt.showGuildNames then
+	if BagSyncOpt.enableGuild and BagSyncOpt.showGuildNames then
 		for k, v in pairsByKeys(previousGuilds) do
 			--only print stuff higher then zero
 			if v > 0 then
@@ -1055,8 +1084,8 @@ local function AddOwners(frame, link)
 	--show grand total if we have something
 	--don't show total if there is only one item
 	if BagSyncOpt.showTotal and grandTotal > 0 and getn(lastDisplayed) > 1 then
-		frame:AddDoubleLine(format(TTL_C, BAGSYNC_SEARCH_TOTAL), format(SILVER, grandTotal))
-		table.insert(lastDisplayed, format(TTL_C, BAGSYNC_SEARCH_TOTAL).."@"..format(SILVER, grandTotal))
+		frame:AddDoubleLine(format(TTL_C, L["Total:"]), format(SILVER, grandTotal))
+		table.insert(lastDisplayed, format(TTL_C, L["Total:"]).."@"..format(SILVER, grandTotal))
 	end
 
 	frame:Show()

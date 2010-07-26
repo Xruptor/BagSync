@@ -1,3 +1,4 @@
+local L = BAGSYNC_L
 local currentPlayer = UnitName('player')
 local currentRealm = GetRealmName()
 
@@ -26,7 +27,7 @@ bgProfiles:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 
 local addonTitle = bgProfiles:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
 addonTitle:SetPoint("CENTER", bgProfiles, "TOP", 0, -20)
-addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..BAGSYNC_PROFILES..")|r")
+addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L["Profiles"]..")|r")
 
 local closeButton = CreateFrame("Button", nil, bgProfiles, "UIPanelCloseButton");
 closeButton:SetPoint("TOPRIGHT", bgProfiles, -15, -8);
@@ -35,14 +36,14 @@ bgProfiles.deleteButton = CreateFrame("Button", nil, bgProfiles, "UIPanelButtonT
 bgProfiles.deleteButton:SetPoint("BOTTOM", bgProfiles, "BOTTOM", -70, 20);
 bgProfiles.deleteButton:SetHeight(21);
 bgProfiles.deleteButton:SetWidth(100);
-bgProfiles.deleteButton:SetText(BAGSYNC_PROFILES_DELETE);
+bgProfiles.deleteButton:SetText(L["Delete"]);
 bgProfiles.deleteButton:SetScript("OnClick", function() BagSync_ProfilesFrame.confirmButton:Enable()  end)
 
 bgProfiles.confirmButton = CreateFrame("Button", nil, bgProfiles, "UIPanelButtonTemplate");
 bgProfiles.confirmButton:SetPoint("BOTTOM", bgProfiles, "BOTTOM", 70, 20);
 bgProfiles.confirmButton:SetHeight(21);
 bgProfiles.confirmButton:SetWidth(100);
-bgProfiles.confirmButton:SetText(BAGSYNC_PROFILES_CONFIRM);
+bgProfiles.confirmButton:SetText(L["Confirm"]);
 bgProfiles.confirmButton:Disable()
 
 bgProfiles.confirmButton:SetScript("OnClick", function()
@@ -81,14 +82,14 @@ function bgProfiles:LoadProfiles()
 	if not BagSync or not BagSyncDB then return end
 	if not BagSyncDB[currentRealm] then return end
 
-	local profile_DD, profile_DD_text, profile_DD_container, profile_DD_label = LibStub("tekKonfig-Dropdown").new(bgProfiles, BAGSYNC_PROFILES, "CENTER", bgProfiles, "CENTER", -25, 0)
+	local profile_DD, profile_DD_text, profile_DD_container, profile_DD_label = LibStub("tekKonfig-Dropdown").new(bgProfiles, L["Profiles"], "CENTER", bgProfiles, "CENTER", -25, 0)
 	
 	profile_DD_container:SetHeight(28)
 	profile_DD:SetWidth(180)
 	profile_DD:ClearAllPoints()
 	profile_DD:SetPoint("LEFT", profile_DD_label, "RIGHT", -8, -2)
 	profile_DD_text:SetText(' ')
-	profile_DD.tiptext = BAGSYNC_PROFILES_TT
+	profile_DD.tiptext = L["Select a profile to delete.\nNOTE: This is irreversible!"]
 
 	bgProfiles.DDText = profile_DD_text
 	
