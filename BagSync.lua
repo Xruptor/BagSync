@@ -20,14 +20,16 @@
 local L = BAGSYNC_L
 local lastItem
 local lastDisplayed = {}
-local currentPlayer = UnitName('player')
-local currentRealm = GetRealmName()
+local currentPlayer
+local currentRealm
+local playerClass
 local NUM_EQUIPMENT_SLOTS = 19
 local BS_DB
 local BS_GD
 local BS_TD
 local MAX_GUILDBANK_SLOTS_PER_TAB = 98
 local doTokenUpdate = 0
+local ammoCount = 0
 
 local SILVER = '|cffc7c7cf%s|r'
 local MOSS = '|cFF80FF00%s|r'
@@ -57,6 +59,11 @@ function BagSync:PLAYER_LOGIN()
   
 	local ver = GetAddOnMetadata("BagSync","Version") or 0
 	
+	--load our player info after login
+	currentPlayer = UnitName('player')
+	currentRealm = GetRealmName()
+	playerClass = select(2, UnitClass("player"))
+
 	--initiate the db
 	self:StartupDB()
 	
@@ -79,6 +86,11 @@ function BagSync:PLAYER_LOGIN()
 		GuildRoster()
 	else
 		BS_DB.guild = nil
+	end
+	
+	--check for hunter
+	if playerClass == "HUNTER" then
+		ammoCount = GetInventoryItemCount('player', 0) or 0
 	end
 	
 	--this will force an update of the -2 key ring
@@ -520,6 +532,10 @@ function BagSync:SaveItem(bagname, bagid, slot)
 end
 
 function BagSync:OnBagUpdate(bagid)
+
+	--do hunter check
+	if not BagSync:DoHunterChecks() then return end
+
 	--this will update the bank/bag slots
 	local bagname
 
@@ -555,7 +571,6 @@ function BagSync:OnBagUpdate(bagid)
 	for slot = 1, GetBagSize(bagid) do
 		self:SaveItem(bagname, bagid, slot)
 	end
-
 end
 
 function BagSync:SaveEquipment()
@@ -563,6 +578,9 @@ function BagSync:SaveEquipment()
 	--reset our tooltip data since we scanned new items (we want current data not old)
 	lastItem = nil
 	lastDisplayed = {}
+	
+	--do hunter check
+	if not BagSync:DoHunterChecks(true) then return end
 	
 	for slot = 0, NUM_EQUIPMENT_SLOTS do
 		local link = GetInventoryItemLink('player', slot)
@@ -587,7 +605,6 @@ function BagSync:SaveEquipment()
 			BS_DB[index] = nil
 		end
 	end
-	
 end
 
 function BagSync:ScanEntireBank()
@@ -688,6 +705,24 @@ function BagSync:ScanMailbox()
 	BS_DB[bChk] = mailCount
 
 	BagSync.isCheckingMail = nil
+end
+
+function BagSync:DoHunterChecks(equipSwitch)
+	--if not hunter return true, or if not in combat return true
+	if playerClass ~= "HUNTER" then return true end
+	if not UnitAffectingCombat("player") then return true end
+
+	--this function is used to prevent scan spamming of the bags due to hunter ammo being used
+	local currAmmo = (GetInventoryItemCount('player', 0) or 0)
+	
+	if not equipSwitch and ammoCount ~= currAmmo then
+		return false
+	elseif ammoCount ~= currAmmo then
+		ammoCount = (GetInventoryItemCount('player', 0) or 0)
+		return false
+	end
+	
+	return true
 end
 
 ------------------------
