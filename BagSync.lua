@@ -197,6 +197,17 @@ function BagSync:PLAYER_LOGIN()
 					print("|cFFFF0000BagSync: "..L["guild"]..": "..L["ON"])
 				end
 				return true
+			elseif c and c:lower() == L["mailbox"] then
+				lastDisplayed = {}
+				lastItem = nil
+				if BagSyncOpt.enableMailbox then
+					BagSyncOpt.enableMailbox = false
+					print("|cFFFF0000BagSync: "..L["mailbox"]..": "..L["OFF"])
+				else
+					BagSyncOpt.enableMailbox = true
+					print("|cFFFF0000BagSync: "..L["mailbox"]..": "..L["ON"])
+				end
+				return true
 			elseif c and c:lower() ~= "" then
 				--do an item search
 				if BagSync_SearchFrame then
@@ -262,7 +273,8 @@ end
 
 function BagSync:GUILDBANKFRAME_OPENED()
 	self.atGuildBank = true
-
+	if not BagSyncOpt.enableGuild then return end
+	
 	local numTabs = GetNumGuildBankTabs()
 	for tab = 1, numTabs do
 		QueryGuildBankTab(tab)
@@ -274,6 +286,7 @@ function BagSync:GUILDBANKFRAME_CLOSED()
 end
 
 function BagSync:GUILDBANKBAGSLOTS_CHANGED()
+	if not BagSyncOpt.enableGuild then return end
 	if self.atGuildBank then
 		self:ScanGuildBank()
 	end
@@ -297,11 +310,13 @@ end
 
 function BagSync:MAIL_SHOW()
 	if self.isCheckingMail then return end
+	if not BagSyncOpt.enableMailbox then return end
 	self:ScanMailbox()
 end
 
 function BagSync:MAIL_INBOX_UPDATE()
 	if self.isCheckingMail then return end
+	if not BagSyncOpt.enableMailbox then return end
 	self:ScanMailbox()
 end
 
@@ -320,6 +335,7 @@ function BagSync:StartupDB()
 	if BagSyncOpt.showGuildNames == nil then BagSyncOpt.showGuildNames = false end
 	if BagSyncOpt.enableThrottle == nil then BagSyncOpt.enableThrottle = true end
 	if BagSyncOpt.enableGuild == nil then BagSyncOpt.enableGuild = true end
+	if BagSyncOpt.enableMailbox == nil then BagSyncOpt.enableMailbox = true end
 	
 	BagSyncGUILD_DB = BagSyncGUILD_DB or {}
 	BagSyncGUILD_DB[currentRealm] = BagSyncGUILD_DB[currentRealm] or {}
@@ -980,7 +996,7 @@ local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, m
 		end
 	end
 	
-	if mailboxCount > 0 then
+	if mailboxCount > 0 and BagSyncOpt.enableMailbox then
 		local count = L["Mailbox: %d"]:format(mailboxCount)
 		if info then
 			info = strjoin(', ', info, count)
