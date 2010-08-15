@@ -101,7 +101,7 @@ function bgSearch:LoadSlider()
 
 	local EDGEGAP, ROWHEIGHT, ROWGAP, GAP = 16, 20, 2, 4
 	local FRAME_HEIGHT = bgSearch:GetHeight() - 60
-	local SCROLL_TOP_POSITION = -110
+	local SCROLL_TOP_POSITION = -90
 	local totalRows = math.floor((FRAME_HEIGHT-22)/(ROWHEIGHT + ROWGAP))
 	
 	for i=1, totalRows do
@@ -128,7 +128,13 @@ function bgSearch:LoadSlider()
 			row:SetScript("OnClick", function(self)
 				if self.link then
 					if IsShiftKeyDown() then
-						ChatFrameEditBox:Insert(self.link)
+						for i = 1, NUM_CHAT_WINDOWS do
+							local editBox = _G[("ChatFrame%dEditBox"):format(i)]
+							if editBox:IsVisible() then
+								editBox:Insert(self.link)
+								break
+							end
+						end
 					elseif IsControlKeyDown() then
 						DressUpItemLink(self.link)
 					end

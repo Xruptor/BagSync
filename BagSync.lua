@@ -36,6 +36,37 @@ local MOSS = '|cFF80FF00%s|r'
 local TTL_C = '|cFFF4A460%s|r'
 local GN_C = '|cFF65B8C0%s|r'
 
+------------------------------
+--    LibDataBroker-1.1	    --
+------------------------------
+
+local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
+
+local dataobj = ldb:NewDataObject("BagSyncLDB", {
+	type = "data source",
+	icon = "Interface\\Icons\\INV_Misc_Bag_12",
+	label = "BagSync",
+	text = "BagSync",
+		
+	OnClick = function(self, button)
+		if getglobal("BagSync_SearchFrame") then
+			if getglobal("BagSync_SearchFrame"):IsVisible() then
+				getglobal("BagSync_SearchFrame"):Hide()
+			else
+				getglobal("BagSync_SearchFrame"):Show()
+			end
+		end
+	end,
+
+	OnTooltipShow = function(self)
+		self:Hide()
+	end
+})
+
+------------------------------
+--        MAIN OBJ	        --
+------------------------------
+
 local BagSync = CreateFrame("frame", "BagSync", UIParent)
 
 BagSync:SetScript('OnEvent', function(self, event, ...)
@@ -81,6 +112,9 @@ function BagSync:PLAYER_LOGIN()
 	--save the current user money (before bag update)
 	BS_DB["gold:0:0"] = GetMoney()
 
+	--save the class information
+	BS_DB["class:0:0"] = playerClass
+	
 	--check for player not in guild
 	if IsInGuild() or GetNumGuildMembers(true) > 0 then
 		GuildRoster()
@@ -119,6 +153,15 @@ function BagSync:PLAYER_LOGIN()
 	self:RegisterEvent('MAIL_SHOW')
 	self:RegisterEvent('MAIL_INBOX_UPDATE')
 	
+	local slashChk = {
+		[L["total"]] = "showTotal",
+		[L["guildname"]] = "showGuildNames",
+		[L["throttle"]] = "enableThrottle",
+		[L["guild"]] = "enableGuild",
+		[L["mailbox"]] = "enableMailbox",
+		[L["unitclass"]] = "enableUnitClass",
+	}
+	
 	SLASH_BAGSYNC1 = "/bagsync"
 	SLASH_BAGSYNC2 = "/bgs"
 	SlashCmdList["BAGSYNC"] = function(msg)
@@ -153,59 +196,14 @@ function BagSync:PLAYER_LOGIN()
 			elseif c and c:lower() == L["fixdb"] then
 				self:FixDB_Data()
 				return true
-			elseif c and c:lower() == L["total"] then
+			elseif c and slashChk[c:lower()] and BagSyncOpt[slashChk[c:lower()]] ~= nil then
 				lastDisplayed = {}
 				lastItem = nil
-				if BagSyncOpt.showTotal then
-					BagSyncOpt.showTotal = false
-					print("|cFFFF0000BagSync: "..L["Total:"].." "..L["OFF"])
+				BagSyncOpt[slashChk[c:lower()]] = not BagSyncOpt[slashChk[c:lower()]]
+				if BagSyncOpt[slashChk[c:lower()]] then
+					print("|cFFFF0000BagSync: |cFFFFFFFF"..(c:lower()).."|r |cFFFF0000"..L["ON"].."|r")
 				else
-					BagSyncOpt.showTotal = true
-					print("|cFFFF0000BagSync: "..L["Total:"].." "..L["ON"])
-				end
-				return true
-			elseif c and c:lower() == L["guildname"] then
-				lastDisplayed = {}
-				lastItem = nil
-				if BagSyncOpt.showGuildNames then
-					BagSyncOpt.showGuildNames = false
-					print("|cFFFF0000BagSync: "..L["guildname"]..": "..L["OFF"])
-				else
-					BagSyncOpt.showGuildNames = true
-					print("|cFFFF0000BagSync: "..L["guildname"]..": "..L["ON"])
-				end
-				return true
-			elseif c and c:lower() == L["throttle"] then
-				lastDisplayed = {}
-				lastItem = nil
-				if BagSyncOpt.enableThrottle then
-					BagSyncOpt.enableThrottle = false
-					print("|cFFFF0000BagSync: "..L["throttle"]..": "..L["OFF"])
-				else
-					BagSyncOpt.enableThrottle = true
-					print("|cFFFF0000BagSync: "..L["throttle"]..": "..L["ON"])
-				end
-				return true
-			elseif c and c:lower() == L["guild"] then
-				lastDisplayed = {}
-				lastItem = nil
-				if BagSyncOpt.enableGuild then
-					BagSyncOpt.enableGuild = false
-					print("|cFFFF0000BagSync: "..L["guild"]..": "..L["OFF"])
-				else
-					BagSyncOpt.enableGuild = true
-					print("|cFFFF0000BagSync: "..L["guild"]..": "..L["ON"])
-				end
-				return true
-			elseif c and c:lower() == L["mailbox"] then
-				lastDisplayed = {}
-				lastItem = nil
-				if BagSyncOpt.enableMailbox then
-					BagSyncOpt.enableMailbox = false
-					print("|cFFFF0000BagSync: "..L["mailbox"]..": "..L["OFF"])
-				else
-					BagSyncOpt.enableMailbox = true
-					print("|cFFFF0000BagSync: "..L["mailbox"]..": "..L["ON"])
+					print("|cFFFF0000BagSync:|r |cFFFFFFFF"..(c:lower()).."|r |cFFFF0000"..L["OFF"].."|r")
 				end
 				return true
 			elseif c and c:lower() ~= "" then
@@ -336,6 +334,7 @@ function BagSync:StartupDB()
 	if BagSyncOpt.enableThrottle == nil then BagSyncOpt.enableThrottle = true end
 	if BagSyncOpt.enableGuild == nil then BagSyncOpt.enableGuild = true end
 	if BagSyncOpt.enableMailbox == nil then BagSyncOpt.enableMailbox = true end
+	if BagSyncOpt.enableUnitClass == nil then BagSyncOpt.enableUnitClass = false end
 	
 	BagSyncGUILD_DB = BagSyncGUILD_DB or {}
 	BagSyncGUILD_DB[currentRealm] = BagSyncGUILD_DB[currentRealm] or {}
@@ -1029,7 +1028,32 @@ local function pairsByKeys (t, f)
 	return iter
 end
 
+local function rgbhex(r, g, b)
+  if type(r) == "table" then
+	if r.r then
+	  r, g, b = r.r, r.g, r.b
+	else
+	  r, g, b = unpack(r)
+	end
+  end
+  return string.format("|cff%02x%02x%02x", (r or 1) * 255, (g or 1) * 255, (b or 1) * 255)
+end
+
+
+local function getNameColor(sName, sClass)
+	if not BagSyncOpt.enableUnitClass then
+		return format(MOSS, sName)
+	else
+		if sName ~= "Unknown" and sClass and RAID_CLASS_COLORS[sClass] then
+			return rgbhex(RAID_CLASS_COLORS[sClass])..sName.."|r"
+		end
+	end
+	return format(MOSS, sName)
+end
+
 local function AddOwners(frame, link)
+	frame.BagSyncShowOnce = nil
+	
 	local itemLink = ToShortLink(link)
 	if not itemLink then
 		frame:Show()
@@ -1111,12 +1135,15 @@ local function AddOwners(frame, link)
 			end
 		end
 		
+		--get class for the unit if there is one
+		local pClass = v["class:0:0"] or nil
+		
 		infoString = CountsToInfoString(invCount or 0, bankCount or 0, equipCount or 0, guildCount or 0, mailboxCount or 0)
 		grandTotal = grandTotal + (invCount or 0) + (bankCount or 0) + (equipCount or 0) + (guildCount or 0) + (mailboxCount or 0)
 		
 		if infoString and infoString ~= '' then
-			frame:AddDoubleLine(format(MOSS, k), infoString)
-			table.insert(lastDisplayed, format(MOSS,(k or 'Unknown')).."@"..(infoString or 'unknown'))
+			frame:AddDoubleLine(getNameColor(k, pClass), infoString)
+			table.insert(lastDisplayed, getNameColor(k or 'Unknown', pClass).."@"..(infoString or 'unknown'))
 		end
 		
 	end
@@ -1150,17 +1177,30 @@ local function HookTip(tooltip)
 			if BagSyncOpt.enableThrottle then
 				if not self.BagSyncThrottle then self.BagSyncThrottle = GetTime() end
 				if not self.BagSyncPrevious then self.BagSyncPrevious = itemName end
+				if not self.BagSyncShowOnce and self:GetName() == "GameTooltip" then self.BagSyncShowOnce = true end
 				
 				if itemName ~= self.BagSyncPrevious then
 					self.BagSyncPrevious = itemName
 					self.BagSyncThrottle = GetTime()
 				end
 				if self:GetName() == "GameTooltip" and (GetTime() - self.BagSyncThrottle) >= 0.05 then
+					self.BagSyncShowOnce = nil
 					AddOwners(self, itemLink)
 				elseif self:GetName() ~= "GameTooltip" then
+					self.BagSyncShowOnce = nil
 					AddOwners(self, itemLink)
 				end
 			else
+				AddOwners(self, itemLink)
+			end
+		end
+	end)
+	
+	tooltip:HookScript('OnUpdate', function(self, ...)
+		if self:GetName() == "GameTooltip" and self.BagSyncShowOnce and self.BagSyncThrottle and (GetTime() - self.BagSyncThrottle) >= 0.05 then
+			local _, itemLink = self:GetItem()
+			self.BagSyncShowOnce = nil
+			if itemLink then
 				AddOwners(self, itemLink)
 			end
 		end

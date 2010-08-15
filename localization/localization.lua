@@ -32,6 +32,7 @@
 -- ["throttle"] = "",
 -- ["guild"] = "",
 -- ["mailbox"] = "",
+-- ["unitclass"] = "",
 -- ["/bgs [itemname] - Does a quick search for an item"] = "",
 -- ["/bgs search - Opens the search window"] = "",
 -- ["/bgs gold - Displays a tooltip with the amount of gold on each character."] = "",
