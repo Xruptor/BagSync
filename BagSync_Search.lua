@@ -128,12 +128,17 @@ function bgSearch:LoadSlider()
 			row:SetScript("OnClick", function(self)
 				if self.link then
 					if IsShiftKeyDown() then
+						local passChk = false
 						for i = 1, NUM_CHAT_WINDOWS do
 							local editBox = _G[("ChatFrame%dEditBox"):format(i)]
 							if editBox:IsVisible() then
 								editBox:Insert(self.link)
+								passChk = true
 								break
 							end
+						end
+						if not passChk then
+							_G[("ChatFrame1EditBox"):Insert(self.link)
 						end
 					elseif IsControlKeyDown() then
 						DressUpItemLink(self.link)
