@@ -118,7 +118,7 @@ function BagSync:PLAYER_LOGIN()
 	--check for player not in guild
 	if IsInGuild() or GetNumGuildMembers(true) > 0 then
 		GuildRoster()
-	else
+	elseif BS_DB.guild then
 		BS_DB.guild = nil
 	end
 	
@@ -244,7 +244,7 @@ function BagSync:PLAYER_LOGIN()
 end
 
 function BagSync:GUILD_ROSTER_UPDATE()
-	if not IsInGuild() then
+	if not IsInGuild() and BS_DB.guild then
 		BS_DB.guild = nil
 	else
 		--if they don't have guild name store it or update it
@@ -549,7 +549,7 @@ end
 function BagSync:OnBagUpdate(bagid)
 
 	--do hunter check
-	if not BagSync:DoHunterChecks() then return end
+	if BagSync:DoHunterCheck() then return end
 
 	--this will update the bank/bag slots
 	local bagname
@@ -595,7 +595,7 @@ function BagSync:SaveEquipment()
 	lastDisplayed = {}
 	
 	--do hunter check
-	if not BagSync:DoHunterChecks(true) then return end
+	if BagSync:DoHunterCheck(true) then return end
 	
 	for slot = 0, NUM_EQUIPMENT_SLOTS do
 		local link = GetInventoryItemLink('player', slot)
@@ -722,22 +722,22 @@ function BagSync:ScanMailbox()
 	BagSync.isCheckingMail = nil
 end
 
-function BagSync:DoHunterChecks(equipSwitch)
+function BagSync:DoHunterCheck(equipSwitch)
 	--if not hunter return true, or if not in combat return true
-	if playerClass ~= "HUNTER" then return true end
-	if not UnitAffectingCombat("player") then return true end
+	if playerClass ~= "HUNTER" then return false end
+	if not UnitAffectingCombat("player") then return false end
 
 	--this function is used to prevent scan spamming of the bags due to hunter ammo being used
 	local currAmmo = (GetInventoryItemCount('player', 0) or 0)
 	
 	if not equipSwitch and ammoCount ~= currAmmo then
-		return false
+		return true
 	elseif ammoCount ~= currAmmo then
 		ammoCount = (GetInventoryItemCount('player', 0) or 0)
-		return false
+		return true
 	end
 	
-	return true
+	return false
 end
 
 ------------------------
