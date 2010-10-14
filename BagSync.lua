@@ -943,6 +943,7 @@ end
 
 --display in currency window tooltip, this is from Blizzard_TokenUI
 hooksecurefunc("TokenFrame_Update", function()
+	if TokenFrameContainer.buttons == nil then return end
 	local buttons = TokenFrameContainer.buttons
 	for i = 1, #buttons do
 		local button = buttons[i]
