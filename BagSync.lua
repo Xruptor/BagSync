@@ -942,7 +942,7 @@ function BagSync:IsInArena()
 end
 
 --display in currency window tooltip, this is from Blizzard_TokenUI
-hooksecurefunc("TokenFrame_Update", function()
+--hooksecurefunc("TokenFrame_Update", function()
 	--if TokenFrameContainer.buttons == nil then return end
 	--local buttons = TokenFrameContainer.buttons
 	--for i = 1, #buttons do
@@ -952,7 +952,7 @@ hooksecurefunc("TokenFrame_Update", function()
 			-- button.hookedOnEnter = true
 		-- end
 	-- end
-end)
+--end)
 
 hooksecurefunc("BackpackTokenFrame_Update", BagSync.ScanTokens)
 
