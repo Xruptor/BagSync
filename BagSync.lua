@@ -943,15 +943,15 @@ end
 
 --display in currency window tooltip, this is from Blizzard_TokenUI
 hooksecurefunc("TokenFrame_Update", function()
-	if TokenFrameContainer.buttons == nil then return end
-	local buttons = TokenFrameContainer.buttons
-	for i = 1, #buttons do
-		local button = buttons[i]
-		if not button.hookedOnEnter then
-			button.LinkButton:HookScript("OnEnter", function(self) BagSync:AddTokenTooltip(self) end)
-			button.hookedOnEnter = true
-		end
-	end
+	--if TokenFrameContainer.buttons == nil then return end
+	--local buttons = TokenFrameContainer.buttons
+	--for i = 1, #buttons do
+		-- local button = buttons[i]
+		-- if not button.hookedOnEnter then
+			-- button.LinkButton:HookScript("OnEnter", function(self) BagSync:AddTokenTooltip(self) end)
+			-- button.hookedOnEnter = true
+		-- end
+	-- end
 end)
 
 hooksecurefunc("BackpackTokenFrame_Update", BagSync.ScanTokens)
