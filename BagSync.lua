@@ -440,13 +440,17 @@ function BagSync:FixDB_Data()
 			if BagSyncTOKEN_DB[realm] and BagSyncTOKEN_DB[realm][2] then BagSyncTOKEN_DB[realm][2] = nil end
 			
 			for k, v in pairs(rd) do
-				--token or points
-				for x, y in pairs(v) do
-					--token id or honor id
-					if x ~= "name" and x ~= "icon" and x ~= "header" then
-						if not storeUsers[realm][x] then
-							--if the user doesn't exist then delete data
-							BagSyncTOKEN_DB[realm][k][x] = nil
+				--5.1 check for old token data, if numeric then delete it
+				if tonumber(k) then
+					BagSyncTOKEN_DB[realm][k] = nil
+				else
+					--k = token name
+					for x, y in pairs(v) do
+						if x ~= "icon" and x ~= "header" then
+							if not storeUsers[realm][x] then
+								--if the user doesn't exist then delete data
+								BagSyncTOKEN_DB[realm][k][x] = nil
+							end
 						end
 					end
 				end
