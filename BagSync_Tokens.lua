@@ -118,15 +118,11 @@ function bgTokens:LoadSlider()
 		for i,row in ipairs(tRows) do
 			if (i + offset) <= #tokensTable then
 				if tokensTable[i + offset] then
-					if tokensTable[i + offset].rarity then
-						local hex = (select(4, GetItemQualityColor(tokensTable[i + offset].rarity)))
-						row.title:SetText(format('%s%s|r', hex, tokensTable[i + offset].name) or tokensTable[i + offset].name)
+
+					if tokensTable[i + offset].isHeader then
+						row.title:SetText("|cFFFFFFFF"..tokensTable[i + offset].name.."|r")
 					else
-						if tokensTable[i + offset].isHeader then
-							row.title:SetText("|cFFFFFFFF"..tokensTable[i + offset].name.."|r")
-						else
-							row.title:SetText(tokensTable[i + offset].name)
-						end
+						row.title:SetText(tokensTable[i + offset].name)
 					end
 					
 					--header texture and parameters
@@ -196,23 +192,20 @@ function bgTokens:DoTokens()
 	-----------------------------------
 	if BS_TD then
 		for k, v in pairs(BS_TD) do
-			local _, _, dRarity = GetItemInfo(k)
-			
+
 			tmp = {}
+			--this will loop and store all characters whom have counts greater then zero, 
+			--ignoring the icon and header table entry, then it sorts it by character name
 			for q, r in pairs(v) do
-				if q ~= "name" and q ~= "icon" and q ~= "header" and r > 0 then
+				if q ~= "icon" and q ~= "header" and r > 0 then
 					--only show counts that are greater then zero
 					table.insert(tmp, { name=q, count=r} )
 				end
 			end
 			table.sort(tmp, function(a,b) return (a.name < b.name) end)
 			
-			if dRarity and k ~= 43307 and k ~= 43308 then
-				--43307 = Arena, 43308 = Honor Points
-				table.insert(tokensTable, {name=v.name, link=k, icon=v.icon, header=v.header, tooltip=tmp, rarity=dRarity})
-			else
-				table.insert(tokensTable, {name=v.name, link=k, icon=v.icon, header=v.header, tooltip=tmp})
-			end
+			--now sort the entire table
+			table.insert(tokensTable, {name=k, icon=v.icon, header=v.header, tooltip=tmp})
 		end
 	end
 	-----------------------------------

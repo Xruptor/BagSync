@@ -29,7 +29,6 @@ local BS_GD
 local BS_TD
 local MAX_GUILDBANK_SLOTS_PER_TAB = 98
 local doTokenUpdate = 0
-local ammoCount = 0
 
 local SILVER = '|cffc7c7cf%s|r'
 local MOSS = '|cFF80FF00%s|r'
@@ -44,7 +43,8 @@ local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
 
 local dataobj = ldb:NewDataObject("BagSyncLDB", {
 	type = "data source",
-	icon = "Interface\\Icons\\INV_Misc_Bag_12",
+	--icon = "Interface\\Icons\\INV_Misc_Bag_12",
+	icon = "Interface\\AddOns\\BagSync\\media\\icon",
 	label = "BagSync",
 	text = "BagSync",
 		
@@ -122,11 +122,6 @@ function BagSync:PLAYER_LOGIN()
 		BS_DB.guild = nil
 	end
 	
-	--check for hunter
-	if playerClass == "HUNTER" then
-		ammoCount = GetInventoryItemCount('player', 0) or 0
-	end
-	
 	--this will force an update of the -2 key ring
 	self:SaveBag('key', KEYRING_CONTAINER, true)
 	
@@ -140,7 +135,14 @@ function BagSync:PLAYER_LOGIN()
 	
 	--force token scan
 	self:ScanTokens()
-
+	
+	--check for minimap toggle
+	if BagSyncOpt.enableMinimap and not BagSync_MinimapButton:IsVisible() then
+		BagSync_MinimapButton:Show()
+	elseif not BagSyncOpt.enableMinimap and BagSync_MinimapButton:IsVisible() then
+		BagSync_MinimapButton:Hide()
+	end
+				
 	self:RegisterEvent('PLAYER_MONEY')
 	self:RegisterEvent('BANKFRAME_OPENED')
 	self:RegisterEvent('BANKFRAME_CLOSED')
@@ -196,6 +198,14 @@ function BagSync:PLAYER_LOGIN()
 			elseif c and c:lower() == L["fixdb"] then
 				self:FixDB_Data()
 				return true
+			elseif c and c:lower() == L["minimap"] then
+				BagSyncOpt.enableMinimap = not BagSyncOpt.enableMinimap
+				if BagSyncOpt.enableMinimap and not BagSync_MinimapButton:IsVisible() then
+					BagSync_MinimapButton:Show()
+				elseif not BagSyncOpt.enableMinimap and BagSync_MinimapButton:IsVisible() then
+					BagSync_MinimapButton:Hide()
+				end
+				return true
 			elseif c and slashChk[c:lower()] and BagSyncOpt[slashChk[c:lower()]] ~= nil then
 				lastDisplayed = {}
 				lastItem = nil
@@ -228,6 +238,7 @@ function BagSync:PLAYER_LOGIN()
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs guildname - Toggles the [Guild Name] display in tooltips."])
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs throttle - Toggles the throttle when displaying tooltips. (ON = Prevents Lag)."])
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs guild - Toggles the displaying of guild information."])
+		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs minimap - Toggles the displaying of BagSync minimap button."])
 		
 	end
 	
@@ -335,6 +346,7 @@ function BagSync:StartupDB()
 	if BagSyncOpt.enableGuild == nil then BagSyncOpt.enableGuild = true end
 	if BagSyncOpt.enableMailbox == nil then BagSyncOpt.enableMailbox = true end
 	if BagSyncOpt.enableUnitClass == nil then BagSyncOpt.enableUnitClass = false end
+	if BagSyncOpt.enableMinimap == nil then BagSyncOpt.enableMinimap = false end
 	
 	BagSyncGUILD_DB = BagSyncGUILD_DB or {}
 	BagSyncGUILD_DB[currentRealm] = BagSyncGUILD_DB[currentRealm] or {}
@@ -376,7 +388,7 @@ function BagSync:FixDB_Data()
 							BagSyncDB[realm][k][q] = nil
 						end
 					elseif db1 == 'equip' then
-						if not(db2 >= 0 and db2 <= NUM_EQUIPMENT_SLOTS) then
+						if not(db2 >= 0 and (db2 > 0 and db2 <= NUM_EQUIPMENT_SLOTS) ) then
 							BagSyncDB[realm][k][q] = nil
 						end
 					end
@@ -548,9 +560,6 @@ end
 
 function BagSync:OnBagUpdate(bagid)
 
-	--do hunter check
-	if BagSync:DoHunterCheck() then return end
-
 	--this will update the bank/bag slots
 	local bagname
 
@@ -594,10 +603,8 @@ function BagSync:SaveEquipment()
 	lastItem = nil
 	lastDisplayed = {}
 	
-	--do hunter check
-	if BagSync:DoHunterCheck(true) then return end
-	
-	for slot = 0, NUM_EQUIPMENT_SLOTS do
+	--start at 1, 0 used to be the old range slot (not needed anymore)
+	for slot = 1, NUM_EQUIPMENT_SLOTS do
 		local link = GetInventoryItemLink('player', slot)
 		local index = GetTag('equip', 0, slot)
 
@@ -607,12 +614,7 @@ function BagSync:SaveEquipment()
 			count = count > 1 and count or nil
 
 			if (linkItem and count) then
-				--check for ranged slot ammo, don't add twice
-				if slot == GetInventorySlotInfo("AmmoSlot") and count <= 1 then
 					BS_DB[index] = format('%s,%d', linkItem, count)
-				elseif slot ~= GetInventorySlotInfo("AmmoSlot") then
-					BS_DB[index] = format('%s,%d', linkItem, count)
-				end
 			else
 				BS_DB[index] = linkItem
 			end
@@ -720,24 +722,6 @@ function BagSync:ScanMailbox()
 	BS_DB[bChk] = mailCount
 
 	BagSync.isCheckingMail = nil
-end
-
-function BagSync:DoHunterCheck(equipSwitch)
-	--if not hunter return true, or if not in combat return true
-	if playerClass ~= "HUNTER" then return false end
-	if not UnitAffectingCombat("player") then return false end
-
-	--this function is used to prevent scan spamming of the bags due to hunter ammo being used
-	local currAmmo = (GetInventoryItemCount('player', 0) or 0)
-	
-	if not equipSwitch and ammoCount ~= currAmmo then
-		return true
-	elseif ammoCount ~= currAmmo then
-		ammoCount = (GetInventoryItemCount('player', 0) or 0)
-		return true
-	end
-	
-	return false
 end
 
 ------------------------
@@ -860,8 +844,9 @@ function BagSync:ScanTokens()
 	local lastHeader
 	
 	for i=1, GetCurrencyListSize() do
-		local name, isHeader, isExpanded, _, _, count, extraCurrencyType, icon, itemID = GetCurrencyListInfo(i)
-		--extraCurrencyType = 1 for arena points, 2 for honor points; 0 otherwise (an item-based currency). 
+		local name, isHeader, isExpanded, _, _, count, icon = GetCurrencyListInfo(i)
+		--extraCurrencyType = 1 for arena points, 2 for honor points; 0 otherwise (an item-based currency).
+
 		if name then
 			if(isHeader and not isExpanded) then
 				ExpandCurrencyList(i,1)
@@ -870,45 +855,17 @@ function BagSync:ScanTokens()
 				lastHeader = name
 			end
 			if (not isHeader) then
-				if BS_TD and itemID then
+				if BS_TD then
 					BS_TD = BS_TD or {}
-					BS_TD[itemID] = BS_TD[itemID] or {}
-					BS_TD[itemID].name = name
-					BS_TD[itemID].icon = icon
-					BS_TD[itemID].header = lastHeader
-					BS_TD[itemID][currentPlayer] = count
+					BS_TD[name] = BS_TD[name] or {}
+					BS_TD[name].icon = icon
+					BS_TD[name].header = lastHeader
+					BS_TD[name][currentPlayer] = count
 				end
 			end
 		end
 	end
 	
-end
-
-function BagSync:AddTokenTooltip(self)
-	if not self:GetParent().index then return end
-	local _, _, _, _, _, _, _, _, itemID = GetCurrencyListInfo(self:GetParent().index)
-
-	if not BS_TD then return end
-	if not BS_TD[itemID] then return end
-	
-	tmp = {}
-	for k, v in pairs(BS_TD[itemID]) do
-		if k ~= "name" and k ~= "icon" and k ~= "header" then
-			if v > 0 then
-				table.insert(tmp, { name=k, count=v} )
-			end
-		end
-	end
-	
-	if #tmp > 0 then
-		table.sort(tmp, function(a,b) return (a.name < b.name) end)
-
-		GameTooltip:AddLine(' ')
-		for i=1, #tmp do
-			GameTooltip:AddDoubleLine(format(MOSS, tmp[i].name), format(SILVER, tmp[i].count))
-		end
-		GameTooltip:Show()
-	end
 end
 
 function BagSync:PLAYER_REGEN_ENABLED()
@@ -940,19 +897,6 @@ function BagSync:IsInArena()
 	end
 	return true
 end
-
---display in currency window tooltip, this is from Blizzard_TokenUI
---hooksecurefunc("TokenFrame_Update", function()
-	--if TokenFrameContainer.buttons == nil then return end
-	--local buttons = TokenFrameContainer.buttons
-	--for i = 1, #buttons do
-		-- local button = buttons[i]
-		-- if not button.hookedOnEnter then
-			-- button.LinkButton:HookScript("OnEnter", function(self) BagSync:AddTokenTooltip(self) end)
-			-- button.hookedOnEnter = true
-		-- end
-	-- end
---end)
 
 hooksecurefunc("BackpackTokenFrame_Update", BagSync.ScanTokens)
 
