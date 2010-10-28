@@ -2,7 +2,6 @@
 --So people can stop PESTERING me about a dang button, why can't they just use DataBroker sheesh
 
 local bgMinimapButton = CreateFrame("Frame","BagSync_MinimapButton", Minimap)
-bgMinimapButton:SetScript("OnEvent", function(self, event, ...) if self[event] then return self[event](self, event, ...) end end)
 
 bgMinimapButton:SetHeight(32)
 bgMinimapButton:SetWidth(32)

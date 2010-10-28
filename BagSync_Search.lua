@@ -8,7 +8,6 @@ local GetItemInfo = _G['GetItemInfo']
 local ItemSearch = LibStub('LibItemSearch-1.0')
 
 local bgSearch = CreateFrame("Frame","BagSync_SearchFrame", UIParent)
-bgSearch:SetScript("OnEvent", function(self, event, ...) if self[event] then return self[event](self, event, ...) end end)
 
 local function escapeEditBox(self)
   self:SetAutoFocus(false)

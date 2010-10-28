@@ -6,7 +6,6 @@ local currentRealm = GetRealmName()
 local GetItemInfo = _G['GetItemInfo']
 
 local bgTokens = CreateFrame("Frame","BagSync_TokensFrame", UIParent)
-bgTokens:SetScript("OnEvent", function(self, event, ...) if self[event] then return self[event](self, event, ...) end end)
 
 bgTokens:SetFrameStrata("HIGH")
 bgTokens:SetToplevel(true)

@@ -137,9 +137,9 @@ function BagSync:PLAYER_LOGIN()
 	self:ScanTokens()
 	
 	--check for minimap toggle
-	if BagSyncOpt.enableMinimap and not BagSync_MinimapButton:IsVisible() then
+	if BagSyncOpt.enableMinimap and BagSync_MinimapButton and not BagSync_MinimapButton:IsVisible() then
 		BagSync_MinimapButton:Show()
-	elseif not BagSyncOpt.enableMinimap and BagSync_MinimapButton:IsVisible() then
+	elseif not BagSyncOpt.enableMinimap and BagSync_MinimapButton and BagSync_MinimapButton:IsVisible() then
 		BagSync_MinimapButton:Hide()
 	end
 				

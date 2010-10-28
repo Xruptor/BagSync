@@ -3,7 +3,6 @@ local currentPlayer = UnitName('player')
 local currentRealm = GetRealmName()
 
 local bgProfiles = CreateFrame("Frame","BagSync_ProfilesFrame", UIParent)
-bgProfiles:SetScript("OnEvent", function(self, event, ...) if self[event] then return self[event](self, event, ...) end end)
 
 bgProfiles:SetFrameStrata("HIGH")
 bgProfiles:SetToplevel(true)
