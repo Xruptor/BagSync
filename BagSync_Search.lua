@@ -226,27 +226,30 @@ function bgSearch:DoSearch()
 				end
 			end
 			
-			local guildN = BagSyncDB[currentRealm][k].guild or nil
-			
-			--check the guild bank if the character is in a guild
-			if BagSyncGUILD_DB and guildN and BagSyncGUILD_DB[currentRealm][guildN] then
-				--check to see if this guild has already been done through this run (so we don't do it multiple times)
-				if not previousGuilds[guildN] then
-					for q, r in pairs(BagSyncGUILD_DB[currentRealm][guildN]) do
-						local dblink, dbcount = strsplit(',', r)
-						if dblink then
-							local dName, dLinkD, dRarity = GetItemInfo(dblink)
-							if dName then
-								--we found a match
-								if not tempList[dblink] and ItemSearch:Find(dblink, searchStr) then
-									table.insert(searchTable, { name=dName, link=dLinkD, rarity=dRarity } )
-									tempList[dblink] = dName
-									count = count + 1
+			--only search guild if the guild features are on
+			if BagSyncOpt.enableGuild then
+				local guildN = BagSyncDB[currentRealm][k].guild or nil
+				
+				--check the guild bank if the character is in a guild
+				if BagSyncGUILD_DB and guildN and BagSyncGUILD_DB[currentRealm][guildN] then
+					--check to see if this guild has already been done through this run (so we don't do it multiple times)
+					if not previousGuilds[guildN] then
+						for q, r in pairs(BagSyncGUILD_DB[currentRealm][guildN]) do
+							local dblink, dbcount = strsplit(',', r)
+							if dblink then
+								local dName, dLinkD, dRarity = GetItemInfo(dblink)
+								if dName then
+									--we found a match
+									if not tempList[dblink] and ItemSearch:Find(dblink, searchStr) then
+										table.insert(searchTable, { name=dName, link=dLinkD, rarity=dRarity } )
+										tempList[dblink] = dName
+										count = count + 1
+									end
 								end
 							end
 						end
+						previousGuilds[guildN] = true
 					end
-					previousGuilds[guildN] = true
 				end
 			end
 			
