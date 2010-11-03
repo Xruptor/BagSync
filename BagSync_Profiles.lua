@@ -117,6 +117,7 @@ function bgProfiles:LoadProfiles()
 		for i=1, #tmp do
 			info.text = tmp[i]
 			info.value = tmp[i]
+			info.notCheckable = true
 			UIDropDownMenu_AddButton(info)
 		end
 
