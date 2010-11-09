@@ -911,7 +911,7 @@ hooksecurefunc("BackpackTokenFrame_Update", BagSync.ScanTokens)
 
 local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount)
 	local info
-	local total = invCount + bankCount + equipCount + guildCount + mailboxCount
+	local total = invCount + bankCount + equipCount + mailboxCount
 
 	if invCount > 0 then
 		info = L["Bags: %d"]:format(invCount)
@@ -936,6 +936,7 @@ local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, m
 	end
 
 	if guildCount > 0 and BagSyncOpt.enableGuild and not BagSyncOpt.showGuildNames then
+		total = total + guildCount --add the guild count only if we don't have showguildnames on, otherwise it's counted twice
 		local count = L["Guild: %d"]:format(guildCount)
 		if info then
 			info = strjoin(', ', info, count)
@@ -1087,9 +1088,9 @@ local function AddOwners(frame, link)
 		--get class for the unit if there is one
 		local pClass = v["class:0:0"] or nil
 		
-		infoString = CountsToInfoString(invCount or 0, bankCount or 0, equipCount or 0, guildCount or 0, mailboxCount or 0)
-		grandTotal = grandTotal + (invCount or 0) + (bankCount or 0) + (equipCount or 0) + (guildCount or 0) + (mailboxCount or 0)
-		
+		infoString = CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount)
+		grandTotal = grandTotal + invCount + bankCount + equipCount + guildCount + mailboxCount
+
 		if infoString and infoString ~= '' then
 			frame:AddDoubleLine(getNameColor(k, pClass), infoString)
 			table.insert(lastDisplayed, getNameColor(k or 'Unknown', pClass).."@"..(infoString or 'unknown'))
