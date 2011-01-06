@@ -49,11 +49,17 @@ local dataobj = ldb:NewDataObject("BagSyncLDB", {
 	text = "BagSync",
 		
 	OnClick = function(self, button)
-		if getglobal("BagSync_SearchFrame") then
-			if getglobal("BagSync_SearchFrame"):IsVisible() then
-				getglobal("BagSync_SearchFrame"):Hide()
+		if button == 'LeftButton' and BagSync_SearchFrame then
+			if BagSync_SearchFrame:IsVisible() then
+				BagSync_SearchFrame:Hide()
 			else
-				getglobal("BagSync_SearchFrame"):Show()
+				BagSync_SearchFrame:Show()
+			end
+		elseif button == 'RightButton' and BagSync_TokensFrame then
+			if BagSync_TokensFrame:IsVisible() then
+				BagSync_TokensFrame:Hide()
+			else
+				BagSync_TokensFrame:Show()
 			end
 		end
 	end,

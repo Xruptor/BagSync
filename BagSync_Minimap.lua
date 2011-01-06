@@ -20,11 +20,17 @@ bgMinimapButtonTexture:SetTexture('Interface\\AddOns\\BagSync\\media\\minimap.tg
 bgMinimapButtonTexture:SetPoint('CENTER')
 
 bgMinimapButton:SetScript('OnMouseUp', function(self, button)
-	if button == 'LeftButton' then
+	if button == 'LeftButton' and BagSync_SearchFrame then
 		if BagSync_SearchFrame:IsVisible() then
 			BagSync_SearchFrame:Hide()
 		else
 			BagSync_SearchFrame:Show()
+		end
+	elseif button == 'RightButton' and BagSync_TokensFrame then
+		if BagSync_TokensFrame:IsVisible() then
+			BagSync_TokensFrame:Hide()
+		else
+			BagSync_TokensFrame:Show()
 		end
 	end
 end)
