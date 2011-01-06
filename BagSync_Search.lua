@@ -214,11 +214,11 @@ function bgSearch:DoSearch()
 			for q, r in pairs(BagSyncDB[currentRealm][k]) do
 				local dblink, dbcount = strsplit(',', r)
 				if dblink then
-					local dName, dLinkD, dRarity = GetItemInfo(dblink)
-					if dName then
+					local dName, dItemLink, dRarity = GetItemInfo(dblink)
+					if dName and dItemLink then
 						--we found a match
-						if not tempList[dblink] and ItemSearch:Find(dblink, searchStr) then
-							table.insert(searchTable, { name=dName, link=dLinkD, rarity=dRarity } )
+						if not tempList[dblink] and ItemSearch:Find(dItemLink, searchStr) then
+							table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
 							tempList[dblink] = dName
 							count = count + 1
 						end
@@ -237,11 +237,11 @@ function bgSearch:DoSearch()
 						for q, r in pairs(BagSyncGUILD_DB[currentRealm][guildN]) do
 							local dblink, dbcount = strsplit(',', r)
 							if dblink then
-								local dName, dLinkD, dRarity = GetItemInfo(dblink)
+								local dName, dItemLink, dRarity = GetItemInfo(dblink)
 								if dName then
 									--we found a match
-									if not tempList[dblink] and ItemSearch:Find(dblink, searchStr) then
-										table.insert(searchTable, { name=dName, link=dLinkD, rarity=dRarity } )
+									if not tempList[dblink] and ItemSearch:Find(dItemLink, searchStr) then
+										table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
 										tempList[dblink] = dName
 										count = count + 1
 									end
