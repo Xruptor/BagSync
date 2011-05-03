@@ -18,7 +18,7 @@
 	I kindof half want to make a full parser for this
 --]]
 
-local MAJOR, MINOR = "LibItemSearch-1.0", 3
+local MAJOR, MINOR = "LibItemSearch-1.0", 2
 local ItemSearch = LibStub:NewLibrary(MAJOR, MINOR)
 if not ItemSearch then return end
 
@@ -315,33 +315,6 @@ ItemSearch:RegisterTypedSearch{
 		['quest'] = ITEM_BIND_QUEST,
 		['boa'] = ITEM_BIND_TO_ACCOUNT
 	}
-}
-
-ItemSearch:RegisterTypedSearch{
-	id = 'tooltipDesc',
-
-	isSearch = function(self, search)
-		return search and search:match('^tt:(.+)$')
-	end,
-
-	findItem = function(self, itemLink, search)
-		--no match?, pull in the resut from tooltip parsing
-		tooltipScanner:SetOwner(UIParent, 'ANCHOR_NONE')
-		tooltipScanner:SetHyperlink(itemLink)
-
-		local i = 1
-		while i <= tooltipScanner:NumLines() do
-			local text =  _G[tooltipScanner:GetName() .. 'TextLeft' .. i]:GetText():lower()
-			if text and text:match(search) then
-				tooltipScanner:Hide()
-				return true
-			end
-			i = i + 1
-		end
-
-		tooltipScanner:Hide()
-		return false
-	end,
 }
 
 
