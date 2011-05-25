@@ -226,7 +226,7 @@ function BagSync:PLAYER_LOGIN()
 				--do an item search
 				if BagSync_SearchFrame then
 					if not BagSync_SearchFrame:IsVisible() then BagSync_SearchFrame:Show() end
-					BagSync_SearchFrame.SEARCHBTN:SetText(c:lower())
+					BagSync_SearchFrame.SEARCHBTN:SetText(msg)
 					BagSync_SearchFrame:DoSearch()
 				end
 				return true
