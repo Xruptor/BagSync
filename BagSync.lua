@@ -29,6 +29,7 @@ local BS_GD
 local BS_TD
 local MAX_GUILDBANK_SLOTS_PER_TAB = 98
 local doTokenUpdate = 0
+local guildTabQueryQueue = {}
 
 local SILVER = '|cffc7c7cf%s|r'
 local MOSS = '|cFF80FF00%s|r'
@@ -292,7 +293,8 @@ function BagSync:GUILDBANKFRAME_OPENED()
 	
 	local numTabs = GetNumGuildBankTabs()
 	for tab = 1, numTabs do
-		QueryGuildBankTab(tab)
+		-- add this tab to the queue to refresh; if we do them all at once the server bugs and sends massive amounts of events
+		guildTabQueryQueue[tab] = true
 	end
 end
 
@@ -302,8 +304,17 @@ end
 
 function BagSync:GUILDBANKBAGSLOTS_CHANGED()
 	if not BagSyncOpt.enableGuild then return end
+
 	if self.atGuildBank then
-		self:ScanGuildBank()
+		-- check if we need to process the queue
+		local tab = next(guildTabQueryQueue)
+		if tab then
+			QueryGuildBankTab(tab)
+			guildTabQueryQueue[tab] = nil
+		else
+			-- the bank is ready for reading
+			self:ScanGuildBank()
+		end
 	end
 end
 
