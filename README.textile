@@ -1,0 +1,3 @@
+h3. (5-30-2011) Major Restructuring of BagSync (Blame Curse at CurseForge.com)
+
+* I had to remove pretty much all previous version tags of BagSync prior to the v6.X format. The primary reason for this was an incompatibility with P.O.S. CurseForge. Now I know why I prefer WOWInterface over CurseForge. In any case, apparently they are extraordinarily picky on how tags should be placed on git. So I had to modify the current tag system for BagSync in order to bend my back so it works on their system. Granted it worked fine on EVERY other Git Respository I used, minus CurseForge of course  <em>(Rollseyes)</em>. So from now on I'm going to use the vX.X format.
