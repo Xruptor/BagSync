@@ -1136,44 +1136,50 @@ local function AddOwners(frame, link)
 	frame:Show()
 end
 
-local function HookTip(tooltip)
-	tooltip:HookScript('OnTooltipSetItem', function(self, ...)
-		local _, itemLink = self:GetItem()
-		if itemLink and GetItemInfo(itemLink) then
-			local itemName = GetItemInfo(itemLink)
-			if BagSyncOpt.enableThrottle then
-				if not self.BagSyncThrottle then self.BagSyncThrottle = GetTime() end
-				if not self.BagSyncPrevious then self.BagSyncPrevious = itemName end
-				if not self.BagSyncShowOnce and self:GetName() == "GameTooltip" then self.BagSyncShowOnce = true end
-				
-				if itemName ~= self.BagSyncPrevious then
-					self.BagSyncPrevious = itemName
-					self.BagSyncThrottle = GetTime()
-				end
-				if self:GetName() == "GameTooltip" and (GetTime() - self.BagSyncThrottle) >= 0.05 then
-					self.BagSyncShowOnce = nil
-					AddOwners(self, itemLink)
-				elseif self:GetName() ~= "GameTooltip" then
-					self.BagSyncShowOnce = nil
-					AddOwners(self, itemLink)
-				end
-			else
-				AddOwners(self, itemLink)
+--Thanks to Aranarth from wowinterface.  Replaced HookScript with insecure hooks
+local orgTipSetItem = {}
+local orgTipOnUpdate = {}
+
+local function Tip_OnSetItem(self, ...)
+	orgTipSetItem[self](self, ...)
+	local _, itemLink = self:GetItem()
+	if itemLink and GetItemInfo(itemLink) then
+		local itemName = GetItemInfo(itemLink)
+		if BagSyncOpt.enableThrottle then
+			if not self.BagSyncThrottle then self.BagSyncThrottle = GetTime() end
+			if not self.BagSyncPrevious then self.BagSyncPrevious = itemName end
+			if not self.BagSyncShowOnce and self:GetName() == "GameTooltip" then self.BagSyncShowOnce = true end
+
+			if itemName ~= self.BagSyncPrevious then
+				self.BagSyncPrevious = itemName
+				self.BagSyncThrottle = GetTime()
 			end
-		end
-	end)
-	
-	tooltip:HookScript('OnUpdate', function(self, ...)
-		if self:GetName() == "GameTooltip" and self.BagSyncShowOnce and self.BagSyncThrottle and (GetTime() - self.BagSyncThrottle) >= 0.05 then
-			local _, itemLink = self:GetItem()
-			self.BagSyncShowOnce = nil
-			if itemLink then
-				AddOwners(self, itemLink)
+
+			if self:GetName() ~= "GameTooltip" or (GetTime() - self.BagSyncThrottle) >= 0.05 then
+				self.BagSyncShowOnce = nil
+				return AddOwners(self, itemLink)
 			end
+		else
+			return AddOwners(self, itemLink)
 		end
-	end)
+	end
 end
 
-HookTip(GameTooltip)
-HookTip(ItemRefTooltip)
+local function Tip_OnUpdate(self, ...)
+	orgTipOnUpdate[self](self, ...)
+	if self:GetName() == "GameTooltip" and self.BagSyncShowOnce and self.BagSyncThrottle and (GetTime() - self.BagSyncThrottle) >= 0.05 then
+		local _, itemLink = self:GetItem()
+		self.BagSyncShowOnce = nil
+		if itemLink then
+			return AddOwners(self, itemLink)
+		end
+	end
+end
+
+for _, tip in next, { GameTooltip, ItemRefTooltip } do
+	orgTipSetItem[tip] = tip:GetScript"OnTooltipSetItem"
+	tip:SetScript("OnTooltipSetItem", Tip_OnSetItem)
+	orgTipOnUpdate[tip] = tip:GetScript"OnUpdate"
+	tip:SetScript("OnUpdate", Tip_OnUpdate)
+end
 
