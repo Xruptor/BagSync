@@ -1177,9 +1177,16 @@ local function Tip_OnUpdate(self, ...)
 end
 
 for _, tip in next, { GameTooltip, ItemRefTooltip } do
+	
 	orgTipSetItem[tip] = tip:GetScript"OnTooltipSetItem"
 	tip:SetScript("OnTooltipSetItem", Tip_OnSetItem)
-	orgTipOnUpdate[tip] = tip:GetScript"OnUpdate"
-	tip:SetScript("OnUpdate", Tip_OnUpdate)
+	
+	if tip == ItemRefTooltip then
+		orgTipOnUpdate[tip] = tip.UpdateTooltip
+		tip.UpdateTooltip = Tip_OnUpdate
+	else
+		orgTipOnUpdate[tip] = tip:GetScript"OnUpdate"
+		tip:SetScript("OnUpdate", Tip_OnUpdate)
+	end
 end
 

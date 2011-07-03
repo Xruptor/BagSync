@@ -66,7 +66,10 @@ bgSearch.totalC = totalC
 local closeButton = CreateFrame("Button", nil, bgSearch, "UIPanelCloseButton");
 closeButton:SetPoint("TOPRIGHT", bgSearch, -15, -8);
 
-bgSearch:SetScript("OnShow", function(self) self:LoadSlider(); end)
+bgSearch:SetScript("OnShow", function(self)
+	self:LoadSlider()
+	self.SEARCHBTN:SetFocus()
+end)
 bgSearch:SetScript("OnHide", function(self)
 	searchTable = {}
 	self.SEARCHBTN:SetText("")
