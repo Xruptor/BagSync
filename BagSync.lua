@@ -23,6 +23,7 @@ local lastDisplayed = {}
 local currentPlayer
 local currentRealm
 local playerClass
+local playerFaction
 local NUM_EQUIPMENT_SLOTS = 19
 local BS_DB
 local BS_GD
@@ -101,6 +102,7 @@ function BagSync:PLAYER_LOGIN()
 	currentPlayer = UnitName('player')
 	currentRealm = GetRealmName()
 	playerClass = select(2, UnitClass("player"))
+	playerFaction = UnitFactionGroup("player")
 
 	--initiate the db
 	self:StartupDB()
@@ -121,6 +123,10 @@ function BagSync:PLAYER_LOGIN()
 
 	--save the class information
 	BS_DB["class:0:0"] = playerClass
+
+	--save the faction information
+	--"Alliance", "Horde" or nil
+	BS_DB["faction:0:0"] = playerFaction
 	
 	--check for player not in guild
 	if IsInGuild() or GetNumGuildMembers(true) > 0 then
@@ -169,6 +175,7 @@ function BagSync:PLAYER_LOGIN()
 		[L["guild"]] = "enableGuild",
 		[L["mailbox"]] = "enableMailbox",
 		[L["unitclass"]] = "enableUnitClass",
+		[L["faction"]] = "enableFaction",
 	}
 	
 	SLASH_BAGSYNC1 = "/bagsync"
@@ -246,6 +253,7 @@ function BagSync:PLAYER_LOGIN()
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs throttle - Toggles the throttle when displaying tooltips. (ON = Prevents Lag)."])
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs guild - Toggles the displaying of guild information."])
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs minimap - Toggles the displaying of BagSync minimap button."])
+		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs faction - Toggles the displaying of items for both factions (Alliance/Horde)."])
 		
 	end
 	
@@ -364,6 +372,7 @@ function BagSync:StartupDB()
 	if BagSyncOpt.enableMailbox == nil then BagSyncOpt.enableMailbox = true end
 	if BagSyncOpt.enableUnitClass == nil then BagSyncOpt.enableUnitClass = false end
 	if BagSyncOpt.enableMinimap == nil then BagSyncOpt.enableMinimap = false end
+	if BagSyncOpt.enableFaction == nil then BagSyncOpt.enableFaction = true end
 	
 	BagSyncGUILD_DB = BagSyncGUILD_DB or {}
 	BagSyncGUILD_DB[currentRealm] = BagSyncGUILD_DB[currentRealm] or {}
@@ -1058,59 +1067,65 @@ local function AddOwners(frame, link)
 
 		local infoString
 		local invCount, bankCount, equipCount, guildCount, mailboxCount = 0, 0, 0, 0, 0
+		local pFaction = v["faction:0:0"] or 'unknown' --just in case ;)
 		
-		--now count the stuff for the user
-		for q, r in pairs(v) do
-			if itemLink then
-				local dblink, dbcount = strsplit(',', r)
-				if dblink then
-					if string.find(q, 'bank') and dblink == itemLink then
-						bankCount = bankCount + (dbcount or 1)
-					elseif string.find(q, 'bag') and dblink == itemLink then
-						invCount = invCount + (dbcount or 1)
-					elseif string.find(q, 'key') and dblink == itemLink then
-						invCount = invCount + (dbcount or 1)
-					elseif string.find(q, 'equip') and dblink == itemLink then
-						equipCount = equipCount + (dbcount or 1)
-					elseif string.find(q, 'mailbox') and dblink == itemLink then
-						mailboxCount = mailboxCount + (dbcount or 1)
-					end
-				end
-			end
-		end
-		
-		if BagSyncOpt.enableGuild then
-			local guildN = v.guild or nil
-			
-			--check the guild bank if the character is in a guild
-			if BS_GD and guildN and BS_GD[guildN] then
-				--check to see if this guild has already been done through this run (so we don't do it multiple times)
-				if not previousGuilds[guildN] then
-					--we only really need to see this information once per guild
-					local tmpCount = 0
-					for q, r in pairs(BS_GD[guildN]) do
-						if itemLink then
-							local dblink, dbcount = strsplit(',', r)
-							if dblink and dblink == itemLink then
-								guildCount = guildCount + (dbcount or 1)
-								tmpCount = tmpCount + (dbcount or 1)
-							end
+		--check if we should show both factions or not
+		if BagSyncOpt.enableFaction or pFaction == playerFaction then
+
+			--now count the stuff for the user
+			for q, r in pairs(v) do
+				if itemLink then
+					local dblink, dbcount = strsplit(',', r)
+					if dblink then
+						if string.find(q, 'bank') and dblink == itemLink then
+							bankCount = bankCount + (dbcount or 1)
+						elseif string.find(q, 'bag') and dblink == itemLink then
+							invCount = invCount + (dbcount or 1)
+						elseif string.find(q, 'key') and dblink == itemLink then
+							invCount = invCount + (dbcount or 1)
+						elseif string.find(q, 'equip') and dblink == itemLink then
+							equipCount = equipCount + (dbcount or 1)
+						elseif string.find(q, 'mailbox') and dblink == itemLink then
+							mailboxCount = mailboxCount + (dbcount or 1)
 						end
 					end
-					previousGuilds[guildN] = tmpCount
 				end
 			end
-		end
 		
-		--get class for the unit if there is one
-		local pClass = v["class:0:0"] or nil
+			if BagSyncOpt.enableGuild then
+				local guildN = v.guild or nil
+			
+				--check the guild bank if the character is in a guild
+				if BS_GD and guildN and BS_GD[guildN] then
+					--check to see if this guild has already been done through this run (so we don't do it multiple times)
+					if not previousGuilds[guildN] then
+						--we only really need to see this information once per guild
+						local tmpCount = 0
+						for q, r in pairs(BS_GD[guildN]) do
+							if itemLink then
+								local dblink, dbcount = strsplit(',', r)
+								if dblink and dblink == itemLink then
+									guildCount = guildCount + (dbcount or 1)
+									tmpCount = tmpCount + (dbcount or 1)
+								end
+							end
+						end
+						previousGuilds[guildN] = tmpCount
+					end
+				end
+			end
 		
-		infoString = CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount)
-		grandTotal = grandTotal + invCount + bankCount + equipCount + guildCount + mailboxCount
+			--get class for the unit if there is one
+			local pClass = v["class:0:0"] or nil
+		
+			infoString = CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount)
+			grandTotal = grandTotal + invCount + bankCount + equipCount + guildCount + mailboxCount
 
-		if infoString and infoString ~= '' then
-			frame:AddDoubleLine(getNameColor(k, pClass), infoString)
-			table.insert(lastDisplayed, getNameColor(k or 'Unknown', pClass).."@"..(infoString or 'unknown'))
+			if infoString and infoString ~= '' then
+				frame:AddDoubleLine(getNameColor(k, pClass), infoString)
+				table.insert(lastDisplayed, getNameColor(k or 'Unknown', pClass).."@"..(infoString or 'unknown'))
+			end
+
 		end
 		
 	end
