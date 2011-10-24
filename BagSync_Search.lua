@@ -150,8 +150,8 @@ function bgSearch:LoadSlider()
 				if searchTable[i + offset] then
 					if searchTable[i + offset].rarity then
 						--local hex = (select(4, GetItemQualityColor(searchTable[i + offset].rarity)))
-						local hex = ("|c" .. select(4, GetItemQualityColor(searchTable[i + offset].rarity))) --@Tonyleila Fix from Wowinterface
-						row.title:SetText(format('%s%s|r', hex, searchTable[i + offset].name) or searchTable[i + offset].name)
+						local hex = (select(4, GetItemQualityColor(searchTable[i + offset].rarity)))
+						row.title:SetText(format('|c%s%s|r', hex, searchTable[i + offset].name) or searchTable[i + offset].name)
 					else
 						row.title:SetText(searchTable[i + offset].name)
 					end
