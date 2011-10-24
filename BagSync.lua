@@ -23,12 +23,14 @@ local lastDisplayed = {}
 local currentPlayer
 local currentRealm
 local playerClass
+local playerFaction
 local NUM_EQUIPMENT_SLOTS = 19
 local BS_DB
 local BS_GD
 local BS_TD
 local MAX_GUILDBANK_SLOTS_PER_TAB = 98
 local doTokenUpdate = 0
+local guildTabQueryQueue = {}
 
 local SILVER = '|cffc7c7cf%s|r'
 local MOSS = '|cFF80FF00%s|r'
@@ -100,6 +102,7 @@ function BagSync:PLAYER_LOGIN()
 	currentPlayer = UnitName('player')
 	currentRealm = GetRealmName()
 	playerClass = select(2, UnitClass("player"))
+	playerFaction = UnitFactionGroup("player")
 
 	--initiate the db
 	self:StartupDB()
@@ -120,6 +123,10 @@ function BagSync:PLAYER_LOGIN()
 
 	--save the class information
 	BS_DB["class:0:0"] = playerClass
+
+	--save the faction information
+	--"Alliance", "Horde" or nil
+	BS_DB["faction:0:0"] = playerFaction
 	
 	--check for player not in guild
 	if IsInGuild() or GetNumGuildMembers(true) > 0 then
@@ -168,6 +175,7 @@ function BagSync:PLAYER_LOGIN()
 		[L["guild"]] = "enableGuild",
 		[L["mailbox"]] = "enableMailbox",
 		[L["unitclass"]] = "enableUnitClass",
+		[L["faction"]] = "enableFaction",
 	}
 	
 	SLASH_BAGSYNC1 = "/bagsync"
@@ -226,7 +234,7 @@ function BagSync:PLAYER_LOGIN()
 				--do an item search
 				if BagSync_SearchFrame then
 					if not BagSync_SearchFrame:IsVisible() then BagSync_SearchFrame:Show() end
-					BagSync_SearchFrame.SEARCHBTN:SetText(c:lower())
+					BagSync_SearchFrame.SEARCHBTN:SetText(msg)
 					BagSync_SearchFrame:DoSearch()
 				end
 				return true
@@ -245,6 +253,7 @@ function BagSync:PLAYER_LOGIN()
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs throttle - Toggles the throttle when displaying tooltips. (ON = Prevents Lag)."])
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs guild - Toggles the displaying of guild information."])
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs minimap - Toggles the displaying of BagSync minimap button."])
+		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs faction - Toggles the displaying of items for both factions (Alliance/Horde)."])
 		
 	end
 	
@@ -292,7 +301,8 @@ function BagSync:GUILDBANKFRAME_OPENED()
 	
 	local numTabs = GetNumGuildBankTabs()
 	for tab = 1, numTabs do
-		QueryGuildBankTab(tab)
+		-- add this tab to the queue to refresh; if we do them all at once the server bugs and sends massive amounts of events
+		guildTabQueryQueue[tab] = true
 	end
 end
 
@@ -302,8 +312,17 @@ end
 
 function BagSync:GUILDBANKBAGSLOTS_CHANGED()
 	if not BagSyncOpt.enableGuild then return end
+
 	if self.atGuildBank then
-		self:ScanGuildBank()
+		-- check if we need to process the queue
+		local tab = next(guildTabQueryQueue)
+		if tab then
+			QueryGuildBankTab(tab)
+			guildTabQueryQueue[tab] = nil
+		else
+			-- the bank is ready for reading
+			self:ScanGuildBank()
+		end
 	end
 end
 
@@ -353,6 +372,7 @@ function BagSync:StartupDB()
 	if BagSyncOpt.enableMailbox == nil then BagSyncOpt.enableMailbox = true end
 	if BagSyncOpt.enableUnitClass == nil then BagSyncOpt.enableUnitClass = false end
 	if BagSyncOpt.enableMinimap == nil then BagSyncOpt.enableMinimap = false end
+	if BagSyncOpt.enableFaction == nil then BagSyncOpt.enableFaction = true end
 	
 	BagSyncGUILD_DB = BagSyncGUILD_DB or {}
 	BagSyncGUILD_DB[currentRealm] = BagSyncGUILD_DB[currentRealm] or {}
@@ -1047,59 +1067,65 @@ local function AddOwners(frame, link)
 
 		local infoString
 		local invCount, bankCount, equipCount, guildCount, mailboxCount = 0, 0, 0, 0, 0
+		local pFaction = v["faction:0:0"] or 'unknown' --just in case ;)
 		
-		--now count the stuff for the user
-		for q, r in pairs(v) do
-			if itemLink then
-				local dblink, dbcount = strsplit(',', r)
-				if dblink then
-					if string.find(q, 'bank') and dblink == itemLink then
-						bankCount = bankCount + (dbcount or 1)
-					elseif string.find(q, 'bag') and dblink == itemLink then
-						invCount = invCount + (dbcount or 1)
-					elseif string.find(q, 'key') and dblink == itemLink then
-						invCount = invCount + (dbcount or 1)
-					elseif string.find(q, 'equip') and dblink == itemLink then
-						equipCount = equipCount + (dbcount or 1)
-					elseif string.find(q, 'mailbox') and dblink == itemLink then
-						mailboxCount = mailboxCount + (dbcount or 1)
-					end
-				end
-			end
-		end
-		
-		if BagSyncOpt.enableGuild then
-			local guildN = v.guild or nil
-			
-			--check the guild bank if the character is in a guild
-			if BS_GD and guildN and BS_GD[guildN] then
-				--check to see if this guild has already been done through this run (so we don't do it multiple times)
-				if not previousGuilds[guildN] then
-					--we only really need to see this information once per guild
-					local tmpCount = 0
-					for q, r in pairs(BS_GD[guildN]) do
-						if itemLink then
-							local dblink, dbcount = strsplit(',', r)
-							if dblink and dblink == itemLink then
-								guildCount = guildCount + (dbcount or 1)
-								tmpCount = tmpCount + (dbcount or 1)
-							end
+		--check if we should show both factions or not
+		if BagSyncOpt.enableFaction or pFaction == playerFaction then
+
+			--now count the stuff for the user
+			for q, r in pairs(v) do
+				if itemLink then
+					local dblink, dbcount = strsplit(',', r)
+					if dblink then
+						if string.find(q, 'bank') and dblink == itemLink then
+							bankCount = bankCount + (dbcount or 1)
+						elseif string.find(q, 'bag') and dblink == itemLink then
+							invCount = invCount + (dbcount or 1)
+						elseif string.find(q, 'key') and dblink == itemLink then
+							invCount = invCount + (dbcount or 1)
+						elseif string.find(q, 'equip') and dblink == itemLink then
+							equipCount = equipCount + (dbcount or 1)
+						elseif string.find(q, 'mailbox') and dblink == itemLink then
+							mailboxCount = mailboxCount + (dbcount or 1)
 						end
 					end
-					previousGuilds[guildN] = tmpCount
 				end
 			end
-		end
 		
-		--get class for the unit if there is one
-		local pClass = v["class:0:0"] or nil
+			if BagSyncOpt.enableGuild then
+				local guildN = v.guild or nil
+			
+				--check the guild bank if the character is in a guild
+				if BS_GD and guildN and BS_GD[guildN] then
+					--check to see if this guild has already been done through this run (so we don't do it multiple times)
+					if not previousGuilds[guildN] then
+						--we only really need to see this information once per guild
+						local tmpCount = 0
+						for q, r in pairs(BS_GD[guildN]) do
+							if itemLink then
+								local dblink, dbcount = strsplit(',', r)
+								if dblink and dblink == itemLink then
+									guildCount = guildCount + (dbcount or 1)
+									tmpCount = tmpCount + (dbcount or 1)
+								end
+							end
+						end
+						previousGuilds[guildN] = tmpCount
+					end
+				end
+			end
 		
-		infoString = CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount)
-		grandTotal = grandTotal + invCount + bankCount + equipCount + guildCount + mailboxCount
+			--get class for the unit if there is one
+			local pClass = v["class:0:0"] or nil
+		
+			infoString = CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount)
+			grandTotal = grandTotal + invCount + bankCount + equipCount + guildCount + mailboxCount
 
-		if infoString and infoString ~= '' then
-			frame:AddDoubleLine(getNameColor(k, pClass), infoString)
-			table.insert(lastDisplayed, getNameColor(k or 'Unknown', pClass).."@"..(infoString or 'unknown'))
+			if infoString and infoString ~= '' then
+				frame:AddDoubleLine(getNameColor(k, pClass), infoString)
+				table.insert(lastDisplayed, getNameColor(k or 'Unknown', pClass).."@"..(infoString or 'unknown'))
+			end
+
 		end
 		
 	end
@@ -1125,44 +1151,57 @@ local function AddOwners(frame, link)
 	frame:Show()
 end
 
-local function HookTip(tooltip)
-	tooltip:HookScript('OnTooltipSetItem', function(self, ...)
-		local _, itemLink = self:GetItem()
-		if itemLink and GetItemInfo(itemLink) then
-			local itemName = GetItemInfo(itemLink)
-			if BagSyncOpt.enableThrottle then
-				if not self.BagSyncThrottle then self.BagSyncThrottle = GetTime() end
-				if not self.BagSyncPrevious then self.BagSyncPrevious = itemName end
-				if not self.BagSyncShowOnce and self:GetName() == "GameTooltip" then self.BagSyncShowOnce = true end
-				
-				if itemName ~= self.BagSyncPrevious then
-					self.BagSyncPrevious = itemName
-					self.BagSyncThrottle = GetTime()
-				end
-				if self:GetName() == "GameTooltip" and (GetTime() - self.BagSyncThrottle) >= 0.05 then
-					self.BagSyncShowOnce = nil
-					AddOwners(self, itemLink)
-				elseif self:GetName() ~= "GameTooltip" then
-					self.BagSyncShowOnce = nil
-					AddOwners(self, itemLink)
-				end
-			else
-				AddOwners(self, itemLink)
+--Thanks to Aranarth from wowinterface.  Replaced HookScript with insecure hooks
+local orgTipSetItem = {}
+local orgTipOnUpdate = {}
+
+local function Tip_OnSetItem(self, ...)
+	orgTipSetItem[self](self, ...)
+	local _, itemLink = self:GetItem()
+	if itemLink and GetItemInfo(itemLink) then
+		local itemName = GetItemInfo(itemLink)
+		if BagSyncOpt.enableThrottle then
+			if not self.BagSyncThrottle then self.BagSyncThrottle = GetTime() end
+			if not self.BagSyncPrevious then self.BagSyncPrevious = itemName end
+			if not self.BagSyncShowOnce and self:GetName() == "GameTooltip" then self.BagSyncShowOnce = true end
+
+			if itemName ~= self.BagSyncPrevious then
+				self.BagSyncPrevious = itemName
+				self.BagSyncThrottle = GetTime()
 			end
-		end
-	end)
-	
-	tooltip:HookScript('OnUpdate', function(self, ...)
-		if self:GetName() == "GameTooltip" and self.BagSyncShowOnce and self.BagSyncThrottle and (GetTime() - self.BagSyncThrottle) >= 0.05 then
-			local _, itemLink = self:GetItem()
-			self.BagSyncShowOnce = nil
-			if itemLink then
-				AddOwners(self, itemLink)
+
+			if self:GetName() ~= "GameTooltip" or (GetTime() - self.BagSyncThrottle) >= 0.05 then
+				self.BagSyncShowOnce = nil
+				return AddOwners(self, itemLink)
 			end
+		else
+			return AddOwners(self, itemLink)
 		end
-	end)
+	end
 end
 
-HookTip(GameTooltip)
-HookTip(ItemRefTooltip)
+local function Tip_OnUpdate(self, ...)
+	orgTipOnUpdate[self](self, ...)
+	if self:GetName() == "GameTooltip" and self.BagSyncShowOnce and self.BagSyncThrottle and (GetTime() - self.BagSyncThrottle) >= 0.05 then
+		local _, itemLink = self:GetItem()
+		self.BagSyncShowOnce = nil
+		if itemLink then
+			return AddOwners(self, itemLink)
+		end
+	end
+end
+
+for _, tip in next, { GameTooltip, ItemRefTooltip } do
+	
+	orgTipSetItem[tip] = tip:GetScript"OnTooltipSetItem"
+	tip:SetScript("OnTooltipSetItem", Tip_OnSetItem)
+	
+	if tip == ItemRefTooltip then
+		orgTipOnUpdate[tip] = tip.UpdateTooltip
+		tip.UpdateTooltip = Tip_OnUpdate
+	else
+		orgTipOnUpdate[tip] = tip:GetScript"OnUpdate"
+		tip:SetScript("OnUpdate", Tip_OnUpdate)
+	end
+end
 
