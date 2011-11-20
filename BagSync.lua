@@ -119,24 +119,25 @@ function BagSync:PLAYER_LOGIN()
 	end
 	
 	--save the current user money (before bag update)
-	BS_DB["gold:0:0"] = GetMoney()
+	if BS_DB["gold:0:0"] then BS_DB["gold:0:0"] = nil end --remove old format
+	BS_DB.gold = GetMoney()
 
 	--save the class information
-	BS_DB["class:0:0"] = playerClass
+	if BS_DB["class:0:0"] then BS_DB["class:0:0"] = nil end --remove old format
+	BS_DB.class = playerClass
 
 	--save the faction information
 	--"Alliance", "Horde" or nil
-	BS_DB["faction:0:0"] = playerFaction
+	if BS_DB["faction:0:0"] then BS_DB["faction:0:0"] = nil end --remove old format
+	BS_DB.faction = playerFaction
 	
 	--check for player not in guild
 	if IsInGuild() or GetNumGuildMembers(true) > 0 then
 		GuildRoster()
 	elseif BS_DB.guild then
 		BS_DB.guild = nil
+		self:FixDB_Data(true)
 	end
-	
-	--this will force an update of the -2 key ring
-	self:SaveBag('key', KEYRING_CONTAINER, true)
 	
 	--save all inventory data, including backpack(0)
 	for i = BACKPACK_CONTAINER, BACKPACK_CONTAINER + NUM_BAG_SLOTS do
@@ -272,18 +273,20 @@ end
 function BagSync:GUILD_ROSTER_UPDATE()
 	if not IsInGuild() and BS_DB.guild then
 		BS_DB.guild = nil
+		self:FixDB_Data(true)
 	else
 		--if they don't have guild name store it or update it
 		if GetGuildInfo("player") then
 			if not BS_DB.guild or BS_DB.guild ~= GetGuildInfo("player") then
 				BS_DB.guild = GetGuildInfo("player")
+				self:FixDB_Data(true)
 			end
 		end
 	end
 end
 
 function BagSync:PLAYER_MONEY()
-	BS_DB["gold:0:0"] = GetMoney()
+	BS_DB.gold = GetMoney()
 end
 
 function BagSync:BANKFRAME_OPENED()
@@ -329,7 +332,7 @@ end
 function BagSync:BAG_UPDATE(event, bagid)
 	--The new token bag or token currency tab has a bag number of -4, lets ignore this bag when new tokens are added
 	--http://www.wowwiki.com/API_TYPE_bagID
-	if bagid == -4 then return nil end
+	if bagid == -4 or bagid == -2 then return end --dont do tokens or keyring
 	--if not token bag then proceed
 	if not(bagid == BANK_CONTAINER or bagid > NUM_BAG_SLOTS) or self.atBank then
 		self:OnBagUpdate(bagid)
@@ -383,43 +386,29 @@ function BagSync:StartupDB()
 	BS_TD = BagSyncTOKEN_DB[currentRealm]
 end
 
-function BagSync:FixDB_Data()
-	--this searches for incorrect bagid's attached to incorrect bag names
-	--it also deletes old guild data if found
-	--mind you this funcion runs once every version change or if they delete a profile
-	local storeGuilds = {}
+function BagSync:FixDB_Data(onlyChkGuild)
+	--Removes obsolete character information
+	--Removes obsolete guild information
+	--Removes obsolete characters from tokens db
+	--Removes obsolete keyring information
+	--Will only check guild related information if the paramater is passed as true
+	
 	local storeUsers = {}
+	local storeGuilds = {}
 	
 	for realm, rd in pairs(BagSyncDB) do
 		--realm
-			storeUsers[realm] = storeUsers[realm] or {}
+		storeUsers[realm] = storeUsers[realm] or {}
+		storeGuilds[realm] = storeGuilds[realm] or {}
 		for k, v in pairs(rd) do
 			--users
-				storeUsers[realm][k] = storeUsers[realm][k] or 1
+			storeUsers[realm][k] = storeUsers[realm][k] or 1
 			for q, r in pairs(v) do
-				--bags
-					local db1, db2, db3 = strsplit(':', q)
-				if db1 and db2 and db3 and tonumber(db2) then
-						db2 = tonumber(db2)
-					if db1 == 'bank' then
-						if not(db2 == BANK_CONTAINER or (db2 >= NUM_BAG_SLOTS + 1) and (db2 <= NUM_BAG_SLOTS + NUM_BANKBAGSLOTS)) then
-							BagSyncDB[realm][k][q] = nil
-						end
-					elseif db1 == 'bag' then
-						if not(db2 >= BACKPACK_CONTAINER and db2 <= BACKPACK_CONTAINER + NUM_BAG_SLOTS) then
-							BagSyncDB[realm][k][q] = nil
-						end
-					elseif db1 == 'key' then
-						if not(db2 == KEYRING_CONTAINER) then
-							BagSyncDB[realm][k][q] = nil
-						end
-					elseif db1 == 'equip' then
-						if not(db2 >= 0 and (db2 > 0 and db2 <= NUM_EQUIPMENT_SLOTS) ) then
-							BagSyncDB[realm][k][q] = nil
-						end
-					end
-				elseif q == 'guild' then
-					storeGuilds[r] = true
+				if q == 'guild' then
+					storeGuilds[realm][r] = true
+				elseif string.find(q, 'key') then
+					--remove obsolete keyring information
+					BagSyncDB[realm][k][q] = nil
 				end
 			end
 		end
@@ -430,47 +419,28 @@ function BagSync:FixDB_Data()
 		--realm
 		for k, v in pairs(rd) do
 			--users
-			if storeGuilds[k] then
-				--only store the guild data if at least one character is in the guild
-				for q, r in pairs(v) do
-					--items
-					local db1, db2, db3 = strsplit(':', q)
-					if db1 and db2 and db3 and tonumber(db2) and tonumber(db3) then
-						db2 = tonumber(db2)
-						db3 = tonumber(db3)
-						if not(db2 > 0 and db2 <= MAX_GUILDBANK_TABS) then
-							--guild:tab:slot
-							BagSyncGUILD_DB[realm][k][q] = nil
-						elseif not(db3 > 0 and db3 <= MAX_GUILDBANK_SLOTS_PER_TAB) then
-							--if it's not between 1-98 slot then delete it
-							BagSyncGUILD_DB[realm][k][q] = nil
-						end
-					end
-				end
-			else
-				--otherwise delete the guild
+			if not storeGuilds[realm][k] then
+				--delete the guild
 				BagSyncGUILD_DB[realm][k] = nil
 			end
 		end
 	end
 	
-	--token data
-	for realm, rd in pairs(BagSyncTOKEN_DB) do
-		--realm
-		if not storeUsers[realm] then
-			--if it's not a realm that ANY users are on then delete it
-			BagSyncTOKEN_DB[realm] = nil
-		else
-			--delete old db information for tokens if it exists
-			if BagSyncTOKEN_DB[realm] and BagSyncTOKEN_DB[realm][1] then BagSyncTOKEN_DB[realm][1] = nil end
-			if BagSyncTOKEN_DB[realm] and BagSyncTOKEN_DB[realm][2] then BagSyncTOKEN_DB[realm][2] = nil end
-			
-			for k, v in pairs(rd) do
-				--5.1 check for old token data, if numeric then delete it
-				if tonumber(k) then
-					BagSyncTOKEN_DB[realm][k] = nil
-				else
-					--k = token name
+	--token data, only do if were not doing a guild check
+	--also display fixdb message only if were not doing a guild check
+	if not onlyChkGuild then
+	
+		for realm, rd in pairs(BagSyncTOKEN_DB) do
+			--realm
+			if not storeUsers[realm] then
+				--if it's not a realm that ANY users are on then delete it
+				BagSyncTOKEN_DB[realm] = nil
+			else
+				--delete old db information for tokens if it exists
+				if BagSyncTOKEN_DB[realm] and BagSyncTOKEN_DB[realm][1] then BagSyncTOKEN_DB[realm][1] = nil end
+				if BagSyncTOKEN_DB[realm] and BagSyncTOKEN_DB[realm][2] then BagSyncTOKEN_DB[realm][2] = nil end
+				
+				for k, v in pairs(rd) do
 					for x, y in pairs(v) do
 						if x ~= "icon" and x ~= "header" then
 							if not storeUsers[realm][x] then
@@ -481,11 +451,11 @@ function BagSync:FixDB_Data()
 					end
 				end
 			end
-			
 		end
+		
+		DEFAULT_CHAT_FRAME:AddMessage("|cFF99CC33BagSync:|r |cFFFF9900"..L["A FixDB has been performed on BagSync!  The database is now optimized!"].."|r")
 	end
 	
-	DEFAULT_CHAT_FRAME:AddMessage("|cFF99CC33BagSync:|r |cFFFF9900"..L["A FixDB has been performed on BagSync!  The database is now optimized!"].."|r")
 end
 
 ----------------------
@@ -493,9 +463,6 @@ end
 ----------------------
 
 local function GetBagSize(bagid)
-	if bagid == KEYRING_CONTAINER then
-		return GetKeyRingSize()
-	end
 	if bagid == 'equip' then
 		return NUM_EQUIPMENT_SLOTS
 	end
@@ -505,9 +472,8 @@ end
 local function GetTag(bagname, bagid, slot)
 	if bagname and bagid and slot then
 		return bagname..':'..bagid..':'..slot
-	else
-		return nil
 	end
+	return nil
 end
 
 --special thanks to tuller :)
@@ -535,7 +501,7 @@ function BagSync:SaveBag(bagname, bagid, rollupdate)
 	--Example ["bd:bagid:0"] = size, link, count
 	local size = GetBagSize(bagid)
 	local index = GetTag('bd', bagname, bagid)
-	if not index then return nil end
+	if not index then return end
 	
 	if size > 0 then
 		local invID = bagid > 0 and ContainerIDToInventoryID(bagid)
@@ -560,7 +526,6 @@ function BagSync:SaveBag(bagname, bagid, rollupdate)
 			self:SaveItem(bagname, bagid, slot)
 		end
 	end
-	
 end
 
 function BagSync:SaveItem(bagname, bagid, slot)
@@ -583,9 +548,11 @@ function BagSync:SaveItem(bagname, bagid, slot)
 		else
 			BS_DB[index] = link
 		end
-	else
-		BS_DB[index] = nil
+		
+		return
 	end
+	
+	BS_DB[index] = nil
 end
 
 function BagSync:OnBagUpdate(bagid)
@@ -596,19 +563,16 @@ function BagSync:OnBagUpdate(bagid)
 	--get the correct bag name based on it's id, trying NOT to use numbers as Blizzard may change bagspace in the future
 	--so instead I'm using constants :)
 	
-	if bagid == -4 then
-		--we don't want to deal with the token bag
-		return
-	elseif bagid == BANK_CONTAINER then
+	if bagid == -4 or bagid == -2 then return end --dont touch tokens or keyring
+	
+	if bagid == BANK_CONTAINER then
 		bagname = 'bank'
 	elseif (bagid >= NUM_BAG_SLOTS + 1) and (bagid <= NUM_BAG_SLOTS + NUM_BANKBAGSLOTS) then
 		bagname = 'bank'
-	elseif bagid == KEYRING_CONTAINER then
-		bagname = 'key'
 	elseif (bagid >= BACKPACK_CONTAINER) and (bagid <= BACKPACK_CONTAINER + NUM_BAG_SLOTS) then
 		bagname = 'bag'
 	else
-		return nil
+		return
 	end
 
 	if self.atBank then
@@ -741,9 +705,7 @@ function BagSync:ScanMailbox()
 		if mailCount < bVal then
 			for x = (mailCount + 1), bVal do
 				local delIndex = GetTag('mailbox', 0, x)
-				if BS_DB[delIndex] then
-					BS_DB[delIndex] = nil
-				end
+				if BS_DB[delIndex] then BS_DB[delIndex] = nil end
 			end
 		end
 	end
@@ -796,15 +758,10 @@ function BagSync:ShowMoneyTooltip()
 	
 	--loop through our characters
 	for k, v in pairs(BagSyncDB[currentRealm]) do
-		for q, r in pairs(BagSyncDB[currentRealm][k]) do
-			if string.find(q, 'gold') then
-				if r then
-					table.insert(usrData, { name=k, gold=r } )
-				end
-			end
+		if BagSyncDB[currentRealm][k].gold then
+			table.insert(usrData, { name=k, gold=BagSyncDB[currentRealm][k].gold } )
 		end
 	end
-	
 	table.sort(usrData, function(a,b) return (a.name < b.name) end)
 	
 	local gldTotal = 0
@@ -1067,7 +1024,7 @@ local function AddOwners(frame, link)
 
 		local infoString
 		local invCount, bankCount, equipCount, guildCount, mailboxCount = 0, 0, 0, 0, 0
-		local pFaction = v["faction:0:0"] or 'unknown' --just in case ;)
+		local pFaction = v.faction or playerFaction --just in case ;) if we dont know the faction yet display it anyways
 		
 		--check if we should show both factions or not
 		if BagSyncOpt.enableFaction or pFaction == playerFaction then
@@ -1080,8 +1037,6 @@ local function AddOwners(frame, link)
 						if string.find(q, 'bank') and dblink == itemLink then
 							bankCount = bankCount + (dbcount or 1)
 						elseif string.find(q, 'bag') and dblink == itemLink then
-							invCount = invCount + (dbcount or 1)
-						elseif string.find(q, 'key') and dblink == itemLink then
 							invCount = invCount + (dbcount or 1)
 						elseif string.find(q, 'equip') and dblink == itemLink then
 							equipCount = equipCount + (dbcount or 1)
@@ -1116,7 +1071,7 @@ local function AddOwners(frame, link)
 			end
 		
 			--get class for the unit if there is one
-			local pClass = v["class:0:0"] or nil
+			local pClass = v.class or nil
 		
 			infoString = CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount)
 			grandTotal = grandTotal + invCount + bankCount + equipCount + guildCount + mailboxCount

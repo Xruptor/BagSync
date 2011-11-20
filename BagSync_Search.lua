@@ -208,7 +208,7 @@ function bgSearch:DoSearch()
 	local tempList = {}
 	local previousGuilds = {}
 	local count = 0
-
+	
 	if strlen(searchStr) > 0 then
 		
 		local playerFaction = UnitFactionGroup("player")
@@ -216,22 +216,25 @@ function bgSearch:DoSearch()
 		--loop through our characters
 		for k, v in pairs(BagSyncDB[currentRealm]) do
 		
-			local pFaction = v["faction:0:0"] or 'unknown' --just in case ;)
+			local pFaction = v.faction or playerFaction --just in case ;) if we dont know the faction yet display it anyways
 		
 			--check if we should show both factions or not
 			if BagSyncOpt.enableFaction or pFaction == playerFaction then
 
 				--now count the stuff for the user
-				for q, r in pairs(BagSyncDB[currentRealm][k]) do
-					local dblink, dbcount = strsplit(',', r)
-					if dblink then
-						local dName, dItemLink, dRarity = GetItemInfo(dblink)
-						if dName and dItemLink then
-							--we found a match
-							if not tempList[dblink] and ItemSearch:Find(dItemLink, searchStr) then
-								table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
-								tempList[dblink] = dName
-								count = count + 1
+				for q, r in pairs(v) do
+					--don't search gold, faction, or class info, just items
+					if q ~= "gold" and q ~= "faction" and q ~= "class" then
+						local dblink, dbcount = strsplit(',', r)
+						if dblink then
+							local dName, dItemLink, dRarity = GetItemInfo(dblink)
+							if dName and dItemLink then
+								--we found a match
+								if not tempList[dblink] and ItemSearch:Find(dItemLink, searchStr) then
+									table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
+									tempList[dblink] = dName
+									count = count + 1
+								end
 							end
 						end
 					end
@@ -239,13 +242,13 @@ function bgSearch:DoSearch()
 			
 				--only search guild if the guild features are on
 				if BagSyncOpt.enableGuild then
-					local guildN = BagSyncDB[currentRealm][k].guild or nil
+					local guildN = v.guild or nil
 				
 					--check the guild bank if the character is in a guild
-					if BagSyncGUILD_DB and guildN and BagSyncGUILD_DB[currentRealm][guildN] then
+					if BagSyncGUILD_DB and guildN and BagSyncGUILD_DB[guildN] then
 						--check to see if this guild has already been done through this run (so we don't do it multiple times)
 						if not previousGuilds[guildN] then
-							for q, r in pairs(BagSyncGUILD_DB[currentRealm][guildN]) do
+							for q, r in pairs(BagSyncGUILD_DB[guildN]) do
 								local dblink, dbcount = strsplit(',', r)
 								if dblink then
 									local dName, dItemLink, dRarity = GetItemInfo(dblink)

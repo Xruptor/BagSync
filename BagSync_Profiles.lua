@@ -98,22 +98,19 @@ function bgProfiles:LoadProfiles()
 	end
 	
 	local tmp = {}
-	local tmp2 = {}
 	
+	--freaking LUA table.sort is terrible, you can't sort non-numeric keys..
+	for k, v in pairs(BagSyncDB[currentRealm]) do
+		table.insert(tmp, k)
+	end
+	table.sort(tmp, function(a,b) return (a < b) end)
+		
 	UIDropDownMenu_Initialize(profile_DD, function()
 		local info = UIDropDownMenu_CreateInfo()
 		
 		info.func = OnClick
 
-		for k, v in pairs(BagSyncDB[currentRealm]) do
-			--show everyone but current player
-			if k ~= currentPlayer and not tmp2[k] then
-				table.insert(tmp, k)
-				tmp2[k] = k
-			end
-		end
-		table.sort(tmp, function(a,b) return (a < b) end)
-		
+		--display sorted listed of names
 		for i=1, #tmp do
 			info.text = tmp[i]
 			info.value = tmp[i]

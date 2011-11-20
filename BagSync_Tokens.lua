@@ -180,17 +180,15 @@ end
 
 function bgTokens:DoTokens()
 	if not BagSync or not BagSyncTOKEN_DB then return end
-	
-	local BS_TD = BagSyncTOKEN_DB[currentRealm] or nil
-	if not BS_TD then return end
+	if not BagSyncTOKEN_DB[currentRealm] then return end
 	
 	tokensTable = {} --reset
 	local tmp = {}
 	
 	--loop through our characters
 	-----------------------------------
-	if BS_TD then
-		for k, v in pairs(BS_TD) do
+	if BagSyncTOKEN_DB[currentRealm] then
+		for k, v in pairs(BagSyncTOKEN_DB[currentRealm]) do
 
 			tmp = {}
 			--this will loop and store all characters whom have counts greater then zero, 
@@ -203,7 +201,7 @@ function bgTokens:DoTokens()
 			end
 			table.sort(tmp, function(a,b) return (a.name < b.name) end)
 			
-			--now sort the entire table
+			--now add it to master table to sort later
 			table.insert(tokensTable, {name=k, icon=v.icon, header=v.header, tooltip=tmp})
 		end
 	end
