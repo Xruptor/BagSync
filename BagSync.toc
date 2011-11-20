@@ -17,4 +17,5 @@ BagSync_Minimap.lua
 BagSync_Search.lua
 BagSync_Tokens.lua
 BagSync_Profiles.lua
+BagSync_Config.lua
 BagSync.lua

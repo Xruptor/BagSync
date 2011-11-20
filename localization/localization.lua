@@ -39,11 +39,16 @@
 -- ["/bgs tokens - Opens the tokens/currency window."] = "",
 -- ["/bgs profiles - Opens the profiles window."] = "",
 -- ["/bgs fixdb - Runs the database fix (FixDB) on BagSync."] = "",
--- ["/bgs total - Toggles the [Total] display in tooltips and gold display."] = "",
--- ["/bgs guildname - Toggles the [Guild Name] display in tooltips."] = "",
--- ["/bgs throttle - Toggles the throttle when displaying tooltips. (ON = Prevents Lag)."] = "",
--- ["/bgs guild - Toggles the displaying of guild information."] = "",
+-- ["/bgs config - Opens the BagSync Config Window"] = "",
+-- ["Display [Total] in tooltips and gold display."] = "",
+-- ["Display [Guild Name] display in tooltips."] = "",
+-- ["Enable guild bank items."] = "",
+-- ["Enable mailbox items."] = "",
+-- ["Display BagSync minimap button."] = "",
+-- ["Display items for both factions (Alliance/Horde)."] = "",
+-- ["Display class colors for characters."] = "",
 	
+		
 BAGSYNC_L = GetLocale() == "zhCN" and {
 	["Bags: %d"] = "背包: %d",
 	["Bank: %d"] = "银行: %d",
@@ -103,13 +108,13 @@ BAGSYNC_L = GetLocale() == "zhCN" and {
 	["A FixDB has been performed on BagSync!  The database is now optimized!"] 		= "Die Funktion FixDB wurde ausgeführt! Die Datenbank wurde optimiert!",
 	["ON"] = "An",
 	["OFF"] = "Aus",
+	["Display [Total] in tooltips and gold display."] 								= "[Gesamt] Anzeige in Tooltips für Items und in der Goldanzeige.",
 	["/bgs [itemname] - Does a quick search for an item"] 							= "/bgs [itemname] - Nach einem Item suchen",
 	["/bgs search - Opens the search window"] 										= "/bgs search - Öffnet das Suchfenster",
 	["/bgs gold - Displays a tooltip with the amount of gold on each character."] 	= "/bgs gold - Zeigt einen Tooltip mit dem Gold eines jeden Charakters.",
 	["/bgs tokens - Opens the tokens/currency window."] 							= "/bgs tokens - Öffnet das Abzeichenfenster.",
 	["/bgs profiles - Opens the profiles window."] 									= "/bgs profiles - Öffnet das Profilfenster.",
 	["/bgs fixdb - Runs the database fix (FixDB) on BagSync."] 						= "/bgs fixdb - Führt eine Reparatur der Datenbank (FixDB) aus.",
-	["/bgs total - Toggles the [Total] display in tooltips and gold display."] 		= "/bgs total - Zeigt/Verbirgt die [Gesamt] Anzeige in Tooltips für Items und in der Goldanzeige.",
 
 } or { }
 

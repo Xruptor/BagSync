@@ -169,16 +169,6 @@ function BagSync:PLAYER_LOGIN()
 	self:RegisterEvent('MAIL_SHOW')
 	self:RegisterEvent('MAIL_INBOX_UPDATE')
 	
-	local slashChk = {
-		[L["total"]] = "showTotal",
-		[L["guildname"]] = "showGuildNames",
-		[L["throttle"]] = "enableThrottle",
-		[L["guild"]] = "enableGuild",
-		[L["mailbox"]] = "enableMailbox",
-		[L["unitclass"]] = "enableUnitClass",
-		[L["faction"]] = "enableFaction",
-	}
-	
 	SLASH_BAGSYNC1 = "/bagsync"
 	SLASH_BAGSYNC2 = "/bgs"
 	SlashCmdList["BAGSYNC"] = function(msg)
@@ -213,23 +203,8 @@ function BagSync:PLAYER_LOGIN()
 			elseif c and c:lower() == L["fixdb"] then
 				self:FixDB_Data()
 				return true
-			elseif c and c:lower() == L["minimap"] then
-				BagSyncOpt.enableMinimap = not BagSyncOpt.enableMinimap
-				if BagSyncOpt.enableMinimap and not BagSync_MinimapButton:IsVisible() then
-					BagSync_MinimapButton:Show()
-				elseif not BagSyncOpt.enableMinimap and BagSync_MinimapButton:IsVisible() then
-					BagSync_MinimapButton:Hide()
-				end
-				return true
-			elseif c and slashChk[c:lower()] and BagSyncOpt[slashChk[c:lower()]] ~= nil then
-				lastDisplayed = {}
-				lastItem = nil
-				BagSyncOpt[slashChk[c:lower()]] = not BagSyncOpt[slashChk[c:lower()]]
-				if BagSyncOpt[slashChk[c:lower()]] then
-					print("|cFFFF0000BagSync: |cFFFFFFFF"..(c:lower()).."|r |cFFFF0000"..L["ON"].."|r")
-				else
-					print("|cFFFF0000BagSync:|r |cFFFFFFFF"..(c:lower()).."|r |cFFFF0000"..L["OFF"].."|r")
-				end
+			elseif c and c:lower() == L["config"] then
+				InterfaceOptionsFrame_OpenToCategory("BagSync")
 				return true
 			elseif c and c:lower() ~= "" then
 				--do an item search
@@ -249,13 +224,8 @@ function BagSync:PLAYER_LOGIN()
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs tokens - Opens the tokens/currency window."])
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs profiles - Opens the profiles window."])
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs fixdb - Runs the database fix (FixDB) on BagSync."])
-		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs total - Toggles the [Total] display in tooltips and gold display."])
-		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs guildname - Toggles the [Guild Name] display in tooltips."])
-		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs throttle - Toggles the throttle when displaying tooltips. (ON = Prevents Lag)."])
-		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs guild - Toggles the displaying of guild information."])
-		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs minimap - Toggles the displaying of BagSync minimap button."])
-		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs faction - Toggles the displaying of items for both factions (Alliance/Horde)."])
-		
+		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs config - Opens the BagSync Config Window"] )
+
 	end
 	
 	DEFAULT_CHAT_FRAME:AddMessage("|cFF99CC33BagSync|r [v|cFFDF2B2B"..ver.."|r]   /bgs, /bagsync")
@@ -370,7 +340,6 @@ function BagSync:StartupDB()
 	BagSyncOpt = BagSyncOpt or {}
 	if BagSyncOpt.showTotal == nil then BagSyncOpt.showTotal = true end
 	if BagSyncOpt.showGuildNames == nil then BagSyncOpt.showGuildNames = false end
-	if BagSyncOpt.enableThrottle == nil then BagSyncOpt.enableThrottle = true end
 	if BagSyncOpt.enableGuild == nil then BagSyncOpt.enableGuild = true end
 	if BagSyncOpt.enableMailbox == nil then BagSyncOpt.enableMailbox = true end
 	if BagSyncOpt.enableUnitClass == nil then BagSyncOpt.enableUnitClass = false end
@@ -892,6 +861,11 @@ hooksecurefunc("BackpackTokenFrame_Update", BagSync.ScanTokens)
 -- (Special thanks to tuller)
 ------------------------
 
+function BagSync:resetTooltip()
+	lastDisplayed = {}
+	lastItem = nil
+end
+
 local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount)
 	local info
 	local total = invCount + bankCount + equipCount + mailboxCount
@@ -1115,21 +1089,17 @@ local function Tip_OnSetItem(self, ...)
 	local _, itemLink = self:GetItem()
 	if itemLink and GetItemInfo(itemLink) then
 		local itemName = GetItemInfo(itemLink)
-		if BagSyncOpt.enableThrottle then
-			if not self.BagSyncThrottle then self.BagSyncThrottle = GetTime() end
-			if not self.BagSyncPrevious then self.BagSyncPrevious = itemName end
-			if not self.BagSyncShowOnce and self:GetName() == "GameTooltip" then self.BagSyncShowOnce = true end
+		if not self.BagSyncThrottle then self.BagSyncThrottle = GetTime() end
+		if not self.BagSyncPrevious then self.BagSyncPrevious = itemName end
+		if not self.BagSyncShowOnce and self:GetName() == "GameTooltip" then self.BagSyncShowOnce = true end
 
-			if itemName ~= self.BagSyncPrevious then
-				self.BagSyncPrevious = itemName
-				self.BagSyncThrottle = GetTime()
-			end
+		if itemName ~= self.BagSyncPrevious then
+			self.BagSyncPrevious = itemName
+			self.BagSyncThrottle = GetTime()
+		end
 
-			if self:GetName() ~= "GameTooltip" or (GetTime() - self.BagSyncThrottle) >= 0.05 then
-				self.BagSyncShowOnce = nil
-				return AddOwners(self, itemLink)
-			end
-		else
+		if self:GetName() ~= "GameTooltip" or (GetTime() - self.BagSyncThrottle) >= 0.05 then
+			self.BagSyncShowOnce = nil
 			return AddOwners(self, itemLink)
 		end
 	end
