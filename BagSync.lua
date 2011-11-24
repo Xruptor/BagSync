@@ -244,7 +244,7 @@ function BagSync:GUILD_ROSTER_UPDATE()
 	if not IsInGuild() and BS_DB.guild then
 		BS_DB.guild = nil
 		self:FixDB_Data(true)
-	else
+	elseif IsInGuild() then
 		--if they don't have guild name store it or update it
 		if GetGuildInfo("player") then
 			if not BS_DB.guild or BS_DB.guild ~= GetGuildInfo("player") then
@@ -598,7 +598,7 @@ end
 
 function BagSync:ScanGuildBank()
 	--GetCurrentGuildBankTab()
-	if not IsInGuild() or not BS_DB.guild then return nil end
+	if not IsInGuild() then return end
 	
 	BS_GD[BS_DB.guild] = BS_GD[BS_DB.guild] or {}
 
