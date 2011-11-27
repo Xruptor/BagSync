@@ -1,6 +1,8 @@
 --Minimap Button for BagSync
 --So people can stop PESTERING me about a dang button, why can't they just use DataBroker sheesh
 
+local L = BAGSYNC_L
+
 local bgMinimapButton = CreateFrame("Frame","BagSync_MinimapButton", Minimap)
 
 bgMinimapButton:SetHeight(32)
@@ -19,6 +21,51 @@ bgMinimapButtonTexture:SetHeight(32)
 bgMinimapButtonTexture:SetTexture('Interface\\AddOns\\BagSync\\media\\minimap.tga')
 bgMinimapButtonTexture:SetPoint('CENTER')
 
+--lets do the dropdown menu of DOOM
+local bgsMinimapDD = CreateFrame("Frame", "bgsMinimapDD")
+bgsMinimapDD.displayMode = 'MENU'
+
+local function addButton(level, text, isTitle, notCheckable, hasArrow, value, func)
+	local info = UIDropDownMenu_CreateInfo()
+	info.text = text
+	info.isTitle = isTitle
+	info.notCheckable = notCheckable
+	info.hasArrow = hasArrow
+	info.value = value
+	info.func = func
+	UIDropDownMenu_AddButton(info, level)
+end
+
+bgsMinimapDD.initialize = function(self, level)
+
+	if level == 1 then
+		PlaySound('gsTitleOptionExit')
+		addButton(level, 'BagSync        ', 1, 1)
+		addButton(level, L["Search"], nil, 1, nil, 'search', function(frame, ...)
+			if BagSync_SearchFrame then BagSync_SearchFrame:Show() end
+		end)
+		addButton(level, L["Tokens"], nil, 1, nil, 'tokens', function(frame, ...)
+			if BagSync_TokensFrame then BagSync_TokensFrame:Show() end
+		end)
+		addButton(level, L["Profiles"], nil, 1, nil, 'profiles', function(frame, ...)
+			if BagSync_ProfilesFrame then BagSync_ProfilesFrame:Show() end
+		end)
+		addButton(level, L["Gold"], nil, 1, nil, 'gold', function(frame, ...)
+			if BagSync then BagSync:ShowMoneyTooltip() end
+		end)
+		addButton(level, L["FixDB"], nil, 1, nil, 'fixdb', function(frame, ...)
+			if BagSync then BagSync:FixDB_Data() end
+		end)
+		addButton(level, L["Config"], nil, 1, nil, 'config', function(frame, ...)
+			InterfaceOptionsFrame_OpenToCategory("BagSync")
+		end)
+		addButton(level, "", nil, 1) --space ;)
+		addButton(level, L["Close"], nil, 1)
+
+	end
+
+end
+	
 bgMinimapButton:SetScript('OnMouseUp', function(self, button)
 	if button == 'LeftButton' and BagSync_SearchFrame then
 		if BagSync_SearchFrame:IsVisible() then
@@ -27,11 +74,7 @@ bgMinimapButton:SetScript('OnMouseUp', function(self, button)
 			BagSync_SearchFrame:Show()
 		end
 	elseif button == 'RightButton' and BagSync_TokensFrame then
-		if BagSync_TokensFrame:IsVisible() then
-			BagSync_TokensFrame:Hide()
-		else
-			BagSync_TokensFrame:Show()
-		end
+		ToggleDropDownMenu(1, nil, bgsMinimapDD, 'cursor', 0, 0)
 	end
 end)
 
