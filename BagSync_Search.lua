@@ -245,10 +245,10 @@ function bgSearch:DoSearch()
 					local guildN = v.guild or nil
 				
 					--check the guild bank if the character is in a guild
-					if BagSyncGUILD_DB and guildN and BagSyncGUILD_DB[guildN] then
+					if BagSyncGUILD_DB and guildN and BagSyncGUILD_DB[currentRealm][guildN] then
 						--check to see if this guild has already been done through this run (so we don't do it multiple times)
 						if not previousGuilds[guildN] then
-							for q, r in pairs(BagSyncGUILD_DB[guildN]) do
+							for q, r in pairs(BagSyncGUILD_DB[currentRealm][guildN]) do
 								local dblink, dbcount = strsplit(',', r)
 								if dblink then
 									local dName, dItemLink, dRarity = GetItemInfo(dblink)
