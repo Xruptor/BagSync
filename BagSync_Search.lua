@@ -128,14 +128,15 @@ function bgSearch:LoadSlider()
 			row:SetScript("OnLeave", OnLeave)
 			row:SetScript("OnClick", function(self)
 				if self.link then
-					if IsShiftKeyDown() then
+					if HandleModifiedItemClick(self.link) then
+						return
+					end
+					if IsModifiedClick("CHATLINK") then
 						local editBox = ChatEdit_ChooseBoxForSend()
 						if editBox then
 							editBox:Insert(self.link)
 							ChatFrame_OpenChat(editBox:GetText())
 						end
-					elseif IsControlKeyDown() then
-						DressUpItemLink(self.link)
 					end
 				end
 			end)
