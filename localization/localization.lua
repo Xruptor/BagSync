@@ -25,6 +25,8 @@
 -- ["A FixDB has been performed on BagSync!  The database is now optimized!"] = "",
 -- ["ON"] = "",
 -- ["OFF"] = "",
+-- ["Left Click = Search Window"] = "",
+-- ["Right Click = BagSync Menu"] = "",
 -- ----THESE ARE FOR SLASH COMMANDS
 -- ["[itemname]"] = "",
 -- ["search"] = "",
@@ -115,7 +117,8 @@ BAGSYNC_L = GetLocale() == "zhCN" and {
 	["/bgs tokens - Opens the tokens/currency window."] 							= "/bgs tokens - Öffnet das Abzeichenfenster.",
 	["/bgs profiles - Opens the profiles window."] 									= "/bgs profiles - Öffnet das Profilfenster.",
 	["/bgs fixdb - Runs the database fix (FixDB) on BagSync."] 						= "/bgs fixdb - Führt eine Reparatur der Datenbank (FixDB) aus.",
-
+	["Left Click = Search Window"] 													= "Links Klick = Suchen",
+	["Right Click = BagSync Menu"] 													= "Rechts Klick = BagSync Menu",
 } or { }
 
 setmetatable(BAGSYNC_L, {__index = function(self, key) rawset(self, key, key); return key; end})

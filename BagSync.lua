@@ -58,16 +58,16 @@ local dataobj = ldb:NewDataObject("BagSyncLDB", {
 				BagSync_SearchFrame:Show()
 			end
 		elseif button == 'RightButton' and BagSync_TokensFrame then
-			if BagSync_TokensFrame:IsVisible() then
-				BagSync_TokensFrame:Hide()
-			else
-				BagSync_TokensFrame:Show()
+			if bgsMinimapDD then
+				ToggleDropDownMenu(1, nil, bgsMinimapDD, 'cursor', 0, 0)
 			end
 		end
 	end,
 
 	OnTooltipShow = function(self)
-		self:Hide()
+		self:AddLine("BagSync")
+		self:AddLine(L["Left Click = Search Window"])
+		self:AddLine(L["Right Click = BagSync Menu"])
 	end
 })
 
