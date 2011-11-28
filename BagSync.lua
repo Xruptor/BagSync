@@ -343,7 +343,7 @@ function BagSync:StartupDB()
 	if BagSyncOpt.enableGuild == nil then BagSyncOpt.enableGuild = true end
 	if BagSyncOpt.enableMailbox == nil then BagSyncOpt.enableMailbox = true end
 	if BagSyncOpt.enableUnitClass == nil then BagSyncOpt.enableUnitClass = false end
-	if BagSyncOpt.enableMinimap == nil then BagSyncOpt.enableMinimap = false end
+	if BagSyncOpt.enableMinimap == nil then BagSyncOpt.enableMinimap = true end
 	if BagSyncOpt.enableFaction == nil then BagSyncOpt.enableFaction = true end
 	
 	BagSyncGUILD_DB = BagSyncGUILD_DB or {}

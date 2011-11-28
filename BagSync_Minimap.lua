@@ -99,8 +99,10 @@ bgMinimapButton:SetScript('OnDragStop', function(self, button)
 end)
 
 bgMinimapButton:SetScript('OnEnter', function(self)
-	GameTooltip:SetOwner(bgMinimapButton)
-	GameTooltip:SetText('BagSync')
+	GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+	GameTooltip:AddLine("BagSync")
+	GameTooltip:AddLine(L["Left Click = Search Window"])
+	GameTooltip:AddLine(L["Right Click = BagSync Menu"])
 	GameTooltip:Show()
 end)
 
