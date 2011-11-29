@@ -4,60 +4,12 @@ local tRows, tAnchor = {}
 local currentPlayer = UnitName('player')
 local currentRealm = GetRealmName()
 local GetItemInfo = _G['GetItemInfo']
-
-local bgTokens = CreateFrame("Frame","BagSync_TokensFrame", UIParent)
-
-bgTokens:SetFrameStrata("HIGH")
-bgTokens:SetToplevel(true)
-bgTokens:EnableMouse(true)
-bgTokens:SetMovable(true)
-bgTokens:SetClampedToScreen(true)
-bgTokens:SetWidth(380)
-bgTokens:SetHeight(500)
-
-bgTokens:SetBackdrop({
-		bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-		edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-		tile = true,
-		tileSize = 16,
-		edgeSize = 32,
-		insets = { left = 5, right = 5, top = 5, bottom = 5 }
-})
-
-bgTokens:SetBackdropColor(0,0,0,1)
-bgTokens:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-
-local addonTitle = bgTokens:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
-addonTitle:SetPoint("CENTER", bgTokens, "TOP", 0, -20)
-addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L["Tokens"]..")|r")
-
-local closeButton = CreateFrame("Button", nil, bgTokens, "UIPanelCloseButton");
-closeButton:SetPoint("TOPRIGHT", bgTokens, -15, -8);
-
-bgTokens:SetScript("OnShow", function(self) self:DoTokens() self:LoadSlider() end)
-bgTokens:SetScript("OnHide", function(self)
-	tokensTable = {}
-end)
-
-bgTokens:SetScript("OnMouseDown", function(frame, button)
-	if frame:IsMovable() then
-		frame.isMoving = true
-		frame:StartMoving()
-	end
-end)
-
-bgTokens:SetScript("OnMouseUp", function(frame, button) 
-	if( frame.isMoving ) then
-		frame.isMoving = nil
-		frame:StopMovingOrSizing()
-	end
-end)
-
-
 local SILVER = '|cffc7c7cf%s|r'
 local MOSS = '|cFF80FF00%s|r'
 
-function bgTokens:LoadSlider()
+local bgTokens = CreateFrame("Frame","BagSync_TokensFrame", UIParent)
+
+local function LoadSlider()
 	
 	local function OnEnter(self)
 		if self.name and self.tooltip then
@@ -178,7 +130,7 @@ function bgTokens:LoadSlider()
 	end)
 end
 
-function bgTokens:DoTokens()
+local function DoTokens()
 	if not BagSync or not BagSyncTOKEN_DB then return end
 	if not BagSyncTOKEN_DB[currentRealm] then return end
 	
@@ -231,7 +183,53 @@ function bgTokens:DoTokens()
 	end
 	tokensTable = tmp
 
-	bgTokens:LoadSlider()
+	LoadSlider()
 end
+
+bgTokens:SetFrameStrata("HIGH")
+bgTokens:SetToplevel(true)
+bgTokens:EnableMouse(true)
+bgTokens:SetMovable(true)
+bgTokens:SetClampedToScreen(true)
+bgTokens:SetWidth(380)
+bgTokens:SetHeight(500)
+
+bgTokens:SetBackdrop({
+		bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+		edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+		tile = true,
+		tileSize = 16,
+		edgeSize = 32,
+		insets = { left = 5, right = 5, top = 5, bottom = 5 }
+})
+
+bgTokens:SetBackdropColor(0,0,0,1)
+bgTokens:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+
+local addonTitle = bgTokens:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
+addonTitle:SetPoint("CENTER", bgTokens, "TOP", 0, -20)
+addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L["Tokens"]..")|r")
+
+local closeButton = CreateFrame("Button", nil, bgTokens, "UIPanelCloseButton");
+closeButton:SetPoint("TOPRIGHT", bgTokens, -15, -8);
+
+bgTokens:SetScript("OnShow", function(self) DoTokens(); LoadSlider(); end)
+bgTokens:SetScript("OnHide", function(self)
+	tokensTable = {}
+end)
+
+bgTokens:SetScript("OnMouseDown", function(frame, button)
+	if frame:IsMovable() then
+		frame.isMoving = true
+		frame:StartMoving()
+	end
+end)
+
+bgTokens:SetScript("OnMouseUp", function(frame, button) 
+	if( frame.isMoving ) then
+		frame.isMoving = nil
+		frame:StopMovingOrSizing()
+	end
+end)
 
 bgTokens:Hide()

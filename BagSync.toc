@@ -1,8 +1,8 @@
-## Interface: 40200
+## Interface: 40300
 ## Title: BagSync
 ## Notes: BagSync tracks your characters items and displays it within tooltips.
 ## Author: Xruptor
-## Version: 6.5.1
+## Version: 6.5.2
 ## SavedVariables: BagSyncDB, BagSyncOpt, BagSyncGUILD_DB, BagSyncTOKEN_DB
 
 localization\localization.lua

@@ -837,7 +837,7 @@ function BagSync:IsInBG()
 		return true
 	end
 	local status, mapName, instanceID, minlevel, maxlevel
-	for i=1, MAX_BATTLEFIELD_QUEUES do
+	for i=1, GetMaxBattlefieldID() do
 		status, mapName, instanceID, minlevel, maxlevel, teamSize = GetBattlefieldStatus(i)
 		if status == "active" then
 			return true

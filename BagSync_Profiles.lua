@@ -4,6 +4,51 @@ local currentRealm = GetRealmName()
 
 local bgProfiles = CreateFrame("Frame","BagSync_ProfilesFrame", UIParent)
 
+local function LoadProfiles()
+	if not BagSync or not BagSyncDB then return end
+	if not BagSyncDB[currentRealm] then return end
+
+	local profile_DD, profile_DD_text, profile_DD_container, profile_DD_label = LibStub("tekKonfig-Dropdown").new(bgProfiles, L["Profiles"], "CENTER", bgProfiles, "CENTER", -25, 0)
+	
+	profile_DD_container:SetHeight(28)
+	profile_DD:SetWidth(180)
+	profile_DD:ClearAllPoints()
+	profile_DD:SetPoint("LEFT", profile_DD_label, "RIGHT", -8, -2)
+	profile_DD_text:SetText(' ')
+	profile_DD.tiptext = L["Select a profile to delete.\nNOTE: This is irreversible!"]
+
+	bgProfiles.DDText = profile_DD_text
+	
+	local function OnClick(self)
+		profile_DD_text:SetText(self.value)
+		GameTooltip:Hide()
+	end
+	
+	local tmp = {}
+	
+	--freaking LUA table.sort is terrible, you can't sort non-numeric keys..
+	for k, v in pairs(BagSyncDB[currentRealm]) do
+		table.insert(tmp, k)
+	end
+	table.sort(tmp, function(a,b) return (a < b) end)
+		
+	UIDropDownMenu_Initialize(profile_DD, function()
+		local info = UIDropDownMenu_CreateInfo()
+		
+		info.func = OnClick
+
+		--display sorted listed of names
+		for i=1, #tmp do
+			info.text = tmp[i]
+			info.value = tmp[i]
+			info.notCheckable = true
+			UIDropDownMenu_AddButton(info)
+		end
+
+	end)
+	
+end
+
 bgProfiles:SetFrameStrata("HIGH")
 bgProfiles:SetToplevel(true)
 bgProfiles:EnableMouse(true)
@@ -60,7 +105,7 @@ bgProfiles.confirmButton:SetScript("OnClick", function()
 end)
 
 
-bgProfiles:SetScript("OnShow", function(self) self:LoadProfiles() end)
+bgProfiles:SetScript("OnShow", function(self) LoadProfiles() end)
 bgProfiles:SetScript("OnHide", function(self) GameTooltip:Hide() end)
 
 bgProfiles:SetScript("OnMouseDown", function(frame, button)
@@ -76,50 +121,5 @@ bgProfiles:SetScript("OnMouseUp", function(frame, button)
 		frame:StopMovingOrSizing()
 	end
 end)
-
-function bgProfiles:LoadProfiles()
-	if not BagSync or not BagSyncDB then return end
-	if not BagSyncDB[currentRealm] then return end
-
-	local profile_DD, profile_DD_text, profile_DD_container, profile_DD_label = LibStub("tekKonfig-Dropdown").new(bgProfiles, L["Profiles"], "CENTER", bgProfiles, "CENTER", -25, 0)
-	
-	profile_DD_container:SetHeight(28)
-	profile_DD:SetWidth(180)
-	profile_DD:ClearAllPoints()
-	profile_DD:SetPoint("LEFT", profile_DD_label, "RIGHT", -8, -2)
-	profile_DD_text:SetText(' ')
-	profile_DD.tiptext = L["Select a profile to delete.\nNOTE: This is irreversible!"]
-
-	bgProfiles.DDText = profile_DD_text
-	
-	local function OnClick(self)
-		profile_DD_text:SetText(self.value)
-		GameTooltip:Hide()
-	end
-	
-	local tmp = {}
-	
-	--freaking LUA table.sort is terrible, you can't sort non-numeric keys..
-	for k, v in pairs(BagSyncDB[currentRealm]) do
-		table.insert(tmp, k)
-	end
-	table.sort(tmp, function(a,b) return (a < b) end)
-		
-	UIDropDownMenu_Initialize(profile_DD, function()
-		local info = UIDropDownMenu_CreateInfo()
-		
-		info.func = OnClick
-
-		--display sorted listed of names
-		for i=1, #tmp do
-			info.text = tmp[i]
-			info.value = tmp[i]
-			info.notCheckable = true
-			UIDropDownMenu_AddButton(info)
-		end
-
-	end)
-	
-end
 
 bgProfiles:Hide()

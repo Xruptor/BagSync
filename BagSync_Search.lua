@@ -5,91 +5,9 @@ local currentRealm = GetRealmName()
 local GetItemInfo = _G['GetItemInfo']
 
 local ItemSearch = LibStub('LibItemSearch-1.0')
-
 local bgSearch = CreateFrame("Frame","BagSync_SearchFrame", UIParent)
 
-local function escapeEditBox(self)
-  self:SetAutoFocus(false)
-end
-
-local function enterEditBox(self)
-	self:ClearFocus()
-	self:GetParent():DoSearch()
-end
-
-local function createEditBox(name, labeltext, obj, x, y)
-  local editbox = CreateFrame("EditBox", name, obj, "InputBoxTemplate")
-  editbox:SetAutoFocus(false)
-  editbox:SetWidth(180)
-  editbox:SetHeight(16)
-  editbox:SetPoint("TOPLEFT", obj, "TOPLEFT", x or 0, y or 0)
-  local label = editbox:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-  label:SetPoint("BOTTOMLEFT", editbox, "TOPLEFT", -6, 4)
-  label:SetText(labeltext)
-  editbox:SetScript("OnEnterPressed", enterEditBox)
-  editbox:HookScript("OnEscapePressed", escapeEditBox)
-  return editbox
-end
-
-bgSearch:SetFrameStrata("HIGH")
-bgSearch:SetToplevel(true)
-bgSearch:EnableMouse(true)
-bgSearch:SetMovable(true)
-bgSearch:SetClampedToScreen(true)
-bgSearch:SetWidth(380)
-bgSearch:SetHeight(500)
-
-bgSearch:SetBackdrop({
-		bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-		edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-		tile = true,
-		tileSize = 16,
-		edgeSize = 32,
-		insets = { left = 5, right = 5, top = 5, bottom = 5 }
-})
-
-bgSearch:SetBackdropColor(0,0,0,1)
-bgSearch:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-
-bgSearch.SEARCHBTN = createEditBox("$parentEdit1", (L["Search"]..":"), bgSearch, 60, -50)
-
-local addonTitle = bgSearch:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
-addonTitle:SetPoint("CENTER", bgSearch, "TOP", 0, -20)
-addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L["Search"]..")|r")
-
-local totalC = bgSearch:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
-totalC:SetPoint("RIGHT", bgSearch.SEARCHBTN, 70, 0)
-totalC:SetText("|cFFFFFFFF"..L["Total:"].." 0|r")
-bgSearch.totalC = totalC
-		
-local closeButton = CreateFrame("Button", nil, bgSearch, "UIPanelCloseButton");
-closeButton:SetPoint("TOPRIGHT", bgSearch, -15, -8);
-
-bgSearch:SetScript("OnShow", function(self)
-	self:LoadSlider()
-	self.SEARCHBTN:SetFocus()
-end)
-bgSearch:SetScript("OnHide", function(self)
-	searchTable = {}
-	self.SEARCHBTN:SetText("")
-	self.totalC:SetText("|cFFFFFFFF"..L["Total:"].." 0|r")
-end)
-
-bgSearch:SetScript("OnMouseDown", function(frame, button)
-	if frame:IsMovable() then
-		frame.isMoving = true
-		frame:StartMoving()
-	end
-end)
-
-bgSearch:SetScript("OnMouseUp", function(frame, button) 
-	if( frame.isMoving ) then
-		frame.isMoving = nil
-		frame:StopMovingOrSizing()
-	end
-end)
-
-function bgSearch:LoadSlider()
+local function LoadSlider()
 
 	local function OnEnter(self)
 		if self.link then
@@ -198,7 +116,7 @@ function bgSearch:LoadSlider()
 end
 
 --do search routine
-function bgSearch:DoSearch()
+local function DoSearch()
 	if not BagSync or not BagSyncDB then return end
 	local searchStr = bgSearch.SEARCHBTN:GetText()
 
@@ -277,7 +195,89 @@ function bgSearch:DoSearch()
 	
 	bgSearch.totalC:SetText("|cFFFFFFFF"..L["Total:"].." "..count.."|r")
 	
-	bgSearch:LoadSlider()
+	LoadSlider()
 end
+
+local function escapeEditBox(self)
+  self:SetAutoFocus(false)
+end
+
+local function enterEditBox(self)
+	self:ClearFocus()
+	--self:GetParent():DoSearch()
+	DoSearch()
+end
+
+local function createEditBox(name, labeltext, obj, x, y)
+  local editbox = CreateFrame("EditBox", name, obj, "InputBoxTemplate")
+  editbox:SetAutoFocus(false)
+  editbox:SetWidth(180)
+  editbox:SetHeight(16)
+  editbox:SetPoint("TOPLEFT", obj, "TOPLEFT", x or 0, y or 0)
+  local label = editbox:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+  label:SetPoint("BOTTOMLEFT", editbox, "TOPLEFT", -6, 4)
+  label:SetText(labeltext)
+  editbox:SetScript("OnEnterPressed", enterEditBox)
+  editbox:HookScript("OnEscapePressed", escapeEditBox)
+  return editbox
+end
+
+bgSearch:SetFrameStrata("HIGH")
+bgSearch:SetToplevel(true)
+bgSearch:EnableMouse(true)
+bgSearch:SetMovable(true)
+bgSearch:SetClampedToScreen(true)
+bgSearch:SetWidth(380)
+bgSearch:SetHeight(500)
+
+bgSearch:SetBackdrop({
+		bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+		edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+		tile = true,
+		tileSize = 16,
+		edgeSize = 32,
+		insets = { left = 5, right = 5, top = 5, bottom = 5 }
+})
+
+bgSearch:SetBackdropColor(0,0,0,1)
+bgSearch:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+
+bgSearch.SEARCHBTN = createEditBox("$parentEdit1", (L["Search"]..":"), bgSearch, 60, -50)
+
+local addonTitle = bgSearch:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
+addonTitle:SetPoint("CENTER", bgSearch, "TOP", 0, -20)
+addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L["Search"]..")|r")
+
+local totalC = bgSearch:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
+totalC:SetPoint("RIGHT", bgSearch.SEARCHBTN, 70, 0)
+totalC:SetText("|cFFFFFFFF"..L["Total:"].." 0|r")
+bgSearch.totalC = totalC
+		
+local closeButton = CreateFrame("Button", nil, bgSearch, "UIPanelCloseButton");
+closeButton:SetPoint("TOPRIGHT", bgSearch, -15, -8);
+
+bgSearch:SetScript("OnShow", function(self)
+	LoadSlider()
+	self.SEARCHBTN:SetFocus()
+end)
+bgSearch:SetScript("OnHide", function(self)
+	searchTable = {}
+	self.SEARCHBTN:SetText("")
+	self.totalC:SetText("|cFFFFFFFF"..L["Total:"].." 0|r")
+end)
+
+bgSearch:SetScript("OnMouseDown", function(frame, button)
+	if frame:IsMovable() then
+		frame.isMoving = true
+		frame:StartMoving()
+	end
+end)
+
+bgSearch:SetScript("OnMouseUp", function(frame, button) 
+	if( frame.isMoving ) then
+		frame.isMoving = nil
+		frame:StopMovingOrSizing()
+	end
+end)
 
 bgSearch:Hide()
