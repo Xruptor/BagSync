@@ -280,4 +280,8 @@ bgSearch:SetScript("OnMouseUp", function(frame, button)
 	end
 end)
 
+function bgSearch:initSearch()
+	DoSearch()
+end
+
 bgSearch:Hide()

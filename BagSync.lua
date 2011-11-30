@@ -169,6 +169,11 @@ function BagSync:PLAYER_LOGIN()
 	self:RegisterEvent('MAIL_SHOW')
 	self:RegisterEvent('MAIL_INBOX_UPDATE')
 	
+	--void storage is a pain, they didn't add events for opening and closing... seriously blizzard
+	self:RegisterEvent("VOID_STORAGE_UPDATE")
+	self:RegisterEvent("VOID_STORAGE_CONTENTS_UPDATE")
+	self:RegisterEvent("VOID_TRANSFER_DONE")
+	
 	SLASH_BAGSYNC1 = "/bagsync"
 	SLASH_BAGSYNC2 = "/bgs"
 	SlashCmdList["BAGSYNC"] = function(msg)
@@ -211,7 +216,7 @@ function BagSync:PLAYER_LOGIN()
 				if BagSync_SearchFrame then
 					if not BagSync_SearchFrame:IsVisible() then BagSync_SearchFrame:Show() end
 					BagSync_SearchFrame.SEARCHBTN:SetText(msg)
-					BagSync_SearchFrame:DoSearch()
+					BagSync_SearchFrame:initSearch()
 				end
 				return true
 			end
@@ -259,6 +264,10 @@ function BagSync:PLAYER_MONEY()
 	BS_DB.gold = GetMoney()
 end
 
+------------------------------
+--      BANK	            --
+------------------------------
+
 function BagSync:BANKFRAME_OPENED()
 	self.atBank = true
 	self:ScanEntireBank()
@@ -267,6 +276,39 @@ end
 function BagSync:BANKFRAME_CLOSED()
 	self.atBank = nil
 end
+
+------------------------------
+--      VOID BANK	        --
+------------------------------
+
+local oldVoidFunction = CanUseVoidStorage
+function CanUseVoidStorage()
+	BagSync.atVoidBank = true
+	BagSync:ScanVoidBank()
+	return(oldVoidFunction())
+end
+
+local oldVoidCloseFunction = CloseVoidStorageFrame
+function CloseVoidStorageFrame()
+	BagSync.atVoidBank = nil
+	oldVoidCloseFunction()
+end
+
+function BagSync:VOID_STORAGE_UPDATE()
+	self:ScanVoidBank()
+end
+
+function BagSync:VOID_STORAGE_CONTENTS_UPDATE()
+	self:ScanVoidBank()
+end
+
+function BagSync:VOID_TRANSFER_DONE()
+	self:ScanVoidBank()
+end
+
+------------------------------
+--      GUILD BANK	        --
+------------------------------
 
 function BagSync:GUILDBANKFRAME_OPENED()
 	self.atGuildBank = true
@@ -299,21 +341,9 @@ function BagSync:GUILDBANKBAGSLOTS_CHANGED()
 	end
 end
 
-function BagSync:BAG_UPDATE(event, bagid)
-	--The new token bag or token currency tab has a bag number of -4, lets ignore this bag when new tokens are added
-	--http://www.wowwiki.com/API_TYPE_bagID
-	if bagid == -4 or bagid == -2 then return end --dont do tokens or keyring
-	--if not token bag then proceed
-	if not(bagid == BANK_CONTAINER or bagid > NUM_BAG_SLOTS) or self.atBank then
-		self:OnBagUpdate(bagid)
-	end
-end
-
-function BagSync:UNIT_INVENTORY_CHANGED(event, unit)
-	if unit == 'player' then
-		self:SaveEquipment()
-	end
-end
+------------------------------
+--      MAILBOX  	        --
+------------------------------
 
 function BagSync:MAIL_SHOW()
 	if self.isCheckingMail then return end
@@ -325,6 +355,26 @@ function BagSync:MAIL_INBOX_UPDATE()
 	if self.isCheckingMail then return end
 	if not BagSyncOpt.enableMailbox then return end
 	self:ScanMailbox()
+end
+
+------------------------------
+--      BAG UPDATES  	    --
+------------------------------
+
+function BagSync:BAG_UPDATE(event, bagid)
+	--The new token bag or token currency tab has a bag number of -4, lets ignore this bag when new tokens are added
+	--http://www.wowwiki.com/API_TYPE_bagID
+	if bagid == -4 or bagid == -2 then return end --dont do tokens or keyring
+	--if not token bag then proceed
+	if not(bagid == BANK_CONTAINER or bagid > NUM_BAG_SLOTS) or self.atBank or self.atVoidBank then
+		self:OnBagUpdate(bagid)
+	end
+end
+
+function BagSync:UNIT_INVENTORY_CHANGED(event, unit)
+	if unit == 'player' then
+		self:SaveEquipment()
+	end
 end
 
 ----------------------
@@ -593,6 +643,21 @@ function BagSync:ScanEntireBank()
 	--NUM_BAG_SLOTS+1 to NUM_BAG_SLOTS+NUM_BANKBAGSLOTS are your bank bags 
 	for i = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
 		self:SaveBag('bank', i, true)
+	end
+end
+
+function BagSync:ScanVoidBank()
+	if VoidStorageFrame and VoidStorageFrame:IsShown() then
+		for i = 1, 80 do
+			itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(i)
+			local index = GetTag('void', 0, i)
+			if (itemID) then
+				BS_DB[index] = tostring(itemID)
+			else
+				--itemID returned nil but we MAY have this location saved in DB, so remove it
+				BS_DB[index] = nil
+			end
+		end
 	end
 end
 
@@ -866,9 +931,9 @@ function BagSync:resetTooltip()
 	lastItem = nil
 end
 
-local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount)
+local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount, voidbankCount)
 	local info
-	local total = invCount + bankCount + equipCount + mailboxCount
+	local total = invCount + bankCount + equipCount + mailboxCount + voidbankCount
 
 	if invCount > 0 then
 		info = L["Bags: %d"]:format(invCount)
@@ -911,8 +976,18 @@ local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, m
 		end
 	end
 	
+	if voidbankCount > 0 then
+		local count = L["Void: %d"]:format(voidbankCount)
+		if info then
+			info = strjoin(', ', info, count)
+		else
+			info = count
+		end
+	end
+	
+	
 	if info then
-		if total and not(total == invCount or total == bankCount or total == equipCount or total == guildCount or total == mailboxCount) then
+		if total and not(total == invCount or total == bankCount or total == equipCount or total == guildCount or total == mailboxCount or total == voidbankCount) then
 			local totalStr = format(MOSS, total)
 			return totalStr .. format(SILVER, format(' (%s)', info))
 		end
@@ -997,7 +1072,7 @@ local function AddOwners(frame, link)
 	for k, v in pairs(BagSyncDB[currentRealm]) do
 
 		local infoString
-		local invCount, bankCount, equipCount, guildCount, mailboxCount = 0, 0, 0, 0, 0
+		local invCount, bankCount, equipCount, guildCount, mailboxCount, voidbankCount = 0, 0, 0, 0, 0, 0
 		local pFaction = v.faction or playerFaction --just in case ;) if we dont know the faction yet display it anyways
 		
 		--check if we should show both factions or not
@@ -1016,6 +1091,8 @@ local function AddOwners(frame, link)
 							equipCount = equipCount + (dbcount or 1)
 						elseif string.find(q, 'mailbox') and dblink == itemLink then
 							mailboxCount = mailboxCount + (dbcount or 1)
+						elseif string.find(q, 'void') and dblink == itemLink then
+							voidbankCount = voidbankCount + (dbcount or 1)
 						end
 					end
 				end
@@ -1047,8 +1124,8 @@ local function AddOwners(frame, link)
 			--get class for the unit if there is one
 			local pClass = v.class or nil
 		
-			infoString = CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount)
-			grandTotal = grandTotal + invCount + bankCount + equipCount + guildCount + mailboxCount
+			infoString = CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount, voidbankCount)
+			grandTotal = grandTotal + invCount + bankCount + equipCount + guildCount + mailboxCount + voidbankCount
 
 			if infoString and infoString ~= '' then
 				frame:AddDoubleLine(getNameColor(k, pClass), infoString)
