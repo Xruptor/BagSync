@@ -506,7 +506,6 @@ local function ToShortLink(link)
 		local second = string.find(link, ":", first+1) --first occurance of : after item:
 		local finally = string.sub(link, first+1, second-1) --after item:  and before second :
 		if tonumber(finally) then
-			print(finally)
 			return finally
 		end
 		--second attempt
