@@ -497,11 +497,24 @@ end
 
 --special thanks to tuller :)
 local function ToShortLink(link)
+	--honestly I did it this half-ass way because of tired of having to update this everytime blizzard decides to alter their itemid format.
+	--at least this way it will always pull the first number after itemid: and before the second :
+	--it's not the best way to do this, but it's better then having to freaking modify a regex every so often.  Their latest change is due to Transmorgify.
 	if link and type(link) == "string" then
+		--first attempt
+		local _, first = string.find(link, "item:")
+		local second = string.find(link, ":", first+1) --first occurance of : after item:
+		local finally = string.sub(link, first+1, second-1) --after item:  and before second :
+		if tonumber(finally) then
+			print(finally)
+			return finally
+		end
+		--second attempt
 		local a,b,c,d,e,f,g,h = link:match('(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+)')
 		if(b == '0' and b == c and c == d and d == e and e == f and f == g) then
 			return a
 		end
+		--final attempt
 		return format('item:%s:%s:%s:%s:%s:%s:%s:%s', a, b, c, d, e, f, g, h)
 	end
 	return nil
