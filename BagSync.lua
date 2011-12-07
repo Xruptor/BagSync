@@ -28,6 +28,7 @@ local NUM_EQUIPMENT_SLOTS = 19
 local BS_DB
 local BS_GD
 local BS_TD
+local BS_CD
 local MAX_GUILDBANK_SLOTS_PER_TAB = 98
 local doTokenUpdate = 0
 local guildTabQueryQueue = {}
@@ -95,6 +96,8 @@ function BagSync:PLAYER_LOGIN()
 	 BINDING_NAME_BAGSYNCTOGGLESEARCH = L["Toggle Search"]
 	 BINDING_NAME_BAGSYNCTOGGLETOKENS = L["Toggle Tokens"]
 	 BINDING_NAME_BAGSYNCTOGGLEPROFILES = L["Toggle Profiles"]
+	 BINDING_NAME_BAGSYNCTOGGLECRAFTS = L["Toggle Professions"]
+	  
   
 	local ver = GetAddOnMetadata("BagSync","Version") or 0
 	
@@ -179,6 +182,9 @@ function BagSync:PLAYER_LOGIN()
 	self:RegisterEvent("VOID_STORAGE_CONTENTS_UPDATE")
 	self:RegisterEvent("VOID_TRANSFER_DONE")
 	
+	--this will be used for getting the tradeskill link
+	self:RegisterEvent("TRADE_SKILL_SHOW")
+
 	SLASH_BAGSYNC1 = "/bagsync"
 	SLASH_BAGSYNC2 = "/bgs"
 	SlashCmdList["BAGSYNC"] = function(msg)
@@ -210,6 +216,13 @@ function BagSync:PLAYER_LOGIN()
 					BagSync_ProfilesFrame:Show()
 				end
 				return true
+			elseif c and c:lower() == L["professions"] then
+				if BagSync_CraftsFrame:IsVisible() then
+					BagSync_CraftsFrame:Hide()
+				else
+					BagSync_CraftsFrame:Show()
+				end
+				return true
 			elseif c and c:lower() == L["fixdb"] then
 				self:FixDB_Data()
 				return true
@@ -233,6 +246,7 @@ function BagSync:PLAYER_LOGIN()
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs gold - Displays a tooltip with the amount of gold on each character."])
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs tokens - Opens the tokens/currency window."])
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs profiles - Opens the profiles window."])
+		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs professions - Opens the professions window."])
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs fixdb - Runs the database fix (FixDB) on BagSync."])
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs config - Opens the BagSync Config Window"] )
 
@@ -379,6 +393,93 @@ function BagSync:AUCTION_OWNED_LIST_UPDATE()
 end
 
 ------------------------------
+--     TRADE SKILLS         --
+------------------------------
+
+--list of tradeskills with NO skill link but can be used as primaries (ex. a person with two gathering skills)
+local noLinkTS = {
+	["Interface\Icons\Trade_Herbalism"] = true, --this is Herbalism
+	["Interface\Icons\INV_Misc_Pelt_Wolf_01"] = true, --this is Skinning
+	["Interface\Icons\INV_Pick_02"] = true, --this is Mining
+}
+
+local function doRegularTradeSkill(numIndex, dbIdx)
+	local name, icon, skillLevel, maxSkillLevel, numAbilities, spelloffset, skillLine, skillModifier = GetProfessionInfo(numIndex)
+	if name and skillLevel then
+		BS_CD[dbIdx] = format('%s,%s', name, skillLevel)
+	end
+end
+
+function BagSync:TRADE_SKILL_SHOW()
+	--IsTradeSkillLinked() returns true only if trade window was opened from chat link (meaning another player)
+	if (not IsTradeSkillLinked()) then
+		
+		local tradename = _G.GetTradeSkillLine()
+		local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions()
+		if not tradename then return end
+		
+		--prof1
+		if prof1 and (GetProfessionInfo(prof1) == tradename) and GetTradeSkillListLink() then
+			local skill = select(3, GetProfessionInfo(prof1))
+			BS_CD[1] = { tradename, GetTradeSkillListLink(), skill }
+		elseif prof1 and select(2, GetProfessionInfo(prof1)) and noLinkTS[select(2, GetProfessionInfo(prof1))] then
+			--only store if it's herbalism, skinning, or mining
+			doRegularTradeSkill(prof1, 1)
+		elseif not prof1 and BS_CD[1] then
+			--they removed a profession
+			BS_CD[1] = nil
+		end
+
+		--prof2
+		if prof2 and (GetProfessionInfo(prof2) == tradename) and GetTradeSkillListLink() then
+			local skill = select(3, GetProfessionInfo(prof2))
+			BS_CD[2] = { tradename, GetTradeSkillListLink(), skill }
+		elseif prof2 and select(2, GetProfessionInfo(prof2)) and noLinkTS[select(2, GetProfessionInfo(prof2))] then
+			--only store if it's herbalism, skinning, or mining
+			doRegularTradeSkill(prof2, 2)
+		elseif not prof2 and BS_CD[2] then
+			--they removed a profession
+			BS_CD[2] = nil
+		end
+		
+		--archaeology
+		if archaeology then
+			doRegularTradeSkill(archaeology, 3)
+		elseif not archaeology and BS_CD[3] then
+			--they removed a profession
+			BS_CD[3] = nil
+		end
+		
+		--fishing
+		if fishing then
+			doRegularTradeSkill(fishing, 4)
+		elseif not fishing and BS_CD[4] then
+			--they removed a profession
+			BS_CD[4] = nil
+		end
+		
+		--cooking
+		if cooking and (GetProfessionInfo(cooking) == tradename) and GetTradeSkillListLink() then
+			local skill = select(3, GetProfessionInfo(cooking))
+			BS_CD[5] = { tradename, GetTradeSkillListLink(), skill }
+		elseif not cooking and BS_CD[5] then
+			--they removed a profession
+			BS_CD[5] = nil
+		end
+		
+		--firstAid
+		if firstAid and (GetProfessionInfo(firstAid) == tradename) and GetTradeSkillListLink() then
+			local skill = select(3, GetProfessionInfo(firstAid))
+			BS_CD[6] = { tradename, GetTradeSkillListLink(), skill }
+		elseif not firstAid and BS_CD[6] then
+			--they removed a profession
+			BS_CD[6] = nil
+		end
+		
+	end
+end
+
+------------------------------
 --      BAG UPDATES  	    --
 ------------------------------
 
@@ -425,6 +526,11 @@ function BagSync:StartupDB()
 	BagSyncTOKEN_DB = BagSyncTOKEN_DB or {}
 	BagSyncTOKEN_DB[currentRealm] = BagSyncTOKEN_DB[currentRealm] or {}
 	BS_TD = BagSyncTOKEN_DB[currentRealm]
+	
+	BagSyncCRAFT_DB = BagSyncCRAFT_DB or {}
+	BagSyncCRAFT_DB[currentRealm] = BagSyncCRAFT_DB[currentRealm] or {}
+	BagSyncCRAFT_DB[currentRealm][currentPlayer] = BagSyncCRAFT_DB[currentRealm][currentPlayer] or {}
+	BS_CD = BagSyncCRAFT_DB[currentRealm][currentPlayer]
 end
 
 function BagSync:FixDB_Data(onlyChkGuild)
@@ -432,6 +538,7 @@ function BagSync:FixDB_Data(onlyChkGuild)
 	--Removes obsolete guild information
 	--Removes obsolete characters from tokens db
 	--Removes obsolete keyring information
+	--Removes obsolete profession information
 	--Will only check guild related information if the paramater is passed as true
 	
 	local storeUsers = {}
@@ -467,10 +574,11 @@ function BagSync:FixDB_Data(onlyChkGuild)
 		end
 	end
 	
-	--token data, only do if were not doing a guild check
+	--token data and profession data, only do if were not doing a guild check
 	--also display fixdb message only if were not doing a guild check
 	if not onlyChkGuild then
 	
+		--fix tokens
 		for realm, rd in pairs(BagSyncTOKEN_DB) do
 			--realm
 			if not storeUsers[realm] then
@@ -494,6 +602,22 @@ function BagSync:FixDB_Data(onlyChkGuild)
 			end
 		end
 		
+		--fix professions
+		for realm, rd in pairs(BagSyncCRAFT_DB) do
+			--realm
+			if not storeUsers[realm] then
+				--if it's not a realm that ANY users are on then delete it
+				BagSyncCRAFT_DB[realm] = nil
+			else
+				for k, v in pairs(rd) do
+					if not storeUsers[realm][k] then
+						--if the user doesn't exist then delete data
+						BagSyncCRAFT_DB[realm][k] = nil
+					end
+				end
+			end
+		end
+
 		DEFAULT_CHAT_FRAME:AddMessage("|cFF99CC33BagSync:|r |cFFFF9900"..L["A FixDB has been performed on BagSync!  The database is now optimized!"].."|r")
 	end
 	
@@ -788,7 +912,7 @@ function BagSync:ScanAuctionHouse()
 	local ahCount = 0
 	local numActiveAuctions = GetNumAuctionItems("owner")
 	
-	if not BS_DB.AH_LastScan then BS_DB.AH_LastScan = time() end --this is only really used once, at first activation of v6.3
+	if not BS_DB.AH_LastScan then BS_DB.AH_LastScan = time() end --this is only really used once, at first activation of v6.7
 	
 	--scan the auction house
 	if (numActiveAuctions > 0) then

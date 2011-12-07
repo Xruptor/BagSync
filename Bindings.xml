@@ -20,4 +20,11 @@
 		BagSync_ProfilesFrame:Show()
 	end
   </Binding>
+   <Binding name="BAGSYNCTOGGLECRAFTS" header="BAGSYNC">
+	if BagSync_CraftsFrame:IsVisible() then
+		BagSync_CraftsFrame:Hide()
+	else
+		BagSync_CraftsFrame:Show()
+	end
+  </Binding>
 </Bindings>

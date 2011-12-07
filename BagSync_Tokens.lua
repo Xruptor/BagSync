@@ -80,6 +80,7 @@ local function LoadSlider()
 					if tokensTable[i + offset].isHeader then
 						row:LockHighlight()
 						row.title:SetJustifyH("CENTER") 
+						row.tooltip = nil
 					else
 						row:UnlockHighlight()
 						row.title:SetJustifyH("LEFT")

@@ -2,8 +2,8 @@
 ## Title: BagSync
 ## Notes: BagSync tracks your characters items and displays it within tooltips.
 ## Author: Xruptor
-## Version: 6.6.2
-## SavedVariables: BagSyncDB, BagSyncOpt, BagSyncGUILD_DB, BagSyncTOKEN_DB
+## Version: 6.7
+## SavedVariables: BagSyncDB, BagSyncOpt, BagSyncGUILD_DB, BagSyncTOKEN_DB, BagSyncCRAFT_DB
 
 localization\localization.lua
 libs\LibStub.lua
@@ -16,6 +16,7 @@ libs\LibDataBroker-1.1.lua
 BagSync_Minimap.lua
 BagSync_Search.lua
 BagSync_Tokens.lua
+BagSync_Crafts.lua
 BagSync_Profiles.lua
 BagSync_Config.lua
 BagSync.lua
