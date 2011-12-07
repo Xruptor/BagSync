@@ -46,6 +46,7 @@
 -- ["Display [Guild Name] display in tooltips."] = "",
 -- ["Enable guild bank items."] = "",
 -- ["Enable mailbox items."] = "",
+-- ["Enable auction house items."] = "",
 -- ["Display BagSync minimap button."] = "",
 -- ["Display items for both factions (Alliance/Horde)."] = "",
 -- ["Display class colors for characters."] = "",
@@ -122,3 +123,4 @@ BAGSYNC_L = GetLocale() == "zhCN" and {
 } or { }
 
 setmetatable(BAGSYNC_L, {__index = function(self, key) rawset(self, key, key); return key; end})
+

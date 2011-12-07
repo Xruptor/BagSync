@@ -163,3 +163,23 @@ end)
 local bgs_MailboxInfo_OptText = bgs_MailboxInfo_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 bgs_MailboxInfo_OptText:SetPoint("LEFT", bgs_MailboxInfo_Opt, "RIGHT", 0, 1)
 bgs_MailboxInfo_OptText:SetText(L["Enable mailbox items."])
+
+--[[ Enable Auction House Info Info ]]--
+local bgs_AuctionInfo_Opt = CreateFrame("CheckButton", "BagSyncConfig_AuctionInfo", bgsOpt, "OptionsBaseCheckButtonTemplate")
+bgs_AuctionInfo_Opt:SetPoint("TOPLEFT", 16, -241)
+bgs_AuctionInfo_Opt:SetScript("OnClick", function(frame)
+	if BagSyncOpt then
+		if frame:GetChecked() then
+			PlaySound("igMainMenuOptionCheckBoxOn")
+			BagSyncOpt["enableAuction"] = true
+			if BagSync then BagSync:resetTooltip() end
+		else
+			PlaySound("igMainMenuOptionCheckBoxOff")
+			BagSyncOpt["enableAuction"] = false
+			if BagSync then BagSync:resetTooltip() end
+		end
+	end
+end)
+local bgs_AuctionInfo_OptText = bgs_AuctionInfo_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+bgs_AuctionInfo_OptText:SetPoint("LEFT", bgs_AuctionInfo_Opt, "RIGHT", 0, 1)
+bgs_AuctionInfo_OptText:SetText(L["Enable auction house items."])

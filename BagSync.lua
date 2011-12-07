@@ -150,6 +150,9 @@ function BagSync:PLAYER_LOGIN()
 	--force token scan
 	self:ScanTokens()
 	
+	--clean up old auctions
+	self:RemoveExpiredAuctions()
+	
 	--check for minimap toggle
 	if BagSyncOpt.enableMinimap and BagSync_MinimapButton and not BagSync_MinimapButton:IsVisible() then
 		BagSync_MinimapButton:Show()
@@ -168,6 +171,8 @@ function BagSync:PLAYER_LOGIN()
 	self:RegisterEvent('GUILD_ROSTER_UPDATE')
 	self:RegisterEvent('MAIL_SHOW')
 	self:RegisterEvent('MAIL_INBOX_UPDATE')
+	self:RegisterEvent("AUCTION_HOUSE_SHOW")
+	self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE")
 	
 	--void storage is a pain, they didn't add events for opening and closing... seriously blizzard
 	self:RegisterEvent("VOID_STORAGE_UPDATE")
@@ -358,6 +363,22 @@ function BagSync:MAIL_INBOX_UPDATE()
 end
 
 ------------------------------
+--     AUCTION HOUSE        --
+------------------------------
+
+function BagSync:AUCTION_HOUSE_SHOW()
+	if not BagSyncOpt.enableAuction then return end
+	self:CharRemoveExpired()
+	self:ScanAuctionHouse()
+end
+
+function BagSync:AUCTION_OWNED_LIST_UPDATE()
+	if not BagSyncOpt.enableAuction then return end
+	BS_DB.AH_LastScan = time()
+	self:ScanAuctionHouse()
+end
+
+------------------------------
 --      BAG UPDATES  	    --
 ------------------------------
 
@@ -395,6 +416,7 @@ function BagSync:StartupDB()
 	if BagSyncOpt.enableUnitClass == nil then BagSyncOpt.enableUnitClass = false end
 	if BagSyncOpt.enableMinimap == nil then BagSyncOpt.enableMinimap = true end
 	if BagSyncOpt.enableFaction == nil then BagSyncOpt.enableFaction = true end
+	if BagSyncOpt.enableAuction == nil then BagSyncOpt.enableAuction = true end
 	
 	BagSyncGUILD_DB = BagSyncGUILD_DB or {}
 	BagSyncGUILD_DB[currentRealm] = BagSyncGUILD_DB[currentRealm] or {}
@@ -762,6 +784,138 @@ function BagSync:ScanMailbox()
 	BagSync.isCheckingMail = nil
 end
 
+function BagSync:ScanAuctionHouse()
+	local ahCount = 0
+	local numActiveAuctions = GetNumAuctionItems("owner")
+	
+	if not BS_DB.AH_LastScan then BS_DB.AH_LastScan = time() end --this is only really used once, at first activation of v6.3
+	
+	--scan the auction house
+	if (numActiveAuctions > 0) then
+		for ahIndex = 1, numActiveAuctions do
+			local name, texture, count, quality, canUse, level, minBid, minIncrement, buyoutPrice, bidAmount, highBidder, owner, saleStatus  = GetAuctionItemInfo("owner", ahIndex)
+			if name then
+				local link = GetAuctionItemLink("owner", ahIndex)
+				local timeLeft = GetAuctionItemTimeLeft("owner", ahIndex)
+				
+				if link and timeLeft then
+					ahCount = ahCount + 1
+					local index = GetTag('auction', 0, ahCount)
+					local linkItem = ToShortLink(link)
+					if linkItem then
+						count = (count or 1)
+						BS_DB[index] = format('%s,%d,%d', linkItem, count, timeLeft)
+					else
+						BS_DB[index] = linkItem
+					end
+				end
+			end
+		end
+	end
+	
+	--check for stragglers from previous auction house count
+	local bChk = GetTag('bd', 'auction_count', 0)
+
+	if BS_DB[bChk] then
+		local bVal = BS_DB[bChk]
+		--only delete if our current auction count is smaller then our stored amount
+		if ahCount < bVal then
+			for x = (ahCount + 1), bVal do
+				local delIndex = GetTag('auction', 0, x)
+				if BS_DB[delIndex] then BS_DB[delIndex] = nil end
+			end
+		end
+	end
+	
+	--store our new auction house count
+	BS_DB[bChk] = ahCount
+end
+
+--this method is global for all toons
+function BagSync:RemoveExpiredAuctions()
+	local bChk = GetTag('bd', 'auction_count', 0)
+	local timestampChk = { 30*60, 2*60*60, 12*60*60, 48*60*60 }
+				
+	for realm, rd in pairs(BagSyncDB) do
+		--realm
+		for k, v in pairs(rd) do
+			--users k=name, v=values
+			if BagSyncDB[realm][k].AH_LastScan then --only proceed if we have an auction house time to work with
+				--check to see if we even have a count
+				if BagSyncDB[realm][k][bChk] then
+					--we do so lets do a loop
+					local bVal = BagSyncDB[realm][k][bChk]
+					--do a loop through all of them and check to see if any expired
+					for x = 1, bVal do
+						local getIndex = GetTag('auction', 0, x)
+						if BagSyncDB[realm][k][getIndex] then
+							--check for expired and remove if necessary
+							--it's okay if the auction count is showing more then actually stored, it's just used as a means
+							--to scan through all our items.  Even if we have only 3 and the count is 6 it will just skip the last 3.
+							local dblink, dbcount, dbtimeleft = strsplit(',', BagSyncDB[realm][k][getIndex])
+							
+							--only proceed if we have everything to work with, otherwise this auction data is corrupt
+							if dblink and dbcount and dbtimeleft then
+								if tonumber(dbtimeleft) < 1 or tonumber(dbtimeleft) > 4 then dbtimeleft = 4 end --just in case
+								--now do the time checks
+								local diff = time() - BagSyncDB[realm][k].AH_LastScan 
+								if diff > timestampChk[tonumber(dbtimeleft)] then
+									--technically this isn't very realiable.  but I suppose it's better the  nothing
+									BagSyncDB[realm][k][getIndex] = nil
+								end
+							else
+								--it's corrupt delete it
+								BagSyncDB[realm][k][getIndex] = nil
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	
+end
+
+--this method is retricted to the current toon
+function BagSync:CharRemoveExpired()
+	if not BS_DB.AH_LastScan then return end
+	
+	local bChk = GetTag('bd', 'auction_count', 0)
+	local timestampChk = { 30*60, 2*60*60, 12*60*60, 48*60*60 }
+	
+	--check to see if we even have a count
+	if BS_DB[bChk] then
+		--we do so lets do a loop
+		local bVal = BS_DB[bChk]
+		
+		--do a loop through all of them and check to see if any expired
+		for x = 1, bVal do
+			local getIndex = GetTag('auction', 0, x)
+			
+			if BS_DB[getIndex] then
+				--check for expired and remove if necessary
+				--it's okay if the auction count is showing more then actually stored, it's just used as a means
+				--to scan through all our items.  Even if we have only 3 and the count is 6 it will just skip the last 3.
+				local dblink, dbcount, dbtimeleft = strsplit(',', BS_DB[getIndex])
+				
+				--only proceed if we have everything to work with, otherwise this auction data is corrupt
+				if dblink and dbcount and dbtimeleft then
+					if tonumber(dbtimeleft) < 1 or tonumber(dbtimeleft) > 4 then dbtimeleft = 4 end --just in case
+					--now do the time checks
+					local diff = time() - BS_DB.AH_LastScan
+					if diff > timestampChk[tonumber(dbtimeleft)] then
+						--technically this isn't very realiable.  but I suppose it's better the  nothing
+						BS_DB[getIndex] = nil
+					end
+				else
+					--it's corrupt delete it
+					BS_DB[getIndex] = nil
+				end
+			end
+		end
+	end
+end
+
 ------------------------
 --   Money Tooltip    --
 ------------------------
@@ -943,9 +1097,9 @@ function BagSync:resetTooltip()
 	lastItem = nil
 end
 
-local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount, voidbankCount)
+local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount, voidbankCount, auctionCount)
 	local info
-	local total = invCount + bankCount + equipCount + mailboxCount + voidbankCount
+	local total = invCount + bankCount + equipCount + mailboxCount + voidbankCount + auctionCount
 
 	if invCount > 0 then
 		info = L["Bags: %d"]:format(invCount)
@@ -997,9 +1151,19 @@ local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, m
 		end
 	end
 	
+	if auctionCount > 0 and BagSyncOpt.enableAuction then
+		local count = L["AH: %d"]:format(auctionCount)
+		if info then
+			info = strjoin(', ', info, count)
+		else
+			info = count
+		end
+	end
+	
 	
 	if info then
-		if total and not(total == invCount or total == bankCount or total == equipCount or total == guildCount or total == mailboxCount or total == voidbankCount) then
+		if total and not(total == invCount or total == bankCount or total == equipCount or total == guildCount
+			or total == mailboxCount or total == voidbankCount or total == auctionCount) then
 			local totalStr = format(MOSS, total)
 			return totalStr .. format(SILVER, format(' (%s)', info))
 		end
@@ -1084,7 +1248,7 @@ local function AddOwners(frame, link)
 	for k, v in pairs(BagSyncDB[currentRealm]) do
 
 		local infoString
-		local invCount, bankCount, equipCount, guildCount, mailboxCount, voidbankCount = 0, 0, 0, 0, 0, 0
+		local invCount, bankCount, equipCount, guildCount, mailboxCount, voidbankCount, auctionCount = 0, 0, 0, 0, 0, 0, 0
 		local pFaction = v.faction or playerFaction --just in case ;) if we dont know the faction yet display it anyways
 		
 		--check if we should show both factions or not
@@ -1105,6 +1269,8 @@ local function AddOwners(frame, link)
 							mailboxCount = mailboxCount + (dbcount or 1)
 						elseif string.find(q, 'void') and dblink == itemLink then
 							voidbankCount = voidbankCount + (dbcount or 1)
+						elseif string.find(q, 'auction') and dblink == itemLink then
+							auctionCount = auctionCount + (dbcount or 1)
 						end
 					end
 				end
@@ -1136,8 +1302,8 @@ local function AddOwners(frame, link)
 			--get class for the unit if there is one
 			local pClass = v.class or nil
 		
-			infoString = CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount, voidbankCount)
-			grandTotal = grandTotal + invCount + bankCount + equipCount + guildCount + mailboxCount + voidbankCount
+			infoString = CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount, voidbankCount, auctionCount)
+			grandTotal = grandTotal + invCount + bankCount + equipCount + guildCount + mailboxCount + voidbankCount + auctionCount
 
 			if infoString and infoString ~= '' then
 				frame:AddDoubleLine(getNameColor(k, pClass), infoString)
