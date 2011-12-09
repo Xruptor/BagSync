@@ -75,7 +75,11 @@ local function LoadSlider()
 					if craftsTable[i + offset].isHeader then
 						row.title:SetText("|cFFFFFFFF"..craftsTable[i + offset].name.."|r")
 					else
-						row.title:SetText( format('|cFF99CC33%s|r |cFFFFFFFF(%s)|r', craftsTable[i + offset].name,  craftsTable[i + offset].level))
+						if craftsTable[i + offset].isLink then
+							row.title:SetText( format('|cFF99CC33%s|r |cFFFFFFFF(%s)|r', craftsTable[i + offset].name,  craftsTable[i + offset].level))
+						else
+							row.title:SetText( format('|cFF6699FF%s|r |cFFFFFFFF(%s)|r', craftsTable[i + offset].name,  craftsTable[i + offset].level))
+						end
 					end
 					
 					--header texture and parameters
