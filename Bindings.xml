@@ -27,4 +27,11 @@
 		BagSync_CraftsFrame:Show()
 	end
   </Binding>
+   <Binding name="BAGSYNCTOGGLEBLACKLIST" header="BAGSYNC">
+	if BagSync_BlackListFrame:IsVisible() then
+		BagSync_BlackListFrame:Hide()
+	else
+		BagSync_BlackListFrame:Show()
+	end
+  </Binding>
 </Bindings>

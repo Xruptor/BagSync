@@ -1,28 +1,26 @@
 local L = BAGSYNC_L
 local currentPlayer = UnitName('player')
 local currentRealm = GetRealmName()
-
 local bgProfiles = CreateFrame("Frame","BagSync_ProfilesFrame", UIParent)
 
-local function LoadProfiles()
+--lets do the dropdown menu of DOOM
+local bgsProfilesDD = CreateFrame("Frame", "bgsProfilesDD")
+bgsProfilesDD.displayMode = 'MENU'
+
+local function addButton(level, text, isTitle, notCheckable, hasArrow, value, func)
+	local info = UIDropDownMenu_CreateInfo()
+	info.text = text
+	info.isTitle = isTitle
+	info.notCheckable = notCheckable
+	info.hasArrow = hasArrow
+	info.value = value
+	info.func = func
+	UIDropDownMenu_AddButton(info, level)
+end
+		
+bgsProfilesDD.initialize = function(self, level)
 	if not BagSync or not BagSyncDB then return end
 	if not BagSyncDB[currentRealm] then return end
-
-	local profile_DD, profile_DD_text, profile_DD_container, profile_DD_label = LibStub("tekKonfig-Dropdown").new(bgProfiles, L["Profiles"], "CENTER", bgProfiles, "CENTER", -25, 0)
-	
-	profile_DD_container:SetHeight(28)
-	profile_DD:SetWidth(180)
-	profile_DD:ClearAllPoints()
-	profile_DD:SetPoint("LEFT", profile_DD_label, "RIGHT", -8, -2)
-	profile_DD_text:SetText(' ')
-	profile_DD.tiptext = L["Select a profile to delete.\nNOTE: This is irreversible!"]
-
-	bgProfiles.DDText = profile_DD_text
-	
-	local function OnClick(self)
-		profile_DD_text:SetText(self.value)
-		GameTooltip:Hide()
-	end
 	
 	local tmp = {}
 	
@@ -31,22 +29,23 @@ local function LoadProfiles()
 		table.insert(tmp, k)
 	end
 	table.sort(tmp, function(a,b) return (a < b) end)
-		
-	UIDropDownMenu_Initialize(profile_DD, function()
-		local info = UIDropDownMenu_CreateInfo()
-		
-		info.func = OnClick
 
-		--display sorted listed of names
+	if level == 1 then
+		PlaySound('gsTitleOptionExit')
+
 		for i=1, #tmp do
-			info.text = tmp[i]
-			info.value = tmp[i]
-			info.notCheckable = true
-			UIDropDownMenu_AddButton(info)
+			addButton(level, tmp[i], nil, 1, nil, tmp[i], function(frame, ...)
+				if BagSyncProfilesToonNameText then
+					BagSyncProfilesToonNameText:SetText(tmp[i])
+				end
+			end)
 		end
+		
+		addButton(level, "", nil, 1) --space ;)
+		addButton(level, L["Close"], nil, 1)
 
-	end)
-	
+	end
+
 end
 
 bgProfiles:SetFrameStrata("HIGH")
@@ -76,6 +75,27 @@ addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L["Profiles"]..")|r")
 local closeButton = CreateFrame("Button", nil, bgProfiles, "UIPanelCloseButton");
 closeButton:SetPoint("TOPRIGHT", bgProfiles, -15, -8);
 
+local warningLabel = bgProfiles:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
+warningLabel:SetPoint("CENTER", bgProfiles, 0, 29)
+warningLabel:SetText("|cFFDF2B2B"..L["Select a profile to delete.\nNOTE: This is irreversible!"].."|r")
+bgProfiles.warningLabel = warningLabel
+
+local buttonText = bgProfiles:CreateFontString("BagSyncProfilesToonNameText", nil, "GameFontNormal")
+buttonText:SetText(L["Click Here"])
+buttonText:SetPoint("CENTER")
+
+bgProfiles.toonName = CreateFrame("Button", "BagSyncProfilesToonName", bgProfiles);
+bgProfiles.toonName:SetPoint("CENTER", bgProfiles, 0, 0)
+bgProfiles.toonName:SetHeight(21);
+bgProfiles.toonName:SetWidth(266);
+bgProfiles.toonName:SetFontString(buttonText)
+bgProfiles.toonName:SetBackdrop({
+	bgFile = "Interface\\Buttons\\WHITE8x8",
+})
+bgProfiles.toonName:SetBackdropColor(0,1,0,0.25)
+bgProfiles.toonName:SetScript("OnClick", function() ToggleDropDownMenu(1, nil, bgsProfilesDD, 'cursor', 0, 0)  end)
+bgProfiles.toonName.text = buttonText
+
 bgProfiles.deleteButton = CreateFrame("Button", nil, bgProfiles, "UIPanelButtonTemplate");
 bgProfiles.deleteButton:SetPoint("BOTTOM", bgProfiles, "BOTTOM", -70, 20);
 bgProfiles.deleteButton:SetHeight(21);
@@ -91,7 +111,7 @@ bgProfiles.confirmButton:SetText(L["Confirm"]);
 bgProfiles.confirmButton:Disable()
 
 bgProfiles.confirmButton:SetScript("OnClick", function()
-	local name = BagSync_ProfilesFrame.DDText:GetText()
+	local name = BagSyncProfilesToonNameText:GetText()
 	if name and BagSyncDB and BagSyncDB[currentRealm] and BagSyncDB[currentRealm][name] then
 		BagSyncDB[currentRealm][name] = nil
 		BagSyncOpt.delName = name
@@ -99,14 +119,12 @@ bgProfiles.confirmButton:SetScript("OnClick", function()
 		BagSync_ProfilesFrame:Hide()
 		ReloadUI()
 	else
-		print("BagSync: Error user not found to delete!")
+		print(L["BagSync: Error user not found!"])
 	end
 	BagSync_ProfilesFrame.confirmButton:Disable()
 end)
 
-
-bgProfiles:SetScript("OnShow", function(self) LoadProfiles() end)
-bgProfiles:SetScript("OnHide", function(self) GameTooltip:Hide() end)
+bgProfiles:SetScript("OnHide", function(self) bgsProfilesDD:Hide() end)
 
 bgProfiles:SetScript("OnMouseDown", function(frame, button)
 	if frame:IsMovable() then

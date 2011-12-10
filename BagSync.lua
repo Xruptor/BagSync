@@ -29,6 +29,7 @@ local BS_DB
 local BS_GD
 local BS_TD
 local BS_CD
+local BS_BL
 local MAX_GUILDBANK_SLOTS_PER_TAB = 98
 local doTokenUpdate = 0
 local guildTabQueryQueue = {}
@@ -80,7 +81,7 @@ local dataobj = ldb:NewDataObject("BagSyncLDB", {
 --        MAIN OBJ	        --
 ------------------------------
 
-local BagSync = CreateFrame("frame", "BagSync", UIParent)
+local BagSync = CreateFrame("Frame", "BagSync", UIParent)
 
 BagSync:SetScript('OnEvent', function(self, event, ...)
 	if self[event] then
@@ -123,6 +124,11 @@ local function StartupDB()
 	BagSyncCRAFT_DB[currentRealm] = BagSyncCRAFT_DB[currentRealm] or {}
 	BagSyncCRAFT_DB[currentRealm][currentPlayer] = BagSyncCRAFT_DB[currentRealm][currentPlayer] or {}
 	BS_CD = BagSyncCRAFT_DB[currentRealm][currentPlayer]
+	
+	--blacklist by realm
+	BagSyncBLACKLIST_DB = BagSyncBLACKLIST_DB or {}
+	BagSyncBLACKLIST_DB[currentRealm] = BagSyncBLACKLIST_DB[currentRealm] or {}
+	BS_BL = BagSyncBLACKLIST_DB[currentRealm]
 end
 
 function BagSync:FixDB_Data(onlyChkGuild)
@@ -935,6 +941,13 @@ end
 
 local function AddOwners(frame, link)
 	frame.BagSyncShowOnce = nil
+
+	--if we can't convert the item link then lets just ignore it altogether
+	local itemLink = ToShortLink(link)
+	if not itemLink then
+		frame:Show()
+		return
+	end
 	
 	--only show tooltips in search frame if the option is enabled
 	if BagSyncOpt.tooltipOnlySearch and frame:GetOwner() and frame:GetOwner():GetName() and string.sub(frame:GetOwner():GetName(), 1, 16) ~= "BagSyncSearchRow" then
@@ -942,18 +955,12 @@ local function AddOwners(frame, link)
 		return
 	end
 	
-	local itemLink = ToShortLink(link)
-	if not itemLink then
+	--ignore the hearthstone and blacklisted items
+	if itemLink and tonumber(itemLink) and (tonumber(itemLink) == 6948 or BS_BL[tonumber(itemLink)]) then
 		frame:Show()
 		return
 	end
-	
-	--ignore the hearthstone
-	if itemLink and tonumber(itemLink) and tonumber(itemLink) == 6948 then
-		frame:Show()
-		return
-	end
-	
+
 	--lag check (check for previously displayed data) if so then display it
 	if lastItem and itemLink and itemLink == lastItem then
 		for i = 1, #lastDisplayed do
@@ -1121,13 +1128,13 @@ end
 
 function BagSync:PLAYER_LOGIN()
 	
-	 BINDING_HEADER_BAGSYNC = "BagSync"
-	 BINDING_NAME_BAGSYNCTOGGLESEARCH = L["Toggle Search"]
-	 BINDING_NAME_BAGSYNCTOGGLETOKENS = L["Toggle Tokens"]
-	 BINDING_NAME_BAGSYNCTOGGLEPROFILES = L["Toggle Profiles"]
-	 BINDING_NAME_BAGSYNCTOGGLECRAFTS = L["Toggle Professions"]
-	  
-  
+	BINDING_HEADER_BAGSYNC = "BagSync"
+	BINDING_NAME_BAGSYNCTOGGLESEARCH = L["Toggle Search"]
+	BINDING_NAME_BAGSYNCTOGGLETOKENS = L["Toggle Tokens"]
+	BINDING_NAME_BAGSYNCTOGGLEPROFILES = L["Toggle Profiles"]
+	BINDING_NAME_BAGSYNCTOGGLECRAFTS = L["Toggle Professions"]
+	BINDING_NAME_BAGSYNCTOGGLEBLACKLIST = L["Toggle Blacklist"]
+	
 	local ver = GetAddOnMetadata("BagSync","Version") or 0
 	
 	--load our player info after login
@@ -1254,6 +1261,13 @@ function BagSync:PLAYER_LOGIN()
 					BagSync_CraftsFrame:Show()
 				end
 				return true
+			elseif c and c:lower() == L["blacklist"] then
+				if BagSync_BlackListFrame:IsVisible() then
+					BagSync_BlackListFrame:Hide()
+				else
+					BagSync_BlackListFrame:Show()
+				end
+				return true
 			elseif c and c:lower() == L["fixdb"] then
 				self:FixDB_Data()
 				return true
@@ -1278,6 +1292,7 @@ function BagSync:PLAYER_LOGIN()
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs tokens - Opens the tokens/currency window."])
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs profiles - Opens the profiles window."])
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs professions - Opens the professions window."])
+		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs blacklist - Opens the blacklist window."])
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs fixdb - Runs the database fix (FixDB) on BagSync."])
 		DEFAULT_CHAT_FRAME:AddMessage(L["/bgs config - Opens the BagSync Config Window"] )
 
