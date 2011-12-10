@@ -534,7 +534,7 @@ local function ScanAuctionHouse()
 					local linkItem = ToShortLink(link)
 					if linkItem then
 						count = (count or 1)
-						BS_DB[index] = format('%s,%d,%d', linkItem, count, timeLeft)
+						BS_DB[index] = format('%s,%s,%s,%s', linkItem, count, timeLeft, time())
 					else
 						BS_DB[index] = linkItem
 					end
@@ -582,14 +582,15 @@ local function RemoveExpiredAuctions()
 							--check for expired and remove if necessary
 							--it's okay if the auction count is showing more then actually stored, it's just used as a means
 							--to scan through all our items.  Even if we have only 3 and the count is 6 it will just skip the last 3.
-							local dblink, dbcount, dbtimeleft = strsplit(',', BagSyncDB[realm][k][getIndex])
+							local dblink, dbcount, dbtimeleft, dbstoretime = strsplit(',', BagSyncDB[realm][k][getIndex])
 							
 							--only proceed if we have everything to work with, otherwise this auction data is corrupt
-							if dblink and dbcount and dbtimeleft then
+							if dblink and dbcount and dbtimeleft and dbstoretime then
 								if tonumber(dbtimeleft) < 1 or tonumber(dbtimeleft) > 4 then dbtimeleft = 4 end --just in case
 								--now do the time checks
 								local diff = time() - BagSyncDB[realm][k].AH_LastScan 
-								if diff > timestampChk[tonumber(dbtimeleft)] then
+								local diff_item = time() - tonumber(dbstoretime)
+								if diff > timestampChk[tonumber(dbtimeleft)] or diff_item > timestampChk[tonumber(dbtimeleft)] then
 									--technically this isn't very realiable.  but I suppose it's better the  nothing
 									BagSyncDB[realm][k][getIndex] = nil
 								end
@@ -626,14 +627,15 @@ local function CharRemoveExpired()
 				--check for expired and remove if necessary
 				--it's okay if the auction count is showing more then actually stored, it's just used as a means
 				--to scan through all our items.  Even if we have only 3 and the count is 6 it will just skip the last 3.
-				local dblink, dbcount, dbtimeleft = strsplit(',', BS_DB[getIndex])
+				local dblink, dbcount, dbtimeleft, dbstoretime = strsplit(',', BS_DB[getIndex])
 				
 				--only proceed if we have everything to work with, otherwise this auction data is corrupt
-				if dblink and dbcount and dbtimeleft then
+				if dblink and dbcount and dbtimeleft and dbstoretime then
 					if tonumber(dbtimeleft) < 1 or tonumber(dbtimeleft) > 4 then dbtimeleft = 4 end --just in case
 					--now do the time checks
 					local diff = time() - BS_DB.AH_LastScan
-					if diff > timestampChk[tonumber(dbtimeleft)] then
+					local diff_item = time() - tonumber(dbstoretime)
+					if diff > timestampChk[tonumber(dbtimeleft)] or diff_item > timestampChk[tonumber(dbtimeleft)] then
 						--technically this isn't very realiable.  but I suppose it's better the  nothing
 						BS_DB[getIndex] = nil
 					end
