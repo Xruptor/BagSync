@@ -25,7 +25,7 @@ local function LoadSlider()
 	
 	for i=1, totalRows do
 		if not rows[i] then
-			local row = CreateFrame("Button", nil, bgSearch)
+			local row = CreateFrame("Button", "BagSyncSearchRow"..i, bgSearch)
 			if not anchor then row:SetPoint("BOTTOMLEFT", bgSearch, "TOPLEFT", 0, SCROLL_TOP_POSITION)
 			else row:SetPoint("TOP", anchor, "BOTTOM", 0, -ROWGAP) end
 			row:SetPoint("LEFT", EDGEGAP, 0)

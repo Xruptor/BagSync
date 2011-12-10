@@ -109,6 +109,7 @@ local function StartupDB()
 	if BagSyncOpt.enableMinimap == nil then BagSyncOpt.enableMinimap = true end
 	if BagSyncOpt.enableFaction == nil then BagSyncOpt.enableFaction = true end
 	if BagSyncOpt.enableAuction == nil then BagSyncOpt.enableAuction = true end
+	if BagSyncOpt.tooltipOnlySearch == nil then BagSyncOpt.tooltipOnlySearch = false end
 	
 	BagSyncGUILD_DB = BagSyncGUILD_DB or {}
 	BagSyncGUILD_DB[currentRealm] = BagSyncGUILD_DB[currentRealm] or {}
@@ -933,12 +934,18 @@ end
 local function AddOwners(frame, link)
 	frame.BagSyncShowOnce = nil
 	
+	--only show tooltips in search frame if the option is enabled
+	if BagSyncOpt.tooltipOnlySearch and frame:GetOwner() and frame:GetOwner():GetName() and string.sub(frame:GetOwner():GetName(), 1, 16) ~= "BagSyncSearchRow" then
+		frame:Show()
+		return
+	end
+	
 	local itemLink = ToShortLink(link)
 	if not itemLink then
 		frame:Show()
 		return
 	end
-
+	
 	--ignore the hearthstone
 	if itemLink and tonumber(itemLink) and tonumber(itemLink) == 6948 then
 		frame:Show()

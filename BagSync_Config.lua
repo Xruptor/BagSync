@@ -183,3 +183,23 @@ end)
 local bgs_AuctionInfo_OptText = bgs_AuctionInfo_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 bgs_AuctionInfo_OptText:SetPoint("LEFT", bgs_AuctionInfo_Opt, "RIGHT", 0, 1)
 bgs_AuctionInfo_OptText:SetText(L["Enable auction house items."])
+
+--[[ Display tooltips only in the BagSync Search window ]]--
+local bgs_TooltipSearchOnly_Opt = CreateFrame("CheckButton", "BagSyncConfig_TooltipSearchOnly", bgsOpt, "OptionsBaseCheckButtonTemplate")
+bgs_TooltipSearchOnly_Opt:SetPoint("TOPLEFT", 16, -269)
+bgs_TooltipSearchOnly_Opt:SetScript("OnClick", function(frame)
+	if BagSyncOpt then
+		if frame:GetChecked() then
+			PlaySound("igMainMenuOptionCheckBoxOn")
+			BagSyncOpt["tooltipOnlySearch"] = true
+			if BagSync then BagSync:resetTooltip() end
+		else
+			PlaySound("igMainMenuOptionCheckBoxOff")
+			BagSyncOpt["tooltipOnlySearch"] = false
+			if BagSync then BagSync:resetTooltip() end
+		end
+	end
+end)
+local bgs_TooltipSearchOnly_OptText = bgs_TooltipSearchOnly_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+bgs_TooltipSearchOnly_OptText:SetPoint("LEFT", bgs_TooltipSearchOnly_Opt, "RIGHT", 0, 1)
+bgs_TooltipSearchOnly_OptText:SetText(L["Display modified tooltips ONLY in the BagSync Search window."])
