@@ -524,8 +524,6 @@ local function ScanAuctionHouse()
 	local ahCount = 0
 	local numActiveAuctions = GetNumAuctionItems("owner")
 	
-	if not BS_DB.AH_LastScan then BS_DB.AH_LastScan = time() end --this is only really used once, at first activation of v6.7
-	
 	--scan the auction house
 	if (numActiveAuctions > 0) then
 		for ahIndex = 1, numActiveAuctions do
@@ -540,7 +538,7 @@ local function ScanAuctionHouse()
 					local linkItem = ToShortLink(link)
 					if linkItem then
 						count = (count or 1)
-						BS_DB[index] = format('%s,%s,%s,%s', linkItem, count, timeLeft, time())
+						BS_DB[index] = format('%s,%s,%s', linkItem, count, timeLeft)
 					else
 						BS_DB[index] = linkItem
 					end
@@ -567,7 +565,7 @@ local function ScanAuctionHouse()
 	BS_DB[bChk] = ahCount
 end
 
---this method is global for all toons
+--this method is global for all toons, removes expired auctions on login
 local function RemoveExpiredAuctions()
 	local bChk = GetTag('bd', 'auction_count', 0)
 	local timestampChk = { 30*60, 2*60*60, 12*60*60, 48*60*60 }
@@ -588,15 +586,14 @@ local function RemoveExpiredAuctions()
 							--check for expired and remove if necessary
 							--it's okay if the auction count is showing more then actually stored, it's just used as a means
 							--to scan through all our items.  Even if we have only 3 and the count is 6 it will just skip the last 3.
-							local dblink, dbcount, dbtimeleft, dbstoretime = strsplit(',', BagSyncDB[realm][k][getIndex])
+							local dblink, dbcount, dbtimeleft = strsplit(',', BagSyncDB[realm][k][getIndex])
 							
 							--only proceed if we have everything to work with, otherwise this auction data is corrupt
-							if dblink and dbcount and dbtimeleft and dbstoretime then
+							if dblink and dbcount and dbtimeleft then
 								if tonumber(dbtimeleft) < 1 or tonumber(dbtimeleft) > 4 then dbtimeleft = 4 end --just in case
 								--now do the time checks
 								local diff = time() - BagSyncDB[realm][k].AH_LastScan 
-								local diff_item = time() - tonumber(dbstoretime)
-								if diff > timestampChk[tonumber(dbtimeleft)] or diff_item > timestampChk[tonumber(dbtimeleft)] then
+								if diff > timestampChk[tonumber(dbtimeleft)] then
 									--technically this isn't very realiable.  but I suppose it's better the  nothing
 									BagSyncDB[realm][k][getIndex] = nil
 								end
@@ -611,47 +608,6 @@ local function RemoveExpiredAuctions()
 		end
 	end
 	
-end
-
---this method is retricted to the current toon
-local function CharRemoveExpired()
-	if not BS_DB.AH_LastScan then return end
-	
-	local bChk = GetTag('bd', 'auction_count', 0)
-	local timestampChk = { 30*60, 2*60*60, 12*60*60, 48*60*60 }
-	
-	--check to see if we even have a count
-	if BS_DB[bChk] then
-		--we do so lets do a loop
-		local bVal = BS_DB[bChk]
-		
-		--do a loop through all of them and check to see if any expired
-		for x = 1, bVal do
-			local getIndex = GetTag('auction', 0, x)
-			
-			if BS_DB[getIndex] then
-				--check for expired and remove if necessary
-				--it's okay if the auction count is showing more then actually stored, it's just used as a means
-				--to scan through all our items.  Even if we have only 3 and the count is 6 it will just skip the last 3.
-				local dblink, dbcount, dbtimeleft, dbstoretime = strsplit(',', BS_DB[getIndex])
-				
-				--only proceed if we have everything to work with, otherwise this auction data is corrupt
-				if dblink and dbcount and dbtimeleft and dbstoretime then
-					if tonumber(dbtimeleft) < 1 or tonumber(dbtimeleft) > 4 then dbtimeleft = 4 end --just in case
-					--now do the time checks
-					local diff = time() - BS_DB.AH_LastScan
-					local diff_item = time() - tonumber(dbstoretime)
-					if diff > timestampChk[tonumber(dbtimeleft)] or diff_item > timestampChk[tonumber(dbtimeleft)] then
-						--technically this isn't very realiable.  but I suppose it's better the  nothing
-						BS_DB[getIndex] = nil
-					end
-				else
-					--it's corrupt delete it
-					BS_DB[getIndex] = nil
-				end
-			end
-		end
-	end
 end
 
 ------------------------
@@ -1456,7 +1412,6 @@ end
 
 function BagSync:AUCTION_HOUSE_SHOW()
 	if not BagSyncOpt.enableAuction then return end
-	CharRemoveExpired()
 	ScanAuctionHouse()
 end
 
