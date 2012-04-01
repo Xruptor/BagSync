@@ -225,13 +225,6 @@ end
 --      Local       --
 ----------------------
 
---list of tradeskills with NO skill link but can be used as primaries (ex. a person with two gathering skills)
-local noLinkTS = {
-	["Interface\Icons\Trade_Herbalism"] = true, --this is Herbalism
-	["Interface\Icons\INV_Misc_Pelt_Wolf_01"] = true, --this is Skinning
-	["Interface\Icons\INV_Pick_02"] = true, --this is Mining
-}
-
 local function doRegularTradeSkill(numIndex, dbIdx)
 	local name, icon, skillLevel, maxSkillLevel, numAbilities, spelloffset, skillLine, skillModifier = GetProfessionInfo(numIndex)
 	if name and skillLevel then
@@ -650,7 +643,7 @@ local function buildMoneyString(money, color)
 end
 
 function BagSync:ShowMoneyTooltip()
-	local tooltip = getglobal("BagSyncMoneyTooltip") or nil
+	local tooltip = _G["BagSyncMoneyTooltip"] or nil
 	
 	if (not tooltip) then
 			tooltip = CreateFrame("GameTooltip", "BagSyncMoneyTooltip", UIParent, "GameTooltipTemplate")
@@ -1431,13 +1424,22 @@ function BagSync:TRADE_SKILL_SHOW()
 		
 		local tradename = _G.GetTradeSkillLine()
 		local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions()
-		if not tradename then return end
+		
+		local iconProf1 = prof1 and select(2, GetProfessionInfo(prof1))
+		local iconProf2 = prof2 and select(2, GetProfessionInfo(prof2))
+		
+		--list of tradeskills with NO skill link but can be used as primaries (ex. a person with two gathering skills)
+		local noLinkTS = {
+			["Interface\\Icons\\Trade_Herbalism"] = true, --this is Herbalism
+			["Interface\\Icons\\INV_Misc_Pelt_Wolf_01"] = true, --this is Skinning
+			["Interface\\Icons\\INV_Pick_02"] = true, --this is Mining
+		}
 		
 		--prof1
 		if prof1 and (GetProfessionInfo(prof1) == tradename) and GetTradeSkillListLink() then
 			local skill = select(3, GetProfessionInfo(prof1))
 			BS_CD[1] = { tradename, GetTradeSkillListLink(), skill }
-		elseif prof1 and select(2, GetProfessionInfo(prof1)) and noLinkTS[select(2, GetProfessionInfo(prof1))] then
+		elseif prof1 and iconProf1 and noLinkTS[iconProf1] then
 			--only store if it's herbalism, skinning, or mining
 			doRegularTradeSkill(prof1, 1)
 		elseif not prof1 and BS_CD[1] then
@@ -1449,7 +1451,7 @@ function BagSync:TRADE_SKILL_SHOW()
 		if prof2 and (GetProfessionInfo(prof2) == tradename) and GetTradeSkillListLink() then
 			local skill = select(3, GetProfessionInfo(prof2))
 			BS_CD[2] = { tradename, GetTradeSkillListLink(), skill }
-		elseif prof2 and select(2, GetProfessionInfo(prof2)) and noLinkTS[select(2, GetProfessionInfo(prof2))] then
+		elseif prof2 and iconProf2 and noLinkTS[iconProf2] then
 			--only store if it's herbalism, skinning, or mining
 			doRegularTradeSkill(prof2, 2)
 		elseif not prof2 and BS_CD[2] then
