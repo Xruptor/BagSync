@@ -254,10 +254,14 @@ local function ToShortLink(link)
 	if link and type(link) == "string" then
 		--first attempt
 		local _, first = string.find(link, "item:")
-		local second = string.find(link, ":", first+1) --first occurance of : after item:
-		local finally = string.sub(link, first+1, second-1) --after item:  and before second :
-		if tonumber(finally) then
-			return finally
+		if first then
+			local second = string.find(link, ":", first+1) --first occurance of : after item:
+			if second then
+				local finally = string.sub(link, first+1, second-1) --after item:  and before second :
+				if tonumber(finally) then
+					return finally
+				end
+			end
 		end
 		--second attempt
 		local a,b,c,d,e,f,g,h = link:match('(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+)')
