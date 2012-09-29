@@ -251,6 +251,12 @@ local function ToShortLink(link)
 	--honestly I did it this half-ass way because of tired of having to update this everytime blizzard decides to alter their itemid format.
 	--at least this way it will always pull the first number after itemid: and before the second :
 	--it's not the best way to do this, but it's better then having to freaking modify a regex every so often.  Their latest change is due to Transmorgify.
+	
+	--ignore pet battle stuff for now till I can fix it :)
+	if string.find(link:lower(), "hbattlepet:") then
+		return nil
+	end
+
 	if link and type(link) == "string" then
 		--first attempt
 		local _, first = string.find(link, "item:")
@@ -265,11 +271,17 @@ local function ToShortLink(link)
 		end
 		--second attempt
 		local a,b,c,d,e,f,g,h = link:match('(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+)')
+		if a == nil or b == nil or c == nil or d == nil or e == nil or f == nil or g == nil or h == nil then return nil end
+		
 		if(b == '0' and b == c and c == d and d == e and e == f and f == g) then
 			return a
 		end
+		--|cff1eff00|Hbattlepet:74:1:2:147:9:12:0|h[Albino Snake]|h|r"
 		--final attempt
-		return format('item:%s:%s:%s:%s:%s:%s:%s:%s', a, b, c, d, e, f, g, h)
+		if type(a) == "string" and type(b) == "string" and type(c) == "string" and type(d) == "string" 
+			and type(e) == "string" and type(f) == "string" and type(g) == "string" and type(h) == "string" then
+			return format('item:%s:%s:%s:%s:%s:%s:%s:%s', a, b, c, d, e, f, g, h)
+		end
 	end
 	return nil
 end
