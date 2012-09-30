@@ -252,6 +252,8 @@ local function ToShortLink(link)
 	--at least this way it will always pull the first number after itemid: and before the second :
 	--it's not the best way to do this, but it's better then having to freaking modify a regex every so often.  Their latest change is due to Transmorgify.
 	
+	if not link then return nil end
+	
 	--ignore pet battle stuff for now till I can fix it :)
 	if string.find(link:lower(), "hbattlepet:") then
 		return nil
