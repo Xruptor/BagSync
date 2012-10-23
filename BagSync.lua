@@ -246,46 +246,9 @@ local function GetTag(bagname, bagid, slot)
 	return nil
 end
 
---special thanks to tuller :)
 local function ToShortLink(link)
-	--honestly I did it this half-ass way because of tired of having to update this everytime blizzard decides to alter their itemid format.
-	--at least this way it will always pull the first number after itemid: and before the second :
-	--it's not the best way to do this, but it's better then having to freaking modify a regex every so often.  Their latest change is due to Transmorgify.
-	
 	if not link then return nil end
-	
-	--ignore pet battle stuff for now till I can fix it :)
-	if string.find(link:lower(), "hbattlepet:") then
-		return nil
-	end
-
-	if link and type(link) == "string" then
-		--first attempt
-		local _, first = string.find(link, "item:")
-		if first then
-			local second = string.find(link, ":", first+1) --first occurance of : after item:
-			if second then
-				local finally = string.sub(link, first+1, second-1) --after item:  and before second :
-				if tonumber(finally) then
-					return finally
-				end
-			end
-		end
-		--second attempt
-		local a,b,c,d,e,f,g,h = link:match('(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+):(%-?%d+)')
-		if a == nil or b == nil or c == nil or d == nil or e == nil or f == nil or g == nil or h == nil then return nil end
-		
-		if(b == '0' and b == c and c == d and d == e and e == f and f == g) then
-			return a
-		end
-		--|cff1eff00|Hbattlepet:74:1:2:147:9:12:0|h[Albino Snake]|h|r"
-		--final attempt
-		if type(a) == "string" and type(b) == "string" and type(c) == "string" and type(d) == "string" 
-			and type(e) == "string" and type(f) == "string" and type(g) == "string" and type(h) == "string" then
-			return format('item:%s:%s:%s:%s:%s:%s:%s:%s', a, b, c, d, e, f, g, h)
-		end
-	end
-	return nil
+	return link:match("item:(%d+):")
 end
 
 ----------------------
@@ -295,27 +258,24 @@ end
 local function SaveItem(bagname, bagid, slot)
 	local index = GetTag(bagname, bagid, slot)
 	if not index then return nil end
-	
+
 	--reset our tooltip data since we scanned new items (we want current data not old)
 	lastItem = nil
 	lastDisplayed = {}
 
+	local link = ToShortLink(GetContainerItemLink(bagid, slot))
 	local texture, count = GetContainerItemInfo(bagid, slot)
-
-	if texture then
-		local link = ToShortLink(GetContainerItemLink(bagid, slot))
+	
+	if link and texture then
 		count = count > 1 and count or nil
-		
 		--Example ["bag:0:1"] = link, count
 		if (link and count) then
 			BS_DB[index] = format('%s,%d', link, count)
 		else
 			BS_DB[index] = link
 		end
-		
 		return
 	end
-	
 	BS_DB[index] = nil
 end
 
@@ -330,22 +290,8 @@ local function SaveBag(bagname, bagid, rollupdate)
 	local index = GetTag('bd', bagname, bagid)
 	if not index then return end
 	
-	if size > 0 then
-		local invID = bagid > 0 and ContainerIDToInventoryID(bagid)
-		local link = ToShortLink(GetInventoryItemLink('player', invID))
-		local count =  GetInventoryItemCount('player', invID)
-		if count < 1 then count = nil end
-
-		if (size and link and count) then
-			BS_DB[index] = format('%d,%s,%d', size, link, count)
-		elseif (size and link) then
-			BS_DB[index] = format('%d,%s', size, link)
-		else
-			BS_DB[index] = size
-		end
-	else
-		BS_DB[index] = nil
-	end
+	--we don't care anymore about storing the bagsize
+	if BS_DB[index] then BS_DB[index] = nil end
 	
 	--used to scan the entire bag and save it's item data
 	if rollupdate then
@@ -363,7 +309,7 @@ local function OnBagUpdate(bagid)
 	--get the correct bag name based on it's id, trying NOT to use numbers as Blizzard may change bagspace in the future
 	--so instead I'm using constants :)
 	
-	if bagid == -4 or bagid == -2 then return end --dont touch tokens or keyring
+	if bagid < -1 then return end
 	
 	if bagid == BANK_CONTAINER then
 		bagname = 'bank'
@@ -381,11 +327,8 @@ local function OnBagUpdate(bagid)
 		--true = forces a rollupdate to scan entire bag
 		SaveBag('bank', BANK_CONTAINER, true)
 	end
-	
-	--save the bag data in case it was changed
-	SaveBag(bagname, bagid, false)
 
-	--now save the item information in the bag
+	--now save the item information in the bag from bagupdate, this could be bag or bank
 	for slot = 1, GetBagSize(bagid) do
 		SaveItem(bagname, bagid, slot)
 	end
@@ -1313,10 +1256,8 @@ end
 ------------------------------
 
 function BagSync:BAG_UPDATE(event, bagid)
-	--The new token bag or token currency tab has a bag number of -4, lets ignore this bag when new tokens are added
-	--http://www.wowwiki.com/API_TYPE_bagID
-	if bagid == -4 or bagid == -2 then return end --dont do tokens or keyring
-	--if not token bag then proceed
+	-- -1 happens to be the primary bank slot ;)
+	if bagid < -1 then return end
 	if not(bagid == BANK_CONTAINER or bagid > NUM_BAG_SLOTS) or atBank or atVoidBank then
 		OnBagUpdate(bagid)
 	end
