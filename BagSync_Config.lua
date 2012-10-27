@@ -16,6 +16,9 @@ bgsOpt:SetScript("OnShow", function()
 		BagSyncConfig_Minimap:SetChecked(BagSyncOpt["enableMinimap"])
 		BagSyncConfig_GuildInfo:SetChecked(BagSyncOpt["enableGuild"])
 		BagSyncConfig_MailboxInfo:SetChecked(BagSyncOpt["enableMailbox"])
+		BagSyncConfig_AuctionInfo:SetChecked(BagSyncOpt["enableAuction"])
+		BagSyncConfig_TooltipSearchOnly:SetChecked(BagSyncOpt["tooltipOnlySearch"])
+		BagSyncConfig_EnableBagSyncTooltips:SetChecked(BagSyncOpt["enableTooltips"])
 	end
 end)
 
@@ -203,3 +206,23 @@ end)
 local bgs_TooltipSearchOnly_OptText = bgs_TooltipSearchOnly_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 bgs_TooltipSearchOnly_OptText:SetPoint("LEFT", bgs_TooltipSearchOnly_Opt, "RIGHT", 0, 1)
 bgs_TooltipSearchOnly_OptText:SetText(L["Display modified tooltips ONLY in the BagSync Search window."])
+
+--[[ Toggle for BagSync tooltips]]--
+local bgs_EnableBagSyncTooltips_Opt = CreateFrame("CheckButton", "BagSyncConfig_EnableBagSyncTooltips", bgsOpt, "OptionsBaseCheckButtonTemplate")
+bgs_EnableBagSyncTooltips_Opt:SetPoint("TOPLEFT", 16, -297)
+bgs_EnableBagSyncTooltips_Opt:SetScript("OnClick", function(frame)
+	if BagSyncOpt then
+		if frame:GetChecked() then
+			PlaySound("igMainMenuOptionCheckBoxOn")
+			BagSyncOpt["enableTooltips"] = true
+			if BagSync then BagSync:resetTooltip() end
+		else
+			PlaySound("igMainMenuOptionCheckBoxOff")
+			BagSyncOpt["enableTooltips"] = false
+			if BagSync then BagSync:resetTooltip() end
+		end
+	end
+end)
+local bgs_EnableBagSyncTooltips_OptText = bgs_EnableBagSyncTooltips_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+bgs_EnableBagSyncTooltips_OptText:SetPoint("LEFT", bgs_EnableBagSyncTooltips_Opt, "RIGHT", 0, 1)
+bgs_EnableBagSyncTooltips_OptText:SetText(L["Enable BagSync Tooltips"])
