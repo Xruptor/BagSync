@@ -43,6 +43,11 @@ local MOSS = '|cFF80FF00%s|r'
 local TTL_C = '|cFFF4A460%s|r'
 local GN_C = '|cFF65B8C0%s|r'
 
+local debugf = tekDebug and tekDebug:GetFrame("BagSync")
+local function Debug(...)
+    if debugf then debugf:AddMessage(string.join(", ", tostringall(...))) end
+end
+
 ------------------------------
 --    LibDataBroker-1.1	    --
 ------------------------------
@@ -107,6 +112,7 @@ local function StartupDB()
 	if BagSyncOpt.enableFaction == nil then BagSyncOpt.enableFaction = true end
 	if BagSyncOpt.enableAuction == nil then BagSyncOpt.enableAuction = true end
 	if BagSyncOpt.tooltipOnlySearch == nil then BagSyncOpt.tooltipOnlySearch = false end
+	if BagSyncOpt.enableTooltips == nil then BagSyncOpt.enableTooltips = true end
 	
 	--new format, get rid of old
 	if not BagSyncOpt.dbversion or not tonumber(BagSyncOpt.dbversion) or tonumber(BagSyncOpt.dbversion) < 7 then
@@ -588,21 +594,21 @@ hooksecurefunc("BackpackTokenFrame_Update", ScanTokens)
 -- (Special thanks to tuller)
 ------------------------
 
+--a function call to reset these local variables outside the scope ;)
 function BagSync:resetTooltip()
 	lastDisplayed = {}
 	lastItem = nil
 end
 
-local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount, voidbankCount, auctionCount)
+local function CountsToInfoString(countTable)
 	local info
-	local total = invCount + bankCount + equipCount + mailboxCount + voidbankCount + auctionCount
 
-	if invCount > 0 then
-		info = L["Bags: %d"]:format(invCount)
+	if countTable['bag'] > 0 then
+		info = L["Bags: %d"]:format(countTable['bag'])
 	end
 
-	if bankCount > 0 then
-		local count = L["Bank: %d"]:format(bankCount)
+	if countTable['bank'] > 0 then
+		local count = L["Bank: %d"]:format(countTable['bank'])
 		if info then
 			info = strjoin(', ', info, count)
 		else
@@ -610,8 +616,8 @@ local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, m
 		end
 	end
 
-	if equipCount > 0 then
-		local count = L["Equipped: %d"]:format(equipCount)
+	if countTable['equip'] > 0 then
+		local count = L["Equipped: %d"]:format(countTable['equip'])
 		if info then
 			info = strjoin(', ', info, count)
 		else
@@ -619,9 +625,19 @@ local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, m
 		end
 	end
 
-	if guildCount > 0 and BagSyncOpt.enableGuild and not BagSyncOpt.showGuildNames then
-		total = total + guildCount --add the guild count only if we don't have showguildnames on, otherwise it's counted twice
-		local count = L["Guild: %d"]:format(guildCount)
+	--TODO: guild count
+	-- if guildCount > 0 and BagSyncOpt.enableGuild and not BagSyncOpt.showGuildNames then
+		-- total = total + guildCount --add the guild count only if we don't have showguildnames on, otherwise it's counted twice
+		-- local count = L["Guild: %d"]:format(guildCount)
+		-- if info then
+			-- info = strjoin(', ', info, count)
+		-- else
+			-- info = count
+		-- end
+	-- end
+	
+	if countTable['mailbox'] > 0 and BagSyncOpt.enableMailbox then
+		local count = L["Mailbox: %d"]:format(countTable['mailbox'])
 		if info then
 			info = strjoin(', ', info, count)
 		else
@@ -629,8 +645,8 @@ local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, m
 		end
 	end
 	
-	if mailboxCount > 0 and BagSyncOpt.enableMailbox then
-		local count = L["Mailbox: %d"]:format(mailboxCount)
+	if countTable['void'] > 0 then
+		local count = L["Void: %d"]:format(countTable['void'])
 		if info then
 			info = strjoin(', ', info, count)
 		else
@@ -638,17 +654,8 @@ local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, m
 		end
 	end
 	
-	if voidbankCount > 0 then
-		local count = L["Void: %d"]:format(voidbankCount)
-		if info then
-			info = strjoin(', ', info, count)
-		else
-			info = count
-		end
-	end
-	
-	if auctionCount > 0 and BagSyncOpt.enableAuction then
-		local count = L["AH: %d"]:format(auctionCount)
+	if countTable['auction'] > 0 and BagSyncOpt.enableAuction then
+		local count = L["AH: %d"]:format(countTable['auction'])
 		if info then
 			info = strjoin(', ', info, count)
 		else
@@ -658,11 +665,12 @@ local function CountsToInfoString(invCount, bankCount, equipCount, guildCount, m
 	
 	
 	if info then
-		if total and not(total == invCount or total == bankCount or total == equipCount or total == guildCount
-			or total == mailboxCount or total == voidbankCount or total == auctionCount) then
-			local totalStr = format(MOSS, total)
-			return totalStr .. format(SILVER, format(' (%s)', info))
-		end
+		--TODO: Fix this
+		--if total and not(total == invCount or total == bankCount or total == equipCount or total == guildCount
+		--	or total == mailboxCount or total == voidbankCount or total == auctionCount) then
+		--	local totalStr = format(MOSS, total)
+		--	return totalStr .. format(SILVER, format(' (%s)', info))
+		--end
 		return format(MOSS, info)
 	end
 end
@@ -705,9 +713,7 @@ local function getNameColor(sName, sClass)
 	return format(MOSS, sName)
 end
 
-local function AddOwners(frame, link)
-	frame.BagSyncShowOnce = nil
-
+local function AddToTooltip(frame, link)
 	--if we can't convert the item link then lets just ignore it altogether
 	local itemLink = ToShortLink(link)
 	if not itemLink then
@@ -738,7 +744,7 @@ local function AddOwners(frame, link)
 		frame:Show()
 		return
 	end
-	
+
 	--reset our last displayed
 	lastDisplayed = {}
 	lastItem = itemLink
@@ -747,7 +753,17 @@ local function AddOwners(frame, link)
 	local previousGuilds = {}
 	local grandTotal = 0
 	
+	local allowList = {
+		["bag"] = 0,
+		["bank"] = 0,
+		["equip"] = 0,
+		["mailbox"] = 0,
+		["void"] = 0,
+		["auction"] = 0,
+	}
+	
 	--loop through our characters
+	--k = player, v = stored data for player
 	for k, v in pairs(BagSyncDB[currentRealm]) do
 
 		local infoString
@@ -758,135 +774,73 @@ local function AddOwners(frame, link)
 		if BagSyncOpt.enableFaction or pFaction == playerFaction then
 
 			--now count the stuff for the user
+			--q = bag name, r = stored data for bag name
 			for q, r in pairs(v) do
-				if itemLink then
-					local dblink, dbcount = strsplit(',', r)
-					if dblink then
-						if string.find(q, 'bank') and dblink == itemLink then
-							bankCount = bankCount + (dbcount or 1)
-						elseif string.find(q, 'bag') and dblink == itemLink then
-							invCount = invCount + (dbcount or 1)
-						elseif string.find(q, 'equip') and dblink == itemLink then
-							equipCount = equipCount + (dbcount or 1)
-						elseif string.find(q, 'mailbox') and dblink == itemLink then
-							mailboxCount = mailboxCount + (dbcount or 1)
-						elseif string.find(q, 'void') and dblink == itemLink then
-							voidbankCount = voidbankCount + (dbcount or 1)
-						elseif string.find(q, 'auction') and dblink == itemLink then
-							auctionCount = auctionCount + (dbcount or 1)
-						end
-					end
-				end
-			end
-		
-			if BagSyncOpt.enableGuild then
-				local guildN = v.guild or nil
-			
-				--check the guild bank if the character is in a guild
-				if BS_GD and guildN and BS_GD[guildN] then
-					--check to see if this guild has already been done through this run (so we don't do it multiple times)
-					if not previousGuilds[guildN] then
-						--we only really need to see this information once per guild
-						local tmpCount = 0
-						for q, r in pairs(BS_GD[guildN]) do
-							if itemLink then
-								local dblink, dbcount = strsplit(',', r)
+				--only loop through table items we want
+				if allowList[q] and type(r) == "table" then
+					--bagID = bag name bagID, bagInfo = data of specific bag with bagID
+					for bagID, bagInfo in pairs(r) do
+						--slotID = slotid for specific bagid, itemValue = data of specific slotid
+						if type(bagInfo) == "table" then
+							for slotID, itemValue in pairs(bagInfo) do
+								local dblink, dbcount = strsplit(',', itemValue)
 								if dblink and dblink == itemLink then
-									guildCount = guildCount + (dbcount or 1)
-									tmpCount = tmpCount + (dbcount or 1)
+									allowList[q] = allowList[q] + (dbcount or 1)
+									grandTotal = grandTotal + (dbcount or 1)
 								end
 							end
 						end
-						previousGuilds[guildN] = tmpCount
 					end
 				end
 			end
 		
+			--TODO: Guild loop check
+			
 			--get class for the unit if there is one
 			local pClass = v.class or nil
 		
-			infoString = CountsToInfoString(invCount, bankCount, equipCount, guildCount, mailboxCount, voidbankCount, auctionCount)
-			grandTotal = grandTotal + invCount + bankCount + equipCount + guildCount + mailboxCount + voidbankCount + auctionCount
+			infoString = CountsToInfoString(allowList)
 
 			if infoString and infoString ~= '' then
 				frame:AddDoubleLine(getNameColor(k, pClass), infoString)
 				table.insert(lastDisplayed, getNameColor(k or 'Unknown', pClass).."@"..(infoString or 'unknown'))
 			end
-
+			
+		
 		end
 		
 	end
 	
-	--show guildnames last
-	if BagSyncOpt.enableGuild and BagSyncOpt.showGuildNames then
-		for k, v in pairsByKeys(previousGuilds) do
-			--only print stuff higher then zero
-			if v > 0 then
-				frame:AddDoubleLine(format(GN_C, k), format(SILVER, v))
-				table.insert(lastDisplayed, format(GN_C, k).."@"..format(SILVER, v))
-			end
-		end
-	end
+	--TODO: show guild name last
 	
-	--show grand total if we have something
-	--don't show total if there is only one item
-	if BagSyncOpt.showTotal and grandTotal > 0 and getn(lastDisplayed) > 1 then
-		frame:AddDoubleLine(format(TTL_C, L["Total:"]), format(SILVER, grandTotal))
-		table.insert(lastDisplayed, format(TTL_C, L["Total:"]).."@"..format(SILVER, grandTotal))
-	end
+	--TODO: show total
 
+	
 	frame:Show()
 end
 
---Thanks to Aranarth from wowinterface.  Replaced HookScript with insecure hooks
-local orgTipSetItem = {}
-local orgTipOnUpdate = {}
-
-local function Tip_OnSetItem(self, ...)
-	orgTipSetItem[self](self, ...)
-	local _, itemLink = self:GetItem()
-	if itemLink and GetItemInfo(itemLink) then
-		local itemName = GetItemInfo(itemLink)
-		if not self.BagSyncThrottle then self.BagSyncThrottle = GetTime() end
-		if not self.BagSyncPrevious then self.BagSyncPrevious = itemName end
-		if not self.BagSyncShowOnce and self:GetName() == "GameTooltip" then self.BagSyncShowOnce = true end
-
-		if itemName ~= self.BagSyncPrevious then
-			self.BagSyncPrevious = itemName
-			self.BagSyncThrottle = GetTime()
+--simplified tooltip function, similar to the past HookTip that was used before Jan 06, 2011 (commit:a89046f844e24585ab8db60d10f2f168498b9af4)
+--Honestly we aren't going to care about throttleing or anything like that anymore.  The lastdisplay array token should take care of that
+--Special thanks to Tuller for tooltip hook function
+local function hookTip(tooltip)
+	local modified = false
+	tooltip:HookScript('OnTooltipCleared', function(self)
+		modified = false
+	end)
+	tooltip:HookScript('OnTooltipSetItem', function(self)
+		if not modified and BagSyncOpt.enableTooltips then
+			modified = true
+			
+			local name, link = self:GetItem()
+			if link and GetItemInfo(link) then
+				AddToTooltip(self, link)
+			end
 		end
-
-		if self:GetName() ~= "GameTooltip" or (GetTime() - self.BagSyncThrottle) >= 0.05 then
-			self.BagSyncShowOnce = nil
-			return AddOwners(self, itemLink)
-		end
-	end
+	end)
 end
 
-local function Tip_OnUpdate(self, ...)
-	orgTipOnUpdate[self](self, ...)
-	if self:GetName() == "GameTooltip" and self.BagSyncShowOnce and self.BagSyncThrottle and (GetTime() - self.BagSyncThrottle) >= 0.05 then
-		local _, itemLink = self:GetItem()
-		self.BagSyncShowOnce = nil
-		if itemLink then
-			return AddOwners(self, itemLink)
-		end
-	end
-end
-
-for _, tip in next, { GameTooltip, ItemRefTooltip } do
-	
-	orgTipSetItem[tip] = tip:GetScript"OnTooltipSetItem"
-	tip:SetScript("OnTooltipSetItem", Tip_OnSetItem)
-	
-	if tip == ItemRefTooltip then
-		orgTipOnUpdate[tip] = tip.UpdateTooltip
-		tip.UpdateTooltip = Tip_OnUpdate
-	else
-		orgTipOnUpdate[tip] = tip:GetScript"OnUpdate"
-		tip:SetScript("OnUpdate", Tip_OnUpdate)
-	end
-end
+hookTip(GameTooltip)
+hookTip(ItemRefTooltip)
 
 ------------------------------
 --    LOGIN HANDLER         --
@@ -919,16 +873,13 @@ function BagSync:PLAYER_LOGIN()
 	end
 	
 	--save the current user money (before bag update)
-	if BS_DB["gold:0:0"] then BS_DB["gold:0:0"] = nil end --remove old format
 	BS_DB.gold = GetMoney()
 
 	--save the class information
-	if BS_DB["class:0:0"] then BS_DB["class:0:0"] = nil end --remove old format
 	BS_DB.class = playerClass
 
 	--save the faction information
 	--"Alliance", "Horde" or nil
-	if BS_DB["faction:0:0"] then BS_DB["faction:0:0"] = nil end --remove old format
 	BS_DB.faction = playerFaction
 	
 	--check for player not in guild
@@ -941,7 +892,7 @@ function BagSync:PLAYER_LOGIN()
 	
 	--save all inventory data, including backpack(0)
 	for i = BACKPACK_CONTAINER, BACKPACK_CONTAINER + NUM_BAG_SLOTS do
-		SaveBag('bag', i, true)
+		SaveBag('bag', i)
 	end
 
 	--force an equipment scan
