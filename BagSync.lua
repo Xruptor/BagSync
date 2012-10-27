@@ -96,11 +96,7 @@ if IsLoggedIn() then BagSync:PLAYER_LOGIN() else BagSync:RegisterEvent('PLAYER_L
 ----------------------
 
 local function StartupDB()
-	BagSyncDB = BagSyncDB or {}
-	BagSyncDB[currentRealm] = BagSyncDB[currentRealm] or {}
-	BagSyncDB[currentRealm][currentPlayer] = BagSyncDB[currentRealm][currentPlayer] or {}
-	BS_DB = BagSyncDB[currentRealm][currentPlayer]
-	
+
 	BagSyncOpt = BagSyncOpt or {}
 	if BagSyncOpt.showTotal == nil then BagSyncOpt.showTotal = true end
 	if BagSyncOpt.showGuildNames == nil then BagSyncOpt.showGuildNames = false end
@@ -111,6 +107,18 @@ local function StartupDB()
 	if BagSyncOpt.enableFaction == nil then BagSyncOpt.enableFaction = true end
 	if BagSyncOpt.enableAuction == nil then BagSyncOpt.enableAuction = true end
 	if BagSyncOpt.tooltipOnlySearch == nil then BagSyncOpt.tooltipOnlySearch = false end
+	
+	--new format, get rid of old
+	if not BagSyncOpt.dbversion or not tonumber(BagSyncOpt.dbversion) or tonumber(BagSyncOpt.dbversion) < 7 then
+		BagSyncDB = {}
+		BagSyncGUILD_DB = {}
+		print("|cFFFF0000BagSync: You have been updated to latest database version!  You will need to rescan all your characters again!|r")
+	end
+	
+	BagSyncDB = BagSyncDB or {}
+	BagSyncDB[currentRealm] = BagSyncDB[currentRealm] or {}
+	BagSyncDB[currentRealm][currentPlayer] = BagSyncDB[currentRealm][currentPlayer] or {}
+	BS_DB = BagSyncDB[currentRealm][currentPlayer]
 	
 	BagSyncGUILD_DB = BagSyncGUILD_DB or {}
 	BagSyncGUILD_DB[currentRealm] = BagSyncGUILD_DB[currentRealm] or {}
@@ -131,96 +139,6 @@ local function StartupDB()
 	BS_BL = BagSyncBLACKLIST_DB[currentRealm]
 end
 
-function BagSync:FixDB_Data(onlyChkGuild)
-	--Removes obsolete character information
-	--Removes obsolete guild information
-	--Removes obsolete characters from tokens db
-	--Removes obsolete keyring information
-	--Removes obsolete profession information
-	--Will only check guild related information if the paramater is passed as true
-	
-	local storeUsers = {}
-	local storeGuilds = {}
-	
-	for realm, rd in pairs(BagSyncDB) do
-		--realm
-		storeUsers[realm] = storeUsers[realm] or {}
-		storeGuilds[realm] = storeGuilds[realm] or {}
-		for k, v in pairs(rd) do
-			--users
-			storeUsers[realm][k] = storeUsers[realm][k] or 1
-			for q, r in pairs(v) do
-				if q == 'guild' then
-					storeGuilds[realm][r] = true
-				elseif string.find(q, 'key') then
-					--remove obsolete keyring information
-					BagSyncDB[realm][k][q] = nil
-				end
-			end
-		end
-	end
-
-	--guildbank data
-	for realm, rd in pairs(BagSyncGUILD_DB) do
-		--realm
-		for k, v in pairs(rd) do
-			--users
-			if not storeGuilds[realm][k] then
-				--delete the guild
-				BagSyncGUILD_DB[realm][k] = nil
-			end
-		end
-	end
-	
-	--token data and profession data, only do if were not doing a guild check
-	--also display fixdb message only if were not doing a guild check
-	if not onlyChkGuild then
-	
-		--fix tokens
-		for realm, rd in pairs(BagSyncTOKEN_DB) do
-			--realm
-			if not storeUsers[realm] then
-				--if it's not a realm that ANY users are on then delete it
-				BagSyncTOKEN_DB[realm] = nil
-			else
-				--delete old db information for tokens if it exists
-				if BagSyncTOKEN_DB[realm] and BagSyncTOKEN_DB[realm][1] then BagSyncTOKEN_DB[realm][1] = nil end
-				if BagSyncTOKEN_DB[realm] and BagSyncTOKEN_DB[realm][2] then BagSyncTOKEN_DB[realm][2] = nil end
-				
-				for k, v in pairs(rd) do
-					for x, y in pairs(v) do
-						if x ~= "icon" and x ~= "header" then
-							if not storeUsers[realm][x] then
-								--if the user doesn't exist then delete data
-								BagSyncTOKEN_DB[realm][k][x] = nil
-							end
-						end
-					end
-				end
-			end
-		end
-		
-		--fix professions
-		for realm, rd in pairs(BagSyncCRAFT_DB) do
-			--realm
-			if not storeUsers[realm] then
-				--if it's not a realm that ANY users are on then delete it
-				BagSyncCRAFT_DB[realm] = nil
-			else
-				for k, v in pairs(rd) do
-					if not storeUsers[realm][k] then
-						--if the user doesn't exist then delete data
-						BagSyncCRAFT_DB[realm][k] = nil
-					end
-				end
-			end
-		end
-
-		DEFAULT_CHAT_FRAME:AddMessage("|cFF99CC33BagSync:|r |cFFFF9900"..L["A FixDB has been performed on BagSync!  The database is now optimized!"].."|r")
-	end
-	
-end
-
 ----------------------
 --      Local       --
 ----------------------
@@ -239,98 +157,36 @@ local function GetBagSize(bagid)
 	return GetContainerNumSlots(bagid)
 end
 
-local function GetTag(bagname, bagid, slot)
-	if bagname and bagid and slot then
-		return bagname..':'..bagid..':'..slot
-	end
-	return nil
-end
-
 local function ToShortLink(link)
 	if not link then return nil end
-	return link:match("item:(%d+):")
+	return link:match("item:(%d+):") or nil
 end
 
 ----------------------
 --  Bag Functions   --
 ----------------------
 
-local function SaveItem(bagname, bagid, slot)
-	local index = GetTag(bagname, bagid, slot)
-	if not index then return nil end
-
-	--reset our tooltip data since we scanned new items (we want current data not old)
-	lastItem = nil
-	lastDisplayed = {}
-
-	local link = ToShortLink(GetContainerItemLink(bagid, slot))
-	local texture, count = GetContainerItemInfo(bagid, slot)
-	
-	if link and texture then
-		count = count > 1 and count or nil
-		--Example ["bag:0:1"] = link, count
-		if (link and count) then
-			BS_DB[index] = format('%s,%d', link, count)
-		else
-			BS_DB[index] = link
-		end
-		return
-	end
-	BS_DB[index] = nil
-end
-
-local function SaveBag(bagname, bagid, rollupdate)
+local function SaveBag(bagname, bagid)
+	if not bagname or not bagid then return nil end
 	if not BS_DB then StartupDB() end
-	--this portion of the code will save the bag data, (type of bag, size of bag, bag item link, etc..)
-	--this is used later to quickly grab bag data and size without having to go through the whole
-	--song and dance again
-	--bd = bagdata
-	--Example ["bd:bagid:0"] = size, link, count
-	local size = GetBagSize(bagid)
-	local index = GetTag('bd', bagname, bagid)
-	if not index then return end
-	
-	--we don't care anymore about storing the bagsize
-	if BS_DB[index] then BS_DB[index] = nil end
-	
-	--used to scan the entire bag and save it's item data
-	if rollupdate then
+	BS_DB[bagname] = BS_DB[bagname] or {}
+
+	if GetBagSize(bagid) > 0 then
+		local slotItems = {}
 		for slot = 1, GetBagSize(bagid) do
-			SaveItem(bagname, bagid, slot)
+			local _, count, _,_,_,_, link = GetContainerItemInfo(bagid, slot)
+			if ToShortLink(link) then
+				count = (count > 1 and count) or nil
+				if count then
+					slotItems[slot] = format('%s,%d', ToShortLink(link), count)
+				else
+					slotItems[slot] = ToShortLink(link)
+				end
+			end
 		end
-	end
-end
-
-local function OnBagUpdate(bagid)
-
-	--this will update the bank/bag slots
-	local bagname
-
-	--get the correct bag name based on it's id, trying NOT to use numbers as Blizzard may change bagspace in the future
-	--so instead I'm using constants :)
-	
-	if bagid < -1 then return end
-	
-	if bagid == BANK_CONTAINER then
-		bagname = 'bank'
-	elseif (bagid >= NUM_BAG_SLOTS + 1) and (bagid <= NUM_BAG_SLOTS + NUM_BANKBAGSLOTS) then
-		bagname = 'bank'
-	elseif (bagid >= BACKPACK_CONTAINER) and (bagid <= BACKPACK_CONTAINER + NUM_BAG_SLOTS) then
-		bagname = 'bag'
+		BS_DB[bagname][bagid] = slotItems
 	else
-		return
-	end
-
-	if atBank then
-		--force an update of the primary bank container (which is -1, in case something was moved)
-		--blizzard doesn't send a bag update for the -1 bank slot for some reason
-		--true = forces a rollupdate to scan entire bag
-		SaveBag('bank', BANK_CONTAINER, true)
-	end
-
-	--now save the item information in the bag from bagupdate, this could be bag or bank
-	for slot = 1, GetBagSize(bagid) do
-		SaveItem(bagname, bagid, slot)
+		BS_DB[bagname][bagid] = nil
 	end
 end
 
@@ -340,80 +196,86 @@ local function SaveEquipment()
 	lastItem = nil
 	lastDisplayed = {}
 	
+	if not BS_DB then StartupDB() end
+	BS_DB['equip'] = BS_DB['equip'] or {}
+
+	local slotItems = {}
 	--start at 1, 0 used to be the old range slot (not needed anymore)
 	for slot = 1, NUM_EQUIPMENT_SLOTS do
 		local link = GetInventoryItemLink('player', slot)
-		local index = GetTag('equip', 0, slot)
-
-		if link then
-			local linkItem = ToShortLink(link)
+		if link and ToShortLink(link) then
 			local count =  GetInventoryItemCount('player', slot)
-			count = count > 1 and count or nil
-
-			if (linkItem and count) then
-					BS_DB[index] = format('%s,%d', linkItem, count)
+			count = (count and count > 1) or nil
+			if count then
+				slotItems[slot] = format('%s,%d', ToShortLink(link), count)
 			else
-				BS_DB[index] = linkItem
+				slotItems[slot] = ToShortLink(link)
 			end
-		else
-			BS_DB[index] = nil
 		end
 	end
+	BS_DB['equip'][0] = slotItems
 end
 
 local function ScanEntireBank()
-	--scan the primary Bank Bag -1, for some reason Blizzard never sends updates on it
-	SaveBag('bank', BANK_CONTAINER, true)
-	--NUM_BAG_SLOTS+1 to NUM_BAG_SLOTS+NUM_BANKBAGSLOTS are your bank bags 
+	--force scan of bank bag -1, since blizzard never sends updates for it
+	SaveBag('bank', BANK_CONTAINER)
 	for i = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
-		SaveBag('bank', i, true)
+		SaveBag('bank', i)
 	end
 end
 
 local function ScanVoidBank()
 	if VoidStorageFrame and VoidStorageFrame:IsShown() then
+		if not BS_DB then StartupDB() end
+		BS_DB['void'] = BS_DB['void'] or {}
+		
+		local slotItems = {}
 		for i = 1, 80 do
 			itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(i)
-			local index = GetTag('void', 0, i)
 			if (itemID) then
-				BS_DB[index] = tostring(itemID)
-			else
-				--itemID returned nil but we MAY have this location saved in DB, so remove it
-				BS_DB[index] = nil
+				slotItems[i] = itemID and tostring(itemID) or nil
 			end
 		end
+		
+		BS_DB['void'][0] = slotItems
 	end
 end
 
 local function ScanGuildBank()
+
 	--GetCurrentGuildBankTab()
 	if not IsInGuild() then return end
 	
+	if not BS_GD then StartupDB() end
 	BS_GD[BS_DB.guild] = BS_GD[BS_DB.guild] or {}
 
 	local numTabs = GetNumGuildBankTabs()
+	local index = 0
+	local slotItems = {}
 	
 	for tab = 1, numTabs do
-		for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
-		
-			local link = GetGuildBankItemLink(tab, slot)
-			local index = GetTag('guild', tab, slot)
+		local name, icon, isViewable, canDeposit, numWithdrawals, remainingWithdrawals = GetGuildBankTabInfo(tab)
+		if isViewable then
+			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
 			
-			if link then
-				local linkItem = ToShortLink(link)
-				local _, count = GetGuildBankItemInfo(tab, slot);
-				count = count > 1 and count or nil
-				
-				if (linkItem and count) then
-					BS_GD[BS_DB.guild][index] = format('%s,%d', linkItem, count)
-				else
-					BS_GD[BS_DB.guild][index] = linkItem
+				local link = GetGuildBankItemLink(tab, slot)
+
+				if link and ToShortLink(link) then
+					index = index + 1
+					local _, count = GetGuildBankItemInfo(tab, slot)
+					count = (count > 1 and count) or nil
+					
+					if count then
+						slotItems[index] = format('%s,%d', ToShortLink(link), count)
+					else
+						slotItems[index] = ToShortLink(link)
+					end
 				end
-			else
-				BS_GD[BS_DB.guild][index] = nil
 			end
 		end
 	end
+	
+	BS_GD[BS_DB.guild] = slotItems
 	
 end
 
@@ -442,8 +304,12 @@ local function ScanMailbox()
 					local index = GetTag('mailbox', 0, mailCount)
 					local linkItem = ToShortLink(link)
 					
-					if (count) then
-						BS_DB[index] = format('%s,%d', linkItem, count)
+					if linkItem then
+						if (count) then
+							BS_DB[index] = format('%s,%d', linkItem, count)
+						else
+							BS_DB[index] = linkItem
+						end
 					else
 						BS_DB[index] = linkItem
 					end
@@ -562,6 +428,35 @@ local function RemoveExpiredAuctions()
 		end
 	end
 	
+end
+
+
+local function OnBagUpdate(bagid)
+
+	--this will update the bank/bag slots
+	local bagname
+
+	--get the correct bag name based on it's id, trying NOT to use numbers as Blizzard may change bagspace in the future
+	--so instead I'm using constants :)
+	if bagid < -1 then return end
+	
+	if bagid == BANK_CONTAINER then
+		bagname = 'bank'
+	elseif (bagid >= NUM_BAG_SLOTS + 1) and (bagid <= NUM_BAG_SLOTS + NUM_BANKBAGSLOTS) then
+		bagname = 'bank'
+	elseif (bagid >= BACKPACK_CONTAINER) and (bagid <= BACKPACK_CONTAINER + NUM_BAG_SLOTS) then
+		bagname = 'bag'
+	else
+		return
+	end
+
+	if atBank then
+		--we have to force the -1 default bank container because blizzard doesn't push updates for it (for some stupid reason)
+		SaveBag('bank', BANK_CONTAINER)
+	end
+
+	--now save the item information in the bag from bagupdate, this could be bag or bank
+	SaveBag(bagname, bagid)
 end
 
 ------------------------
@@ -1057,13 +952,8 @@ function BagSync:PLAYER_LOGIN()
 	StartupDB()
 	
 	--do DB cleanup check by version number
-	if BagSyncDB.dbversion then
-		--remove old variable and replace with BagSyncOpt DB
-		BagSyncDB.dbversion = nil
-		BagSyncOpt.dbversion = ver
-		self:FixDB_Data()
-	elseif not BagSyncOpt.dbversion or BagSyncOpt.dbversion ~= ver then
-		self:FixDB_Data()
+	if not BagSyncOpt.dbversion or BagSyncOpt.dbversion ~= ver then	
+		--self:FixDB_Data()
 		BagSyncOpt.dbversion = ver
 	end
 	
@@ -1085,7 +975,7 @@ function BagSync:PLAYER_LOGIN()
 		GuildRoster()
 	elseif BS_DB.guild then
 		BS_DB.guild = nil
-		self:FixDB_Data(true)
+		--self:FixDB_Data(true)
 	end
 	
 	--save all inventory data, including backpack(0)
@@ -1100,7 +990,7 @@ function BagSync:PLAYER_LOGIN()
 	ScanTokens()
 	
 	--clean up old auctions
-	RemoveExpiredAuctions()
+	--RemoveExpiredAuctions()
 	
 	--check for minimap toggle
 	if BagSyncOpt.enableMinimap and BagSync_MinimapButton and not BagSync_MinimapButton:IsVisible() then
@@ -1179,7 +1069,7 @@ function BagSync:PLAYER_LOGIN()
 				end
 				return true
 			elseif c and c:lower() == L["fixdb"] then
-				self:FixDB_Data()
+				--self:FixDB_Data()
 				return true
 			elseif c and c:lower() == L["config"] then
 				InterfaceOptionsFrame_OpenToCategory("BagSync")
@@ -1235,13 +1125,13 @@ end
 function BagSync:GUILD_ROSTER_UPDATE()
 	if not IsInGuild() and BS_DB.guild then
 		BS_DB.guild = nil
-		self:FixDB_Data(true)
+		--self:FixDB_Data(true)
 	elseif IsInGuild() then
 		--if they don't have guild name store it or update it
 		if GetGuildInfo("player") then
 			if not BS_DB.guild or BS_DB.guild ~= GetGuildInfo("player") then
 				BS_DB.guild = GetGuildInfo("player")
-				self:FixDB_Data(true)
+				--self:FixDB_Data(true)
 			end
 		end
 	end
@@ -1318,7 +1208,10 @@ function BagSync:GUILDBANKFRAME_OPENED()
 	local numTabs = GetNumGuildBankTabs()
 	for tab = 1, numTabs do
 		-- add this tab to the queue to refresh; if we do them all at once the server bugs and sends massive amounts of events
-		guildTabQueryQueue[tab] = true
+		local name, icon, isViewable, canDeposit, numWithdrawals, remainingWithdrawals = GetGuildBankTabInfo(tab)
+		if isViewable then
+			guildTabQueryQueue[tab] = true
+		end
 	end
 end
 
