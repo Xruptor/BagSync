@@ -255,6 +255,7 @@ local function ScanGuildBank()
 	
 	for tab = 1, numTabs do
 		local name, icon, isViewable, canDeposit, numWithdrawals, remainingWithdrawals = GetGuildBankTabInfo(tab)
+		--if we don't check for isViewable we get a weirdo permissions error for the player when they attempt it
 		if isViewable then
 			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
 			
@@ -288,6 +289,10 @@ local function ScanMailbox()
 	 --even though the user has mail in the mailbox.  This can be attributed to lag.
 	CheckInbox()
 
+	if not BS_DB then StartupDB() end
+	BS_DB['mailbox'] = BS_DB['mailbox'] or {}
+	
+	local slotItems = {}
 	local mailCount = 0
 	local numInbox = GetInboxNumItems()
 
@@ -298,49 +303,28 @@ local function ScanMailbox()
 				local name, itemTexture, count, quality, canUse = GetInboxItem(mailIndex, i)
 				local link = GetInboxItemLink(mailIndex, i)
 				
-				if name and link then
+				if name and link and ToShortLink(link) then
 					mailCount = mailCount + 1
-					
-					local index = GetTag('mailbox', 0, mailCount)
-					local linkItem = ToShortLink(link)
-					
-					if linkItem then
-						if (count) then
-							BS_DB[index] = format('%s,%d', linkItem, count)
-						else
-							BS_DB[index] = linkItem
-						end
+					count = (count > 1 and count) or nil
+					if count then
+						slotItems[mailCount] = format('%s,%d', ToShortLink(link), count)
 					else
-						BS_DB[index] = linkItem
+						slotItems[mailCount] = ToShortLink(link)
 					end
 				end
-				
 			end
 		end
 	end
 	
-	--lets avoid looping through data if we can help it
-	--store the amount of mail at our mailbox for comparison
-	local bChk = GetTag('bd', 'inbox', 0)
-
-	if BS_DB[bChk] then
-		local bVal = BS_DB[bChk]
-		--only delete if our current mail count is smaller then our stored amount
-		if mailCount < bVal then
-			for x = (mailCount + 1), bVal do
-				local delIndex = GetTag('mailbox', 0, x)
-				if BS_DB[delIndex] then BS_DB[delIndex] = nil end
-			end
-		end
-	end
-	
-	--store our mail count regardless
-	BS_DB[bChk] = mailCount
-
+	BS_DB['mailbox'][0] = slotItems
 	isCheckingMail = false
 end
 
 local function ScanAuctionHouse()
+	if not BS_DB then StartupDB() end
+	BS_DB['auction'] = BS_DB['auction'] or {}
+	
+	local slotItems = {}
 	local ahCount = 0
 	local numActiveAuctions = GetNumAuctionItems("owner")
 	
@@ -351,62 +335,39 @@ local function ScanAuctionHouse()
 			if name then
 				local link = GetAuctionItemLink("owner", ahIndex)
 				local timeLeft = GetAuctionItemTimeLeft("owner", ahIndex)
-				
-				if link and timeLeft then
+				if link and ToShortLink(link) and timeLeft then
 					ahCount = ahCount + 1
-					local index = GetTag('auction', 0, ahCount)
-					local linkItem = ToShortLink(link)
-					if linkItem then
-						count = (count or 1)
-						BS_DB[index] = format('%s,%s,%s', linkItem, count, timeLeft)
-					else
-						BS_DB[index] = linkItem
-					end
+					count = (count or 1)
+					slotItems[ahCount] = format('%s,%s,%s', ToShortLink(link), count, timeLeft)
 				end
 			end
 		end
 	end
 	
-	--check for stragglers from previous auction house count
-	local bChk = GetTag('bd', 'auction_count', 0)
-
-	if BS_DB[bChk] then
-		local bVal = BS_DB[bChk]
-		--only delete if our current auction count is smaller then our stored amount
-		if ahCount < bVal then
-			for x = (ahCount + 1), bVal do
-				local delIndex = GetTag('auction', 0, x)
-				if BS_DB[delIndex] then BS_DB[delIndex] = nil end
-			end
-		end
-	end
-	
-	--store our new auction house count
-	BS_DB[bChk] = ahCount
+	BS_DB['auction'][0] = slotItems
+	BS_DB.AH_Count = ahCount
 end
 
 --this method is global for all toons, removes expired auctions on login
 local function RemoveExpiredAuctions()
-	local bChk = GetTag('bd', 'auction_count', 0)
 	local timestampChk = { 30*60, 2*60*60, 12*60*60, 48*60*60 }
 				
 	for realm, rd in pairs(BagSyncDB) do
 		--realm
 		for k, v in pairs(rd) do
 			--users k=name, v=values
-			if BagSyncDB[realm][k].AH_LastScan then --only proceed if we have an auction house time to work with
-				--check to see if we even have a count
-				if BagSyncDB[realm][k][bChk] then
+			if BagSyncDB[realm][k].AH_LastScan and BagSyncDB[realm][k].AH_Count then --only proceed if we have an auction house time to work with
+				--check to see if we even have something to work with
+				if BagSyncDB[realm][k]['auction'] then
 					--we do so lets do a loop
-					local bVal = BagSyncDB[realm][k][bChk]
+					local bVal = BagSyncDB[realm][k].AH_Count
 					--do a loop through all of them and check to see if any expired
 					for x = 1, bVal do
-						local getIndex = GetTag('auction', 0, x)
-						if BagSyncDB[realm][k][getIndex] then
+						if BagSyncDB[realm][k]['auction'][0][x] then
 							--check for expired and remove if necessary
 							--it's okay if the auction count is showing more then actually stored, it's just used as a means
 							--to scan through all our items.  Even if we have only 3 and the count is 6 it will just skip the last 3.
-							local dblink, dbcount, dbtimeleft = strsplit(',', BagSyncDB[realm][k][getIndex])
+							local dblink, dbcount, dbtimeleft = strsplit(',', BagSyncDB[realm][k]['auction'][0][x])
 							
 							--only proceed if we have everything to work with, otherwise this auction data is corrupt
 							if dblink and dbcount and dbtimeleft then
@@ -415,11 +376,11 @@ local function RemoveExpiredAuctions()
 								local diff = time() - BagSyncDB[realm][k].AH_LastScan 
 								if diff > timestampChk[tonumber(dbtimeleft)] then
 									--technically this isn't very realiable.  but I suppose it's better the  nothing
-									BagSyncDB[realm][k][getIndex] = nil
+									BagSyncDB[realm][k]['auction'][0][x] = nil
 								end
 							else
 								--it's corrupt delete it
-								BagSyncDB[realm][k][getIndex] = nil
+								BagSyncDB[realm][k]['auction'][0][x] = nil
 							end
 						end
 					end
@@ -990,7 +951,7 @@ function BagSync:PLAYER_LOGIN()
 	ScanTokens()
 	
 	--clean up old auctions
-	--RemoveExpiredAuctions()
+	RemoveExpiredAuctions()
 	
 	--check for minimap toggle
 	if BagSyncOpt.enableMinimap and BagSync_MinimapButton and not BagSync_MinimapButton:IsVisible() then
