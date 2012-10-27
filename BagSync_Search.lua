@@ -131,35 +131,53 @@ local function DoSearch()
 	if strlen(searchStr) > 0 then
 		
 		local playerFaction = UnitFactionGroup("player")
-
+		local allowList = {
+			["bag"] = 0,
+			["bank"] = 0,
+			["equip"] = 0,
+			["mailbox"] = 0,
+			["void"] = 0,
+			["auction"] = 0,
+			["guild"] = 0,
+		}
+			
 		--loop through our characters
+		--k = player, v = stored data for player
 		for k, v in pairs(BagSyncDB[currentRealm]) do
-		
+
 			local pFaction = v.faction or playerFaction --just in case ;) if we dont know the faction yet display it anyways
-		
+			
 			--check if we should show both factions or not
 			if BagSyncOpt.enableFaction or pFaction == playerFaction then
 
 				--now count the stuff for the user
+				--q = bag name, r = stored data for bag name
 				for q, r in pairs(v) do
-					--don't search gold, faction, or class info, just items
-					if q ~= "gold" and q ~= "faction" and q ~= "class" then
-						local dblink, dbcount = strsplit(',', r)
-						if dblink then
-							local dName, dItemLink, dRarity = GetItemInfo(dblink)
-							if dName and dItemLink then
-								--we found a match
-								if not tempList[dblink] and ItemSearch:Find(dItemLink, searchStr) then
-									table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
-									tempList[dblink] = dName
-									count = count + 1
+					--only loop through table items we want
+					if allowList[q] and type(r) == "table" then
+						--bagID = bag name bagID, bagInfo = data of specific bag with bagID
+						for bagID, bagInfo in pairs(r) do
+							--slotID = slotid for specific bagid, itemValue = data of specific slotid
+							if type(bagInfo) == "table" then
+								for slotID, itemValue in pairs(bagInfo) do
+									local dblink, dbcount = strsplit(',', itemValue)
+									if dblink then
+										local dName, dItemLink, dRarity = GetItemInfo(dblink)
+										if dName and dItemLink then
+											--we found a match
+											if not tempList[dblink] and ItemSearch:Find(dItemLink, searchStr) then
+												table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
+												tempList[dblink] = dName
+												count = count + 1
+											end
+										end
+									end
 								end
 							end
 						end
 					end
 				end
-			
-				--only search guild if the guild features are on
+				
 				if BagSyncOpt.enableGuild then
 					local guildN = v.guild or nil
 				
@@ -167,6 +185,7 @@ local function DoSearch()
 					if BagSyncGUILD_DB and guildN and BagSyncGUILD_DB[currentRealm][guildN] then
 						--check to see if this guild has already been done through this run (so we don't do it multiple times)
 						if not previousGuilds[guildN] then
+							--we only really need to see this information once per guild
 							for q, r in pairs(BagSyncGUILD_DB[currentRealm][guildN]) do
 								local dblink, dbcount = strsplit(',', r)
 								if dblink then
@@ -185,11 +204,11 @@ local function DoSearch()
 						end
 					end
 				end
-
+				
 			end
 			
 		end
-
+		
 		table.sort(searchTable, function(a,b) return (a.name < b.name) end)
 	end
 	
