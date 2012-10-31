@@ -633,7 +633,7 @@ local function ScanTokens()
 			end
 		end
 	end
-	
+	--we don't want to overwrite tokens, because some characters may have currency that the others dont have
 end
 
 hooksecurefunc("BackpackTokenFrame_Update", ScanTokens)
