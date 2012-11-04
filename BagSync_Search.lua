@@ -3,6 +3,7 @@ local searchTable = {}
 local rows, anchor = {}
 local currentRealm = GetRealmName()
 local GetItemInfo = _G['GetItemInfo']
+local currentPlayer = UnitName('player')
 
 local ItemSearch = LibStub('LibItemSearch-1.0')
 local bgSearch = CreateFrame("Frame","BagSync_SearchFrame", UIParent)
@@ -127,6 +128,7 @@ local function DoSearch()
 	local tempList = {}
 	local previousGuilds = {}
 	local count = 0
+	local playerSearch = false
 	
 	if strlen(searchStr) > 0 then
 		
@@ -140,7 +142,9 @@ local function DoSearch()
 			["auction"] = 0,
 			["guild"] = 0,
 		}
-			
+		
+		if string.len(searchStr) > 1 and string.find(searchStr, "@") and allowList[string.sub(searchStr, 2)] ~= nil then playerSearch = true end
+		
 		--loop through our characters
 		--k = player, v = stored data for player
 		for k, v in pairs(BagSyncDB[currentRealm]) do
@@ -164,8 +168,13 @@ local function DoSearch()
 									if dblink then
 										local dName, dItemLink, dRarity = GetItemInfo(dblink)
 										if dName and dItemLink then
+											--are we checking in our bank,void, etc?
+											if playerSearch and string.sub(searchStr, 2) == q and string.sub(searchStr, 2) ~= "guild" and k == currentPlayer and not tempList[dblink] then
+												table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
+												tempList[dblink] = dName
+												count = count + 1
 											--we found a match
-											if not tempList[dblink] and ItemSearch:Find(dItemLink, searchStr) then
+											elseif not playerSearch and not tempList[dblink] and ItemSearch:Find(dItemLink, searchStr) then
 												table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
 												tempList[dblink] = dName
 												count = count + 1
@@ -191,8 +200,12 @@ local function DoSearch()
 								if dblink then
 									local dName, dItemLink, dRarity = GetItemInfo(dblink)
 									if dName then
+										if playerSearch and string.sub(searchStr, 2) == q and string.sub(searchStr, 2) == "guild" and k == currentPlayer and not tempList[dblink] then
+											table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
+											tempList[dblink] = dName
+											count = count + 1
 										--we found a match
-										if not tempList[dblink] and ItemSearch:Find(dItemLink, searchStr) then
+										elseif not playerSearch and not tempList[dblink] and ItemSearch:Find(dItemLink, searchStr) then
 											table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
 											tempList[dblink] = dName
 											count = count + 1
