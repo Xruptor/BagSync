@@ -19,6 +19,7 @@ bgsOpt:SetScript("OnShow", function()
 		BagSyncConfig_AuctionInfo:SetChecked(BagSyncOpt["enableAuction"])
 		BagSyncConfig_TooltipSearchOnly:SetChecked(BagSyncOpt["tooltipOnlySearch"])
 		BagSyncConfig_EnableBagSyncTooltips:SetChecked(BagSyncOpt["enableTooltips"])
+		BagSyncConfig_EnableBagSyncTooltipsSeperator:SetChecked(BagSyncOpt["enableTooltipSeperator"])
 	end
 end)
 
@@ -226,3 +227,23 @@ end)
 local bgs_EnableBagSyncTooltips_OptText = bgs_EnableBagSyncTooltips_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 bgs_EnableBagSyncTooltips_OptText:SetPoint("LEFT", bgs_EnableBagSyncTooltips_Opt, "RIGHT", 0, 1)
 bgs_EnableBagSyncTooltips_OptText:SetText(L["Enable BagSync Tooltips"])
+
+--[[ Toggle for BagSync Tooltip Seperator]]--
+local bgs_EnableBagSyncTooltipsSeperator_Opt = CreateFrame("CheckButton", "BagSyncConfig_EnableBagSyncTooltipsSeperator", bgsOpt, "OptionsBaseCheckButtonTemplate")
+bgs_EnableBagSyncTooltipsSeperator_Opt:SetPoint("TOPLEFT", 16, -325)
+bgs_EnableBagSyncTooltipsSeperator_Opt:SetScript("OnClick", function(frame)
+	if BagSyncOpt then
+		if frame:GetChecked() then
+			PlaySound("igMainMenuOptionCheckBoxOn")
+			BagSyncOpt["enableTooltipSeperator"] = true
+			if BagSync then BagSync:resetTooltip() end
+		else
+			PlaySound("igMainMenuOptionCheckBoxOff")
+			BagSyncOpt["enableTooltipSeperator"] = false
+			if BagSync then BagSync:resetTooltip() end
+		end
+	end
+end)
+local bgs_EnableBagSyncTooltipsSeperator_OptText = bgs_EnableBagSyncTooltipsSeperator_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+bgs_EnableBagSyncTooltipsSeperator_OptText:SetPoint("LEFT", bgs_EnableBagSyncTooltipsSeperator_Opt, "RIGHT", 0, 1)
+bgs_EnableBagSyncTooltipsSeperator_OptText:SetText(L["Enable empty line seperator above BagSync tooltip display."])

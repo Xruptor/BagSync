@@ -113,6 +113,7 @@ local function StartupDB()
 	if BagSyncOpt.enableAuction == nil then BagSyncOpt.enableAuction = true end
 	if BagSyncOpt.tooltipOnlySearch == nil then BagSyncOpt.tooltipOnlySearch = false end
 	if BagSyncOpt.enableTooltips == nil then BagSyncOpt.enableTooltips = true end
+	if BagSyncOpt.enableTooltipSeperator == nil then BagSyncOpt.enableTooltipSeperator = true end
 	
 	--new format, get rid of old
 	if not BagSyncOpt.dbversion or not tonumber(BagSyncOpt.dbversion) or tonumber(BagSyncOpt.dbversion) < 7 then
@@ -813,6 +814,12 @@ local function AddToTooltip(frame, link)
 	--this is so we don't scan the same guild multiple times
 	local previousGuilds = {}
 	local grandTotal = 0
+	
+	--check for seperator
+	if BagSyncOpt.enableTooltipSeperator then
+		frame:AddDoubleLine(" ", " ")
+		table.insert(lastDisplayed, " @ ")
+	end
 
 	--loop through our characters
 	--k = player, v = stored data for player
@@ -1152,8 +1159,8 @@ end
 
 function BagSync:BAG_UPDATE(event, bagid)
 	-- -1 happens to be the primary bank slot ;)
-	if bagid < -1 then return end
-	if not(bagid == BANK_CONTAINER or bagid > NUM_BAG_SLOTS) or atBank or atVoidBank then
+	if bagid <= BANK_CONTAINER then return end
+	if not(bagid > NUM_BAG_SLOTS) or atBank or atVoidBank then
 	
 		--this will update the bank/bag slots
 		local bagname
@@ -1162,9 +1169,7 @@ function BagSync:BAG_UPDATE(event, bagid)
 		--so instead I'm using constants :)
 		if bagid < -1 then return end
 		
-		if bagid == BANK_CONTAINER then
-			bagname = 'bank'
-		elseif (bagid >= NUM_BAG_SLOTS + 1) and (bagid <= NUM_BAG_SLOTS + NUM_BANKBAGSLOTS) then
+		if (bagid >= NUM_BAG_SLOTS + 1) and (bagid <= NUM_BAG_SLOTS + NUM_BANKBAGSLOTS) then
 			bagname = 'bank'
 		elseif (bagid >= BACKPACK_CONTAINER) and (bagid <= BACKPACK_CONTAINER + NUM_BAG_SLOTS) then
 			bagname = 'bag'
