@@ -6,28 +6,28 @@
 		BagSync_SearchFrame:Show()
 	end
   </Binding>
-   <Binding name="BAGSYNCTOGGLETOKENS" header="BAGSYNC">
+   <Binding name="BAGSYNCTOGGLETOKENS">
 	if BagSync_TokensFrame:IsVisible() then
 		BagSync_TokensFrame:Hide()
 	else
 		BagSync_TokensFrame:Show()
 	end
   </Binding>
-   <Binding name="BAGSYNCTOGGLEPROFILES" header="BAGSYNC">
+   <Binding name="BAGSYNCTOGGLEPROFILES">
 	if BagSync_ProfilesFrame:IsVisible() then
 		BagSync_ProfilesFrame:Hide()
 	else
 		BagSync_ProfilesFrame:Show()
 	end
   </Binding>
-   <Binding name="BAGSYNCTOGGLECRAFTS" header="BAGSYNC">
+   <Binding name="BAGSYNCTOGGLECRAFTS">
 	if BagSync_CraftsFrame:IsVisible() then
 		BagSync_CraftsFrame:Hide()
 	else
 		BagSync_CraftsFrame:Show()
 	end
   </Binding>
-   <Binding name="BAGSYNCTOGGLEBLACKLIST" header="BAGSYNC">
+   <Binding name="BAGSYNCTOGGLEBLACKLIST">
 	if BagSync_BlackListFrame:IsVisible() then
 		BagSync_BlackListFrame:Hide()
 	else

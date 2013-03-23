@@ -17,7 +17,7 @@
 		<op>				:=  : | = | == | != | ~= | < | > | <= | >=
 --]]
 
-local Lib = LibStub:NewLibrary('LibItemSearch-1.0', 7)
+local Lib = LibStub:NewLibrary('LibItemSearch-1.0', 9)
 if not Lib then
   return
 else
@@ -176,7 +176,7 @@ function Lib:FindTypedSearch(item, search, default)
     end
   else
     for id, searchType in self:GetTypedSearches() do
-      if self:UseTypedSearch(searchType, item, operator, search) then
+      if not searchType.onlyTags and self:UseTypedSearch(searchType, item, operator, search) then
         return true
       end
     end
@@ -200,14 +200,14 @@ end
 
 Lib:RegisterTypedSearch{
   id = 'itemName',
-  tags = {'name'},
+  tags = {'n', 'name'},
 
 	canSearch = function(self, operator, search)
 		return not operator and search
 	end,
 
 	findItem = function(self, item, _, search)
-		local name = GetItemInfo(item)
+		local name = item:match('%[(.-)%]')
 		return match(search, name)
 	end
 }
@@ -217,7 +217,7 @@ Lib:RegisterTypedSearch{
 
 Lib:RegisterTypedSearch{
 	id = 'itemType',
-	tags = {'type', 'slot'},
+	tags = {'t', 'type', 'slot'},
 
 	canSearch = function(self, operator, search)
 		return not operator and search
@@ -239,7 +239,7 @@ end
 
 Lib:RegisterTypedSearch{
 	id = 'itemQuality',
-	tags = {'quality'},
+	tags = {'q', 'quality'},
 
 	canSearch = function(self, _, search)
 		for i, name in pairs(qualities) do
@@ -260,7 +260,7 @@ Lib:RegisterTypedSearch{
 
 Lib:RegisterTypedSearch{
 	id = 'itemLevel',
-	tags = {'level', 'lvl'},
+	tags = {'l', 'level', 'lvl'},
 
 	canSearch = function(self, _, search)
 		return tonumber(search)
@@ -279,17 +279,19 @@ Lib:RegisterTypedSearch{
 
 local tooltipCache = setmetatable({}, {__index = function(t, k) local v = {} t[k] = v return v end})
 local tooltipScanner = _G['LibItemSearchTooltipScanner'] or CreateFrame('GameTooltip', 'LibItemSearchTooltipScanner', UIParent, 'GameTooltipTemplate')
-tooltipScanner:SetOwner(UIParent, 'ANCHOR_NONE')
 
 local function link_FindSearchInTooltip(itemLink, search)
-	--look in the cache for the result
 	local itemID = itemLink:match('item:(%d+)')
+	if not itemID then
+		return
+	end
+	
 	local cachedResult = tooltipCache[search][itemID]
 	if cachedResult ~= nil then
 		return cachedResult
 	end
 
-	--no match?, pull in the resut from tooltip parsing
+	tooltipScanner:SetOwner(UIParent, 'ANCHOR_NONE')
 	tooltipScanner:SetHyperlink(itemLink)
 
 	local result = false
@@ -316,8 +318,8 @@ Lib:RegisterTypedSearch{
 	end,
 
 	keywords = {
-    	['soulbound'] = ITEM_BIND_ON_PICKUP,
-    	['bound'] = ITEM_BIND_ON_PICKUP,
+    		['soulbound'] = ITEM_BIND_ON_PICKUP,
+    		['bound'] = ITEM_BIND_ON_PICKUP,
 		['boe'] = ITEM_BIND_ON_EQUIP,
 		['bop'] = ITEM_BIND_ON_PICKUP,
 		['bou'] = ITEM_BIND_ON_USE,
@@ -328,21 +330,23 @@ Lib:RegisterTypedSearch{
 
 Lib:RegisterTypedSearch{
 	id = 'tooltip',
+	tags = {'tt', 'tip', 'tooltip'},
+	onlyTags = true,
 
 	canSearch = function(self, _, search)
-		return search and search:match('^tt:(.+)$')
+		return search
 	end,
 
-	findItem = function(self, itemLink, _, search)
-		tooltipScanner:SetHyperlink(itemLink)
+	findItem = function(self, link, _, search)
+		tooltipScanner:SetOwner(UIParent, 'ANCHOR_NONE')
+		tooltipScanner:SetHyperlink(link)
 
-		local i = 1
-		while i <= tooltipScanner:NumLines() do
+		for i = 1, tooltipScanner:NumLines() do
 			local text =  _G[tooltipScanner:GetName() .. 'TextLeft' .. i]:GetText():lower()
+			
 			if text:find(search) then
 				return true
 			end
-			i = i + 1
 		end
 
 		return false
@@ -454,7 +458,7 @@ end
 
 Lib:RegisterTypedSearch{
 	id = 'equipmentSet',
-	tags = {'set'},
+	tags = {'s', 'set'},
 
 	canSearch = function(self, operator, search)
 		return not operator and search

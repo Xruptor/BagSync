@@ -8,6 +8,52 @@ local currentPlayer = UnitName('player')
 local ItemSearch = LibStub('LibItemSearch-1.0')
 local bgSearch = CreateFrame("Frame","BagSync_SearchFrame", UIParent)
 
+--add class search
+local tooltipScanner = _G['LibItemSearchTooltipScanner'] or CreateFrame('GameTooltip', 'LibItemSearchTooltipScanner', UIParent, 'GameTooltipTemplate')
+local tooltipCache = setmetatable({}, {__index = function(t, k) local v = {} t[k] = v return v end})
+
+ItemSearch:RegisterTypedSearch{
+	id = 'classRestriction',
+	tags = {'c', 'class'},
+	
+	canSearch = function(self, _, search)
+		return search
+	end,
+	
+	findItem = function(self, link, _, search)
+		if link:find("battlepet") then return false end
+
+		local itemID = link:match('item:(%d+)')
+		if not itemID then
+			return
+		end
+		
+		local cachedResult = tooltipCache[search][itemID]
+		if cachedResult ~= nil then
+			return cachedResult
+		end
+	
+		tooltipScanner:SetOwner(UIParent, 'ANCHOR_NONE')
+		tooltipScanner:SetHyperlink(link)
+
+		local result = false
+		
+		local pattern = string.gsub(ITEM_CLASSES_ALLOWED:lower(), "%%s", "(.+)")
+		
+		for i = 1, tooltipScanner:NumLines() do
+			local text =  _G[tooltipScanner:GetName() .. 'TextLeft' .. i]:GetText():lower()
+			textChk = string.find(text, pattern)
+
+			if textChk and tostring(text):find(search) then
+				result = true
+			end
+		end
+		
+		tooltipCache[search][itemID] = result
+		return result
+	end,
+}
+
 local function LoadSlider()
 
 	local function OnEnter(self)
