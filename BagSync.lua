@@ -255,6 +255,10 @@ local function SaveBag(bagname, bagid)
 	if not bagname or not bagid then return nil end
 	if not BS_DB then StartupDB() end
 	BS_DB[bagname] = BS_DB[bagname] or {}
+	
+	--reset our tooltip data since we scanned new items (we want current data not old)
+	lastItem = nil
+	lastDisplayed = {}
 
 	if GetContainerNumSlots(bagid) > 0 then
 		local slotItems = {}
@@ -314,6 +318,10 @@ local function ScanVoidBank()
 		if not BS_DB then StartupDB() end
 		BS_DB['void'] = BS_DB['void'] or {}
 		
+		--reset our tooltip data since we scanned new items (we want current data not old)
+		lastItem = nil
+		lastDisplayed = {}
+	
 		local slotItems = {}
 		for i = 1, 80 do
 			itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(i)
@@ -334,6 +342,10 @@ local function ScanGuildBank()
 	if not BS_GD then StartupDB() end
 	BS_GD[BS_DB.guild] = BS_GD[BS_DB.guild] or {}
 
+	--reset our tooltip data since we scanned new items (we want current data not old)
+	lastItem = nil
+	lastDisplayed = {}
+	
 	local numTabs = GetNumGuildBankTabs()
 	local index = 0
 	local slotItems = {}
@@ -381,6 +393,10 @@ local function ScanMailbox()
 	local mailCount = 0
 	local numInbox = GetInboxNumItems()
 
+	--reset our tooltip data since we scanned new items (we want current data not old)
+	lastItem = nil
+	lastDisplayed = {}
+	
 	--scan the inbox
 	if (numInbox > 0) then
 		for mailIndex = 1, numInbox do
@@ -412,6 +428,10 @@ local function ScanAuctionHouse()
 	local slotItems = {}
 	local ahCount = 0
 	local numActiveAuctions = GetNumAuctionItems("owner")
+	
+	--reset our tooltip data since we scanned new items (we want current data not old)
+	lastItem = nil
+	lastDisplayed = {}
 	
 	--scan the auction house
 	if (numActiveAuctions > 0) then
