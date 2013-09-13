@@ -795,7 +795,29 @@ local function getNameColor(sName, sClass)
 	return format(MOSS, sName)
 end
 
-local function AddToTooltip(frame, link)
+local function getPlayerNameColor(playerName)
+	if BagSyncDB[currentRealm][playerName] then
+		local sClass = BagSyncDB[currentRealm][playerName].class
+		return getNameColor(sName, sClass)
+	end
+	return format(MOSS, sName)
+end
+
+local function AddCurrencyToTooltip(frame, currencyName)
+	if BS_TD and currencyName and BS_TD[currencyName] then
+		if BagSyncOpt.enableTooltipSeperator then
+			frame:AddLine(" ")
+		end
+		for charName, count in pairsByKeys(BS_TD[currencyName]) do
+			if charName ~= "icon" and charName ~= "header" and count > 0 then
+				frame:AddDoubleLine(getPlayerNameColor(charName), count)
+			end
+		end
+		frame:Show()
+	end
+end
+
+local function AddItemToTooltip(frame, link)
 	--if we can't convert the item link then lets just ignore it altogether
 	local itemLink = ToShortLink(link)
 	if not itemLink then
@@ -948,14 +970,28 @@ local function hookTip(tooltip)
 		modified = false
 	end)
 	tooltip:HookScript('OnTooltipSetItem', function(self)
-		if not modified and BagSyncOpt.enableTooltips then
-			modified = true
-			
-			local name, link = self:GetItem()
-			if link and GetItemInfo(link) then
-				AddToTooltip(self, link)
-			end
-		end
+		if modified or not BagSyncOpt.enableTooltips then return end
+		modified = true
+		local name, link = self:GetItem()
+		AddItemToTooltip(self, link)
+	end)
+	hooksecurefunc(tooltip, 'SetCurrencyToken', function(self, index)
+		if modified or not BagSyncOpt.enableTooltips then return end
+		modified = true
+		local currencyName = GetCurrencyListInfo(index)
+		AddCurrencyToTooltip(self, currencyName)
+	end)
+	hooksecurefunc(tooltip, 'SetCurrencyByID', function(self, id)
+		if modified or not BagSyncOpt.enableTooltips then return end
+		modified = true
+		local currencyName = GetCurrencyInfo(id)
+		AddCurrencyToTooltip(self, currencyName)
+	end)
+	hooksecurefunc(tooltip, 'SetBackpackToken', function(self, index)
+		if modified or not BagSyncOpt.enableTooltips then return end
+		modified = true
+		local currencyName = GetBackpackCurrencyInfo(index)
+		AddCurrencyToTooltip(self, currencyName)
 	end)
 end
 
