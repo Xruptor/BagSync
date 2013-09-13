@@ -795,9 +795,9 @@ local function getNameColor(sName, sClass)
 	return format(MOSS, sName)
 end
 
-local function getPlayerNameColor(playerName)
-	if BagSyncDB[currentRealm][playerName] then
-		local sClass = BagSyncDB[currentRealm][playerName].class
+local function getPlayerNameColor(sName)
+	if BagSyncDB[currentRealm][sName] then
+		local sClass = BagSyncDB[currentRealm][sName].class
 		return getNameColor(sName, sClass)
 	end
 	return format(MOSS, sName)
