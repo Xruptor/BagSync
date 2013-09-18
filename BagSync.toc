@@ -2,7 +2,7 @@
 ## Title: BagSync
 ## Notes: BagSync tracks your characters items and displays it within tooltips.
 ## Author: Xruptor
-## Version: 7.5
+## Version: 7.6
 ## OptionalDeps: tekDebug
 ## SavedVariables: BagSyncDB, BagSyncOpt, BagSyncGUILD_DB, BagSyncTOKEN_DB, BagSyncCRAFT_DB, BagSyncBLACKLIST_DB
 
