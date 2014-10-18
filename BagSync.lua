@@ -311,6 +311,9 @@ local function ScanEntireBank()
 	for i = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
 		SaveBag('bank', i)
 	end
+	if IsReagentBankUnlocked() then 
+		SaveBag('reagentbank', REAGENTBANK_CONTAINER)
+	end
 end
 
 local function ScanVoidBank()
@@ -322,13 +325,19 @@ local function ScanVoidBank()
 		lastItem = nil
 		lastDisplayed = {}
 	
+		local numTabs = 2
+		local index = 0
 		local slotItems = {}
-		for i = 1, 80 do
-			itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(i)
-			if (itemID) then
-				slotItems[i] = itemID and tostring(itemID) or nil
+		
+		for tab = 1, numTabs do
+			for i = 1, 80 do
+				itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(tab, i)
+				if (itemID) then
+					index = index + 1
+					slotItems[index] = itemID and tostring(itemID) or nil
+				end
 			end
-		end
+		end		
 		
 		BS_DB['void'][0] = slotItems
 	end
@@ -688,6 +697,16 @@ local function CountsToInfoString(countTable)
 		end
 		total = total + countTable['bank']
 	end
+	
+	if countTable['reagentbank'] > 0 then
+		local count = L["ReagentBank: %d"]:format(countTable['reagentbank'])
+		if info then
+			info = strjoin(', ', info, count)
+		else
+			info = count
+		end
+		total = total + countTable['reagentbank']
+	end
 
 	if countTable['equip'] > 0 then
 		local count = L["Equipped: %d"]:format(countTable['equip'])
@@ -870,6 +889,7 @@ local function AddItemToTooltip(frame, link)
 		local allowList = {
 			["bag"] = 0,
 			["bank"] = 0,
+			["reagentbank"] = 0,
 			["equip"] = 0,
 			["mailbox"] = 0,
 			["void"] = 0,
@@ -878,7 +898,7 @@ local function AddItemToTooltip(frame, link)
 		}
 	
 		local infoString
-		local invCount, bankCount, equipCount, guildCount, mailboxCount, voidbankCount, auctionCount = 0, 0, 0, 0, 0, 0, 0
+		local invCount, bankCount, reagentbankCount, equipCount, guildCount, mailboxCount, voidbankCount, auctionCount = 0, 0, 0, 0, 0, 0, 0, 0
 		local pFaction = v.faction or playerFaction --just in case ;) if we dont know the faction yet display it anyways
 		
 		--check if we should show both factions or not
@@ -1073,6 +1093,7 @@ function BagSync:PLAYER_LOGIN()
 	self:RegisterEvent('GUILDBANKFRAME_OPENED')
 	self:RegisterEvent('GUILDBANKFRAME_CLOSED')
 	self:RegisterEvent('GUILDBANKBAGSLOTS_CHANGED')
+	self:RegisterEvent('PLAYERREAGENTBANKSLOTS_CHANGED')
 	self:RegisterEvent('BAG_UPDATE')
 	self:RegisterEvent('UNIT_INVENTORY_CHANGED')
 	self:RegisterEvent('GUILD_ROSTER_UPDATE')
@@ -1215,7 +1236,7 @@ end
 
 function BagSync:BAG_UPDATE(event, bagid)
 	-- -1 happens to be the primary bank slot ;)
-	if bagid <= BANK_CONTAINER then return end
+	if (bagid <= BANK_CONTAINER) then return end
 	if not(bagid > NUM_BAG_SLOTS) or atBank or atVoidBank then
 	
 		--this will update the bank/bag slots
@@ -1223,7 +1244,7 @@ function BagSync:BAG_UPDATE(event, bagid)
 
 		--get the correct bag name based on it's id, trying NOT to use numbers as Blizzard may change bagspace in the future
 		--so instead I'm using constants :)
-		if bagid < -1 then return end
+		if bagid < -1 and (bagid ~= REAGENTBANK_CONTAINER) then return end
 		
 		if (bagid >= NUM_BAG_SLOTS + 1) and (bagid <= NUM_BAG_SLOTS + NUM_BANKBAGSLOTS) then
 			bagname = 'bank'
@@ -1261,6 +1282,14 @@ end
 
 function BagSync:BANKFRAME_CLOSED()
 	atBank = false
+end
+
+------------------------------
+--		REAGENT BANK		--
+------------------------------
+
+function BagSync:PLAYERREAGENTBANKSLOTS_CHANGED()
+	SaveBag('reagentbank', REAGENTBANK_CONTAINER)
 end
 
 ------------------------------
