@@ -337,7 +337,7 @@ local function ScanVoidBank()
 					slotItems[index] = itemID and tostring(itemID) or nil
 				end
 			end
-		end		
+		end
 		
 		BS_DB['void'][0] = slotItems
 	end
@@ -1244,7 +1244,7 @@ function BagSync:BAG_UPDATE(event, bagid)
 
 		--get the correct bag name based on it's id, trying NOT to use numbers as Blizzard may change bagspace in the future
 		--so instead I'm using constants :)
-		if bagid < -1 and (bagid ~= REAGENTBANK_CONTAINER) then return end
+		if bagid < -1 then return end
 		
 		if (bagid >= NUM_BAG_SLOTS + 1) and (bagid <= NUM_BAG_SLOTS + NUM_BANKBAGSLOTS) then
 			bagname = 'bank'
