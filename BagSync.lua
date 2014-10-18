@@ -308,6 +308,7 @@ end
 local function ScanEntireBank()
 	--force scan of bank bag -1, since blizzard never sends updates for it
 	SaveBag('bank', BANK_CONTAINER)
+	SaveBag('bank', REAGENTBANK_CONTAINER)
 	for i = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
 		SaveBag('bank', i)
 	end
@@ -1239,6 +1240,7 @@ function BagSync:BAG_UPDATE(event, bagid)
 		if atBank then
 			--we have to force the -1 default bank container because blizzard doesn't push updates for it (for some stupid reason)
 			SaveBag('bank', BANK_CONTAINER)
+			SaveBag('bank', REAGENTBANK_CONTAINER)
 		end
 
 		--now save the item information in the bag from bagupdate, this could be bag or bank
