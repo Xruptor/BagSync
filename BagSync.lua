@@ -323,14 +323,17 @@ local function ScanVoidBank()
 		lastDisplayed = {}
 	
 		local slotItems = {}
-		for i = 1, 80 do
-			itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(i)
-			if (itemID) then
-				slotItems[i] = itemID and tostring(itemID) or nil
+		for i = 1, 2 do
+			slotItems[i] = {}
+			for j = 1, 80 do
+				itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(i, j)
+				if (itemID) then
+					slotItems[i][j] = itemID and tostring(itemID) or nil
+				end
 			end
 		end
-		
-		BS_DB['void'][0] = slotItems
+
+		BS_DB['void'] = slotItems
 	end
 end
 
