@@ -1090,6 +1090,7 @@ function BagSync:PLAYER_LOGIN()
 	self:RegisterEvent('GUILDBANKBAGSLOTS_CHANGED')
 	self:RegisterEvent('PLAYERREAGENTBANKSLOTS_CHANGED')
 	self:RegisterEvent('BAG_UPDATE')
+	self:RegisterEvent('PLAYERBANKSLOTS_CHANGED')
 	self:RegisterEvent('UNIT_INVENTORY_CHANGED')
 	self:RegisterEvent('GUILD_ROSTER_UPDATE')
 	self:RegisterEvent('MAIL_SHOW')
@@ -1240,29 +1241,21 @@ end
 
 function BagSync:BAG_UPDATE(event, bagid)
 	-- -1 happens to be the primary bank slot ;)
-	if (bagid <= BANK_CONTAINER) then return end
-	if not(bagid > NUM_BAG_SLOTS) or atBank or atVoidBank then
+	if (bagid > BANK_CONTAINER) then
 	
 		--this will update the bank/bag slots
 		local bagname
 
 		--get the correct bag name based on it's id, trying NOT to use numbers as Blizzard may change bagspace in the future
 		--so instead I'm using constants :)
-		if bagid < -1 then return end
-		
-		if (bagid >= NUM_BAG_SLOTS + 1) and (bagid <= NUM_BAG_SLOTS + NUM_BANKBAGSLOTS) then
+		if ((bagid >= NUM_BAG_SLOTS + 1) and (bagid <= NUM_BAG_SLOTS + NUM_BANKBAGSLOTS)) then
 			bagname = 'bank'
 		elseif (bagid >= BACKPACK_CONTAINER) and (bagid <= BACKPACK_CONTAINER + NUM_BAG_SLOTS) then
 			bagname = 'bag'
 		else
 			return
 		end
-
-		if atBank then
-			--we have to force the -1 default bank container because blizzard doesn't push updates for it (for some stupid reason)
-			SaveBag('bank', BANK_CONTAINER)
-		end
-
+		
 		--now save the item information in the bag from bagupdate, this could be bag or bank
 		SaveBag(bagname, bagid)
 		
@@ -1286,6 +1279,13 @@ end
 
 function BagSync:BANKFRAME_CLOSED()
 	atBank = false
+end
+
+function BagSync:PLAYERBANKSLOTS_CHANGED(event, slotid)
+	--Remove atBank when/if Blizzard allows Bank access without being at the bank
+	if atBank then
+		SaveBag('bank', BANK_CONTAINER)
+	end
 end
 
 ------------------------------
