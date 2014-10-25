@@ -139,7 +139,7 @@ BAGSYNC_L = GetLocale() == "zhCN" and {
 	["Left Click = Search Window"] 													= "Links Klick = Suchen",
 	["Right Click = BagSync Menu"] 													= "Rechts Klick = BagSync Menu",
 	
-} or GetLocale() == "PtBr" and {
+} or GetLocale() == "ptBR" and {
 	--special thanks to kubito from wowinterface.com
 	["Bags: %d"] = "Bolsa",
 	["Bank: %d"] = "Banco",
