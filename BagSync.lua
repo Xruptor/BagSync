@@ -893,7 +893,6 @@ local function AddItemToTooltip(frame, link)
 		}
 	
 		local infoString
-		local invCount, bankCount, reagentbankCount, equipCount, guildCount, mailboxCount, voidbankCount, auctionCount = 0, 0, 0, 0, 0, 0, 0, 0
 		local pFaction = v.faction or playerFaction --just in case ;) if we dont know the faction yet display it anyways
 		
 		--check if we should show both factions or not
