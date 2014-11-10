@@ -888,12 +888,7 @@ local function AddItemToTooltip(frame, link) --workaround
 	--this is so we don't scan the same guild multiple times
 	local previousGuilds = {}
 	local grandTotal = 0
-	
-	--check for seperator
-	if BagSyncOpt.enableTooltipSeperator then
-		frame:AddDoubleLine(" ", " ")
-		table.insert(lastDisplayed, " @ ")
-	end
+	local first = true
 
 	--loop through our characters
 	--k = player, v = stored data for player
@@ -964,6 +959,13 @@ local function AddItemToTooltip(frame, link) --workaround
 			infoString = CountsToInfoString(allowList)
 
 			if infoString and infoString ~= '' then
+				--check for seperator
+				if first and BagSyncOpt.enableTooltipSeperator then
+					first = false
+					frame:AddDoubleLine(" ", " ")
+					table.insert(lastDisplayed, " @ ")
+				end
+
 				frame:AddDoubleLine(getNameColor(k, pClass), infoString)
 				table.insert(lastDisplayed, getNameColor(k or 'Unknown', pClass).."@"..(infoString or 'unknown'))
 			end
