@@ -187,6 +187,7 @@ local function DoSearch()
 			["void"] = 0,
 			["auction"] = 0,
 			["guild"] = 0,
+			["reagentbank"] = 0,
 		}
 		
 		if string.len(searchStr) > 1 and string.find(searchStr, "@") and allowList[string.sub(searchStr, 2)] ~= nil then playerSearch = true end
