@@ -1255,6 +1255,7 @@ function BagSync:BAG_UPDATE(event, bagid)
 			return
 		end
 		
+		if bagname == 'bank' and not atBank then return; end
 		--now save the item information in the bag from bagupdate, this could be bag or bank
 		SaveBag(bagname, bagid)
 		
