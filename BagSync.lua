@@ -831,8 +831,26 @@ local function AddCurrencyToTooltip(frame, currencyName)
 	end
 end
 
-local function AddItemToTooltip(frame, link)
-	--if we can't convert the item link then lets just ignore it altogether
+local function AddItemToTooltip(frame, link) --workaround
+	if (link) then
+		local itemId = tonumber(string.match(link, "item:(%d+):"))	-- get itemID // itemID seems to be "0" for every reagent in profession window?!
+		if (itemId == 0 and TradeSkillFrame ~= nil and TradeSkillFrame:IsVisible()) then -- some other frames show ID = 0 aswell, so limit this workaround to the profession window || IMPORTANT: TradeSkillFrame ~= nil has to be checked BEFORE TradeSkillFrame:IsVisible()
+			local newItemId
+			if ((GetMouseFocus():GetName()) == "TradeSkillSkillIcon") then 			--replace TradeSkill
+				newItemId = tonumber(GetTradeSkillItemLink(TradeSkillFrame.selectedSkill):match("item:(%d+):"))
+			else 		-- could check if a reagent is under mouse, but since we have to check it 3 lines later again...
+				for i = 1, 12 do 													-- how many reagents can a reciepe have? lets assume not more than 12
+					if ((GetMouseFocus():GetName()) == "TradeSkillReagent"..i) then 	--replace TradeSkillReagents
+						newItemId = tonumber(GetTradeSkillReagentItemLink(TradeSkillFrame.selectedSkill, i):match("item:(%d+):"))
+						break 			--end loop if correct one already found
+					end
+				end
+			end
+			_, link = GetItemInfo(newItemId) -- replace original link with our found link
+		end	
+	end
+	
+	--if we can't convert the item link then lets just ignore it altogether	
 	local itemLink = ToShortLink(link)
 	if not itemLink then
 		frame:Show()
@@ -1007,7 +1025,15 @@ local function hookTip(tooltip)
 		local currencyName = GetBackpackCurrencyInfo(index)
 		AddCurrencyToTooltip(self, currencyName)
 	end)
+	-- hooksecurefunc(tooltip, 'SetTradeSkillReagentInfo', function(self, index)
+		-- if modified or not BagSyncOpt.enableTooltips then return end
+		-- modified = true
+		-- local currencyName = GetTradeSkillReagentInfo(index,1)
+		-- AddCurrencyToTooltip(self, currencyName)
+	-- end)
 end
+--GameTooltip:SetTradeSkillItem(skillIndex [, reagentIndex])
+
 
 hookTip(GameTooltip)
 hookTip(ItemRefTooltip)
