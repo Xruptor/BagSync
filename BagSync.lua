@@ -831,16 +831,16 @@ local function AddCurrencyToTooltip(frame, currencyName)
 	end
 end
 
-local function AddItemToTooltip(frame, link)
+local function AddItemToTooltip(frame, link) --workaround
 	if (link) then
 		local itemId = tonumber(string.match(link, "item:(%d+):"))	-- get itemID // itemID seems to be "0" for every reagent in profession window?!
-		if (itemId == 0) then
+		if (itemId == 0 and TradeSkillFrame:IsVisible()) then -- some other frames show ID = 0 aswell, so limit this workaround to the profession window
 			local newItemId
-			if (GetMouseFocus():GetName()) == "TradeSkillSkillIcon" then 			--replace TradeSkill
+			if ((GetMouseFocus():GetName()) == "TradeSkillSkillIcon") then 			--replace TradeSkill
 				newItemId = tonumber(GetTradeSkillItemLink(TradeSkillFrame.selectedSkill):match("item:(%d+):"))
 			else 		-- could check if a reagent is under mouse, but since we have to check it 3 lines later again...
 				for i = 1, 12 do 													-- how many reagents can a reciepe have? lets assume not more than 12
-					if (GetMouseFocus():GetName()) == "TradeSkillReagent"..i then 	--replace TradeSkillReagents
+					if ((GetMouseFocus():GetName()) == "TradeSkillReagent"..i) then 	--replace TradeSkillReagents
 						newItemId = tonumber(GetTradeSkillReagentItemLink(TradeSkillFrame.selectedSkill, i):match("item:(%d+):"))
 						break 			--end loop if correct one already found
 					end
