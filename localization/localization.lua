@@ -179,6 +179,9 @@ BAGSYNC_L = GetLocale() == "zhCN" and {
 	["Add ItemID"] = "Добавить ItemID",
 	["Remove ItemID"] = "Удалить ItemID",
 	----THESE ARE FOR SLASH COMMANDS
+--[[	Не переводите на русский эту секцию, иначе консольные команды вида "/bgs gold" не будут работать, потребуется 
+	писать в консоли "/bgs золото". Что не очень удобно и не эстетично. При желании, пользователь может просто 
+	раскомментировать эту секцию на локальном компьютере.
 	["[itemname]"] = "[имя предмета]",
 	["search"] = "поиск",
 	["gold"] = "золото",
@@ -187,6 +190,7 @@ BAGSYNC_L = GetLocale() == "zhCN" and {
 	["profiles"] = "профили",
 	["professions"] = "профессии",
 	["blacklist"] = "черный список",
+ --]]
 	----------------------
 	["/bgs [itemname] - Does a quick search for an item"] = "/bgs [имя предмета] - Быстрый поиск предмета.",
 	["/bgs search - Opens the search window"] = "/bgs search - Открыть окно поиска.",
