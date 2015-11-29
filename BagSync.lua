@@ -331,7 +331,7 @@ local function ScanVoidBank()
 		
 		for tab = 1, numTabs do
 			for i = 1, 80 do
-				itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(tab, i)
+				local itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(tab, i)
 				if (itemID) then
 					index = index + 1
 					slotItems[index] = itemID and tostring(itemID) or nil
@@ -846,7 +846,7 @@ local function AddItemToTooltip(frame, link) --workaround
 					end
 				end
 			end
-			_, link = GetItemInfo(newItemId) -- replace original link with our found link
+			link = select(2, GetItemInfo(newItemId)) -- replace original link with our found link
 		end	
 	end
 	
