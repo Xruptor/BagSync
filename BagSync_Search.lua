@@ -42,7 +42,7 @@ ItemSearch:RegisterTypedSearch{
 		
 		for i = 1, tooltipScanner:NumLines() do
 			local text =  _G[tooltipScanner:GetName() .. 'TextLeft' .. i]:GetText():lower()
-			textChk = string.find(text, pattern)
+			local textChk = string.find(text, pattern)
 
 			if textChk and tostring(text):find(search) then
 				result = true
