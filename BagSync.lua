@@ -846,7 +846,9 @@ local function AddItemToTooltip(frame, link) --workaround
 					end
 				end
 			end
-			link = select(2, GetItemInfo(newItemId)) -- replace original link with our found link
+			if newItemId then
+				link = select(2, GetItemInfo(newItemId)) -- replace original link with our found link
+			end
 		end	
 	end
 	
