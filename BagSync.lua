@@ -834,14 +834,14 @@ end
 local function AddItemToTooltip(frame, link) --workaround
 	if (link) then
 		local itemId = tonumber(string.match(link, "item:(%d+):"))	-- get itemID // itemID seems to be "0" for every reagent in profession window?!
-		if (itemId == 0 and TradeSkillFrame ~= nil and TradeSkillFrame:IsVisible()) then -- some other frames show ID = 0 aswell, so limit this workaround to the profession window || IMPORTANT: TradeSkillFrame ~= nil has to be checked BEFORE TradeSkillFrame:IsVisible()
+		if (itemId == nil or itemId == 0 and TradeSkillFrame ~= nil and TradeSkillFrame:IsVisible()) then -- some other frames show ID = 0 aswell, so limit this workaround to the profession window || IMPORTANT: TradeSkillFrame ~= nil has to be checked BEFORE TradeSkillFrame:IsVisible()
 			local newItemId
-			if ((GetMouseFocus():GetName()) == "TradeSkillSkillIcon") then 			--replace TradeSkill
-				newItemId = tonumber(GetTradeSkillItemLink(TradeSkillFrame.selectedSkill):match("item:(%d+):"))
+			if (GetMouseFocus() == TradeSkillFrame.DetailsFrame.Contents.ResultIcon) then 			--replace TradeSkill
+				newItemId = tonumber(C_TradeSkillUI.GetRecipeItemLink(TradeSkillFrame.RecipeList.selectedRecipeID):match("item:(%d+):"))
 			else 		-- could check if a reagent is under mouse, but since we have to check it 3 lines later again...
 				for i = 1, 12 do 													-- how many reagents can a reciepe have? lets assume not more than 12
-					if ((GetMouseFocus():GetName()) == "TradeSkillReagent"..i) then 	--replace TradeSkillReagents
-						newItemId = tonumber(GetTradeSkillReagentItemLink(TradeSkillFrame.selectedSkill, i):match("item:(%d+):"))
+					if (GetMouseFocus() == TradeSkillFrame.DetailsFrame.Contents["Reagent" .. i]) then 	--replace TradeSkillReagents
+						newItemId = tonumber(C_TradeSkillUI.GetRecipeReagentItemLink(TradeSkillFrame.RecipeList.selectedRecipeID, i):match("item:(%d+):"))
 						break 			--end loop if correct one already found
 					end
 				end
@@ -1426,9 +1426,9 @@ end
 
 function BagSync:TRADE_SKILL_SHOW()
 	--IsTradeSkillLinked() returns true only if trade window was opened from chat link (meaning another player)
-	if (not IsTradeSkillLinked()) then
+	if (not C_TradeSkillUI.IsTradeSkillLinked()) then
 		
-		local tradename = _G.GetTradeSkillLine()
+		local tradename = C_TradeSkillUI.GetTradeSkillLine()
 		local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions()
 		
 		local iconProf1 = prof1 and select(2, GetProfessionInfo(prof1))
@@ -1442,9 +1442,9 @@ function BagSync:TRADE_SKILL_SHOW()
 		}
 		
 		--prof1
-		if prof1 and (GetProfessionInfo(prof1) == tradename) and GetTradeSkillListLink() then
+		if prof1 and (GetProfessionInfo(prof1) == tradename) and C_TradeSkillUI.GetTradeSkillListLink() then
 			local skill = select(3, GetProfessionInfo(prof1))
-			BS_CD[1] = { tradename, GetTradeSkillListLink(), skill }
+			BS_CD[1] = { tradename, C_TradeSkillUI.GetTradeSkillListLink(), skill }
 		elseif prof1 and iconProf1 and noLinkTS[iconProf1] then
 			--only store if it's herbalism, skinning, or mining
 			doRegularTradeSkill(prof1, 1)
@@ -1454,9 +1454,9 @@ function BagSync:TRADE_SKILL_SHOW()
 		end
 
 		--prof2
-		if prof2 and (GetProfessionInfo(prof2) == tradename) and GetTradeSkillListLink() then
+		if prof2 and (GetProfessionInfo(prof2) == tradename) and C_TradeSkillUI.GetTradeSkillListLink() then
 			local skill = select(3, GetProfessionInfo(prof2))
-			BS_CD[2] = { tradename, GetTradeSkillListLink(), skill }
+			BS_CD[2] = { tradename, C_TradeSkillUI.GetTradeSkillListLink(), skill }
 		elseif prof2 and iconProf2 and noLinkTS[iconProf2] then
 			--only store if it's herbalism, skinning, or mining
 			doRegularTradeSkill(prof2, 2)
@@ -1482,18 +1482,18 @@ function BagSync:TRADE_SKILL_SHOW()
 		end
 		
 		--cooking
-		if cooking and (GetProfessionInfo(cooking) == tradename) and GetTradeSkillListLink() then
+		if cooking and (GetProfessionInfo(cooking) == tradename) and C_TradeSkillUI.GetTradeSkillListLink() then
 			local skill = select(3, GetProfessionInfo(cooking))
-			BS_CD[5] = { tradename, GetTradeSkillListLink(), skill }
+			BS_CD[5] = { tradename, C_TradeSkillUI.GetTradeSkillListLink(), skill }
 		elseif not cooking and BS_CD[5] then
 			--they removed a profession
 			BS_CD[5] = nil
 		end
 		
 		--firstAid
-		if firstAid and (GetProfessionInfo(firstAid) == tradename) and GetTradeSkillListLink() then
+		if firstAid and (GetProfessionInfo(firstAid) == tradename) and C_TradeSkillUI.GetTradeSkillListLink() then
 			local skill = select(3, GetProfessionInfo(firstAid))
-			BS_CD[6] = { tradename, GetTradeSkillListLink(), skill }
+			BS_CD[6] = { tradename, C_TradeSkillUI.GetTradeSkillListLink(), skill }
 		elseif not firstAid and BS_CD[6] then
 			--they removed a profession
 			BS_CD[6] = nil
