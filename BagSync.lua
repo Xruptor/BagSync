@@ -866,7 +866,7 @@ local function AddItemToTooltip(frame, link) --workaround
 	end
 	
 	--ignore the hearthstone and blacklisted items
-	if itemLink and tonumber(itemLink) and (tonumber(itemLink) == 6948 or tonumber(itemLink) == 110560 or BS_BL[tonumber(itemLink)]) then
+	if itemLink and tonumber(itemLink) and (tonumber(itemLink) == 6948 or tonumber(itemLink) == 110560 or tonumber(itemLink) == 140192 or BS_BL[tonumber(itemLink)]) then
 		frame:Show()
 		return
 	end
