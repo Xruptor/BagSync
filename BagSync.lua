@@ -834,7 +834,7 @@ end
 local function AddItemToTooltip(frame, link) --workaround
 	if (link) then
 		local itemId = tonumber(string.match(link, "item:(%d+):"))	-- get itemID // itemID seems to be "0" for every reagent in profession window?!
-		if (itemId == nil or itemId == 0 and TradeSkillFrame ~= nil and TradeSkillFrame:IsVisible()) then -- some other frames show ID = 0 aswell, so limit this workaround to the profession window || IMPORTANT: TradeSkillFrame ~= nil has to be checked BEFORE TradeSkillFrame:IsVisible()
+		if ((itemId == nil or itemId == 0) and (TradeSkillFrame ~= nil and TradeSkillFrame:IsVisible())) then -- some other frames show ID = 0 aswell, so limit this workaround to the profession window || IMPORTANT: TradeSkillFrame ~= nil has to be checked BEFORE TradeSkillFrame:IsVisible()
 			local newItemId
 			if (GetMouseFocus() == TradeSkillFrame.DetailsFrame.Contents.ResultIcon) then 			--replace TradeSkill
 				newItemId = tonumber(C_TradeSkillUI.GetRecipeItemLink(TradeSkillFrame.RecipeList.selectedRecipeID):match("item:(%d+):"))
