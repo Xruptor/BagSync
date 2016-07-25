@@ -907,7 +907,7 @@ local function AddItemToTooltip(frame, link) --workaround
 		for k, v in pairs(BagSyncDB) do
 			for q, r in pairs(v) do
 				--we do this incase there are multiple characters with same name
-				buildCache[q.."~"..k] = r
+				buildCache[q.."^"..k] = r
 			end
 		end
 	elseif BagSyncOpt.enableCrossRealmsItems then
@@ -915,10 +915,12 @@ local function AddItemToTooltip(frame, link) --workaround
 			if k == currentRealm or crossRealmNames[k] then
 				for q, r in pairs(v) do
 					----we do this incase there are multiple characters with same name
-					buildCache[q.."~"..k] = r
+					buildCache[q.."^"..k] = r
 				end
 			end
-		end		
+		end
+    else
+		buildCache = BagSyncDB[currentRealm]
 	end
 
 	--loop through our characters
@@ -941,7 +943,7 @@ local function AddItemToTooltip(frame, link) --workaround
 		
 		--check if we should show both factions or not
 		if BagSyncOpt.enableFaction or pFaction == playerFaction then
-
+		
 			--now count the stuff for the user
 			--q = bag name, r = stored data for bag name
 			for q, r in pairs(v) do
@@ -996,8 +998,8 @@ local function AddItemToTooltip(frame, link) --workaround
 					frame:AddDoubleLine(" ", " ")
 				end
 				
-				local yName, yRealm  = strsplit('~', k)
-				
+				local yName, yRealm  = strsplit('^', k)
+
 				--add Cross-Realm and BNet identifiers to Characters not on same realm
 				if BagSyncOpt.enableBNetAccountItems then
 					if v.realm and v.realm ~= currentRealm then
@@ -1027,6 +1029,9 @@ local function AddItemToTooltip(frame, link) --workaround
 		
 	end
 	
+	--sort it
+	table.sort(lastDisplayed, function(a,b) return (a < b) end)
+	
 	--show guildnames last
 	if BagSyncOpt.enableGuild and BagSyncOpt.showGuildNames then
 		for k, v in pairsByKeys(previousGuilds) do
@@ -1042,9 +1047,6 @@ local function AddItemToTooltip(frame, link) --workaround
 	if BagSyncOpt.showTotal and grandTotal > 0 and getn(lastDisplayed) > 1 then
 		table.insert(lastDisplayed, format(TTL_C, L["Total:"]).."@"..format(SILVER, grandTotal))
 	end
-	
-	--sort it
-	table.sort(lastDisplayed, function(a,b) return (a < b) end)
 	
 	--add it all together now
 	for i = 1, #lastDisplayed do
@@ -1123,7 +1125,7 @@ function BagSync:PLAYER_LOGIN()
 	playerClass = select(2, UnitClass("player"))
 	playerFaction = UnitFactionGroup("player")
 
-	for k, v in pairs(GetAutoCompleteRealms()) do 
+	for k, v in pairs(GetAutoCompleteRealms()) do	
 		if v ~= currentRealm then
 			crossRealmNames[v] = true
 		end
