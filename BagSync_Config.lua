@@ -20,6 +20,8 @@ bgsOpt:SetScript("OnShow", function()
 		BagSyncConfig_TooltipSearchOnly:SetChecked(BagSyncOpt["tooltipOnlySearch"])
 		BagSyncConfig_EnableBagSyncTooltips:SetChecked(BagSyncOpt["enableTooltips"])
 		BagSyncConfig_EnableBagSyncTooltipsSeperator:SetChecked(BagSyncOpt["enableTooltipSeperator"])
+		BagSyncConfig_EnableCrossRealmsItems:SetChecked(BagSyncOpt["enableCrossRealmsItems"])
+		BagSyncConfig_EnableBNetAccountItems:SetChecked(BagSyncOpt["enableBNetAccountItems"])
 	end
 end)
 
@@ -247,3 +249,43 @@ end)
 local bgs_EnableBagSyncTooltipsSeperator_OptText = bgs_EnableBagSyncTooltipsSeperator_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 bgs_EnableBagSyncTooltipsSeperator_OptText:SetPoint("LEFT", bgs_EnableBagSyncTooltipsSeperator_Opt, "RIGHT", 0, 1)
 bgs_EnableBagSyncTooltipsSeperator_OptText:SetText(L["Enable empty line seperator above BagSync tooltip display."])
+
+--[[ Toggle for Cross-Realms Items]]--
+local bgs_EnableCrossRealmsItems_Opt = CreateFrame("CheckButton", "BagSyncConfig_EnableCrossRealmsItems", bgsOpt, "OptionsBaseCheckButtonTemplate")
+bgs_EnableCrossRealmsItems_Opt:SetPoint("TOPLEFT", 16, -353)
+bgs_EnableCrossRealmsItems_Opt:SetScript("OnClick", function(frame)
+	if BagSyncOpt then
+		if frame:GetChecked() then
+			PlaySound("igMainMenuOptionCheckBoxOn")
+			BagSyncOpt["enableCrossRealmsItems"] = true
+			if BagSync then BagSync:resetTooltip() end
+		else
+			PlaySound("igMainMenuOptionCheckBoxOff")
+			BagSyncOpt["enableCrossRealmsItems"] = false
+			if BagSync then BagSync:resetTooltip() end
+		end
+	end
+end)
+local bgs_EnableCrossRealmsItems_OptText = bgs_EnableCrossRealmsItems_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+bgs_EnableCrossRealmsItems_OptText:SetPoint("LEFT", bgs_EnableCrossRealmsItems_Opt, "RIGHT", 0, 1)
+bgs_EnableCrossRealmsItems_OptText:SetText(L["Enable items for Cross-Realms characters."])
+
+--[[ Toggle for current Battle.Net Account Character Items]]--
+local bgs_EnableBNetAccountItems_Opt = CreateFrame("CheckButton", "BagSyncConfig_EnableBNetAccountItems", bgsOpt, "OptionsBaseCheckButtonTemplate")
+bgs_EnableBNetAccountItems_Opt:SetPoint("TOPLEFT", 16, -381)
+bgs_EnableBNetAccountItems_Opt:SetScript("OnClick", function(frame)
+	if BagSyncOpt then
+		if frame:GetChecked() then
+			PlaySound("igMainMenuOptionCheckBoxOn")
+			BagSyncOpt["enableBNetAccountItems"] = true
+			if BagSync then BagSync:resetTooltip() end
+		else
+			PlaySound("igMainMenuOptionCheckBoxOff")
+			BagSyncOpt["enableBNetAccountItems"] = false
+			if BagSync then BagSync:resetTooltip() end
+		end
+	end
+end)
+local bgs_EnableBNetAccountItems_OptText = bgs_EnableBNetAccountItems_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+bgs_EnableBNetAccountItems_OptText:SetPoint("LEFT", bgs_EnableBNetAccountItems_Opt, "RIGHT", 0, 1)
+bgs_EnableBNetAccountItems_OptText:SetText(L["Enable items for current Battle.Net Account characters. |cFFDF2B2B((Not Recommended))|r"])

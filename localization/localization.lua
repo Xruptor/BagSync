@@ -72,6 +72,8 @@
 -- ["Display modified tooltips ONLY in the BagSync Search window."] = "",
 -- ["Enable BagSync Tooltips"] = "",
 -- ["Enable empty line seperator above BagSync tooltip display."] = "",
+-- ["Enable items for Cross-Realms characters."] = "",
+-- ["Enable items for current Battle.Net Account characters |cFFDF2B2B(Not Recommended)|r."] = "",
 	
 ---------------------
 --Major shout out and special thanks to ytzyt at Curse for the zhCN and zhTW translations!  Thanks!

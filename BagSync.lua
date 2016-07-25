@@ -24,6 +24,7 @@ local currentPlayer
 local currentRealm
 local playerClass
 local playerFaction
+local crossRealmNames = {}
 local NUM_EQUIPMENT_SLOTS = 19
 local BS_DB
 local BS_GD
@@ -114,6 +115,8 @@ local function StartupDB()
 	if BagSyncOpt.tooltipOnlySearch == nil then BagSyncOpt.tooltipOnlySearch = false end
 	if BagSyncOpt.enableTooltips == nil then BagSyncOpt.enableTooltips = true end
 	if BagSyncOpt.enableTooltipSeperator == nil then BagSyncOpt.enableTooltipSeperator = true end
+	if BagSyncOpt.enableCrossRealmsItems == nil then BagSyncOpt.enableCrossRealmsItems = true end
+	if BagSyncOpt.enableBNetAccountItems == nil then BagSyncOpt.enableBNetAccountItems = false end
 	
 	--new format, get rid of old
 	if not BagSyncOpt.dbversion or not tonumber(BagSyncOpt.dbversion) or tonumber(BagSyncOpt.dbversion) < 7 then
@@ -152,6 +155,7 @@ function BagSync:FixDB_Data(onlyChkGuild)
 	--Removes obsolete characters from tokens db
 	--Removes obsolete profession information
 	--Will only check guild related information if the paramater is passed as true
+	--Adds realm name to characters profiles if missing, v8.6
 
 	local storeUsers = {}
 	local storeGuilds = {}
@@ -163,6 +167,7 @@ function BagSync:FixDB_Data(onlyChkGuild)
 		for k, v in pairs(rd) do
 			--users
 			storeUsers[realm][k] = storeUsers[realm][k] or 1
+			if v.realm == nil then v.realm = realm end  --Adds realm name to characters profiles if missing, v8.6
 			for q, r in pairs(v) do
 				if q == 'guild' then
 					storeGuilds[realm][r] = true
@@ -870,9 +875,12 @@ local function AddItemToTooltip(frame, link) --workaround
 		frame:Show()
 		return
 	end
-
+	
 	--lag check (check for previously displayed data) if so then display it
 	if lastItem and itemLink and itemLink == lastItem then
+		if BagSyncOpt.enableTooltipSeperator then
+			frame:AddDoubleLine(" ", " ")
+		end
 		for i = 1, #lastDisplayed do
 			local ename, ecount  = strsplit('@', lastDisplayed[i])
 			if ename and ecount then
@@ -891,10 +899,31 @@ local function AddItemToTooltip(frame, link) --workaround
 	local previousGuilds = {}
 	local grandTotal = 0
 	local first = true
+	
+	local buildCache = {}
+
+	--add more realm names if necessary based on BNet or Cross Realms
+	if BagSyncOpt.enableBNetAccountItems then
+		for k, v in pairs(BagSyncDB) do
+			for q, r in pairs(v) do
+				--we do this incase there are multiple characters with same name
+				buildCache[q.."~"..k] = r
+			end
+		end
+	elseif BagSyncOpt.enableCrossRealmsItems then
+		for k, v in pairs(BagSyncDB) do
+			if k == currentRealm or crossRealmNames[k] then
+				for q, r in pairs(v) do
+					----we do this incase there are multiple characters with same name
+					buildCache[q.."~"..k] = r
+				end
+			end
+		end		
+	end
 
 	--loop through our characters
 	--k = player, v = stored data for player
-	for k, v in pairs(BagSyncDB[currentRealm]) do
+	for k, v in pairs(buildCache) do
 
 		local allowList = {
 			["bag"] = 0,
@@ -965,10 +994,32 @@ local function AddItemToTooltip(frame, link) --workaround
 				if first and BagSyncOpt.enableTooltipSeperator then
 					first = false
 					frame:AddDoubleLine(" ", " ")
-					table.insert(lastDisplayed, " @ ")
+				end
+				
+				local yName, yRealm  = strsplit('~', k)
+				
+				--add Cross-Realm and BNet identifiers to Characters not on same realm
+				if BagSyncOpt.enableBNetAccountItems then
+					if v.realm and v.realm ~= currentRealm then
+						if not crossRealmNames[v.realm] then
+							k = yName.." |cff3588ff[BNet-"..v.realm.."]|r"
+						else
+							k = yName.." |cffff7d0a[XR-"..v.realm.."]|r"
+						end
+					else
+						k = yName
+					end
+				elseif BagSyncOpt.enableCrossRealmsItems then
+					if v.realm and v.realm ~= currentRealm then
+						k = yName.." |cffff7d0a[XR-"..v.realm.."]|r"
+					else
+						k = yName
+					end
+				else
+					--to cover our buttocks lol, JUST IN CASE
+					k = yName
 				end
 
-				frame:AddDoubleLine(getNameColor(k, pClass), infoString)
 				table.insert(lastDisplayed, getNameColor(k or 'Unknown', pClass).."@"..(infoString or 'unknown'))
 			end
 			
@@ -981,7 +1032,6 @@ local function AddItemToTooltip(frame, link) --workaround
 		for k, v in pairsByKeys(previousGuilds) do
 			--only print stuff higher then zero
 			if v > 0 then
-				frame:AddDoubleLine(format(GN_C, k), format(SILVER, v))
 				table.insert(lastDisplayed, format(GN_C, k).."@"..format(SILVER, v))
 			end
 		end
@@ -990,10 +1040,20 @@ local function AddItemToTooltip(frame, link) --workaround
 	--show grand total if we have something
 	--don't show total if there is only one item
 	if BagSyncOpt.showTotal and grandTotal > 0 and getn(lastDisplayed) > 1 then
-		frame:AddDoubleLine(format(TTL_C, L["Total:"]), format(SILVER, grandTotal))
 		table.insert(lastDisplayed, format(TTL_C, L["Total:"]).."@"..format(SILVER, grandTotal))
 	end
 	
+	--sort it
+	table.sort(lastDisplayed, function(a,b) return (a < b) end)
+	
+	--add it all together now
+	for i = 1, #lastDisplayed do
+		local ename, ecount  = strsplit('@', lastDisplayed[i])
+		if ename and ecount then
+			frame:AddDoubleLine(ename, ecount)
+		end
+	end
+		
 	frame:Show()
 end
 
@@ -1063,6 +1123,12 @@ function BagSync:PLAYER_LOGIN()
 	playerClass = select(2, UnitClass("player"))
 	playerFaction = UnitFactionGroup("player")
 
+	for k, v in pairs(GetAutoCompleteRealms()) do 
+		if v ~= currentRealm then
+			crossRealmNames[v] = true
+		end
+	end
+	
 	--initiate the db
 	StartupDB()
 	
@@ -1081,6 +1147,9 @@ function BagSync:PLAYER_LOGIN()
 	--save the faction information
 	--"Alliance", "Horde" or nil
 	BS_DB.faction = playerFaction
+	
+	--save player Realm for quick access later
+	BS_DB.realm = currentRealm
 	
 	--check for player not in guild
 	if IsInGuild() or GetNumGuildMembers(true) > 0 then
@@ -1225,6 +1294,7 @@ function BagSync:PLAYER_LOGIN()
 	
 	self:UnregisterEvent("PLAYER_LOGIN")
 	self.PLAYER_LOGIN = nil
+		
 end
 
 ------------------------------
