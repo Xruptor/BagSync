@@ -1125,7 +1125,9 @@ function BagSync:PLAYER_LOGIN()
 	playerClass = select(2, UnitClass("player"))
 	playerFaction = UnitFactionGroup("player")
 
-	for k, v in pairs(GetAutoCompleteRealms()) do	
+	local autoCompleteRealms = GetAutoCompleteRealms() or { currentRealm }
+
+	for k, v in pairs(autoCompleteRealms) do
 		if v ~= currentRealm then
 			crossRealmNames[v] = true
 		end
