@@ -236,6 +236,34 @@ function BagSync:FixDB_Data(onlyChkGuild)
 	end
 end
 
+local function getFilteredDB()
+
+	local xIndex = {}
+
+	--add more realm names if necessary based on BNet or Cross Realms
+	if BagSyncOpt.enableBNetAccountItems then
+		for k, v in pairs(BagSyncDB) do
+			for q, r in pairs(v) do
+				--we do this incase there are multiple characters with same name
+				xIndex[q.."^"..k] = r
+			end
+		end
+	elseif BagSyncOpt.enableCrossRealmsItems then
+		for k, v in pairs(BagSyncDB) do
+			if k == currentRealm or crossRealmNames[k] then
+				for q, r in pairs(v) do
+					----we do this incase there are multiple characters with same name
+					xIndex[q.."^"..k] = r
+				end
+			end
+		end
+	else
+		xIndex = BagSyncDB[currentRealm]
+	end
+	
+	return xIndex
+end
+
 ----------------------
 --      Local       --
 ----------------------
@@ -250,6 +278,35 @@ end
 local function ToShortLink(link)
 	if not link then return nil end
 	return link:match("item:(%d+):") or nil
+end
+
+local function getCharacterInfo(charName, charRealm)
+
+	local yName, yRealm  = strsplit('^', charName)
+
+	--add Cross-Realm and BNet identifiers to Characters not on same realm
+	if BagSyncOpt.enableBNetAccountItems then
+		if charRealm and charRealm ~= currentRealm then
+			if not crossRealmNames[charRealm] then
+				charName = yName.." |cff3588ff[BNet-"..charRealm.."]|r"
+			else
+				charName = yName.." |cffff7d0a[XR-"..charRealm.."]|r"
+			end
+		else
+			charName = yName
+		end
+	elseif BagSyncOpt.enableCrossRealmsItems then
+		if charRealm and charRealm ~= currentRealm then
+			charName = yName.." |cffff7d0a[XR-"..charRealm.."]|r"
+		else
+			charName = yName
+		end
+	else
+		--to cover our buttocks lol, JUST IN CASE
+		charName = yName
+	end
+		
+	return charName
 end
 
 ----------------------
@@ -586,56 +643,11 @@ function BagSync:ShowMoneyTooltip()
 	tooltip:AddLine(" ")
 	
 	--loop through our characters
-	local buildCache = {}
+	local xDB = getFilteredDB()
 
-	--add more realm names if necessary based on BNet or Cross Realms
-	if BagSyncOpt.enableBNetAccountItems then
-		for k, v in pairs(BagSyncDB) do
-			for q, r in pairs(v) do
-				--we do this incase there are multiple characters with same name
-				buildCache[q.."^"..k] = r
-			end
-		end
-	elseif BagSyncOpt.enableCrossRealmsItems then
-		for k, v in pairs(BagSyncDB) do
-			if k == currentRealm or crossRealmNames[k] then
-				for q, r in pairs(v) do
-					----we do this incase there are multiple characters with same name
-					buildCache[q.."^"..k] = r
-				end
-			end
-		end
-	else
-		buildCache = BagSyncDB[currentRealm]
-	end
-	
-	for k, v in pairs(buildCache) do
+	for k, v in pairs(xDB) do
 		if v.gold then
-		
-				local yName, yRealm  = strsplit('^', k)
-
-				--add Cross-Realm and BNet identifiers to Characters not on same realm
-				if BagSyncOpt.enableBNetAccountItems then
-					if v.realm and v.realm ~= currentRealm then
-						if not crossRealmNames[v.realm] then
-							k = yName.." |cff3588ff[BNet-"..v.realm.."]|r"
-						else
-							k = yName.." |cffff7d0a[XR-"..v.realm.."]|r"
-						end
-					else
-						k = yName
-					end
-				elseif BagSyncOpt.enableCrossRealmsItems then
-					if v.realm and v.realm ~= currentRealm then
-						k = yName.." |cffff7d0a[XR-"..v.realm.."]|r"
-					else
-						k = yName
-					end
-				else
-					--to cover our buttocks lol, JUST IN CASE
-					k = yName
-				end
-				
+			k = getCharacterInfo(k, v.realm)
 			table.insert(usrData, { name=k, gold=v.gold } )
 		end
 	end
@@ -948,32 +960,11 @@ local function AddItemToTooltip(frame, link) --workaround
 	local grandTotal = 0
 	local first = true
 	
-	local buildCache = {}
-
-	--add more realm names if necessary based on BNet or Cross Realms
-	if BagSyncOpt.enableBNetAccountItems then
-		for k, v in pairs(BagSyncDB) do
-			for q, r in pairs(v) do
-				--we do this incase there are multiple characters with same name
-				buildCache[q.."^"..k] = r
-			end
-		end
-	elseif BagSyncOpt.enableCrossRealmsItems then
-		for k, v in pairs(BagSyncDB) do
-			if k == currentRealm or crossRealmNames[k] then
-				for q, r in pairs(v) do
-					----we do this incase there are multiple characters with same name
-					buildCache[q.."^"..k] = r
-				end
-			end
-		end
-	else
-		buildCache = BagSyncDB[currentRealm]
-	end
-
+	local xDB = getFilteredDB()
+	
 	--loop through our characters
 	--k = player, v = stored data for player
-	for k, v in pairs(buildCache) do
+	for k, v in pairs(xDB) do
 
 		local allowList = {
 			["bag"] = 0,
@@ -1046,29 +1037,7 @@ local function AddItemToTooltip(frame, link) --workaround
 					frame:AddDoubleLine(" ", " ")
 				end
 				
-				local yName, yRealm  = strsplit('^', k)
-
-				--add Cross-Realm and BNet identifiers to Characters not on same realm
-				if BagSyncOpt.enableBNetAccountItems then
-					if v.realm and v.realm ~= currentRealm then
-						if not crossRealmNames[v.realm] then
-							k = yName.." |cff3588ff[BNet-"..v.realm.."]|r"
-						else
-							k = yName.." |cffff7d0a[XR-"..v.realm.."]|r"
-						end
-					else
-						k = yName
-					end
-				elseif BagSyncOpt.enableCrossRealmsItems then
-					if v.realm and v.realm ~= currentRealm then
-						k = yName.." |cffff7d0a[XR-"..v.realm.."]|r"
-					else
-						k = yName
-					end
-				else
-					--to cover our buttocks lol, JUST IN CASE
-					k = yName
-				end
+				k = k = getCharacterInfo(k, v.realm)
 
 				table.insert(lastDisplayed, getNameColor(k or 'Unknown', pClass).."@"..(infoString or 'unknown'))
 			end
