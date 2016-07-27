@@ -586,9 +586,57 @@ function BagSync:ShowMoneyTooltip()
 	tooltip:AddLine(" ")
 	
 	--loop through our characters
-	for k, v in pairs(BagSyncDB[currentRealm]) do
-		if BagSyncDB[currentRealm][k].gold then
-			table.insert(usrData, { name=k, gold=BagSyncDB[currentRealm][k].gold } )
+	local buildCache = {}
+
+	--add more realm names if necessary based on BNet or Cross Realms
+	if BagSyncOpt.enableBNetAccountItems then
+		for k, v in pairs(BagSyncDB) do
+			for q, r in pairs(v) do
+				--we do this incase there are multiple characters with same name
+				buildCache[q.."^"..k] = r
+			end
+		end
+	elseif BagSyncOpt.enableCrossRealmsItems then
+		for k, v in pairs(BagSyncDB) do
+			if k == currentRealm or crossRealmNames[k] then
+				for q, r in pairs(v) do
+					----we do this incase there are multiple characters with same name
+					buildCache[q.."^"..k] = r
+				end
+			end
+		end
+	else
+		buildCache = BagSyncDB[currentRealm]
+	end
+	
+	for k, v in pairs(buildCache) do
+		if v.gold then
+		
+				local yName, yRealm  = strsplit('^', k)
+
+				--add Cross-Realm and BNet identifiers to Characters not on same realm
+				if BagSyncOpt.enableBNetAccountItems then
+					if v.realm and v.realm ~= currentRealm then
+						if not crossRealmNames[v.realm] then
+							k = yName.." |cff3588ff[BNet-"..v.realm.."]|r"
+						else
+							k = yName.." |cffff7d0a[XR-"..v.realm.."]|r"
+						end
+					else
+						k = yName
+					end
+				elseif BagSyncOpt.enableCrossRealmsItems then
+					if v.realm and v.realm ~= currentRealm then
+						k = yName.." |cffff7d0a[XR-"..v.realm.."]|r"
+					else
+						k = yName
+					end
+				else
+					--to cover our buttocks lol, JUST IN CASE
+					k = yName
+				end
+				
+			table.insert(usrData, { name=k, gold=v.gold } )
 		end
 	end
 	table.sort(usrData, function(a,b) return (a.name < b.name) end)
@@ -919,7 +967,7 @@ local function AddItemToTooltip(frame, link) --workaround
 				end
 			end
 		end
-    else
+	else
 		buildCache = BagSyncDB[currentRealm]
 	end
 
