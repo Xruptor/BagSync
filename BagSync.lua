@@ -415,7 +415,7 @@ local function ScanMailbox()
 	if (numInbox > 0) then
 		for mailIndex = 1, numInbox do
 			for i=1, ATTACHMENTS_MAX_RECEIVE do
-				local name, itemTexture, count, quality, canUse = GetInboxItem(mailIndex, i)
+				local name, itemID, itemTexture, count, quality, canUse = GetInboxItem(mailIndex, i)
 				local link = GetInboxItemLink(mailIndex, i)
 				
 				if name and link and ToShortLink(link) then
