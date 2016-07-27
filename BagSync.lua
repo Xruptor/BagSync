@@ -1037,7 +1037,7 @@ local function AddItemToTooltip(frame, link) --workaround
 					frame:AddDoubleLine(" ", " ")
 				end
 				
-				k = k = getCharacterInfo(k, v.realm)
+				k = getCharacterInfo(k, v.realm)
 
 				table.insert(lastDisplayed, getNameColor(k or 'Unknown', pClass).."@"..(infoString or 'unknown'))
 			end
