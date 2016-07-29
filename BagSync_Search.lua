@@ -192,11 +192,14 @@ local function DoSearch()
 		
 		if string.len(searchStr) > 1 and string.find(searchStr, "@") and allowList[string.sub(searchStr, 2)] ~= nil then playerSearch = true end
 		
+		local xDB = BagSync:getFilteredDB()
+		
 		--loop through our characters
 		--k = player, v = stored data for player
-		for k, v in pairs(BagSyncDB[currentRealm]) do
+		for k, v in pairs(xDB) do
 
 			local pFaction = v.faction or playerFaction --just in case ;) if we dont know the faction yet display it anyways
+			local yName, yRealm  = strsplit('^', k)
 			
 			--check if we should show both factions or not
 			if BagSyncOpt.enableFaction or pFaction == playerFaction then
@@ -216,7 +219,7 @@ local function DoSearch()
 										local dName, dItemLink, dRarity = GetItemInfo(dblink)
 										if dName and dItemLink then
 											--are we checking in our bank,void, etc?
-											if playerSearch and string.sub(searchStr, 2) == q and string.sub(searchStr, 2) ~= "guild" and k == currentPlayer and not tempList[dblink] then
+											if playerSearch and string.sub(searchStr, 2) == q and string.sub(searchStr, 2) ~= "guild" and yName == currentPlayer and not tempList[dblink] then
 												table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
 												tempList[dblink] = dName
 												count = count + 1
@@ -247,7 +250,7 @@ local function DoSearch()
 								if dblink then
 									local dName, dItemLink, dRarity = GetItemInfo(dblink)
 									if dName then
-										if playerSearch and string.sub(searchStr, 2) == q and string.sub(searchStr, 2) == "guild" and k == currentPlayer and not tempList[dblink] then
+										if playerSearch and string.sub(searchStr, 2) == q and string.sub(searchStr, 2) == "guild" and yName == currentPlayer and not tempList[dblink] then
 											table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
 											tempList[dblink] = dName
 											count = count + 1

@@ -236,7 +236,7 @@ function BagSync:FixDB_Data(onlyChkGuild)
 	end
 end
 
-local function getFilteredDB()
+function BagSync:getFilteredDB()
 
 	local xIndex = {}
 
@@ -264,23 +264,7 @@ local function getFilteredDB()
 	return xIndex
 end
 
-----------------------
---      Local       --
-----------------------
-
-local function doRegularTradeSkill(numIndex, dbIdx)
-	local name, icon, skillLevel, maxSkillLevel, numAbilities, spelloffset, skillLine, skillModifier = GetProfessionInfo(numIndex)
-	if name and skillLevel then
-		BS_CD[dbIdx] = format('%s,%s', name, skillLevel)
-	end
-end
-
-local function ToShortLink(link)
-	if not link then return nil end
-	return link:match("item:(%d+):") or nil
-end
-
-local function getCharacterInfo(charName, charRealm)
+function BagSync:getCharacterInfo(charName, charRealm)
 
 	local yName, yRealm  = strsplit('^', charName)
 
@@ -308,6 +292,23 @@ local function getCharacterInfo(charName, charRealm)
 		
 	return charName
 end
+
+----------------------
+--      Local       --
+----------------------
+
+local function doRegularTradeSkill(numIndex, dbIdx)
+	local name, icon, skillLevel, maxSkillLevel, numAbilities, spelloffset, skillLine, skillModifier = GetProfessionInfo(numIndex)
+	if name and skillLevel then
+		BS_CD[dbIdx] = format('%s,%s', name, skillLevel)
+	end
+end
+
+local function ToShortLink(link)
+	if not link then return nil end
+	return link:match("item:(%d+):") or nil
+end
+
 
 ----------------------
 --  Bag Functions   --
@@ -643,11 +644,11 @@ function BagSync:ShowMoneyTooltip()
 	tooltip:AddLine(" ")
 	
 	--loop through our characters
-	local xDB = getFilteredDB()
+	local xDB = BagSync:getFilteredDB()
 
 	for k, v in pairs(xDB) do
 		if v.gold then
-			k = getCharacterInfo(k, v.realm)
+			k = BagSync:getCharacterInfo(k, v.realm)
 			table.insert(usrData, { name=k, gold=v.gold } )
 		end
 	end
@@ -960,7 +961,7 @@ local function AddItemToTooltip(frame, link) --workaround
 	local grandTotal = 0
 	local first = true
 	
-	local xDB = getFilteredDB()
+	local xDB = BagSync:getFilteredDB()
 	
 	--loop through our characters
 	--k = player, v = stored data for player
@@ -1037,7 +1038,7 @@ local function AddItemToTooltip(frame, link) --workaround
 					frame:AddDoubleLine(" ", " ")
 				end
 				
-				k = getCharacterInfo(k, v.realm)
+				k = BagSync:getCharacterInfo(k, v.realm)
 
 				table.insert(lastDisplayed, getNameColor(k or 'Unknown', pClass).."@"..(infoString or 'unknown'))
 			end
