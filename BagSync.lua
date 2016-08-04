@@ -760,7 +760,7 @@ local function CountsToInfoString(countTable)
 	end
 	
 	if countTable['reagentbank'] > 0 then
-		local count = L["ReagentBank: %d"]:format(countTable['reagentbank'])
+		local count = L["Reagent: %d"]:format(countTable['reagentbank'])
 		if info then
 			info = strjoin(', ', info, count)
 		else
@@ -770,7 +770,7 @@ local function CountsToInfoString(countTable)
 	end
 
 	if countTable['equip'] > 0 then
-		local count = L["Equipped: %d"]:format(countTable['equip'])
+		local count = L["Equip: %d"]:format(countTable['equip'])
 		if info then
 			info = strjoin(', ', info, count)
 		else
@@ -790,7 +790,7 @@ local function CountsToInfoString(countTable)
 	end
 	
 	if countTable['mailbox'] > 0 and BagSyncOpt.enableMailbox then
-		local count = L["Mailbox: %d"]:format(countTable['mailbox'])
+		local count = L["Mail: %d"]:format(countTable['mailbox'])
 		if info then
 			info = strjoin(', ', info, count)
 		else
