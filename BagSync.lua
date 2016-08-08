@@ -1076,28 +1076,38 @@ end
 
 local function hookTip(tooltip)
 	local modified = false
+	
+	tooltip:HookScript("OnHide", function(self)
+		modified = false
+		self.lastHyperLink = nil
+	end)	
 	tooltip:HookScript('OnTooltipCleared', function(self)
 		modified = false
 	end)
+
 	tooltip:HookScript('OnTooltipSetItem', function(self)
 		if modified or not BagSyncOpt.enableTooltips then return end
 		local name, link = self:GetItem()
 		if link and ToShortLink(link) then
 			modified = true
 			AddItemToTooltip(self, link)
+			return
 		end
 		--sometimes we have a tooltip but no link because GetItem() returns nil, this is the case for recipes
 		--so lets try something else to see if we can get the link.  Doesn't always work!  Thanks for breaking GetItem() Blizzard... you ROCK! :P
 		if not modified and self.lastHyperLink then
 			local xName, xLink = GetItemInfo(self.lastHyperLink)
-			local title = _G[tooltip:GetName().."TextLeft1"]
-			if xName and xLink and title and title:GetText() and title:GetText() == xName and ToShortLink(xLink) then  --only show info if the tooltip text matches the link
+			--local title = _G[tooltip:GetName().."TextLeft1"]
+			-- if xName and xLink and title and title:GetText() and title:GetText() == xName and ToShortLink(xLink) then  --only show info if the tooltip text matches the link
+				-- modified = true
+				-- AddItemToTooltip(self, xLink)
+			-- end
+			if xName and ToShortLink(xLink) then  --only show info if the tooltip text matches the link
 				modified = true
 				AddItemToTooltip(self, xLink)
-			end
+			end		
 		end
 	end)
-	
 	---------------------------------
 	--Special thanks to GetItem() being broken we need to capture the ItemLink before the tooltip shows sometimes
 	hooksecurefunc(tooltip, 'SetBagItem', function(self, tab, slot)
@@ -1126,7 +1136,7 @@ local function hookTip(tooltip)
 		if link and ToShortLink(link) then
 			--there is a slight delay with recipes tooltips, so lets try something different with this one, we will need to use OnUpdate because the Recipe tooltips are parsed twice by Blizzard
 			--I'm pretty sure there is a better way to do this but since Recipes fire OnTooltipSetItem with empty/nil GetItem().  There is really no way to my knowledge to grab the current itemID
-			modified = true
+			if tooltip:IsVisible() then modified = true end --only do the modifier if the tooltip is showing, because this interferes with ItemRefTooltip if someone clicks it twice in chat
 			AddItemToTooltip(self, link)
 		end
 	end)
