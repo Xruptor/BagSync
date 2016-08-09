@@ -1102,7 +1102,7 @@ local function hookTip(tooltip)
 				-- modified = true
 				-- AddItemToTooltip(self, xLink)
 			-- end
-			if xName and ToShortLink(xLink) then  --only show info if the tooltip text matches the link
+			if xLink and ToShortLink(xLink) then  --only show info if the tooltip text matches the link
 				modified = true
 				AddItemToTooltip(self, xLink)
 			end		
@@ -1134,8 +1134,8 @@ local function hookTip(tooltip)
 	hooksecurefunc(tooltip, 'SetHyperlink', function(self, link)
 		if modified or not BagSyncOpt.enableTooltips then return end
 		if link and ToShortLink(link) then
-			--there is a slight delay with recipes tooltips, so lets try something different with this one, we will need to use OnUpdate because the Recipe tooltips are parsed twice by Blizzard
 			--I'm pretty sure there is a better way to do this but since Recipes fire OnTooltipSetItem with empty/nil GetItem().  There is really no way to my knowledge to grab the current itemID
+			--without storing the ItemLink from the bag parsing or at least grabbing the current SetHyperLink.
 			if tooltip:IsVisible() then modified = true end --only do the modifier if the tooltip is showing, because this interferes with ItemRefTooltip if someone clicks it twice in chat
 			AddItemToTooltip(self, link)
 		end
