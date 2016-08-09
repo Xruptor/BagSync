@@ -906,23 +906,6 @@ local function AddItemToTooltip(frame, link) --workaround
 		return
 	end
 
-	if ((itemLink == nil or itemLink == 0) and (TradeSkillFrame ~= nil and TradeSkillFrame:IsVisible())) then -- some other frames show ID = 0 aswell, so limit this workaround to the profession window || IMPORTANT: TradeSkillFrame ~= nil has to be checked BEFORE TradeSkillFrame:IsVisible()
-		local newItemId
-		if (GetMouseFocus() == TradeSkillFrame.DetailsFrame.Contents.ResultIcon) then 			--replace TradeSkill
-			newItemId = tonumber(C_TradeSkillUI.GetRecipeItemLink(TradeSkillFrame.RecipeList.selectedRecipeID):match("item:(%d+):"))
-		else 		-- could check if a reagent is under mouse, but since we have to check it 3 lines later again...
-			for i = 1, 12 do 													-- how many reagents can a reciepe have? lets assume not more than 12
-				if (GetMouseFocus() == TradeSkillFrame.DetailsFrame.Contents["Reagent" .. i]) then 	--replace TradeSkillReagents
-					newItemId = tonumber(C_TradeSkillUI.GetRecipeReagentItemLink(TradeSkillFrame.RecipeList.selectedRecipeID, i):match("item:(%d+):"))
-					break 			--end loop if correct one already found
-				end
-			end
-		end
-		if newItemId then
-			link = select(2, GetItemInfo(newItemId)) -- replace original link with our found link
-		end
-	end	
-	
 	--only show tooltips in search frame if the option is enabled
 	if BagSyncOpt.tooltipOnlySearch and frame:GetOwner() and frame:GetOwner():GetName() and string.sub(frame:GetOwner():GetName(), 1, 16) ~= "BagSyncSearchRow" then
 		frame:Show()
