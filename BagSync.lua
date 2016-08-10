@@ -1,17 +1,9 @@
 --[[
 	BagSync.lua
-		A item tracking addon similar to Bagnon_Forever (special thanks to Tuller).
-		Works with practically any Bag mod available, Bagnon not required.
-
-	NOTE: Parts of this mod were inspired by code from Bagnon_Forever by Tuller.
-	
-	This project was originally done a long time ago when I used the default blizzard bags.  I wanted something like what
-	was available in Bagnon for tracking items, but I didn't want to use Bagnon.  So I decided to code one that works with
-	pretty much any inventory addon.
-	
-	It was intended to be a beta addon as I never really uploaded it to a interface website.  Instead I used the
-	SVN of wowace to work on it.  The last revision done on the old BagSync was r50203.11 (29 Sep 2007).
-	Note: This addon has been completely rewritten. 
+		A item tracking addon that works with practically any bag addon available.
+		This addon has been heavily rewritten several times since it's creation back in 2007.
+		
+		This addon was inspired by Tuller and his Bagnon addon.  (Thanks Tuller!)
 
 	Author: Xruptor
 
@@ -94,6 +86,10 @@ BagSync:SetScript('OnEvent', function(self, event, ...)
 		self[event](self, event, ...)
 	end
 end)
+
+function BagSync:Debug(...)
+	Debug(...)
+end
 
 if IsLoggedIn() then BagSync:PLAYER_LOGIN() else BagSync:RegisterEvent('PLAYER_LOGIN') end
 
@@ -264,7 +260,7 @@ function BagSync:getFilteredDB()
 	return xIndex
 end
 
-function BagSync:getCharacterInfo(charName, charRealm)
+function BagSync:getCharacterRealmInfo(charName, charRealm)
 
 	local yName, yRealm  = strsplit('^', charName)
 
@@ -293,6 +289,32 @@ function BagSync:getCharacterInfo(charName, charRealm)
 	return charName
 end
 
+function BagSync:getGuildRealmInfo(guildName, guildRealm)
+
+	--add Cross-Realm and BNet identifiers to Guilds not on same realm
+	if BagSyncOpt.enableBNetAccountItems then
+		if guildRealm and guildRealm ~= currentRealm then
+			if not crossRealmNames[guildRealm] then
+				guildName = guildName.." |cff3588ff[BNet-"..guildRealm.."]|r"
+			else
+				guildName = guildName.." |cffff7d0a[XR-"..guildRealm.."]|r"
+			end
+		else
+			guildName = guildName
+		end
+	elseif BagSyncOpt.enableCrossRealmsItems then
+		if guildRealm and guildRealm ~= currentRealm then
+			guildName = guildName.." |cffff7d0a[XR-"..guildRealm.."]|r"
+		else
+			guildName = guildName
+		end
+	else
+		--to cover our buttocks lol, JUST IN CASE
+		guildName = guildName
+	end
+		
+	return guildName
+end
 ----------------------
 --      Local       --
 ----------------------
@@ -648,7 +670,7 @@ function BagSync:ShowMoneyTooltip()
 
 	for k, v in pairs(xDB) do
 		if v.gold then
-			k = BagSync:getCharacterInfo(k, v.realm)
+			k = BagSync:getCharacterRealmInfo(k, v.realm)
 			table.insert(usrData, { name=k, gold=v.gold } )
 		end
 	end
@@ -987,12 +1009,15 @@ local function AddItemToTooltip(frame, link) --workaround
 				local guildN = v.guild or nil
 			
 				--check the guild bank if the character is in a guild
-				if BS_GD and guildN and BS_GD[guildN] then
+				if BagSyncGUILD_DB and guildN and BagSyncGUILD_DB[v.realm][guildN] then
 					--check to see if this guild has already been done through this run (so we don't do it multiple times)
-					if not previousGuilds[guildN] then
+					--check for XR/B.Net support
+					local gName = BagSync:getGuildRealmInfo(guildN, v.realm)
+					
+					if not previousGuilds[gName] then
 						--we only really need to see this information once per guild
 						local tmpCount = 0
-						for q, r in pairs(BS_GD[guildN]) do
+						for q, r in pairs(BagSyncGUILD_DB[v.realm][guildN]) do
 							local dblink, dbcount = strsplit(',', r)
 							if dblink and dblink == itemLink then
 								allowList["guild"] = allowList["guild"] + (dbcount or 1)
@@ -1000,7 +1025,7 @@ local function AddItemToTooltip(frame, link) --workaround
 								grandTotal = grandTotal + (dbcount or 1)
 							end
 						end
-						previousGuilds[guildN] = tmpCount
+						previousGuilds[gName] = tmpCount
 					end
 				end
 			end
@@ -1010,7 +1035,7 @@ local function AddItemToTooltip(frame, link) --workaround
 			infoString = CountsToInfoString(allowList)
 
 			if infoString and infoString ~= '' then
-				k = BagSync:getCharacterInfo(k, v.realm)
+				k = BagSync:getCharacterRealmInfo(k, v.realm)
 				table.insert(lastDisplayed, getNameColor(k or 'Unknown', pClass).."@"..(infoString or 'unknown'))
 			end
 			

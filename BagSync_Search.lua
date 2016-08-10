@@ -239,18 +239,21 @@ local function DoSearch()
 				
 				if BagSyncOpt.enableGuild then
 					local guildN = v.guild or nil
-				
+
 					--check the guild bank if the character is in a guild
-					if BagSyncGUILD_DB and guildN and BagSyncGUILD_DB[currentRealm][guildN] then
+					if BagSyncGUILD_DB and guildN and BagSyncGUILD_DB[v.realm][guildN] then
 						--check to see if this guild has already been done through this run (so we don't do it multiple times)
-						if not previousGuilds[guildN] then
+						--check for XR/B.Net support
+						local gName = BagSync:getGuildRealmInfo(guildN, v.realm)
+					
+						if not previousGuilds[gName] then
 							--we only really need to see this information once per guild
-							for q, r in pairs(BagSyncGUILD_DB[currentRealm][guildN]) do
+							for q, r in pairs(BagSyncGUILD_DB[v.realm][guildN]) do
 								local dblink, dbcount = strsplit(',', r)
 								if dblink then
 									local dName, dItemLink, dRarity = GetItemInfo(dblink)
 									if dName then
-										if playerSearch and string.sub(searchStr, 2) == q and string.sub(searchStr, 2) == "guild" and yName == currentPlayer and not tempList[dblink] then
+										if playerSearch and string.sub(searchStr, 2) == "guild" and GetGuildInfo("player") and guildN == GetGuildInfo("player") and not tempList[dblink] then
 											table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
 											tempList[dblink] = dName
 											count = count + 1
@@ -263,7 +266,7 @@ local function DoSearch()
 									end
 								end
 							end
-							previousGuilds[guildN] = true
+							previousGuilds[gName] = true
 						end
 					end
 				end
