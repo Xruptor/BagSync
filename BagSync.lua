@@ -942,10 +942,12 @@ local function AddItemToTooltip(frame, link) --workaround
 	
 	--lag check (check for previously displayed data) if so then display it
 	if lastItem and itemLink and itemLink == lastItem then
-		for i = 1, #lastDisplayed do
-			local ename, ecount  = strsplit('@', lastDisplayed[i])
-			if ename and ecount then
-				frame:AddDoubleLine(ename, ecount)
+		if table.getn(lastDisplayed) > 0 then
+			for i = 1, #lastDisplayed do
+				local ename, ecount  = strsplit('@', lastDisplayed[i])
+				if ename and ecount then
+					frame:AddDoubleLine(ename, ecount)
+				end
 			end
 		end
 		frame:Show()
@@ -1068,10 +1070,12 @@ local function AddItemToTooltip(frame, link) --workaround
 	end
 	
 	--add it all together now
-	for i = 1, #lastDisplayed do
-		local ename, ecount  = strsplit('@', lastDisplayed[i])
-		if ename and ecount then
-			frame:AddDoubleLine(ename, ecount)
+	if table.getn(lastDisplayed) > 0 then
+		for i = 1, #lastDisplayed do
+			local ename, ecount  = strsplit('@', lastDisplayed[i])
+			if ename and ecount then
+				frame:AddDoubleLine(ename, ecount)
+			end
 		end
 	end
 		
