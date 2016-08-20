@@ -41,6 +41,9 @@ local function Debug(...)
     if debugf then debugf:AddMessage(string.join(", ", tostringall(...))) end
 end
 
+--sometimes I just want to debug some BagSync DB data someone gives me lol
+local debugging = false
+
 ------------------------------
 --    LibDataBroker-1.1	    --
 ------------------------------
@@ -146,6 +149,7 @@ local function StartupDB()
 end
 
 function BagSync:FixDB_Data(onlyChkGuild)
+	if debugging then return end
 	--Removes obsolete character information
 	--Removes obsolete guild information
 	--Removes obsolete characters from tokens db
@@ -337,6 +341,7 @@ end
 ----------------------
 
 local function SaveBag(bagname, bagid)
+	if debugging then return end
 	if not bagname or not bagid then return nil end
 	if not BS_DB then StartupDB() end
 	BS_DB[bagname] = BS_DB[bagname] or {}
@@ -365,7 +370,7 @@ local function SaveBag(bagname, bagid)
 end
 
 local function SaveEquipment()
-
+	if debugging then return end
 	--reset our tooltip data since we scanned new items (we want current data not old)
 	lastItem = nil
 	lastDisplayed = {}
@@ -429,7 +434,6 @@ local function ScanVoidBank()
 end
 
 local function ScanGuildBank()
-
 	--GetCurrentGuildBankTab()
 	if not IsInGuild() then return end
 	
@@ -549,6 +553,7 @@ end
 
 --this method is global for all toons, removes expired auctions on login
 local function RemoveExpiredAuctions()
+	if debugging then return end
 	local timestampChk = { 30*60, 2*60*60, 12*60*60, 48*60*60 }
 				
 	for realm, rd in pairs(BagSyncDB) do
@@ -710,6 +715,7 @@ local function IsInArena()
 end
 
 local function ScanTokens()
+	if debugging then return end
 	--LETS AVOID TOKEN SPAM AS MUCH AS POSSIBLE
 	if doTokenUpdate == 1 then return end
 	if IsInBG() or IsInArena() or InCombatLockdown() or UnitAffectingCombat("player") then
@@ -1428,12 +1434,14 @@ end
 ------------------------------
 
 function BagSync:CURRENCY_DISPLAY_UPDATE()
+	if debugging then return end
 	if IsInBG() or IsInArena() or InCombatLockdown() or UnitAffectingCombat("player") then return end
 	doTokenUpdate = 0
 	ScanTokens()
 end
 
 function BagSync:PLAYER_REGEN_ENABLED()
+	if debugging then return end
 	if IsInBG() or IsInArena() or InCombatLockdown() or UnitAffectingCombat("player") then return end
 	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
 	--were out of an arena or battleground scan the points
@@ -1442,6 +1450,7 @@ function BagSync:PLAYER_REGEN_ENABLED()
 end
 
 function BagSync:GUILD_ROSTER_UPDATE()
+	if debugging then return end
 	if not IsInGuild() and BS_DB.guild then
 		BS_DB.guild = nil
 		self:FixDB_Data(true)
@@ -1457,6 +1466,7 @@ function BagSync:GUILD_ROSTER_UPDATE()
 end
 
 function BagSync:PLAYER_MONEY()
+	if debugging then return end
 	BS_DB.gold = GetMoney()
 end
 
@@ -1465,6 +1475,7 @@ end
 ------------------------------
 
 function BagSync:BAG_UPDATE(event, bagid)
+	if debugging then return end
 	-- -1 happens to be the primary bank slot ;)
 	if (bagid > BANK_CONTAINER) then
 	
@@ -1489,6 +1500,7 @@ function BagSync:BAG_UPDATE(event, bagid)
 end
 
 function BagSync:UNIT_INVENTORY_CHANGED(event, unit)
+	if debugging then return end
 	if unit == 'player' then
 		SaveEquipment()
 	end
@@ -1499,15 +1511,18 @@ end
 ------------------------------
 
 function BagSync:BANKFRAME_OPENED()
+	if debugging then return end
 	atBank = true
 	ScanEntireBank()
 end
 
 function BagSync:BANKFRAME_CLOSED()
+	if debugging then return end
 	atBank = false
 end
 
 function BagSync:PLAYERBANKSLOTS_CHANGED(event, slotid)
+	if debugging then return end
 	--Remove atBank when/if Blizzard allows Bank access without being at the bank
 	if atBank then
 		SaveBag('bank', BANK_CONTAINER)
@@ -1519,6 +1534,7 @@ end
 ------------------------------
 
 function BagSync:PLAYERREAGENTBANKSLOTS_CHANGED()
+	if debugging then return end
 	SaveBag('reagentbank', REAGENTBANK_CONTAINER)
 end
 
@@ -1527,23 +1543,28 @@ end
 ------------------------------
 
 function BagSync:VOID_STORAGE_OPEN()
+	if debugging then return end
 	atVoidBank = true
 	ScanVoidBank()
 end
 
 function BagSync:VOID_STORAGE_CLOSE()
+	if debugging then return end
 	atVoidBank = false
 end
 
 function BagSync:VOID_STORAGE_UPDATE()
+	if debugging then return end
 	ScanVoidBank()
 end
 
 function BagSync:VOID_STORAGE_CONTENTS_UPDATE()
+	if debugging then return end
 	ScanVoidBank()
 end
 
 function BagSync:VOID_TRANSFER_DONE()
+	if debugging then return end
 	ScanVoidBank()
 end
 
@@ -1552,6 +1573,7 @@ end
 ------------------------------
 
 function BagSync:GUILDBANKFRAME_OPENED()
+	if debugging then return end
 	atGuildBank = true
 	if not BagSyncOpt.enableGuild then return end
 	
@@ -1566,10 +1588,12 @@ function BagSync:GUILDBANKFRAME_OPENED()
 end
 
 function BagSync:GUILDBANKFRAME_CLOSED()
+	if debugging then return end
 	atGuildBank = false
 end
 
 function BagSync:GUILDBANKBAGSLOTS_CHANGED()
+	if debugging then return end
 	if not BagSyncOpt.enableGuild then return end
 
 	if atGuildBank then
@@ -1590,12 +1614,14 @@ end
 ------------------------------
 
 function BagSync:MAIL_SHOW()
+	if debugging then return end
 	if isCheckingMail then return end
 	if not BagSyncOpt.enableMailbox then return end
 	ScanMailbox()
 end
 
 function BagSync:MAIL_INBOX_UPDATE()
+	if debugging then return end
 	if isCheckingMail then return end
 	if not BagSyncOpt.enableMailbox then return end
 	ScanMailbox()
@@ -1606,11 +1632,13 @@ end
 ------------------------------
 
 function BagSync:AUCTION_HOUSE_SHOW()
+	if debugging then return end
 	if not BagSyncOpt.enableAuction then return end
 	ScanAuctionHouse()
 end
 
 function BagSync:AUCTION_OWNED_LIST_UPDATE()
+	if debugging then return end
 	if not BagSyncOpt.enableAuction then return end
 	BS_DB.AH_LastScan = time()
 	ScanAuctionHouse()
@@ -1621,6 +1649,8 @@ end
 ------------------------------
 
 function BagSync:TRADE_SKILL_SHOW()
+	if debugging then return end
+	
 	--IsTradeSkillLinked() returns true only if trade window was opened from chat link (meaning another player)
 	if (not C_TradeSkillUI.IsTradeSkillLinked()) then
 		
