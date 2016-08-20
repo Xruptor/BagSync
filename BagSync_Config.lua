@@ -1,291 +1,247 @@
 local L = BAGSYNC_L
-local currentPlayer = UnitName('player')
-local currentRealm = GetRealmName()
+local currentPlayer = UnitName("player")
+local currentRealm = select(2, UnitFullName("player"))
 local ver = GetAddOnMetadata("BagSync","Version") or 0
 
-local bgsOpt = CreateFrame("Frame", "BagSyncConfig", InterfaceOptionsFramePanelContainer)
-bgsOpt:Hide()
-bgsOpt.name = "BagSync"
+local SO = LibStub("LibSimpleOptions-1.0")
 
-bgsOpt:SetScript("OnShow", function()
-	if BagSyncOpt then
-		BagSyncConfig_Total:SetChecked(BagSyncOpt["showTotal"])
-		BagSyncConfig_GuildNames:SetChecked(BagSyncOpt["showGuildNames"])
-		BagSyncConfig_BothFactions:SetChecked(BagSyncOpt["enableFaction"])
-		BagSyncConfig_ClassColors:SetChecked(BagSyncOpt["enableUnitClass"])
-		BagSyncConfig_Minimap:SetChecked(BagSyncOpt["enableMinimap"])
-		BagSyncConfig_GuildInfo:SetChecked(BagSyncOpt["enableGuild"])
-		BagSyncConfig_MailboxInfo:SetChecked(BagSyncOpt["enableMailbox"])
-		BagSyncConfig_AuctionInfo:SetChecked(BagSyncOpt["enableAuction"])
-		BagSyncConfig_TooltipSearchOnly:SetChecked(BagSyncOpt["tooltipOnlySearch"])
-		BagSyncConfig_EnableBagSyncTooltips:SetChecked(BagSyncOpt["enableTooltips"])
-		BagSyncConfig_EnableBagSyncTooltipsSeperator:SetChecked(BagSyncOpt["enableTooltipSeperator"])
-		BagSyncConfig_EnableCrossRealmsItems:SetChecked(BagSyncOpt["enableCrossRealmsItems"])
-		BagSyncConfig_EnableBNetAccountItems:SetChecked(BagSyncOpt["enableBNetAccountItems"])
-	end
-end)
+function BSOpt_Startup()
 
-local title = bgsOpt:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-title:SetPoint("TOPLEFT", 16, -16)
-title:SetText("|cFF99CC33BagSync|r [|cFFDF2B2B"..ver.."|r]")
-InterfaceOptions_AddCategory(bgsOpt)
+	local panel = SO.AddOptionsPanel("BagSync", function() end)
 
---[[ Total ]]--
-local bgs_Total_Opt = CreateFrame("CheckButton", "BagSyncConfig_Total", bgsOpt, "OptionsBaseCheckButtonTemplate")
-bgs_Total_Opt:SetPoint("TOPLEFT", 16, -45)
-bgs_Total_Opt:SetScript("OnClick", function(frame)
-	if BagSyncOpt then
-		if frame:GetChecked() then
-			PlaySound("igMainMenuOptionCheckBoxOn")
-			BagSyncOpt["showTotal"] = true
-			if BagSync then BagSync:resetTooltip() end
-		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
-			BagSyncOpt["showTotal"] = false
-			if BagSync then BagSync:resetTooltip() end
-		end
-	end
-end)
-local bgs_Total_OptText = bgs_Total_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-bgs_Total_OptText:SetPoint("LEFT", bgs_Total_Opt, "RIGHT", 0, 1)
-bgs_Total_OptText:SetText(L["Display [Total] in tooltips and gold display."])
+	local title, subText = panel:MakeTitleTextAndSubText("|cFF99CC33BagSync|r [|cFFDF2B2B"..ver.."|r]", "These options allow you to customize the BagSync displays data.")
 
---[[ Guild Names ]]--
-local bgs_GuildNames_Opt = CreateFrame("CheckButton", "BagSyncConfig_GuildNames", bgsOpt, "OptionsBaseCheckButtonTemplate")
-bgs_GuildNames_Opt:SetPoint("TOPLEFT", 16, -73)
-bgs_GuildNames_Opt:SetScript("OnClick", function(frame)
-	if BagSyncOpt then
-		if frame:GetChecked() then
-			PlaySound("igMainMenuOptionCheckBoxOn")
-			BagSyncOpt["showGuildNames"] = true
-			if BagSync then BagSync:resetTooltip() end
-		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
-			BagSyncOpt["showGuildNames"] = false
-			if BagSync then BagSync:resetTooltip() end
-		end
-	end
-end)
-local bgs_GuildNames_OptText = bgs_GuildNames_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-bgs_GuildNames_OptText:SetPoint("LEFT", bgs_GuildNames_Opt, "RIGHT", 0, 1)
-bgs_GuildNames_OptText:SetText(L["Display [Guild Name] display in tooltips."])
+	--toggle BagSync tooltips
+	panel:MakeToggle(
+		"name", L["Enable BagSync Tooltips"],
+		"description", "",
+		"default", false,
+		"getFunc", function() return BagSyncOpt["enableTooltips"] end,
+		"setFunc", function(value)
+			BagSyncOpt["enableTooltips"] = value
+			BagSync:resetTooltip()
+			end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -16)
+	
+	--tooltip seperator
+	panel:MakeToggle(
+		"name", L["Enable empty line seperator above BagSync tooltip display."],
+		"description", "",
+		"default", false,
+		"getFunc", function() return BagSyncOpt["enableTooltipSeperator"] end,
+		"setFunc", function(value)
+			BagSyncOpt["enableTooltipSeperator"] = value
+			BagSync:resetTooltip()
+			end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -41)
+	
+	--total
+	panel:MakeToggle(
+		"name", L["Display [Total] in tooltips and gold display."],
+		"description", "",
+		"default", false,
+		"getFunc", function() return BagSyncOpt["showTotal"] end,
+		"setFunc", function(value)
+			BagSyncOpt["showTotal"] = value
+			BagSync:resetTooltip()
+			end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -66)
+	
+	--guild names
+	panel:MakeToggle(
+		"name", L["Display [Guild Name] display in tooltips."],
+		"description", "",
+		"default", false,
+		"getFunc", function() return BagSyncOpt["showGuildNames"] end,
+		"setFunc", function(value)
+			BagSyncOpt["showGuildNames"] = value
+			BagSync:resetTooltip()
+			end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -91)
+	
+	--factions
+	panel:MakeToggle(
+		"name", L["Display items for both factions (Alliance/Horde)."],
+		"description", "",
+		"default", false,
+		"getFunc", function() return BagSyncOpt["enableFaction"] end,
+		"setFunc", function(value)
+			BagSyncOpt["enableFaction"] = value
+			BagSync:resetTooltip()
+			end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -116)
+	
+	--class colors
+	panel:MakeToggle(
+		"name", L["Display class colors for characters."],
+		"description", "",
+		"default", false,
+		"getFunc", function() return BagSyncOpt["enableUnitClass"] end,
+		"setFunc", function(value)
+			BagSyncOpt["enableUnitClass"] = value
+			BagSync:resetTooltip()
+			end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -141)
+	
+	--minimap
+	panel:MakeToggle(
+		"name", L["Display BagSync minimap button."],
+		"description", "",
+		"default", false,
+		"getFunc", function() return BagSyncOpt["enableMinimap"] end,
+		"setFunc", function(value)
+			BagSyncOpt["enableMinimap"] = value
+			if value then BagSync_MinimapButton:Show() else BagSync_MinimapButton:Hide() end
+			end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -166)
+	
+	--guild info
+	panel:MakeToggle(
+		"name", L["Enable guild bank items."],
+		"description", "",
+		"default", false,
+		"getFunc", function() return BagSyncOpt["enableGuild"] end,
+		"setFunc", function(value)
+			BagSyncOpt["enableGuild"] = value
+			BagSync:resetTooltip()
+			end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -191)
+	
+	--mailbox info
+	panel:MakeToggle(
+		"name", L["Enable mailbox items."],
+		"description", "",
+		"default", false,
+		"getFunc", function() return BagSyncOpt["enableMailbox"] end,
+		"setFunc", function(value)
+			BagSyncOpt["enableMailbox"] = value
+			BagSync:resetTooltip()
+			end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -216)
+	
+	--auction house
+	panel:MakeToggle(
+		"name", L["Enable auction house items."],
+		"description", "",
+		"default", false,
+		"getFunc", function() return BagSyncOpt["enableAuction"] end,
+		"setFunc", function(value)
+			BagSyncOpt["enableAuction"] = value
+			BagSync:resetTooltip()
+			end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -241)
+	
+	--tooltip only on bagsync search window
+	panel:MakeToggle(
+		"name", L["Display modified tooltips ONLY in the BagSync Search window."],
+		"description", "",
+		"default", false,
+		"getFunc", function() return BagSyncOpt["tooltipOnlySearch"] end,
+		"setFunc", function(value)
+			BagSyncOpt["tooltipOnlySearch"] = value
+			BagSync:resetTooltip()
+			end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -266)
+	
+	--cross realms
+	panel:MakeToggle(
+		"name", L["Enable items for Cross-Realms characters."],
+		"description", "",
+		"default", false,
+		"getFunc", function() return BagSyncOpt["enableCrossRealmsItems"] end,
+		"setFunc", function(value)
+			BagSyncOpt["enableCrossRealmsItems"] = value
+			BagSync:resetTooltip()
+			end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -291)
+	
+	--battle.net account characters
+	panel:MakeToggle(
+		"name", L["Enable items for current Battle.Net Account characters. |cFFDF2B2B((Not Recommended))|r"],
+		"description", "",
+		"default", false,
+		"getFunc", function() return BagSyncOpt["enableBNetAccountItems"] end,
+		"setFunc", function(value)
+			BagSyncOpt["enableBNetAccountItems"] = value
+			BagSync:resetTooltip()
+			end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -316)
+	
+	--first color (default moss)
+	panel:MakeColorPicker(
+	    "name", L["Primary BagSync tooltip color."],
+	    "description", "",
+	    "hasAlpha", false,
+	    "defaultR", 128/255,
+	    "defaultG", 1,
+	    "defaultB", 0,
+	    "getFunc", function() return BagSyncOpt.colors.FIRST.r, BagSyncOpt.colors.FIRST.g, BagSyncOpt.colors.FIRST.b end,
+	    "setFunc", function(r, g, b) BagSyncOpt.colors.FIRST.r, BagSyncOpt.colors.FIRST.g, BagSyncOpt.colors.FIRST.b = r, g, b end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -341)
+	
+	--second color (default silver)
+	panel:MakeColorPicker(
+	    "name", L["Secondary BagSync tooltip color."],
+	    "description", "",
+	    "hasAlpha", false,
+	    "defaultR", 199/255,
+	    "defaultG", 199/255,
+	    "defaultB", 207/255,
+	    "getFunc", function() return BagSyncOpt.colors.SECOND.r, BagSyncOpt.colors.SECOND.g, BagSyncOpt.colors.SECOND.b end,
+	    "setFunc", function(r, g, b) BagSyncOpt.colors.SECOND.r, BagSyncOpt.colors.SECOND.g, BagSyncOpt.colors.SECOND.b = r, g, b end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -366)
+	
+	--total color
+	panel:MakeColorPicker(
+	    "name", L["BagSync [Total] tooltip color."],
+	    "description", "",
+	    "hasAlpha", false,
+	    "defaultR", 244/255,
+	    "defaultG", 164/255,
+	    "defaultB", 96/255,
+	    "getFunc", function() return BagSyncOpt.colors.TOTAL.r, BagSyncOpt.colors.TOTAL.g, BagSyncOpt.colors.TOTAL.b end,
+	    "setFunc", function(r, g, b) BagSyncOpt.colors.TOTAL.r, BagSyncOpt.colors.TOTAL.g, BagSyncOpt.colors.TOTAL.b = r, g, b end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -391)
+	
+	--guild color
+	panel:MakeColorPicker(
+	    "name", L["BagSync [Guild] tooltip color."],
+	    "description", "",
+	    "hasAlpha", false,
+	    "defaultR", 101/255,
+	    "defaultG", 184/255,
+	    "defaultB", 192/255,
+	    "getFunc", function() return BagSyncOpt.colors.GUILD.r, BagSyncOpt.colors.GUILD.g, BagSyncOpt.colors.GUILD.b end,
+	    "setFunc", function(r, g, b) BagSyncOpt.colors.GUILD.r, BagSyncOpt.colors.GUILD.g, BagSyncOpt.colors.GUILD.b = r, g, b end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -416)
+	
+	--cross realm color
+	panel:MakeColorPicker(
+	    "name", L["BagSync [Cross-Realms] tooltip color."],
+	    "description", "",
+	    "hasAlpha", false,
+	    "defaultR", 1,
+	    "defaultG", 125/255,
+	    "defaultB", 10/255,
+	    "getFunc", function() return BagSyncOpt.colors.CROSS.r, BagSyncOpt.colors.CROSS.g, BagSyncOpt.colors.CROSS.b end,
+	    "setFunc", function(r, g, b) BagSyncOpt.colors.CROSS.r, BagSyncOpt.colors.CROSS.g, BagSyncOpt.colors.CROSS.b = r, g, b end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -441)
+	
+	--bnet color
+	panel:MakeColorPicker(
+	    "name", L["BagSync [Battle.Net] tooltip color."],
+	    "description", "",
+	    "hasAlpha", false,
+	    "defaultR", 53/255,
+	    "defaultG", 136/255,
+	    "defaultB", 1,
+	    "getFunc", function() return BagSyncOpt.colors.BNET.r, BagSyncOpt.colors.BNET.g, BagSyncOpt.colors.BNET.b end,
+	    "setFunc", function(r, g, b) BagSyncOpt.colors.BNET.r, BagSyncOpt.colors.BNET.g, BagSyncOpt.colors.BNET.b = r, g, b end
+	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -466)
+	
 
---[[ Display Both Factions ]]--
-local bgs_BothFactions_Opt = CreateFrame("CheckButton", "BagSyncConfig_BothFactions", bgsOpt, "OptionsBaseCheckButtonTemplate")
-bgs_BothFactions_Opt:SetPoint("TOPLEFT", 16, -101)
-bgs_BothFactions_Opt:SetScript("OnClick", function(frame)
-	if BagSyncOpt then
-		if frame:GetChecked() then
-			PlaySound("igMainMenuOptionCheckBoxOn")
-			BagSyncOpt["enableFaction"] = true
-			if BagSync then BagSync:resetTooltip() end
-		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
-			BagSyncOpt["enableFaction"] = false
-			if BagSync then BagSync:resetTooltip() end
-		end
-	end
-end)
-local bgs_BothFactions_OptText = bgs_BothFactions_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-bgs_BothFactions_OptText:SetPoint("LEFT", bgs_BothFactions_Opt, "RIGHT", 0, 1)
-bgs_BothFactions_OptText:SetText(L["Display items for both factions (Alliance/Horde)."])
-
---[[ Class Colors ]]--
-local bgs_ClassColors_Opt = CreateFrame("CheckButton", "BagSyncConfig_ClassColors", bgsOpt, "OptionsBaseCheckButtonTemplate")
-bgs_ClassColors_Opt:SetPoint("TOPLEFT", 16, -129)
-bgs_ClassColors_Opt:SetScript("OnClick", function(frame)
-	if BagSyncOpt then
-		if frame:GetChecked() then
-			PlaySound("igMainMenuOptionCheckBoxOn")
-			BagSyncOpt["enableUnitClass"] = true
-			if BagSync then BagSync:resetTooltip() end
-		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
-			BagSyncOpt["enableUnitClass"] = false
-			if BagSync then BagSync:resetTooltip() end
-		end
-	end
-end)
-local bgs_ClassColors_OptText = bgs_ClassColors_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-bgs_ClassColors_OptText:SetPoint("LEFT", bgs_ClassColors_Opt, "RIGHT", 0, 1)
-bgs_ClassColors_OptText:SetText(L["Display class colors for characters."])
-
---[[ Minimap ]]--
-local bgs_Minimap_Opt = CreateFrame("CheckButton", "BagSyncConfig_Minimap", bgsOpt, "OptionsBaseCheckButtonTemplate")
-bgs_Minimap_Opt:SetPoint("TOPLEFT", 16, -157)
-bgs_Minimap_Opt:SetScript("OnClick", function(frame)
-	if BagSyncOpt then
-		if frame:GetChecked() then
-			PlaySound("igMainMenuOptionCheckBoxOn")
-			BagSyncOpt["enableMinimap"] = true
-			if BagSync_MinimapButton and not BagSync_MinimapButton:IsVisible() then BagSync_MinimapButton:Show() end
-		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
-			BagSyncOpt["enableMinimap"] = false
-			if BagSync_MinimapButton and BagSync_MinimapButton:IsVisible() then BagSync_MinimapButton:Hide() end
-		end
-	end			
-end)
-local bgs_Minimap_OptText = bgs_Minimap_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-bgs_Minimap_OptText:SetPoint("LEFT", bgs_Minimap_Opt, "RIGHT", 0, 1)
-bgs_Minimap_OptText:SetText(L["Display BagSync minimap button."])
-
---[[ Enable Guild Info ]]--
-local bgs_GuildInfo_Opt = CreateFrame("CheckButton", "BagSyncConfig_GuildInfo", bgsOpt, "OptionsBaseCheckButtonTemplate")
-bgs_GuildInfo_Opt:SetPoint("TOPLEFT", 16, -185)
-bgs_GuildInfo_Opt:SetScript("OnClick", function(frame)
-	if BagSyncOpt then
-		if frame:GetChecked() then
-			PlaySound("igMainMenuOptionCheckBoxOn")
-			BagSyncOpt["enableGuild"] = true
-			if BagSync then BagSync:resetTooltip() end
-		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
-			BagSyncOpt["enableGuild"] = false
-			if BagSync then BagSync:resetTooltip() end
-		end
-	end
-end)
-local bgs_GuildInfo_OptText = bgs_GuildInfo_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-bgs_GuildInfo_OptText:SetPoint("LEFT", bgs_GuildInfo_Opt, "RIGHT", 0, 1)
-bgs_GuildInfo_OptText:SetText(L["Enable guild bank items."])
-
---[[ Enable Mailbox Info ]]--
-local bgs_MailboxInfo_Opt = CreateFrame("CheckButton", "BagSyncConfig_MailboxInfo", bgsOpt, "OptionsBaseCheckButtonTemplate")
-bgs_MailboxInfo_Opt:SetPoint("TOPLEFT", 16, -213)
-bgs_MailboxInfo_Opt:SetScript("OnClick", function(frame)
-	if BagSyncOpt then
-		if frame:GetChecked() then
-			PlaySound("igMainMenuOptionCheckBoxOn")
-			BagSyncOpt["enableMailbox"] = true
-			if BagSync then BagSync:resetTooltip() end
-		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
-			BagSyncOpt["enableMailbox"] = false
-			if BagSync then BagSync:resetTooltip() end
-		end
-	end
-end)
-local bgs_MailboxInfo_OptText = bgs_MailboxInfo_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-bgs_MailboxInfo_OptText:SetPoint("LEFT", bgs_MailboxInfo_Opt, "RIGHT", 0, 1)
-bgs_MailboxInfo_OptText:SetText(L["Enable mailbox items."])
-
---[[ Enable Auction House Info Info ]]--
-local bgs_AuctionInfo_Opt = CreateFrame("CheckButton", "BagSyncConfig_AuctionInfo", bgsOpt, "OptionsBaseCheckButtonTemplate")
-bgs_AuctionInfo_Opt:SetPoint("TOPLEFT", 16, -241)
-bgs_AuctionInfo_Opt:SetScript("OnClick", function(frame)
-	if BagSyncOpt then
-		if frame:GetChecked() then
-			PlaySound("igMainMenuOptionCheckBoxOn")
-			BagSyncOpt["enableAuction"] = true
-			if BagSync then BagSync:resetTooltip() end
-		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
-			BagSyncOpt["enableAuction"] = false
-			if BagSync then BagSync:resetTooltip() end
-		end
-	end
-end)
-local bgs_AuctionInfo_OptText = bgs_AuctionInfo_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-bgs_AuctionInfo_OptText:SetPoint("LEFT", bgs_AuctionInfo_Opt, "RIGHT", 0, 1)
-bgs_AuctionInfo_OptText:SetText(L["Enable auction house items."])
-
---[[ Display tooltips only in the BagSync Search window ]]--
-local bgs_TooltipSearchOnly_Opt = CreateFrame("CheckButton", "BagSyncConfig_TooltipSearchOnly", bgsOpt, "OptionsBaseCheckButtonTemplate")
-bgs_TooltipSearchOnly_Opt:SetPoint("TOPLEFT", 16, -269)
-bgs_TooltipSearchOnly_Opt:SetScript("OnClick", function(frame)
-	if BagSyncOpt then
-		if frame:GetChecked() then
-			PlaySound("igMainMenuOptionCheckBoxOn")
-			BagSyncOpt["tooltipOnlySearch"] = true
-			if BagSync then BagSync:resetTooltip() end
-		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
-			BagSyncOpt["tooltipOnlySearch"] = false
-			if BagSync then BagSync:resetTooltip() end
-		end
-	end
-end)
-local bgs_TooltipSearchOnly_OptText = bgs_TooltipSearchOnly_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-bgs_TooltipSearchOnly_OptText:SetPoint("LEFT", bgs_TooltipSearchOnly_Opt, "RIGHT", 0, 1)
-bgs_TooltipSearchOnly_OptText:SetText(L["Display modified tooltips ONLY in the BagSync Search window."])
-
---[[ Toggle for BagSync tooltips]]--
-local bgs_EnableBagSyncTooltips_Opt = CreateFrame("CheckButton", "BagSyncConfig_EnableBagSyncTooltips", bgsOpt, "OptionsBaseCheckButtonTemplate")
-bgs_EnableBagSyncTooltips_Opt:SetPoint("TOPLEFT", 16, -297)
-bgs_EnableBagSyncTooltips_Opt:SetScript("OnClick", function(frame)
-	if BagSyncOpt then
-		if frame:GetChecked() then
-			PlaySound("igMainMenuOptionCheckBoxOn")
-			BagSyncOpt["enableTooltips"] = true
-			if BagSync then BagSync:resetTooltip() end
-		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
-			BagSyncOpt["enableTooltips"] = false
-			if BagSync then BagSync:resetTooltip() end
-		end
-	end
-end)
-local bgs_EnableBagSyncTooltips_OptText = bgs_EnableBagSyncTooltips_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-bgs_EnableBagSyncTooltips_OptText:SetPoint("LEFT", bgs_EnableBagSyncTooltips_Opt, "RIGHT", 0, 1)
-bgs_EnableBagSyncTooltips_OptText:SetText(L["Enable BagSync Tooltips"])
-
---[[ Toggle for BagSync Tooltip Seperator]]--
-local bgs_EnableBagSyncTooltipsSeperator_Opt = CreateFrame("CheckButton", "BagSyncConfig_EnableBagSyncTooltipsSeperator", bgsOpt, "OptionsBaseCheckButtonTemplate")
-bgs_EnableBagSyncTooltipsSeperator_Opt:SetPoint("TOPLEFT", 16, -325)
-bgs_EnableBagSyncTooltipsSeperator_Opt:SetScript("OnClick", function(frame)
-	if BagSyncOpt then
-		if frame:GetChecked() then
-			PlaySound("igMainMenuOptionCheckBoxOn")
-			BagSyncOpt["enableTooltipSeperator"] = true
-			if BagSync then BagSync:resetTooltip() end
-		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
-			BagSyncOpt["enableTooltipSeperator"] = false
-			if BagSync then BagSync:resetTooltip() end
-		end
-	end
-end)
-local bgs_EnableBagSyncTooltipsSeperator_OptText = bgs_EnableBagSyncTooltipsSeperator_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-bgs_EnableBagSyncTooltipsSeperator_OptText:SetPoint("LEFT", bgs_EnableBagSyncTooltipsSeperator_Opt, "RIGHT", 0, 1)
-bgs_EnableBagSyncTooltipsSeperator_OptText:SetText(L["Enable empty line seperator above BagSync tooltip display."])
-
---[[ Toggle for Cross-Realms Items]]--
-local bgs_EnableCrossRealmsItems_Opt = CreateFrame("CheckButton", "BagSyncConfig_EnableCrossRealmsItems", bgsOpt, "OptionsBaseCheckButtonTemplate")
-bgs_EnableCrossRealmsItems_Opt:SetPoint("TOPLEFT", 16, -353)
-bgs_EnableCrossRealmsItems_Opt:SetScript("OnClick", function(frame)
-	if BagSyncOpt then
-		if frame:GetChecked() then
-			PlaySound("igMainMenuOptionCheckBoxOn")
-			BagSyncOpt["enableCrossRealmsItems"] = true
-			if BagSync then BagSync:resetTooltip() end
-		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
-			BagSyncOpt["enableCrossRealmsItems"] = false
-			if BagSync then BagSync:resetTooltip() end
-		end
-	end
-end)
-local bgs_EnableCrossRealmsItems_OptText = bgs_EnableCrossRealmsItems_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-bgs_EnableCrossRealmsItems_OptText:SetPoint("LEFT", bgs_EnableCrossRealmsItems_Opt, "RIGHT", 0, 1)
-bgs_EnableCrossRealmsItems_OptText:SetText(L["Enable items for Cross-Realms characters."])
-
---[[ Toggle for current Battle.Net Account Character Items]]--
-local bgs_EnableBNetAccountItems_Opt = CreateFrame("CheckButton", "BagSyncConfig_EnableBNetAccountItems", bgsOpt, "OptionsBaseCheckButtonTemplate")
-bgs_EnableBNetAccountItems_Opt:SetPoint("TOPLEFT", 16, -381)
-bgs_EnableBNetAccountItems_Opt:SetScript("OnClick", function(frame)
-	if BagSyncOpt then
-		if frame:GetChecked() then
-			PlaySound("igMainMenuOptionCheckBoxOn")
-			BagSyncOpt["enableBNetAccountItems"] = true
-			if BagSync then BagSync:resetTooltip() end
-		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
-			BagSyncOpt["enableBNetAccountItems"] = false
-			if BagSync then BagSync:resetTooltip() end
-		end
-	end
-end)
-local bgs_EnableBNetAccountItems_OptText = bgs_EnableBNetAccountItems_Opt:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-bgs_EnableBNetAccountItems_OptText:SetPoint("LEFT", bgs_EnableBNetAccountItems_Opt, "RIGHT", 0, 1)
-bgs_EnableBNetAccountItems_OptText:SetText(L["Enable items for current Battle.Net Account characters. |cFFDF2B2B((Not Recommended))|r"])
+	--i'm calling a refresh for the panel, because sometimes (like the color picker) some of the items aren't refreshed on the screen due to a /reload
+	--so instead I'm just going to force the getFunc for all the controls
+	panel:Refresh()
+	
+end

@@ -1,11 +1,11 @@
 local L = BAGSYNC_L
-local currentPlayer = UnitName('player')
-local currentRealm = GetRealmName()
+local currentPlayer = UnitName("player")
+local currentRealm = select(2, UnitFullName("player"))
 local bgProfiles = CreateFrame("Frame","BagSync_ProfilesFrame", UIParent)
 
 --lets do the dropdown menu of DOOM
 local bgsProfilesDD = CreateFrame("Frame", "bgsProfilesDD")
-bgsProfilesDD.displayMode = 'MENU'
+bgsProfilesDD.displayMode = "MENU"
 
 local function addButton(level, text, isTitle, notCheckable, hasArrow, value, func)
 	local info = UIDropDownMenu_CreateInfo()
@@ -31,7 +31,7 @@ bgsProfilesDD.initialize = function(self, level)
 	table.sort(tmp, function(a,b) return (a < b) end)
 
 	if level == 1 then
-		PlaySound('gsTitleOptionExit')
+		PlaySound("gsTitleOptionExit")
 
 		for i=1, #tmp do
 			addButton(level, tmp[i], nil, 1, nil, tmp[i], function(frame, ...)
@@ -93,7 +93,7 @@ bgProfiles.toonName:SetBackdrop({
 	bgFile = "Interface\\Buttons\\WHITE8x8",
 })
 bgProfiles.toonName:SetBackdropColor(0,1,0,0.25)
-bgProfiles.toonName:SetScript("OnClick", function() ToggleDropDownMenu(1, nil, bgsProfilesDD, 'cursor', 0, 0)  end)
+bgProfiles.toonName:SetScript("OnClick", function() ToggleDropDownMenu(1, nil, bgsProfilesDD, "cursor", 0, 0)  end)
 bgProfiles.toonName.text = buttonText
 
 bgProfiles.deleteButton = CreateFrame("Button", nil, bgProfiles, "UIPanelButtonTemplate");

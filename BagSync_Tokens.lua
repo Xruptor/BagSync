@@ -1,13 +1,15 @@
 local L = BAGSYNC_L
 local tokensTable = {}
 local tRows, tAnchor = {}
-local currentPlayer = UnitName('player')
-local currentRealm = GetRealmName()
-local GetItemInfo = _G['GetItemInfo']
-local SILVER = '|cffc7c7cf%s|r'
-local MOSS = '|cFF80FF00%s|r'
+local currentPlayer = UnitName("player")
+local currentRealm = select(2, UnitFullName("player"))
+local GetItemInfo = _G["GetItemInfo"]
 
 local bgTokens = CreateFrame("Frame","BagSync_TokensFrame", UIParent)
+
+local function tooltipColor(color, str)
+  return string.format("|cff%02x%02x%02x%s|r", (color.r or 1) * 255, (color.g or 1) * 255, (color.b or 1) * 255, str)
+end
 
 local function LoadSlider()
 	
@@ -15,9 +17,9 @@ local function LoadSlider()
 		if self.name and self.tooltip then
 			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 			GameTooltip:AddLine(self.name)
-			GameTooltip:AddLine(' ')
+			GameTooltip:AddLine(" ")
 			for i=1, #self.tooltip do
-				GameTooltip:AddDoubleLine(format(MOSS, self.tooltip[i].name), format(SILVER, self.tooltip[i].count))
+				GameTooltip:AddDoubleLine(tooltipColor(BagSyncOpt.colors.FIRST, self.tooltip[i].name), tooltipColor(BagSyncOpt.colors.SECOND, self.tooltip[i].count))
 			end
 			GameTooltip:Show()
 		end

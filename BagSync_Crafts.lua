@@ -1,8 +1,8 @@
 local L = BAGSYNC_L
 local craftsTable = {}
 local tRows, tAnchor = {}
-local currentPlayer = UnitName('player')
-local currentRealm = GetRealmName()
+local currentPlayer = UnitName("player")
+local currentRealm = select(2, UnitFullName("player"))
 
 local bgCrafts = CreateFrame("Frame","BagSync_CraftsFrame", UIParent)
 
@@ -11,7 +11,7 @@ local function LoadSlider()
 	local function OnEnter(self)
 		if self.canLink and self.owner then
 			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-			GameTooltip:AddLine(format('|cFF99CC33%s|r', self.owner))
+			GameTooltip:AddLine(format("|cFF99CC33%s|r", self.owner))
 			GameTooltip:AddLine(L["Left Click = Link to view tradeskill."])
 			GameTooltip:AddLine(L["Right Click = Insert tradeskill link."])
 			GameTooltip:Show()
@@ -50,7 +50,7 @@ local function LoadSlider()
 			row:SetScript("OnClick", function (self, button, down)
 				if self.link then
 					if button == "LeftButton" then
-						DEFAULT_CHAT_FRAME:AddMessage(format('%s|cFF99CC33%s|r ==> %s', L["Click to view profession: "], self.owner, self.link))
+						DEFAULT_CHAT_FRAME:AddMessage(format("%s|cFF99CC33%s|r ==> %s", L["Click to view profession: "], self.owner, self.link))
 					else
 						local editBox = ChatEdit_ChooseBoxForSend()
 						
@@ -76,9 +76,9 @@ local function LoadSlider()
 						row.title:SetText("|cFFFFFFFF"..craftsTable[i + offset].name.."|r")
 					else
 						if craftsTable[i + offset].isLink then
-							row.title:SetText( format('|cFF99CC33%s|r |cFFFFFFFF(%s)|r', craftsTable[i + offset].name,  craftsTable[i + offset].level))
+							row.title:SetText( format("|cFF99CC33%s|r |cFFFFFFFF(%s)|r", craftsTable[i + offset].name,  craftsTable[i + offset].level))
 						else
-							row.title:SetText( format('|cFF6699FF%s|r |cFFFFFFFF(%s)|r', craftsTable[i + offset].name,  craftsTable[i + offset].level))
+							row.title:SetText( format("|cFF6699FF%s|r |cFFFFFFFF(%s)|r", craftsTable[i + offset].name,  craftsTable[i + offset].level))
 						end
 					end
 					
@@ -148,7 +148,7 @@ local function DoCrafts()
 			tmp = {}
 			for q, r in pairs(v) do
 				if type(r) == "string" then
-					local trName, trSkillLevel = strsplit(',', r)
+					local trName, trSkillLevel = strsplit(",", r)
 					if trName and trSkillLevel then
 						table.insert(tmp, { name=trName, level=trSkillLevel, isLink=false, owner=k} )
 					end

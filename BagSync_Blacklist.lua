@@ -1,8 +1,8 @@
 local L = BAGSYNC_L
 local blacklistTable = {}
 local tRows, tAnchor = {}
-local currentPlayer = UnitName('player')
-local currentRealm = GetRealmName()
+local currentPlayer = UnitName("player")
+local currentRealm = select(2, UnitFullName("player")) --get shortend realm name with no spaces and dashes
 local storedBarCount = 0
 local prevClickedBar
 

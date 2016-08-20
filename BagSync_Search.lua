@@ -1,20 +1,20 @@
 local L = BAGSYNC_L
 local searchTable = {}
 local rows, anchor = {}
-local currentRealm = GetRealmName()
-local GetItemInfo = _G['GetItemInfo']
-local currentPlayer = UnitName('player')
+local currentRealm = select(2, UnitFullName("player"))
+local GetItemInfo = _G["GetItemInfo"]
+local currentPlayer = UnitName("player")
 
-local ItemSearch = LibStub('LibItemSearch-1.0')
+local ItemSearch = LibStub("LibItemSearch-1.0")
 local bgSearch = CreateFrame("Frame","BagSync_SearchFrame", UIParent)
 
 --add class search
-local tooltipScanner = _G['LibItemSearchTooltipScanner'] or CreateFrame('GameTooltip', 'LibItemSearchTooltipScanner', UIParent, 'GameTooltipTemplate')
+local tooltipScanner = _G["LibItemSearchTooltipScanner"] or CreateFrame("GameTooltip", "LibItemSearchTooltipScanner", UIParent, "GameTooltipTemplate")
 local tooltipCache = setmetatable({}, {__index = function(t, k) local v = {} t[k] = v return v end})
 
 ItemSearch:RegisterTypedSearch{
-	id = 'classRestriction',
-	tags = {'c', 'class'},
+	id = "classRestriction",
+	tags = {"c", "class"},
 	
 	canSearch = function(self, _, search)
 		return search
@@ -23,7 +23,7 @@ ItemSearch:RegisterTypedSearch{
 	findItem = function(self, link, _, search)
 		if link:find("battlepet") then return false end
 
-		local itemID = link:match('item:(%d+)')
+		local itemID = link:match("item:(%d+)")
 		if not itemID then
 			return
 		end
@@ -33,7 +33,7 @@ ItemSearch:RegisterTypedSearch{
 			return cachedResult
 		end
 	
-		tooltipScanner:SetOwner(UIParent, 'ANCHOR_NONE')
+		tooltipScanner:SetOwner(UIParent, "ANCHOR_NONE")
 		tooltipScanner:SetHyperlink(link)
 
 		local result = false
@@ -41,7 +41,7 @@ ItemSearch:RegisterTypedSearch{
 		local pattern = string.gsub(ITEM_CLASSES_ALLOWED:lower(), "%%s", "(.+)")
 		
 		for i = 1, tooltipScanner:NumLines() do
-			local text =  _G[tooltipScanner:GetName() .. 'TextLeft' .. i]:GetText():lower()
+			local text =  _G[tooltipScanner:GetName() .. "TextLeft" .. i]:GetText():lower()
 			local textChk = string.find(text, pattern)
 
 			if textChk and tostring(text):find(search) then
@@ -117,7 +117,7 @@ local function LoadSlider()
 					if searchTable[i + offset].rarity then
 						--local hex = (select(4, GetItemQualityColor(searchTable[i + offset].rarity)))
 						local hex = (select(4, GetItemQualityColor(searchTable[i + offset].rarity)))
-						row.title:SetText(format('|c%s%s|r', hex, searchTable[i + offset].name) or searchTable[i + offset].name)
+						row.title:SetText(format("|c%s%s|r", hex, searchTable[i + offset].name) or searchTable[i + offset].name)
 					else
 						row.title:SetText(searchTable[i + offset].name)
 					end
@@ -199,7 +199,7 @@ local function DoSearch()
 		for k, v in pairs(xDB) do
 
 			local pFaction = v.faction or playerFaction --just in case ;) if we dont know the faction yet display it anyways
-			local yName, yRealm  = strsplit('^', k)
+			local yName, yRealm  = strsplit("^", k)
 			
 			--check if we should show both factions or not
 			if BagSyncOpt.enableFaction or pFaction == playerFaction then
@@ -214,7 +214,7 @@ local function DoSearch()
 							--slotID = slotid for specific bagid, itemValue = data of specific slotid
 							if type(bagInfo) == "table" then
 								for slotID, itemValue in pairs(bagInfo) do
-									local dblink, dbcount = strsplit(',', itemValue)
+									local dblink, dbcount = strsplit(",", itemValue)
 									if dblink then
 										local dName, dItemLink, dRarity = GetItemInfo(dblink)
 										if dName and dItemLink then
@@ -249,7 +249,7 @@ local function DoSearch()
 						if not previousGuilds[gName] then
 							--we only really need to see this information once per guild
 							for q, r in pairs(BagSyncGUILD_DB[v.realm][guildN]) do
-								local dblink, dbcount = strsplit(',', r)
+								local dblink, dbcount = strsplit(",", r)
 								if dblink then
 									local dName, dItemLink, dRarity = GetItemInfo(dblink)
 									if dName then

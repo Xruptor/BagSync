@@ -74,6 +74,12 @@
 -- ["Enable empty line seperator above BagSync tooltip display."] = "",
 -- ["Enable items for Cross-Realms characters."] = "",
 -- ["Enable items for current Battle.Net Account characters |cFFDF2B2B(Not Recommended)|r."] = "",
+-- ["Primary BagSync tooltip color."] = "",
+-- ["Secondary BagSync tooltip color."] = "",
+-- ["BagSync [Total] tooltip color."] = "",
+-- ["BagSync [Guild] tooltip color."] = "",
+-- ["BagSync [Cross-Realms] tooltip color."] = "",
+-- ["BagSync [Battle.Net] tooltip color."] = "",
 	
 ---------------------
 --Major shout out and special thanks to ytzyt at Curse for the zhCN and zhTW translations!  Thanks!

@@ -1,0 +1,15 @@
+------------------------------------------------------------------------
+r46 | cladhaire | 2012-09-09 08:40:07 +0000 (Sun, 09 Sep 2012) | 2 lines
+Changed paths:
+   M /trunk/LibSimpleOptions-1.0.lua
+   M /trunk/LibSimpleOptions-1.0.toc
+
+Update for MoP
+
+------------------------------------------------------------------------
+r45 | nevcairiel | 2009-03-06 10:12:36 +0000 (Fri, 06 Mar 2009) | 1 line
+Changed paths:
+   M /trunk/LibSimpleOptions-1.0.toc
+
+Restore LoD to Libraries, as 3.0.8 fixed all bugs that blocked LoD OptionalDeps to load properly.
+------------------------------------------------------------------------
