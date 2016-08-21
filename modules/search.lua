@@ -5,8 +5,10 @@ local currentRealm = select(2, UnitFullName("player"))
 local GetItemInfo = _G["GetItemInfo"]
 local currentPlayer = UnitName("player")
 
-local ItemSearch = LibStub("LibItemSearch-1.2")
 local bgSearch = CreateFrame("Frame","BagSync_SearchFrame", UIParent)
+
+local customSearch = LibStub('CustomSearch-1.0')
+local ItemSearch = LibStub("LibItemSearch-1.2")
 
 local scanner = LibItemSearchTooltipScanner or CreateFrame('GameTooltip', 'LibItemSearchTooltipScanner', UIParent, 'GameTooltipTemplate')
 
@@ -29,7 +31,7 @@ ItemSearch.Filters.class = {
 				local text =  _G[scanner:GetName() .. 'TextLeft' .. i]:GetText():lower()
 				local textChk = string.find(text, pattern)
 				
-				if textChk and Search:Find(search, _G[scanner:GetName() .. 'TextLeft' .. i]:GetText()) then
+				if textChk and customSearch:Find(search, _G[scanner:GetName() .. 'TextLeft' .. i]:GetText()) then
 					return true
 				end
 			end
