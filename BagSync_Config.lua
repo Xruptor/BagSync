@@ -2,12 +2,11 @@ local L = BAGSYNC_L
 local currentPlayer = UnitName("player")
 local currentRealm = select(2, UnitFullName("player"))
 local ver = GetAddOnMetadata("BagSync","Version") or 0
-
+	
 local SO = LibStub("LibSimpleOptions-1.0")
-
+local panel = SO.AddOptionsPanel("BagSync", function() end)
+	
 function BSOpt_Startup()
-
-	local panel = SO.AddOptionsPanel("BagSync", function() end)
 
 	local title, subText = panel:MakeTitleTextAndSubText("|cFF99CC33BagSync|r [|cFFDF2B2B"..ver.."|r]", "These options allow you to customize the BagSync displays data.")
 

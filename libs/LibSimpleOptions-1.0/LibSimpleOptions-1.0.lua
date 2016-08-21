@@ -96,6 +96,9 @@ do
 			self:refreshFunc()
 		end
 	end
+	local function panel_refresh(self)
+		self:Refresh()
+	end
 	local function panel_OnShow(self)
 		self:SetScript("OnShow", self.Refresh)
 		self:controlCreationFunc()
@@ -142,6 +145,7 @@ do
 		panel.okay = panel_okay
 		panel.cancel = panel_cancel
 		panel.default = panel_default
+		panel.refresh = panel_refresh
 
 		InterfaceOptions_AddCategory(panel)
 

@@ -186,6 +186,7 @@ function BagSync:FixDB_Data(onlyChkGuild)
 	--Removes obsolete guild information
 	--Removes obsolete characters from tokens db
 	--Removes obsolete profession information
+	--removes obsolete blacklist information
 	--Will only check guild related information if the paramater is passed as true
 	--Adds realm name to characters profiles if missing, v8.6
 
@@ -289,6 +290,12 @@ function BagSync:FixDB_Data(onlyChkGuild)
 			if string.find(realm, " ") then
 				--get rid of old realm names with whitespaces, we aren't going to use it anymore
 				BagSyncBLACKLIST_DB[realm] = nil
+			else
+				--realm
+				if not storeUsers[realm] then
+					--if it's not a realm that ANY users are on then delete it
+					BagSyncBLACKLIST_DB[realm] = nil
+				end
 			end
 		end
 
@@ -1434,6 +1441,7 @@ function BagSync:PLAYER_LOGIN()
 				return true
 			elseif c and c:lower() == L["config"] then
 				InterfaceOptionsFrame_OpenToCategory("BagSync")
+				InterfaceOptionsFrame_OpenToCategory("BagSync") --calling it twice because sometimes it doesn't always work, it's a bug with blizzard
 				return true
 			elseif c and c:lower() ~= "" then
 				--do an item search
@@ -1460,12 +1468,6 @@ function BagSync:PLAYER_LOGIN()
 	end
 	
 	DEFAULT_CHAT_FRAME:AddMessage("|cFF99CC33BagSync|r [v|cFFDF2B2B"..ver.."|r]   /bgs, /bagsync")
-	
-	--we deleted someone with the Profile Window, display name of user deleted
-	if BagSyncOpt.delName then
-		print("|cFFFF0000BagSync: "..L["Profiles"].." "..L["Delete"].." ["..BagSyncOpt.delName.."]!|r")
-		BagSyncOpt.delName = nil
-	end
 	
 	self:UnregisterEvent("PLAYER_LOGIN")
 	self.PLAYER_LOGIN = nil

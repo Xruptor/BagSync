@@ -20,23 +20,28 @@ end
 		
 bgsProfilesDD.initialize = function(self, level)
 	if not BagSync or not BagSyncDB then return end
-	if not BagSyncDB[currentRealm] then return end
-	
+
 	local tmp = {}
 	
-	--freaking LUA table.sort is terrible, you can't sort non-numeric keys..
-	for k, v in pairs(BagSyncDB[currentRealm]) do
-		table.insert(tmp, k)
+	--add all the accounts, who cares if it's the current user
+	for realm, rd in pairs(BagSyncDB) do
+		for k, v in pairs(rd) do
+			table.insert(tmp, {k, realm, (BagSync_REALMKEY[realm] or realm)} ) --name, shortrealm name, realrealm name
+		end
 	end
-	table.sort(tmp, function(a,b) return (a < b) end)
-
+	
+	table.sort(tmp, function(a,b) return (a[1] < b[1]) end)
+	
 	if level == 1 then
 		PlaySound("gsTitleOptionExit")
 
 		for i=1, #tmp do
-			addButton(level, tmp[i], nil, 1, nil, tmp[i], function(frame, ...)
+			addButton(level, tmp[i][1].." - "..tmp[i][3], nil, 1, nil, tmp[i][1].." - "..tmp[i][3], function(frame, ...)
+				bgProfiles.charName = tmp[i][1]
+				bgProfiles.charRealm = tmp[i][2]
+				bgProfiles.realRealm = tmp[i][3]
 				if BagSyncProfilesToonNameText then
-					BagSyncProfilesToonNameText:SetText(tmp[i])
+					BagSyncProfilesToonNameText:SetText(tmp[i][1].." - "..tmp[i][3])
 				end
 			end)
 		end
@@ -110,21 +115,31 @@ bgProfiles.confirmButton:SetWidth(100);
 bgProfiles.confirmButton:SetText(L["Confirm"]);
 bgProfiles.confirmButton:Disable()
 
-bgProfiles.confirmButton:SetScript("OnClick", function()
-	local name = BagSyncProfilesToonNameText:GetText()
-	if name and BagSyncDB and BagSyncDB[currentRealm] and BagSyncDB[currentRealm][name] then
-		BagSyncDB[currentRealm][name] = nil
-		BagSyncOpt.delName = name
-		BagSync:FixDB_Data()
-		BagSync_ProfilesFrame:Hide()
-		ReloadUI()
+bgProfiles.confirmButton:SetScript("OnClick", function(self)
+
+	--call me paranoid but I want to make sure we have something to work with before we even think of deleting... double checking everything
+	if bgProfiles.charName and string.len(bgProfiles.charName) > 0 and bgProfiles.charRealm and string.len(bgProfiles.charRealm) > 0 then
+		
+		BagSyncDB[bgProfiles.charRealm][bgProfiles.charName] = nil --remove it
+		BagSyncProfilesToonNameText:SetText(L["Click Here"]) --reset
+		UIDropDownMenu_Initialize(bgsProfilesDD, bgsProfilesDD.initialize) --repopulate the dropdown
+		BagSync:FixDB_Data() --remove all associated tables from the user
+		print("|cFFFF0000BagSync: "..L["Profiles"].." "..L["Delete"].." ["..bgProfiles.charName.." - "..bgProfiles.charRealm.."]!|r")
+		bgProfiles.charName = nil
+		bgProfiles.charRealm = nil
+		bgProfiles.realRealm = nil
+		bgProfiles:Hide()
+		
 	else
 		print(L["BagSync: Error user not found!"])
 	end
-	BagSync_ProfilesFrame.confirmButton:Disable()
+	
+	bgProfiles.confirmButton:Disable()
 end)
 
-bgProfiles:SetScript("OnHide", function(self) bgsProfilesDD:Hide() end)
+bgProfiles:SetScript("OnShow", function(self) self.confirmButton:Disable() UIDropDownMenu_Initialize(bgsProfilesDD, bgsProfilesDD.initialize) end)
+bgProfiles:SetScript("OnHide", function(self) if DropDownList1:IsVisible() then DropDownList1:Hide() end end)
+bgsProfilesDD:SetScript('OnHide', function(self) if DropDownList1:IsVisible() then DropDownList1:Hide() end end)
 
 bgProfiles:SetScript("OnMouseDown", function(frame, button)
 	if frame:IsMovable() then
