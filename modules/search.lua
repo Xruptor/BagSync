@@ -5,53 +5,36 @@ local currentRealm = select(2, UnitFullName("player"))
 local GetItemInfo = _G["GetItemInfo"]
 local currentPlayer = UnitName("player")
 
-local ItemSearch = LibStub("LibItemSearch-1.0")
+local ItemSearch = LibStub("LibItemSearch-1.2")
 local bgSearch = CreateFrame("Frame","BagSync_SearchFrame", UIParent)
 
---add class search
-local tooltipScanner = _G["LibItemSearchTooltipScanner"] or CreateFrame("GameTooltip", "LibItemSearchTooltipScanner", UIParent, "GameTooltipTemplate")
-local tooltipCache = setmetatable({}, {__index = function(t, k) local v = {} t[k] = v return v end})
+local scanner = LibItemSearchTooltipScanner or CreateFrame('GameTooltip', 'LibItemSearchTooltipScanner', UIParent, 'GameTooltipTemplate')
 
-ItemSearch:RegisterTypedSearch{
-	id = "classRestriction",
-	tags = {"c", "class"},
-	
+--add classes to the LibItemSearch-1.2
+ItemSearch.Filters.class = {
+	tags = {'c', 'class'},
+
 	canSearch = function(self, _, search)
 		return search
 	end,
-	
-	findItem = function(self, link, _, search)
-		if link:find("battlepet") then return false end
 
-		local itemID = link:match("item:(%d+)")
-		if not itemID then
-			return
-		end
-		
-		local cachedResult = tooltipCache[search][itemID]
-		if cachedResult ~= nil then
-			return cachedResult
-		end
-	
-		tooltipScanner:SetOwner(UIParent, "ANCHOR_NONE")
-		tooltipScanner:SetHyperlink(link)
-
-		local result = false
-		
-		local pattern = string.gsub(ITEM_CLASSES_ALLOWED:lower(), "%%s", "(.+)")
-		
-		for i = 1, tooltipScanner:NumLines() do
-			local text =  _G[tooltipScanner:GetName() .. "TextLeft" .. i]:GetText():lower()
-			local textChk = string.find(text, pattern)
-
-			if textChk and tostring(text):find(search) then
-				result = true
+	match = function(self, link, _, search)
+		if link:find('item:') then
+			scanner:SetOwner(UIParent, 'ANCHOR_NONE')
+			scanner:SetHyperlink(link)
+			
+			local pattern = string.gsub(ITEM_CLASSES_ALLOWED:lower(), "%%s", "(.+)")
+			
+			for i = 1, scanner:NumLines() do
+				local text =  _G[scanner:GetName() .. 'TextLeft' .. i]:GetText():lower()
+				local textChk = string.find(text, pattern)
+				
+				if textChk and Search:Find(search, _G[scanner:GetName() .. 'TextLeft' .. i]:GetText()) then
+					return true
+				end
 			end
 		end
-		
-		tooltipCache[search][itemID] = result
-		return result
-	end,
+	end
 }
 
 local function LoadSlider()
@@ -224,7 +207,7 @@ local function DoSearch()
 												tempList[dblink] = dName
 												count = count + 1
 											--we found a match
-											elseif not playerSearch and not tempList[dblink] and ItemSearch:Find(dItemLink, searchStr) then
+											elseif not playerSearch and not tempList[dblink] and ItemSearch:Matches(dItemLink, searchStr) then
 												table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
 												tempList[dblink] = dName
 												count = count + 1
@@ -258,7 +241,7 @@ local function DoSearch()
 											tempList[dblink] = dName
 											count = count + 1
 										--we found a match
-										elseif not playerSearch and not tempList[dblink] and ItemSearch:Find(dItemLink, searchStr) then
+										elseif not playerSearch and not tempList[dblink] and ItemSearch:Matches(dItemLink, searchStr) then
 											table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
 											tempList[dblink] = dName
 											count = count + 1

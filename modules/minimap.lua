@@ -1,5 +1,4 @@
 --Minimap Button for BagSync
---So people can stop PESTERING me about a dang button, why can't they just use DataBroker sheesh
 
 local L = BAGSYNC_L
 
