@@ -139,12 +139,12 @@ local function StartupDB()
 	
 	--setup the default colors
 	if BagSyncOpt.colors == nil then BagSyncOpt.colors = {} end
-	if BagSyncOpt.colors.FIRST == nil then BagSyncOpt.colors.FIRST = { r = 128/255, g = 1, b = 0 }  end
-	if BagSyncOpt.colors.SECOND == nil then BagSyncOpt.colors.SECOND = { r = 199/255, g = 199/255, b = 207/255 }  end
-	if BagSyncOpt.colors.TOTAL == nil then BagSyncOpt.colors.TOTAL = { r = 244/255, g = 164/255, b = 96/255 }  end
-	if BagSyncOpt.colors.GUILD == nil then BagSyncOpt.colors.GUILD = { r = 101/255, g = 184/255, b = 192/255 }  end
-	if BagSyncOpt.colors.CROSS == nil then BagSyncOpt.colors.CROSS = { r = 1, g = 125/255, b = 10/255 }  end
-	if BagSyncOpt.colors.BNET == nil then BagSyncOpt.colors.BNET = { r = 53/255, g = 136/255, b = 1 }  end
+	if BagSyncOpt.colors.first == nil then BagSyncOpt.colors.first = { r = 128/255, g = 1, b = 0 }  end
+	if BagSyncOpt.colors.second == nil then BagSyncOpt.colors.second = { r = 199/255, g = 199/255, b = 207/255 }  end
+	if BagSyncOpt.colors.total == nil then BagSyncOpt.colors.total = { r = 244/255, g = 164/255, b = 96/255 }  end
+	if BagSyncOpt.colors.guild == nil then BagSyncOpt.colors.guild = { r = 101/255, g = 184/255, b = 192/255 }  end
+	if BagSyncOpt.colors.cross == nil then BagSyncOpt.colors.cross = { r = 1, g = 125/255, b = 10/255 }  end
+	if BagSyncOpt.colors.bnet == nil then BagSyncOpt.colors.bnet = { r = 53/255, g = 136/255, b = 1 }  end
 
 	--new format, get rid of old
 	if not BagSyncOpt.dbversion or not tonumber(BagSyncOpt.dbversion) or tonumber(BagSyncOpt.dbversion) < 7 then
@@ -342,16 +342,16 @@ function BagSync:getCharacterRealmInfo(charName, charRealm)
 	if BagSyncOpt.enableBNetAccountItems then
 		if charRealm and charRealm ~= currentRealm then
 			if not crossRealmNames[charRealm] then
-				charName = yName.." "..rgbhex(BagSyncOpt.colors.BNET).."[BNet-"..realmFullName.."]|r"
+				charName = yName.." "..rgbhex(BagSyncOpt.colors.bnet).."[BNet-"..realmFullName.."]|r"
 			else
-				charName = yName.." "..rgbhex(BagSyncOpt.colors.CROSS).."[XR-"..realmFullName.."]|r"
+				charName = yName.." "..rgbhex(BagSyncOpt.colors.cross).."[XR-"..realmFullName.."]|r"
 			end
 		else
 			charName = yName
 		end
 	elseif BagSyncOpt.enableCrossRealmsItems then
 		if charRealm and charRealm ~= currentRealm then
-			charName = yName.." "..rgbhex(BagSyncOpt.colors.CROSS).."[XR-"..realmFullName.."]|r"
+			charName = yName.." "..rgbhex(BagSyncOpt.colors.cross).."[XR-"..realmFullName.."]|r"
 		else
 			charName = yName
 		end
@@ -373,16 +373,16 @@ function BagSync:getGuildRealmInfo(guildName, guildRealm)
 	if BagSyncOpt.enableBNetAccountItems then
 		if guildRealm and guildRealm ~= currentRealm then
 			if not crossRealmNames[guildRealm] then
-				guildName = guildName.." "..rgbhex(BagSyncOpt.colors.BNET).."[BNet-"..realmFullName.."]|r"
+				guildName = guildName.." "..rgbhex(BagSyncOpt.colors.bnet).."[BNet-"..realmFullName.."]|r"
 			else
-				guildName = guildName.." "..rgbhex(BagSyncOpt.colors.CROSS).."[XR-"..realmFullName.."]|r"
+				guildName = guildName.." "..rgbhex(BagSyncOpt.colors.cross).."[XR-"..realmFullName.."]|r"
 			end
 		else
 			guildName = guildName
 		end
 	elseif BagSyncOpt.enableCrossRealmsItems then
 		if guildRealm and guildRealm ~= currentRealm then
-			guildName = guildName.." "..rgbhex(BagSyncOpt.colors.CROSS).."[XR-"..realmFullName.."]|r"
+			guildName = guildName.." "..rgbhex(BagSyncOpt.colors.cross).."[XR-"..realmFullName.."]|r"
 		else
 			guildName = guildName
 		end
@@ -747,7 +747,7 @@ function BagSync:ShowMoneyTooltip()
 	end
 	if BagSyncOpt.showTotal and gldTotal > 0 then
 		tooltip:AddLine(" ")
-		tooltip:AddDoubleLine(tooltipColor(BagSyncOpt.colors.TOTAL, buildMoneyString(gldTotal, false)), 1, 1, 1, 1, 1, 1)
+		tooltip:AddDoubleLine(tooltipColor(BagSyncOpt.colors.total, buildMoneyString(gldTotal, false)), 1, 1, 1, 1, 1, 1)
 	end
 	
 	tooltip:AddLine(" ")
@@ -916,10 +916,10 @@ local function CountsToInfoString(countTable)
 		end
 		
 		if not totalPass then
-			local totalStr = tooltipColor(BagSyncOpt.colors.FIRST, total)
-			return totalStr .. tooltipColor(BagSyncOpt.colors.SECOND, format(" (%s)", info))
+			local totalStr = tooltipColor(BagSyncOpt.colors.first, total)
+			return totalStr .. tooltipColor(BagSyncOpt.colors.second, format(" (%s)", info))
 		else
-			return tooltipColor(BagSyncOpt.colors.FIRST, info)
+			return tooltipColor(BagSyncOpt.colors.first, info)
 		end
 	end
 end
@@ -941,13 +941,13 @@ end
 
 local function getNameColor(sName, sClass)
 	if not BagSyncOpt.enableUnitClass then
-		return tooltipColor(BagSyncOpt.colors.FIRST, sName)
+		return tooltipColor(BagSyncOpt.colors.first, sName)
 	else
 		if sName ~= "Unknown" and sClass and RAID_CLASS_COLORS[sClass] then
 			return rgbhex(RAID_CLASS_COLORS[sClass])..sName.."|r"
 		end
 	end
-	return tooltipColor(BagSyncOpt.colors.FIRST, sName)
+	return tooltipColor(BagSyncOpt.colors.first, sName)
 end
 
 local function getPlayerNameColor(sName)
@@ -955,7 +955,7 @@ local function getPlayerNameColor(sName)
 		local sClass = BagSyncDB[currentRealm][sName].class
 		return getNameColor(sName, sClass)
 	end
-	return tooltipColor(BagSyncOpt.colors.FIRST, sName)
+	return tooltipColor(BagSyncOpt.colors.first, sName)
 end
 
 local function AddCurrencyToTooltip(frame, currencyName)
@@ -1106,7 +1106,7 @@ local function AddItemToTooltip(frame, link) --workaround
 		for k, v in pairsByKeys(previousGuilds) do
 			--only print stuff higher then zero
 			if v > 0 then
-				table.insert(lastDisplayed, tooltipColor(BagSyncOpt.colors.GUILD, k).."@"..tooltipColor(BagSyncOpt.colors.SECOND, v))
+				table.insert(lastDisplayed, tooltipColor(BagSyncOpt.colors.guild, k).."@"..tooltipColor(BagSyncOpt.colors.second, v))
 			end
 		end
 	end
@@ -1114,7 +1114,7 @@ local function AddItemToTooltip(frame, link) --workaround
 	--show grand total if we have something
 	--don't show total if there is only one item
 	if BagSyncOpt.showTotal and grandTotal > 0 and getn(lastDisplayed) > 1 then
-		table.insert(lastDisplayed, tooltipColor(BagSyncOpt.colors.TOTAL, L["Total:"]).."@"..tooltipColor(BagSyncOpt.colors.SECOND, grandTotal))
+		table.insert(lastDisplayed, tooltipColor(BagSyncOpt.colors.total, L["Total:"]).."@"..tooltipColor(BagSyncOpt.colors.second, grandTotal))
 	end
 	
 	--now check for seperater and only add if we have something in the table already
@@ -1310,9 +1310,6 @@ function BagSync:PLAYER_LOGIN()
 	
 	--initiate the db
 	StartupDB()
-	
-	--load the options menu
-	BSOpt_Startup()
 	
 	--do DB cleanup check by version number
 	if not BagSyncOpt.dbversion or BagSyncOpt.dbversion ~= ver then	

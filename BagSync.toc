@@ -9,11 +9,12 @@
 localization\localization.lua
 libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+libs\AceGUI-3.0\AceGUI-3.0.xml
+libs\AceConfig-3.0\AceConfig-3.0.xml
 libs\Unfit-1.0\Unfit-1.0.lua
 libs\CustomSearch-1.0\CustomSearch-1.0.lua
 libs\LibItemSearch-1.2\LibItemSearch-1.2.lua
 libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
-libs\LibSimpleOptions-1.0\LibSimpleOptions-1.0.lua
 libs\tekKonfigScroll.lua
 modules\minimap.lua
 modules\search.lua

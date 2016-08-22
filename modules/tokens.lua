@@ -19,7 +19,7 @@ local function LoadSlider()
 			GameTooltip:AddLine(self.name)
 			GameTooltip:AddLine(" ")
 			for i=1, #self.tooltip do
-				GameTooltip:AddDoubleLine(tooltipColor(BagSyncOpt.colors.FIRST, self.tooltip[i].name), tooltipColor(BagSyncOpt.colors.SECOND, self.tooltip[i].count))
+				GameTooltip:AddDoubleLine(tooltipColor(BagSyncOpt.colors.first, self.tooltip[i].name), tooltipColor(BagSyncOpt.colors.second, self.tooltip[i].count))
 			end
 			GameTooltip:Show()
 		end

@@ -2,245 +2,292 @@ local L = BAGSYNC_L
 local currentPlayer = UnitName("player")
 local currentRealm = select(2, UnitFullName("player"))
 local ver = GetAddOnMetadata("BagSync","Version") or 0
-	
-local SO = LibStub("LibSimpleOptions-1.0")
-local panel = SO.AddOptionsPanel("BagSync", function() end)
-	
-function BSOpt_Startup()
 
-	local title, subText = panel:MakeTitleTextAndSubText("|cFF99CC33BagSync|r [|cFFDF2B2B"..ver.."|r]", "These options allow you to customize the BagSync displays data.")
+local config = LibStub("AceConfig-3.0")
+local configDialog = LibStub("AceConfigDialog-3.0")
 
-	--toggle BagSync tooltips
-	panel:MakeToggle(
-		"name", L["Enable BagSync Tooltips"],
-		"description", "",
-		"default", false,
-		"getFunc", function() return BagSyncOpt["enableTooltips"] end,
-		"setFunc", function(value)
-			BagSyncOpt["enableTooltips"] = value
-			BagSync:resetTooltip()
-			end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -16)
-	
-	--tooltip seperator
-	panel:MakeToggle(
-		"name", L["Enable empty line seperator above BagSync tooltip display."],
-		"description", "",
-		"default", false,
-		"getFunc", function() return BagSyncOpt["enableTooltipSeperator"] end,
-		"setFunc", function(value)
-			BagSyncOpt["enableTooltipSeperator"] = value
-			BagSync:resetTooltip()
-			end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -41)
-	
-	--total
-	panel:MakeToggle(
-		"name", L["Display [Total] in tooltips and gold display."],
-		"description", "",
-		"default", false,
-		"getFunc", function() return BagSyncOpt["showTotal"] end,
-		"setFunc", function(value)
-			BagSyncOpt["showTotal"] = value
-			BagSync:resetTooltip()
-			end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -66)
-	
-	--guild names
-	panel:MakeToggle(
-		"name", L["Display [Guild Name] display in tooltips."],
-		"description", "",
-		"default", false,
-		"getFunc", function() return BagSyncOpt["showGuildNames"] end,
-		"setFunc", function(value)
-			BagSyncOpt["showGuildNames"] = value
-			BagSync:resetTooltip()
-			end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -91)
-	
-	--factions
-	panel:MakeToggle(
-		"name", L["Display items for both factions (Alliance/Horde)."],
-		"description", "",
-		"default", false,
-		"getFunc", function() return BagSyncOpt["enableFaction"] end,
-		"setFunc", function(value)
-			BagSyncOpt["enableFaction"] = value
-			BagSync:resetTooltip()
-			end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -116)
-	
-	--class colors
-	panel:MakeToggle(
-		"name", L["Display class colors for characters."],
-		"description", "",
-		"default", false,
-		"getFunc", function() return BagSyncOpt["enableUnitClass"] end,
-		"setFunc", function(value)
-			BagSyncOpt["enableUnitClass"] = value
-			BagSync:resetTooltip()
-			end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -141)
-	
-	--minimap
-	panel:MakeToggle(
-		"name", L["Display BagSync minimap button."],
-		"description", "",
-		"default", false,
-		"getFunc", function() return BagSyncOpt["enableMinimap"] end,
-		"setFunc", function(value)
-			BagSyncOpt["enableMinimap"] = value
-			if value then BagSync_MinimapButton:Show() else BagSync_MinimapButton:Hide() end
-			end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -166)
-	
-	--guild info
-	panel:MakeToggle(
-		"name", L["Enable guild bank items."],
-		"description", "",
-		"default", false,
-		"getFunc", function() return BagSyncOpt["enableGuild"] end,
-		"setFunc", function(value)
-			BagSyncOpt["enableGuild"] = value
-			BagSync:resetTooltip()
-			end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -191)
-	
-	--mailbox info
-	panel:MakeToggle(
-		"name", L["Enable mailbox items."],
-		"description", "",
-		"default", false,
-		"getFunc", function() return BagSyncOpt["enableMailbox"] end,
-		"setFunc", function(value)
-			BagSyncOpt["enableMailbox"] = value
-			BagSync:resetTooltip()
-			end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -216)
-	
-	--auction house
-	panel:MakeToggle(
-		"name", L["Enable auction house items."],
-		"description", "",
-		"default", false,
-		"getFunc", function() return BagSyncOpt["enableAuction"] end,
-		"setFunc", function(value)
-			BagSyncOpt["enableAuction"] = value
-			BagSync:resetTooltip()
-			end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -241)
-	
-	--tooltip only on bagsync search window
-	panel:MakeToggle(
-		"name", L["Display modified tooltips ONLY in the BagSync Search window."],
-		"description", "",
-		"default", false,
-		"getFunc", function() return BagSyncOpt["tooltipOnlySearch"] end,
-		"setFunc", function(value)
-			BagSyncOpt["tooltipOnlySearch"] = value
-			BagSync:resetTooltip()
-			end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -266)
-	
-	--cross realms
-	panel:MakeToggle(
-		"name", L["Enable items for Cross-Realms characters."],
-		"description", "",
-		"default", false,
-		"getFunc", function() return BagSyncOpt["enableCrossRealmsItems"] end,
-		"setFunc", function(value)
-			BagSyncOpt["enableCrossRealmsItems"] = value
-			BagSync:resetTooltip()
-			end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -291)
-	
-	--battle.net account characters
-	panel:MakeToggle(
-		"name", L["Enable items for current Battle.Net Account characters. |cFFDF2B2B((Not Recommended))|r"],
-		"description", "",
-		"default", false,
-		"getFunc", function() return BagSyncOpt["enableBNetAccountItems"] end,
-		"setFunc", function(value)
-			BagSyncOpt["enableBNetAccountItems"] = value
-			BagSync:resetTooltip()
-			end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -316)
-	
-	--first color (default moss)
-	panel:MakeColorPicker(
-	    "name", L["Primary BagSync tooltip color."],
-	    "description", "",
-	    "hasAlpha", false,
-	    "defaultR", 128/255,
-	    "defaultG", 1,
-	    "defaultB", 0,
-	    "getFunc", function() return BagSyncOpt.colors.FIRST.r, BagSyncOpt.colors.FIRST.g, BagSyncOpt.colors.FIRST.b end,
-	    "setFunc", function(r, g, b) BagSyncOpt.colors.FIRST.r, BagSyncOpt.colors.FIRST.g, BagSyncOpt.colors.FIRST.b = r, g, b end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -341)
-	
-	--second color (default silver)
-	panel:MakeColorPicker(
-	    "name", L["Secondary BagSync tooltip color."],
-	    "description", "",
-	    "hasAlpha", false,
-	    "defaultR", 199/255,
-	    "defaultG", 199/255,
-	    "defaultB", 207/255,
-	    "getFunc", function() return BagSyncOpt.colors.SECOND.r, BagSyncOpt.colors.SECOND.g, BagSyncOpt.colors.SECOND.b end,
-	    "setFunc", function(r, g, b) BagSyncOpt.colors.SECOND.r, BagSyncOpt.colors.SECOND.g, BagSyncOpt.colors.SECOND.b = r, g, b end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -366)
-	
-	--total color
-	panel:MakeColorPicker(
-	    "name", L["BagSync [Total] tooltip color."],
-	    "description", "",
-	    "hasAlpha", false,
-	    "defaultR", 244/255,
-	    "defaultG", 164/255,
-	    "defaultB", 96/255,
-	    "getFunc", function() return BagSyncOpt.colors.TOTAL.r, BagSyncOpt.colors.TOTAL.g, BagSyncOpt.colors.TOTAL.b end,
-	    "setFunc", function(r, g, b) BagSyncOpt.colors.TOTAL.r, BagSyncOpt.colors.TOTAL.g, BagSyncOpt.colors.TOTAL.b = r, g, b end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -391)
-	
-	--guild color
-	panel:MakeColorPicker(
-	    "name", L["BagSync [Guild] tooltip color."],
-	    "description", "",
-	    "hasAlpha", false,
-	    "defaultR", 101/255,
-	    "defaultG", 184/255,
-	    "defaultB", 192/255,
-	    "getFunc", function() return BagSyncOpt.colors.GUILD.r, BagSyncOpt.colors.GUILD.g, BagSyncOpt.colors.GUILD.b end,
-	    "setFunc", function(r, g, b) BagSyncOpt.colors.GUILD.r, BagSyncOpt.colors.GUILD.g, BagSyncOpt.colors.GUILD.b = r, g, b end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -416)
-	
-	--cross realm color
-	panel:MakeColorPicker(
-	    "name", L["BagSync [Cross-Realms] tooltip color."],
-	    "description", "",
-	    "hasAlpha", false,
-	    "defaultR", 1,
-	    "defaultG", 125/255,
-	    "defaultB", 10/255,
-	    "getFunc", function() return BagSyncOpt.colors.CROSS.r, BagSyncOpt.colors.CROSS.g, BagSyncOpt.colors.CROSS.b end,
-	    "setFunc", function(r, g, b) BagSyncOpt.colors.CROSS.r, BagSyncOpt.colors.CROSS.g, BagSyncOpt.colors.CROSS.b = r, g, b end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -441)
-	
-	--bnet color
-	panel:MakeColorPicker(
-	    "name", L["BagSync [Battle.Net] tooltip color."],
-	    "description", "",
-	    "hasAlpha", false,
-	    "defaultR", 53/255,
-	    "defaultG", 136/255,
-	    "defaultB", 1,
-	    "getFunc", function() return BagSyncOpt.colors.BNET.r, BagSyncOpt.colors.BNET.g, BagSyncOpt.colors.BNET.b end,
-	    "setFunc", function(r, g, b) BagSyncOpt.colors.BNET.r, BagSyncOpt.colors.BNET.g, BagSyncOpt.colors.BNET.b = r, g, b end
-	):SetPoint("TOPLEFT", subText, "BOTTOMLEFT", 0, -466)
-	
+local options = {}
 
-	--i'm calling a refresh for the panel, because sometimes (like the color picker) some of the items aren't refreshed on the screen due to a /reload
-	--so instead I'm just going to force the getFunc for all the controls
-	panel:Refresh()
+options.type = "group"
+options.name = "BagSync"
+
+options.args = {} --initiate the arguements for the options to display
+
+local function get(info)
+
+	local p, c = string.split(".", info.arg)
+	
+	if p ~= "color" then
+		if BagSyncOpt[c] then --if this is nil then it will default to false
+			return BagSyncOpt[c]
+		else
+			return false
+		end
+	elseif p == "color" then
+		return BagSyncOpt.colors[c].r, BagSyncOpt.colors[c].g, BagSyncOpt.colors[c].b
+	end
 	
 end
+
+local function set(info, arg1, arg2, arg3, arg4)
+
+	local p, c = string.split(".", info.arg)
+	
+	if p ~= "color" then
+		BagSyncOpt[c] = arg1
+		if p == "minimap" then
+			if arg1 then BagSync_MinimapButton:Show() else BagSync_MinimapButton:Hide() end
+		else
+			BagSync:resetTooltip()
+		end
+	elseif p == "color" then
+		BagSyncOpt.colors[c].r = arg1
+		BagSyncOpt.colors[c].g = arg2
+		BagSyncOpt.colors[c].b = arg3
+	end
+	
+end
+
+options.args.heading = {
+	type = "description",
+	name = L["Settings for various BagSync features."],
+	fontSize = "medium",
+	order = 1,
+	width = "full",
+}
+
+options.args.display = {
+	type = "group",
+	order = 2,
+	name = L["Display"],
+	desc = L["Settings for the displayed BagSync tooltip information."],
+	args = {    
+		tooltip = {
+			order = 1,
+			type = "toggle",
+			name = L["Enable BagSync Tooltips"],
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.enableTooltips",
+		},
+		seperator = {
+			order = 2,
+			type = "toggle",
+			name = L["Display empty line seperator."],
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.enableTooltipSeperator",
+		},
+		total = {
+			order = 3,
+			type = "toggle",
+			name = L["Display [Total] amount."],
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.showTotal",
+		},
+		guildbank = {
+			order = 4,
+			type = "toggle",
+			name = L["Display guild bank items."],
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.enableGuild",
+		},
+		guildname = {
+			order = 5,
+			type = "toggle",
+			name = L["Display [Guild Name] for guild bank items."],
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.showGuildNames",
+		},
+		faction = {
+			order = 6,
+			type = "toggle",
+			name = L["Display items for both factions (Alliance/Horde)."],
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.enableFaction",
+		},
+		class = {
+			order = 7,
+			type = "toggle",
+			name = L["Display class colors for characters."],
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.enableUnitClass",
+		},
+		mailbox = {
+			order = 8,
+			type = "toggle",
+			name = L["Display mailbox items."],
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.enableMailbox",
+		},
+		auction = {
+			order = 9,
+			type = "toggle",
+			name = L["Display auction house items."],
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.enableAuction",
+		},
+		crossrealm = {
+			order = 10,
+			type = "toggle",
+			name = L["Display Cross-Realms characters."],
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.enableCrossRealmsItems",
+		},
+		battlenet = {
+			order = 11,
+			type = "toggle",
+			name = L["Display Battle.Net Account characters |cFFDF2B2B(Not Recommended)|r."],
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.enableBNetAccountItems",
+		},
+
+	},
+}
+	
+options.args.color = {
+	type = "group",
+	order = 3,
+	name = L["Color"],
+	desc = L["Color settings for BagSync tooltip information."],
+	args = {
+		first = {
+			order = 1,
+			type = "color",
+			name = L["Primary BagSync tooltip color."],
+			width = "full",
+			hasAlpha = false,
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "color.first",
+		},
+		second = {
+			order = 2,
+			type = "color",
+			name = L["Secondary BagSync tooltip color."],
+			width = "full",
+			hasAlpha = false,
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "color.second",
+		},
+		total = {
+			order = 3,
+			type = "color",
+			name = L["BagSync [Total] tooltip color."],
+			width = "full",
+			hasAlpha = false,
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "color.total",
+		},
+		guild = {
+			order = 4,
+			type = "color",
+			name = L["BagSync [Guild] tooltip color."],
+			width = "full",
+			hasAlpha = false,
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "color.guild",
+		},
+		cross = {
+			order = 5,
+			type = "color",
+			name = L["BagSync [Cross-Realms] tooltip color."],
+			width = "full",
+			hasAlpha = false,
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "color.cross",
+		},
+		bnet = {
+			order = 6,
+			type = "color",
+			name = L["BagSync [Battle.Net] tooltip color."],
+			width = "full",
+			hasAlpha = false,
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "color.bnet",
+		},
+	},
+}
+
+options.args.minimap = {
+	type = "group",
+	order = 4,
+	name = L["Minimap"],
+	desc = L["Settings for BagSync minimap button."],
+	args = {
+		enable = {
+			order = 1,
+			type = "toggle",
+			name = L["Display BagSync minimap button."],
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "minimap.enableMinimap",
+		},
+	},
+}
+	
+options.args.search = {
+	type = "group",
+	order = 5,
+	name = L["Search"],
+	desc = L["Settings for BagSync search window."],
+	args = {
+		enable = {
+			order = 1,
+			type = "toggle",
+			name = L["Display BagSync tooltip ONLY in the search window."],
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "search.tooltipOnlySearch",
+		},
+	},
+}
+
+config:RegisterOptionsTable("BagSync", options)
+configDialog:AddToBlizOptions("BagSync", "BagSync")
