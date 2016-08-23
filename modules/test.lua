@@ -207,7 +207,7 @@ frame:AddChild(OKbutton)
 
 --lets create the warning frame.
 
-local warning = AceGUI:Create("Frame")
+--local warning = AceGUI:Create("Frame")
 --f.statusbg:Hide() 
 --f:SetWidth(400) f:SetHeight(320)
 
