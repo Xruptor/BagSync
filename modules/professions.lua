@@ -1,4 +1,4 @@
-local L = BAGSYNC_L
+local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
 local craftsTable = {}
 local tRows, tAnchor = {}
 local currentPlayer = UnitName("player")

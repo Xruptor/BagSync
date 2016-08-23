@@ -1,4 +1,4 @@
-local L = BAGSYNC_L
+local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
 local currentPlayer = UnitName("player")
 local currentRealm = select(2, UnitFullName("player"))
 local bgProfiles = CreateFrame("Frame","BagSync_ProfilesFrame", UIParent)

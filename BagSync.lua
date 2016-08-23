@@ -9,7 +9,9 @@
 
 --]]
 
-local L = BAGSYNC_L
+local ADDON_NAME, addon = ...
+
+local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
 local lastItem
 local lastDisplayed = {}
 local currentPlayer
@@ -31,6 +33,12 @@ local atBank = false
 local atVoidBank = false
 local atGuildBank = false
 local isCheckingMail = false
+
+local strsub, strsplit, strlower, strmatch, strtrim = string.sub, string.split, string.lower, string.match, string.trim
+local format, tonumber, tostring, tostringall = string.format, tonumber, tostring, tostringall
+local tsort, tinsert, unpack = table.sort, table.insert, unpack
+local select, pairs, next, type = select, pairs, next, type
+local error, assert = error, assert
 
 local debugf = tekDebug and tekDebug:GetFrame("BagSync")
 local function Debug(...)

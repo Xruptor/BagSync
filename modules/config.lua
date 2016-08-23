@@ -1,4 +1,4 @@
-local L = BAGSYNC_L
+local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
 local currentPlayer = UnitName("player")
 local currentRealm = select(2, UnitFullName("player"))
 local ver = GetAddOnMetadata("BagSync","Version") or 0
@@ -56,12 +56,12 @@ options.args.heading = {
 	width = "full",
 }
 
-options.args.display = {
+options.args.main = {
 	type = "group",
 	order = 2,
-	name = L["Display"],
-	desc = L["Settings for the displayed BagSync tooltip information."],
-	args = {    
+	name = L["Main"],
+	desc = L["Main settings for BagSync."],
+	args = {
 		tooltip = {
 			order = 1,
 			type = "toggle",
@@ -70,10 +70,39 @@ options.args.display = {
 			descStyle = "hide",
 			get = get,
 			set = set,
-			arg = "display.enableTooltips",
+			arg = "main.enableTooltips",
 		},
-		seperator = {
+		enable = {
 			order = 2,
+			type = "toggle",
+			name = L["Display BagSync tooltip ONLY in the search window."],
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "main.tooltipOnlySearch",
+		},
+		enable = {
+			order = 3,
+			type = "toggle",
+			name = L["Display BagSync minimap button."],
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "minimap.enableMinimap",
+		},
+	},
+}
+
+options.args.display = {
+	type = "group",
+	order = 3,
+	name = L["Display"],
+	desc = L["Settings for the displayed BagSync tooltip information."],
+	args = {
+		seperator = {
+			order = 1,
 			type = "toggle",
 			name = L["Display empty line seperator."],
 			width = "full",
@@ -83,7 +112,7 @@ options.args.display = {
 			arg = "display.enableTooltipSeperator",
 		},
 		total = {
-			order = 3,
+			order = 2,
 			type = "toggle",
 			name = L["Display [Total] amount."],
 			width = "full",
@@ -93,7 +122,7 @@ options.args.display = {
 			arg = "display.showTotal",
 		},
 		guildbank = {
-			order = 4,
+			order = 3,
 			type = "toggle",
 			name = L["Display guild bank items."],
 			width = "full",
@@ -103,7 +132,7 @@ options.args.display = {
 			arg = "display.enableGuild",
 		},
 		guildname = {
-			order = 5,
+			order = 4,
 			type = "toggle",
 			name = L["Display [Guild Name] for guild bank items."],
 			width = "full",
@@ -113,7 +142,7 @@ options.args.display = {
 			arg = "display.showGuildNames",
 		},
 		faction = {
-			order = 6,
+			order = 5,
 			type = "toggle",
 			name = L["Display items for both factions (Alliance/Horde)."],
 			width = "full",
@@ -123,7 +152,7 @@ options.args.display = {
 			arg = "display.enableFaction",
 		},
 		class = {
-			order = 7,
+			order = 6,
 			type = "toggle",
 			name = L["Display class colors for characters."],
 			width = "full",
@@ -133,7 +162,7 @@ options.args.display = {
 			arg = "display.enableUnitClass",
 		},
 		mailbox = {
-			order = 8,
+			order = 7,
 			type = "toggle",
 			name = L["Display mailbox items."],
 			width = "full",
@@ -143,7 +172,7 @@ options.args.display = {
 			arg = "display.enableMailbox",
 		},
 		auction = {
-			order = 9,
+			order = 8,
 			type = "toggle",
 			name = L["Display auction house items."],
 			width = "full",
@@ -153,7 +182,7 @@ options.args.display = {
 			arg = "display.enableAuction",
 		},
 		crossrealm = {
-			order = 10,
+			order = 9,
 			type = "toggle",
 			name = L["Display Cross-Realms characters."],
 			width = "full",
@@ -163,7 +192,7 @@ options.args.display = {
 			arg = "display.enableCrossRealmsItems",
 		},
 		battlenet = {
-			order = 11,
+			order = 10,
 			type = "toggle",
 			name = L["Display Battle.Net Account characters |cFFDF2B2B(Not Recommended)|r."],
 			width = "full",
@@ -178,7 +207,7 @@ options.args.display = {
 	
 options.args.color = {
 	type = "group",
-	order = 3,
+	order = 4,
 	name = L["Color"],
 	desc = L["Color settings for BagSync tooltip information."],
 	args = {
@@ -247,44 +276,6 @@ options.args.color = {
 			get = get,
 			set = set,
 			arg = "color.bnet",
-		},
-	},
-}
-
-options.args.minimap = {
-	type = "group",
-	order = 4,
-	name = L["Minimap"],
-	desc = L["Settings for BagSync minimap button."],
-	args = {
-		enable = {
-			order = 1,
-			type = "toggle",
-			name = L["Display BagSync minimap button."],
-			width = "full",
-			descStyle = "hide",
-			get = get,
-			set = set,
-			arg = "minimap.enableMinimap",
-		},
-	},
-}
-	
-options.args.search = {
-	type = "group",
-	order = 5,
-	name = L["Search"],
-	desc = L["Settings for BagSync search window."],
-	args = {
-		enable = {
-			order = 1,
-			type = "toggle",
-			name = L["Display BagSync tooltip ONLY in the search window."],
-			width = "full",
-			descStyle = "hide",
-			get = get,
-			set = set,
-			arg = "search.tooltipOnlySearch",
 		},
 	},
 }
