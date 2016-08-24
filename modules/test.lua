@@ -22,21 +22,6 @@ frame:AddChild(scrollframe)
 
 --:ReleaseChildren()
 
---[[ local itemTexture = select(10, GetItemInfo(71354))
- 
-local myILabel
-
-for i = 1, 50 do
-	myILabel = AceGUI:Create("InteractiveLabel")
-	--myILabel:SetText("20")
-	myILabel:SetWidth(48)
-	myILabel:SetHeight(48)
-	myILabel:SetImage(itemTexture)
-	myILabel:SetImageSize(48,48)
-	myILabel:SetText("lala")
-	scrollframe:AddChild(myILabel)
-end ]]
-		
 		
 local function addEntry(entry, counter)
 
@@ -212,36 +197,5 @@ frame:AddChild(OKbutton)
 --f:SetWidth(400) f:SetHeight(320)
 
 frame:Show()
-
---[[ scrollcontainer = AceGUI:Create("SimpleGroup") -- "InlineGroup" is also good
-scrollcontainer:SetFullWidth(true)
-scrollcontainer:SetFullHeight(true) -- probably?
-scrollcontainer:SetLayout("Fill") -- important!
-
-topContainer:AddChild(scrollcontainer)
-
-scroll = AceGUI:Create("ScrollFrame")
-scroll:SetLayout("Flow") -- probably?
-scrollcontainer:AddChild(scroll) ]]
-
---[[ 		scrollframe = AceGUI:Create("ScrollFrame");
-		scrollframe:SetLayout("Flow");
-		scrollframe:SetFullHeight(true);
-		scrollframe:SetWidth(80);
-
-		LMMainFrame_Loot_BottomLeftCntr:AddChild(scrollframe);
-		
-		local _, _, _, _, _, _, _, _, _, itemTexture = GetItemInfo(71354);
-	
-		for i = 1, 5 do
-			myILabel = AceGUI:Create("InteractiveLabel");
-			--myILabel:SetText("20");
-			myILabel:SetWidth(48);
-			myILabel:SetHeight(48);
-			myILabel:SetImage(itemTexture);
-			myILabel:SetImageSize(48,48);
-			scrollframe:AddChild(myILabel);
-		end
- ]]
 
  
