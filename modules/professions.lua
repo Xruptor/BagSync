@@ -12,8 +12,8 @@ local function LoadSlider()
 		if self.canLink and self.owner then
 			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 			GameTooltip:AddLine(format("|cFF99CC33%s|r", self.owner))
-			GameTooltip:AddLine(L["Left Click = Link to view tradeskill."])
-			GameTooltip:AddLine(L["Right Click = Insert tradeskill link."])
+			GameTooltip:AddLine(L.LeftClickViewTradeSkill)
+			GameTooltip:AddLine(L.RightClickInsertTradeskill)
 			GameTooltip:Show()
 		end
 	end
@@ -50,7 +50,7 @@ local function LoadSlider()
 			row:SetScript("OnClick", function (self, button, down)
 				if self.link then
 					if button == "LeftButton" then
-						DEFAULT_CHAT_FRAME:AddMessage(format("%s|cFF99CC33%s|r ==> %s", L["Click to view profession: "], self.owner, self.link))
+						DEFAULT_CHAT_FRAME:AddMessage(format("%s|cFF99CC33%s|r ==> %s", L.ClickViewProfession, self.owner, self.link))
 					else
 						local editBox = ChatEdit_ChooseBoxForSend()
 						
@@ -211,7 +211,7 @@ bgCrafts:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 
 local addonTitle = bgCrafts:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
 addonTitle:SetPoint("CENTER", bgCrafts, "TOP", 0, -20)
-addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L["Professions"]..")|r")
+addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L.Professions..")|r")
 
 local closeButton = CreateFrame("Button", nil, bgCrafts, "UIPanelCloseButton");
 closeButton:SetPoint("TOPRIGHT", bgCrafts, -15, -8);

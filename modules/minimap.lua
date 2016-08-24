@@ -40,32 +40,32 @@ bgsMinimapDD.initialize = function(self, level)
 	if level == 1 then
 		PlaySound('gsTitleOptionExit')
 		addButton(level, 'BagSync        ', 1, 1)
-		addButton(level, L["Search"], nil, 1, nil, 'search', function(frame, ...)
+		addButton(level, L.Search, nil, 1, nil, 'search', function(frame, ...)
 			if BagSync_SearchFrame then BagSync_SearchFrame:Show() end
 		end)
-		addButton(level, L["Tokens"], nil, 1, nil, 'tokens', function(frame, ...)
+		addButton(level, L.Tokens, nil, 1, nil, 'tokens', function(frame, ...)
 			if BagSync_TokensFrame then BagSync_TokensFrame:Show() end
 		end)
-		addButton(level, L["Profiles"], nil, 1, nil, 'profiles', function(frame, ...)
+		addButton(level, L.Profiles, nil, 1, nil, 'profiles', function(frame, ...)
 			if BagSync_ProfilesFrame then BagSync_ProfilesFrame:Show() end
 		end)
-		addButton(level, L["Professions"], nil, 1, nil, 'professions', function(frame, ...)
+		addButton(level, L.Professions, nil, 1, nil, 'professions', function(frame, ...)
 			if BagSync_CraftsFrame then BagSync_CraftsFrame:Show() end
 		end)
-		addButton(level, L["Blacklist"], nil, 1, nil, 'blacklist', function(frame, ...)
+		addButton(level, L.Blacklist, nil, 1, nil, 'blacklist', function(frame, ...)
 			if BagSync_BlackListFrame then BagSync_BlackListFrame:Show() end
 		end)
-		addButton(level, L["Gold"], nil, 1, nil, 'gold', function(frame, ...)
+		addButton(level, L.Gold, nil, 1, nil, 'gold', function(frame, ...)
 			if BagSync then BagSync:ShowMoneyTooltip() end
 		end)
-		addButton(level, L["FixDB"], nil, 1, nil, 'fixdb', function(frame, ...)
+		addButton(level, L.FixDB, nil, 1, nil, 'fixdb', function(frame, ...)
 			if BagSync then BagSync:FixDB_Data() end
 		end)
-		addButton(level, L["Config"], nil, 1, nil, 'config', function(frame, ...)
+		addButton(level, L.Config, nil, 1, nil, 'config', function(frame, ...)
 			InterfaceOptionsFrame_OpenToCategory("BagSync")
 		end)
 		addButton(level, "", nil, 1) --space ;)
-		addButton(level, L["Close"], nil, 1)
+		addButton(level, L.Close, nil, 1)
 
 	end
 
@@ -106,8 +106,8 @@ end)
 bgMinimapButton:SetScript('OnEnter', function(self)
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT")
 	GameTooltip:AddLine("BagSync")
-	GameTooltip:AddLine(L["Left Click = Search Window"])
-	GameTooltip:AddLine(L["Right Click = BagSync Menu"])
+	GameTooltip:AddLine(L.LeftClickSearch)
+	GameTooltip:AddLine(L.RightClickBagSyncMenu)
 	GameTooltip:Show()
 end)
 

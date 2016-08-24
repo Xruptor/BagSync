@@ -54,8 +54,8 @@ local dataobj = ldb:NewDataObject("BagSyncLDB", {
 
 	OnTooltipShow = function(self)
 		self:AddLine("BagSync")
-		self:AddLine(L["Left Click = Search Window"])
-		self:AddLine(L["Right Click = BagSync Menu"])
+		self:AddLine(L.LeftClickSearch)
+		self:AddLine(L.RightClickBagSyncMenu)
 	end
 })
 
@@ -294,7 +294,7 @@ function BSYC:FixDB(onlyChkGuild)
 			end
 		end
 
-		self:Print("|cFFFF9900"..L["A FixDB has been performed on BagSync!  The database is now optimized!"].."|r")
+		self:Print("|cFFFF9900"..L.FixDBComplete.."|r")
 	end
 end
 
@@ -500,11 +500,10 @@ function BSYC:ScanEntireBank()
 end
 
 function BSYC:ScanVoidBank()
-	--for some reason blizzard pushes out events for void storage even after you close the window, to prevent this check for the frame
-	if not VoidStorageFrame or not VoidStorageFrame:IsVisible() then return end
+	if not self.atVoidBank then return end
 	
 	self.db.player["void"] = self.db.player["void"] or {}
-	self:Debug("void scanned")
+
 	--reset our tooltip data since we scanned new items (we want current data not old)
 	self.PreviousItemLink = nil
 	self.PreviousItemTotals = {}
@@ -734,7 +733,7 @@ function BSYC:ShowMoneyTooltip()
 	end
 	if self.options.showTotal and gldTotal > 0 then
 		tooltip:AddLine(" ")
-		tooltip:AddDoubleLine(tooltipColor(self.options.colors.total, L["Total:"]), self:CreateMoneyString(gldTotal, false), 1, 1, 1, 1, 1, 1)
+		tooltip:AddDoubleLine(tooltipColor(self.options.colors.total, L.TooltipTotal), self:CreateMoneyString(gldTotal, false), 1, 1, 1, 1, 1, 1)
 	end
 	
 	tooltip:AddLine(" ")
@@ -798,26 +797,30 @@ function BSYC:CreateItemTotals(countTable)
 	
 	--order in which we want stuff displayed
 	local list = {
-		[1] = { "bag", 			L["Bags: %d"] },
-		[2] = { "bank", 		L["Bank: %d"] },
-		[3] = { "reagentbank", 	L["Reagent: %d"] },
-		[4] = { "equip", 		L["Equip: %d"] },
-		[5] = { "guild", 		L["Guild: %d"] },
-		[6] = { "mailbox", 		L["Mail: %d"] },
-		[7] = { "void", 		L["Void: %d"] },
-		[8] = { "auction", 		L["AH: %d"] },
+		[1] = { "bag", 			L.TooltipBag },
+		[2] = { "bank", 		L.TooltipBank },
+		[3] = { "reagentbank", 	L.TooltipReagent },
+		[4] = { "equip", 		L.TooltipEquip },
+		[5] = { "guild", 		L.TooltipGuild },
+		[6] = { "mailbox", 		L.TooltipMail },
+		[7] = { "void", 		L.TooltipVoid },
+		[8] = { "auction", 		L.TooltipAuction },
 	}
 		
 	for i = 1, #list do
 		local count = countTable[list[i][1]]
 		if count > 0 then
-			info = info..", "..list[i][2]:format(count)
-			total = total + count
 			grouped = grouped + 1
+			info = info..L.TooltipDelimiter..list[i][2]:format(count)
+			total = total + count
 		end
 	end
 
-	if grouped > 0 then
+	--remove the first delimiter since it's added to the front automatically
+	info = strsub(info, string.len(L.TooltipDelimiter) + 1)
+	
+	--if it's groupped up and has more then one item then use a different color and show total
+	if grouped > 1 then
 		local totalStr = tooltipColor(self.options.colors.first, total)
 		return totalStr .. tooltipColor(self.options.colors.second, format(" (%s)", info))
 	else
@@ -995,7 +998,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 	--show grand total if we have something
 	--don't show total if there is only one item
 	if self.options.showTotal and grandTotal > 0 and getn(self.PreviousItemTotals) > 1 then
-		table.insert(self.PreviousItemTotals, tooltipColor(self.options.colors.total, L["Total:"]).."@"..tooltipColor(self.options.colors.second, grandTotal))
+		table.insert(self.PreviousItemTotals, tooltipColor(self.options.colors.total, L.TooltipTotal).."@"..tooltipColor(self.options.colors.second, grandTotal))
 	end
 	
 	--now check for seperater and only add if we have something in the table already
@@ -1164,11 +1167,11 @@ function BSYC:OnEnable()
 	--NOTE: Using OnEnable() instead of OnInitialize() because not all the SavedVarables are loaded and UnitFullName() will return nil for realm
 	
 	BINDING_HEADER_BAGSYNC = "BagSync"
-	BINDING_NAME_BAGSYNCTOGGLESEARCH = L["Toggle Search"]
-	BINDING_NAME_BAGSYNCTOGGLETOKENS = L["Toggle Tokens"]
-	BINDING_NAME_BAGSYNCTOGGLEPROFILES = L["Toggle Profiles"]
-	BINDING_NAME_BAGSYNCTOGGLECRAFTS = L["Toggle Professions"]
-	BINDING_NAME_BAGSYNCTOGGLEBLACKLIST = L["Toggle Blacklist"]
+	BINDING_NAME_BAGSYNCTOGGLESEARCH = L.ToggleSearch
+	BINDING_NAME_BAGSYNCTOGGLETOKENS = L.ToggleTokens
+	BINDING_NAME_BAGSYNCTOGGLEPROFILES = L.ToggleProfiles
+	BINDING_NAME_BAGSYNCTOGGLECRAFTS = L.ToggleProfessions
+	BINDING_NAME_BAGSYNCTOGGLEBLACKLIST = L.ToggleBlacklist
 	
 	local ver = GetAddOnMetadata("BagSync","Version") or 0
 	
@@ -1279,48 +1282,48 @@ function BSYC:OnEnable()
 		local a,b,c=strfind(msg, "(%S+)"); --contiguous string of non-space characters
 		
 		if a then
-			if c and c:lower() == L["search"] then
+			if c and c:lower() == L.SlashSearch then
 				if BagSync_SearchFrame:IsVisible() then
 					BagSync_SearchFrame:Hide()
 				else
 					BagSync_SearchFrame:Show()
 				end
 				return true
-			elseif c and c:lower() == L["gold"] then
+			elseif c and c:lower() == L.SlashGold then
 				self:ShowMoneyTooltip()
 				return true
-			elseif c and c:lower() == L["tokens"] then
+			elseif c and c:lower() == L.SlashTokens then
 				if BagSync_TokensFrame:IsVisible() then
 					BagSync_TokensFrame:Hide()
 				else
 					BagSync_TokensFrame:Show()
 				end
 				return true
-			elseif c and c:lower() == L["profiles"] then
+			elseif c and c:lower() == L.SlashProfiles then
 				if BagSync_ProfilesFrame:IsVisible() then
 					BagSync_ProfilesFrame:Hide()
 				else
 					BagSync_ProfilesFrame:Show()
 				end
 				return true
-			elseif c and c:lower() == L["professions"] then
+			elseif c and c:lower() == L.SlashProfessions then
 				if BagSync_CraftsFrame:IsVisible() then
 					BagSync_CraftsFrame:Hide()
 				else
 					BagSync_CraftsFrame:Show()
 				end
 				return true
-			elseif c and c:lower() == L["blacklist"] then
+			elseif c and c:lower() == L.SlashBlacklist then
 				if BagSync_BlackListFrame:IsVisible() then
 					BagSync_BlackListFrame:Hide()
 				else
 					BagSync_BlackListFrame:Show()
 				end
 				return true
-			elseif c and c:lower() == L["fixdb"] then
+			elseif c and c:lower() == L.SlashFixDB then
 				self:FixDB()
 				return true
-			elseif c and c:lower() == L["config"] then
+			elseif c and c:lower() == L.SlashConfig then
 				LibStub("AceConfigDialog-3.0"):Open("BagSync")
 				return true
 			elseif c and c:lower() ~= "" then
@@ -1334,15 +1337,15 @@ function BSYC:OnEnable()
 			end
 		end
 
-		self:Print(L["/bgs [itemname] - Does a quick search for an item"])
-		self:Print(L["/bgs search - Opens the search window"])
-		self:Print(L["/bgs gold - Displays a tooltip with the amount of gold on each character."])
-		self:Print(L["/bgs tokens - Opens the tokens/currency window."])
-		self:Print(L["/bgs profiles - Opens the profiles window."])
-		self:Print(L["/bgs professions - Opens the professions window."])
-		self:Print(L["/bgs blacklist - Opens the blacklist window."])
-		self:Print(L["/bgs fixdb - Runs the database fix (FixDB) on BagSync."])
-		self:Print(L["/bgs config - Opens the BagSync Config Window"] )
+		self:Print(L.HelpSearchItemName)
+		self:Print(L.HelpSearchWindow)
+		self:Print(L.HelpGoldTooltip)
+		self:Print(L.HelpTokensWindow)
+		self:Print(L.HelpProfilesWindow)
+		self:Print(L.HelpProfessionsWindow)
+		self:Print(L.HelpBlacklistWindow)
+		self:Print(L.HelpFixDB)
+		self:Print(L.HelpConfigWindow )
 
 	end
 	

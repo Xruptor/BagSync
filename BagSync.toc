@@ -28,6 +28,7 @@ locale\ruRU.lua
 locale\zhCN.lua
 locale\zhTW.lua
 locale\ptBR.lua
+locale\esES.lua
 
 modules\minimap.lua
 modules\search.lua

@@ -47,7 +47,7 @@ bgsProfilesDD.initialize = function(self, level)
 		end
 		
 		addButton(level, "", nil, 1) --space ;)
-		addButton(level, L["Close"], nil, 1)
+		addButton(level, L.Close, nil, 1)
 
 	end
 
@@ -75,18 +75,18 @@ bgProfiles:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 
 local addonTitle = bgProfiles:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
 addonTitle:SetPoint("CENTER", bgProfiles, "TOP", 0, -20)
-addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L["Profiles"]..")|r")
+addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L.Profiles..")|r")
 
 local closeButton = CreateFrame("Button", nil, bgProfiles, "UIPanelCloseButton");
 closeButton:SetPoint("TOPRIGHT", bgProfiles, -15, -8);
 
 local warningLabel = bgProfiles:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
 warningLabel:SetPoint("CENTER", bgProfiles, 0, 29)
-warningLabel:SetText("|cFFDF2B2B"..L["Select a profile to delete.\nNOTE: This is irreversible!"].."|r")
+warningLabel:SetText("|cFFDF2B2B"..L.DeleteWarning.."|r")
 bgProfiles.warningLabel = warningLabel
 
 local buttonText = bgProfiles:CreateFontString("BagSyncProfilesToonNameText", nil, "GameFontNormal")
-buttonText:SetText(L["Click Here"])
+buttonText:SetText(L.ClickHere)
 buttonText:SetPoint("CENTER")
 
 bgProfiles.toonName = CreateFrame("Button", "BagSyncProfilesToonName", bgProfiles);
@@ -105,14 +105,14 @@ bgProfiles.deleteButton = CreateFrame("Button", nil, bgProfiles, "UIPanelButtonT
 bgProfiles.deleteButton:SetPoint("BOTTOM", bgProfiles, "BOTTOM", -70, 20);
 bgProfiles.deleteButton:SetHeight(21);
 bgProfiles.deleteButton:SetWidth(100);
-bgProfiles.deleteButton:SetText(L["Delete"]);
+bgProfiles.deleteButton:SetText(L.Delete);
 bgProfiles.deleteButton:SetScript("OnClick", function() BagSync_ProfilesFrame.confirmButton:Enable()  end)
 
 bgProfiles.confirmButton = CreateFrame("Button", nil, bgProfiles, "UIPanelButtonTemplate");
 bgProfiles.confirmButton:SetPoint("BOTTOM", bgProfiles, "BOTTOM", 70, 20);
 bgProfiles.confirmButton:SetHeight(21);
 bgProfiles.confirmButton:SetWidth(100);
-bgProfiles.confirmButton:SetText(L["Confirm"]);
+bgProfiles.confirmButton:SetText(L.Confirm);
 bgProfiles.confirmButton:Disable()
 
 bgProfiles.confirmButton:SetScript("OnClick", function(self)
@@ -121,17 +121,17 @@ bgProfiles.confirmButton:SetScript("OnClick", function(self)
 	if bgProfiles.charName and string.len(bgProfiles.charName) > 0 and bgProfiles.charRealm and string.len(bgProfiles.charRealm) > 0 then
 		
 		BagSyncDB[bgProfiles.charRealm][bgProfiles.charName] = nil --remove it
-		BagSyncProfilesToonNameText:SetText(L["Click Here"]) --reset
+		BagSyncProfilesToonNameText:SetText(L.ClickHere) --reset
 		UIDropDownMenu_Initialize(bgsProfilesDD, bgsProfilesDD.initialize) --repopulate the dropdown
 		BagSync:FixDB_Data() --remove all associated tables from the user
-		print("|cFFFF0000BagSync: "..L["Profiles"].." "..L["Delete"].." ["..bgProfiles.charName.." - "..bgProfiles.charRealm.."]!|r")
+		print("|cFFFF0000BagSync: "..L.Profiles.." "..L.Delete.." ["..bgProfiles.charName.." - "..bgProfiles.charRealm.."]!|r")
 		bgProfiles.charName = nil
 		bgProfiles.charRealm = nil
 		bgProfiles.realRealm = nil
 		bgProfiles:Hide()
 		
 	else
-		print(L["BagSync: Error user not found!"])
+		print(L.ErrorUserNotFound)
 	end
 	
 	bgProfiles.confirmButton:Disable()

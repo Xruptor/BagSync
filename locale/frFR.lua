@@ -4,7 +4,7 @@ if not L then return end
 
 --Really wish someone would do the french translation
 
-L["Bags: %d"] = "Sacs: %d"
-L["Bank: %d"] = "Banque: %d"
-L["Equip: %d"] = "Équipé: %d"
-L["Guild: %d"] = "Guilde: %d"
+L.TooltipBag = "Sacs: %d"
+L.TooltipBank = "Banque: %d"
+L.TooltipEquip = "Équipé: %d"
+L.TooltipGuild = "Guilde: %d"

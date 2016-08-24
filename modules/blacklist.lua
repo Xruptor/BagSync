@@ -10,7 +10,7 @@ local bgBlackList = CreateFrame("Frame","BagSync_BlackListFrame", UIParent)
 
 --itemid popup
 StaticPopupDialogs["BAGSYNC_BLACKLIST"] = {
-	text = L["Please enter an itemid. (Use Wowhead.com)"],
+	text = L.EnterItemID,
 	button1 = "Yes",
 	button2 = "No",
 	hasEditBox = true,
@@ -159,7 +159,7 @@ bgBlackList:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 
 local addonTitle = bgBlackList:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
 addonTitle:SetPoint("CENTER", bgBlackList, "TOP", 0, -20)
-addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L["Blacklist"]..")|r")
+addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L.Blacklist..")|r")
 
 local closeButton = CreateFrame("Button", nil, bgBlackList, "UIPanelCloseButton");
 closeButton:SetPoint("TOPRIGHT", bgBlackList, -15, -8);
@@ -169,7 +169,7 @@ local addItemButton = CreateFrame("Button", nil, bgBlackList, "UIPanelButtonTemp
 addItemButton:SetWidth(130)
 addItemButton:SetHeight(25)
 addItemButton:SetPoint("BOTTOMLEFT", bgBlackList, "BOTTOMLEFT", 20, 15)
-addItemButton:SetText(L["Add ItemID"])
+addItemButton:SetText(L.AddItemID)
 addItemButton:SetScript("OnClick", function() StaticPopup_Show("BAGSYNC_BLACKLIST") end)
 
 --Remove ItemID
@@ -177,7 +177,7 @@ local removeItemButton = CreateFrame("Button", nil, bgBlackList, "UIPanelButtonT
 removeItemButton:SetWidth(130)
 removeItemButton:SetHeight(25)
 removeItemButton:SetPoint("BOTTOMRIGHT", bgBlackList, "BOTTOMRIGHT", -20, 15)
-removeItemButton:SetText(L["Remove ItemID"])
+removeItemButton:SetText(L.RemoveItemID)
 removeItemButton:SetScript("OnClick", function()
 	if not BagSync or not BagSyncBLACKLIST_DB then return end
 	if not BagSyncBLACKLIST_DB[currentRealm] then return end

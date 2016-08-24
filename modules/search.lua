@@ -263,7 +263,7 @@ local function DoSearch()
 		table.sort(searchTable, function(a,b) return (a.name < b.name) end)
 	end
 	
-	bgSearch.totalC:SetText("|cFFFFFFFF"..L["Total:"].." "..count.."|r")
+	bgSearch.totalC:SetText("|cFFFFFFFF"..L.TooltipTotal.." "..count.."|r")
 	
 	LoadSlider()
 end
@@ -312,15 +312,15 @@ bgSearch:SetBackdrop({
 bgSearch:SetBackdropColor(0,0,0,1)
 bgSearch:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 
-bgSearch.SEARCHBTN = createEditBox("$parentEdit1", (L["Search"]..":"), bgSearch, 60, -50)
+bgSearch.SEARCHBTN = createEditBox("$parentEdit1", (L.Search..":"), bgSearch, 60, -50)
 
 local addonTitle = bgSearch:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
 addonTitle:SetPoint("CENTER", bgSearch, "TOP", 0, -20)
-addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L["Search"]..")|r")
+addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L.Search..")|r")
 
 local totalC = bgSearch:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
 totalC:SetPoint("RIGHT", bgSearch.SEARCHBTN, 70, 0)
-totalC:SetText("|cFFFFFFFF"..L["Total:"].." 0|r")
+totalC:SetText("|cFFFFFFFF"..L.TooltipTotal.." 0|r")
 bgSearch.totalC = totalC
 		
 local closeButton = CreateFrame("Button", nil, bgSearch, "UIPanelCloseButton");
@@ -333,7 +333,7 @@ end)
 bgSearch:SetScript("OnHide", function(self)
 	searchTable = {}
 	self.SEARCHBTN:SetText("")
-	self.totalC:SetText("|cFFFFFFFF"..L["Total:"].." 0|r")
+	self.totalC:SetText("|cFFFFFFFF"..L.TooltipTotal.." 0|r")
 end)
 
 bgSearch:SetScript("OnMouseDown", function(frame, button)
