@@ -1,158 +1,94 @@
+local BSYC = select(2, ...) --grab the addon namespace
+--BSYC.callbacks = BSYC.callbacks or LibStub("CallbackHandler-1.0"):New(BSYC)
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
-local currentPlayer = UnitName("player")
-local currentRealm = select(2, UnitFullName("player"))
-local bgProfiles = CreateFrame("Frame","BagSync_ProfilesFrame", UIParent)
+local AceGUI = LibStub("AceGUI-3.0")
+local bgProfiles = AceGUI:Create("Frame")
 
---lets do the dropdown menu of DOOM
-local bgsProfilesDD = CreateFrame("Frame", "bgsProfilesDD")
-bgsProfilesDD.displayMode = "MENU"
+--set the defaults for the main frame
+bgProfiles:SetTitle(L.Profiles)
+bgProfiles:SetHeight(200)
+bgProfiles:SetWidth(375)
+bgProfiles.statustext:GetParent():Hide() --hide the statusbar background
+bgProfiles:EnableResize(false)
 
-local function addButton(level, text, isTitle, notCheckable, hasArrow, value, func)
-	local info = UIDropDownMenu_CreateInfo()
-	info.text = text
-	info.isTitle = isTitle
-	info.notCheckable = notCheckable
-	info.hasArrow = hasArrow
-	info.value = value
-	info.func = func
-	UIDropDownMenu_AddButton(info, level)
-end
-		
-bgsProfilesDD.initialize = function(self, level)
-	if not BagSync or not BagSyncDB then return end
+--lets create our widgets
+local warning = AceGUI:Create("Label")
+local deleteButton = AceGUI:Create("Button")
+local confirmButton = AceGUI:Create("Button")
+local ddlist = AceGUI:Create("Dropdown")
 
+--this will populate and fix up the UI a bit
+local function CreateProfileWindow()
 	local tmp = {}
 	
 	--add all the accounts, who cares if it's the current user
-	for realm, rd in pairs(BagSyncDB) do
+	for realm, rd in pairs(BSYC.db.global) do
 		for k, v in pairs(rd) do
-			table.insert(tmp, {k, realm, (BagSync_REALMKEY[realm] or realm)} ) --name, shortrealm name, realrealm name
+			local key = k.."^"..realm
+			tmp[key] = k.." - "..(BSYC.db.realmkey[realm] or realm)
 		end
 	end
 	
-	table.sort(tmp, function(a,b) return (a[1] < b[1]) end)
+	table.sort(tmp, function(a,b) return (a < b) end)
 	
-	if level == 1 then
-		PlaySound("gsTitleOptionExit")
+	--set the list and move the dropdown a bit
+	ddlist:SetList(tmp)
+	ddlist:SetWidth(300)
+	ddlist:ClearAllPoints()
+	ddlist:SetPoint( "TOPLEFT", bgProfiles.frame, "TOPLEFT", 35, -70)
 
-		for i=1, #tmp do
-			addButton(level, tmp[i][1].." - "..tmp[i][3], nil, 1, nil, tmp[i][1].." - "..tmp[i][3], function(frame, ...)
-				bgProfiles.charName = tmp[i][1]
-				bgProfiles.charRealm = tmp[i][2]
-				bgProfiles.realRealm = tmp[i][3]
-				if BagSyncProfilesToonNameText then
-					BagSyncProfilesToonNameText:SetText(tmp[i][1].." - "..tmp[i][3])
-				end
-			end)
-		end
-		
-		addButton(level, "", nil, 1) --space ;)
-		addButton(level, L.Close, nil, 1)
-
-	end
+	--fix the label a bit
+	warning:SetText(L.DeleteWarning)
+	warning:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
+	warning:ClearAllPoints()
+	warning:SetPoint( "CENTER", bgProfiles.frame, "CENTER", 10, 55)
+	
+	deleteButton:ClearAllPoints()
+	deleteButton:SetPoint("BOTTOMLEFT", ddlist.frame, "LEFT", 0, -50)
+	
+	confirmButton:ClearAllPoints()
+	confirmButton:SetPoint("BOTTOMRIGHT", ddlist.frame, "RIGHT", 0, -50)
 
 end
 
-bgProfiles:SetFrameStrata("HIGH")
-bgProfiles:SetToplevel(true)
-bgProfiles:EnableMouse(true)
-bgProfiles:SetMovable(true)
-bgProfiles:SetClampedToScreen(true)
-bgProfiles:SetWidth(280)
-bgProfiles:SetHeight(150)
+deleteButton:SetText(L.Delete)
+deleteButton:SetCallback("OnClick", function()
+	if not ddlist:GetValue() then BSYC:Print(L.ErrorUserNotFound) return end
+	confirmButton:SetDisabled(false)
+end)
 
-bgProfiles:SetBackdrop({
-		bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-		edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-		tile = true,
-		tileSize = 16,
-		edgeSize = 32,
-		insets = { left = 5, right = 5, top = 5, bottom = 5 }
-})
+confirmButton:SetText(L.Confirm)
+confirmButton:SetCallback("OnClick", function()
+	if not ddlist:GetValue() then return end
 
-bgProfiles:SetBackdropColor(0,0,0,1)
-bgProfiles:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-
-local addonTitle = bgProfiles:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
-addonTitle:SetPoint("CENTER", bgProfiles, "TOP", 0, -20)
-addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L.Profiles..")|r")
-
-local closeButton = CreateFrame("Button", nil, bgProfiles, "UIPanelCloseButton");
-closeButton:SetPoint("TOPRIGHT", bgProfiles, -15, -8);
-
-local warningLabel = bgProfiles:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
-warningLabel:SetPoint("CENTER", bgProfiles, 0, 29)
-warningLabel:SetText("|cFFDF2B2B"..L.DeleteWarning.."|r")
-bgProfiles.warningLabel = warningLabel
-
-local buttonText = bgProfiles:CreateFontString("BagSyncProfilesToonNameText", nil, "GameFontNormal")
-buttonText:SetText(L.ClickHere)
-buttonText:SetPoint("CENTER")
-
-bgProfiles.toonName = CreateFrame("Button", "BagSyncProfilesToonName", bgProfiles);
-bgProfiles.toonName:SetPoint("CENTER", bgProfiles, 0, 0)
-bgProfiles.toonName:SetHeight(21);
-bgProfiles.toonName:SetWidth(266);
-bgProfiles.toonName:SetFontString(buttonText)
-bgProfiles.toonName:SetBackdrop({
-	bgFile = "Interface\\Buttons\\WHITE8x8",
-})
-bgProfiles.toonName:SetBackdropColor(0,1,0,0.25)
-bgProfiles.toonName:SetScript("OnClick", function() ToggleDropDownMenu(1, nil, bgsProfilesDD, "cursor", 0, 0)  end)
-bgProfiles.toonName.text = buttonText
-
-bgProfiles.deleteButton = CreateFrame("Button", nil, bgProfiles, "UIPanelButtonTemplate");
-bgProfiles.deleteButton:SetPoint("BOTTOM", bgProfiles, "BOTTOM", -70, 20);
-bgProfiles.deleteButton:SetHeight(21);
-bgProfiles.deleteButton:SetWidth(100);
-bgProfiles.deleteButton:SetText(L.Delete);
-bgProfiles.deleteButton:SetScript("OnClick", function() BagSync_ProfilesFrame.confirmButton:Enable()  end)
-
-bgProfiles.confirmButton = CreateFrame("Button", nil, bgProfiles, "UIPanelButtonTemplate");
-bgProfiles.confirmButton:SetPoint("BOTTOM", bgProfiles, "BOTTOM", 70, 20);
-bgProfiles.confirmButton:SetHeight(21);
-bgProfiles.confirmButton:SetWidth(100);
-bgProfiles.confirmButton:SetText(L.Confirm);
-bgProfiles.confirmButton:Disable()
-
-bgProfiles.confirmButton:SetScript("OnClick", function(self)
-
+	local yName, yRealm  = strsplit("^", ddlist:GetValue())
+	
 	--call me paranoid but I want to make sure we have something to work with before we even think of deleting... double checking everything
-	if bgProfiles.charName and string.len(bgProfiles.charName) > 0 and bgProfiles.charRealm and string.len(bgProfiles.charRealm) > 0 then
-		
-		BagSyncDB[bgProfiles.charRealm][bgProfiles.charName] = nil --remove it
-		BagSyncProfilesToonNameText:SetText(L.ClickHere) --reset
-		UIDropDownMenu_Initialize(bgsProfilesDD, bgsProfilesDD.initialize) --repopulate the dropdown
-		BagSync:FixDB_Data() --remove all associated tables from the user
-		print("|cFFFF0000BagSync: "..L.Profiles.." "..L.Delete.." ["..bgProfiles.charName.." - "..bgProfiles.charRealm.."]!|r")
-		bgProfiles.charName = nil
-		bgProfiles.charRealm = nil
-		bgProfiles.realRealm = nil
+	if yName and string.len(yName) > 0 and yRealm and string.len(yRealm) > 0 then
+		BSYC.db.global[yRealm][yName] = nil --remove it
+		BSYC:FixDB() --remove all associated tables from the user
+		BSYC:Print(L.Profiles.." "..L.Delete.." ["..yName.." - "..(BSYC.db.realmkey[yRealm] or yRealm).."]!")
+		ddlist:SetValue(nil) --remove the currently selected player from dropdown
 		bgProfiles:Hide()
-		
 	else
-		print(L.ErrorUserNotFound)
+		BSYC:Print(L.ErrorUserNotFound)
 	end
 	
-	bgProfiles.confirmButton:Disable()
+	confirmButton:SetDisabled(true)
 end)
+confirmButton:SetDisabled(true)
 
-bgProfiles:SetScript("OnShow", function(self) self.confirmButton:Disable() UIDropDownMenu_Initialize(bgsProfilesDD, bgsProfilesDD.initialize) end)
-bgProfiles:SetScript("OnHide", function(self) if DropDownList1:IsVisible() then DropDownList1:Hide() end end)
-bgsProfilesDD:SetScript('OnHide', function(self) if DropDownList1:IsVisible() then DropDownList1:Hide() end end)
+deleteButton:SetWidth(100)
+confirmButton:SetWidth(100)
 
-bgProfiles:SetScript("OnMouseDown", function(frame, button)
-	if frame:IsMovable() then
-		frame.isMoving = true
-		frame:StartMoving()
-	end
-end)
+bgProfiles:AddChild(warning)
+bgProfiles:AddChild(ddlist)
+bgProfiles:AddChild(deleteButton)
+bgProfiles:AddChild(confirmButton)
 
-bgProfiles:SetScript("OnMouseUp", function(frame, button) 
-	if( frame.isMoving ) then
-		frame.isMoving = nil
-		frame:StopMovingOrSizing()
-	end
-end)
+hooksecurefunc(bgProfiles, "Show" , function() CreateProfileWindow() end)
+--BSYC.RegisterCallback(bgProfiles, "BAGSYNC_LOADED", CreateProfileWindow)
 
 bgProfiles:Hide()
+
+BSYC.FrameProfile = bgProfiles

@@ -196,6 +196,6 @@ frame:AddChild(OKbutton)
 --f.statusbg:Hide() 
 --f:SetWidth(400) f:SetHeight(320)
 
-frame:Show()
+frame:Hide()
 
  

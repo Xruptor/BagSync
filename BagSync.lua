@@ -11,7 +11,9 @@
 
 local BSYC = select(2, ...) --grab the addon namespace
 BSYC = LibStub("AceAddon-3.0"):NewAddon(BSYC, "BagSync", "AceEvent-3.0", "AceConsole-3.0")
+BSYC.callbacks = BSYC.callbacks or LibStub("CallbackHandler-1.0"):New(BSYC)
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
+
 
 local strsub, strsplit, strlower, strmatch, strtrim = string.sub, string.split, string.lower, string.match, string.trim
 local format, tonumber, tostring, tostringall = string.format, tonumber, tostring, tostringall
@@ -149,6 +151,7 @@ function BSYC:StartupDB()
 	
 	--the player DB defaults to the current realm, if you want more then you need to iterate BagSyncDB
 	BagSyncDB = BagSyncDB or {}
+	self.db.global = BagSyncDB
 	BagSyncDB[self.currentRealm] = BagSyncDB[self.currentRealm] or {}
 	BagSyncDB[self.currentRealm][self.currentPlayer] = BagSyncDB[self.currentRealm][self.currentPlayer] or {}
 	self.db.player = BagSyncDB[self.currentRealm][self.currentPlayer]
@@ -818,6 +821,7 @@ function BSYC:CreateItemTotals(countTable)
 
 	--remove the first delimiter since it's added to the front automatically
 	info = strsub(info, string.len(L.TooltipDelimiter) + 1)
+	if string.len(info) < 1 then return nil end --return nil for empty strings
 	
 	--if it's groupped up and has more then one item then use a different color and show total
 	if grouped > 1 then
@@ -973,7 +977,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 			local pClass = v.class or nil
 			infoString = self:CreateItemTotals(allowList)
 
-			if infoString and infoString ~= "" then
+			if infoString then
 				k = BSYC:GetCharacterRealmInfo(k, v.realm)
 				table.insert(self.PreviousItemTotals, self:GetClassColor(k or "Unknown", pClass).."@"..(infoString or "unknown"))
 			end
@@ -1300,11 +1304,7 @@ function BSYC:OnEnable()
 				end
 				return true
 			elseif c and c:lower() == L.SlashProfiles then
-				if BagSync_ProfilesFrame:IsVisible() then
-					BagSync_ProfilesFrame:Hide()
-				else
-					BagSync_ProfilesFrame:Show()
-				end
+				self.FrameProfile:Show()
 				return true
 			elseif c and c:lower() == L.SlashProfessions then
 				if BagSync_CraftsFrame:IsVisible() then
@@ -1350,6 +1350,10 @@ function BSYC:OnEnable()
 	end
 	
 	self:Print("[v|cFFDF2B2B"..ver.."|r] /bgs, /bagsync")
+	
+	--fire off the callback for BagSync fully loaded
+	BSYC.callbacks:Fire("BAGSYNC_LOADED")
+	
 end
 
 ------------------------------

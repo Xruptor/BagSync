@@ -1,5 +1,5 @@
 --Minimap Button for BagSync
-
+local BSYC = select(2, ...) --grab the addon namespace
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
 
 local bgMinimapButton = CreateFrame("Frame","BagSync_MinimapButton", Minimap)
@@ -47,7 +47,7 @@ bgsMinimapDD.initialize = function(self, level)
 			if BagSync_TokensFrame then BagSync_TokensFrame:Show() end
 		end)
 		addButton(level, L.Profiles, nil, 1, nil, 'profiles', function(frame, ...)
-			if BagSync_ProfilesFrame then BagSync_ProfilesFrame:Show() end
+			BSYC.FrameProfile:Show()
 		end)
 		addButton(level, L.Professions, nil, 1, nil, 'professions', function(frame, ...)
 			if BagSync_CraftsFrame then BagSync_CraftsFrame:Show() end
@@ -62,7 +62,7 @@ bgsMinimapDD.initialize = function(self, level)
 			if BagSync then BagSync:FixDB_Data() end
 		end)
 		addButton(level, L.Config, nil, 1, nil, 'config', function(frame, ...)
-			InterfaceOptionsFrame_OpenToCategory("BagSync")
+			LibStub("AceConfigDialog-3.0"):Open("BagSync")
 		end)
 		addButton(level, "", nil, 1) --space ;)
 		addButton(level, L.Close, nil, 1)
