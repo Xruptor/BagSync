@@ -436,7 +436,7 @@ end
 ----------------------
 
 function BSYC:SaveBag(bagname, bagid)
-	if not bagname or not bagid then return nil end
+	if not bagname or not bagid then return end
 	self.db.player[bagname] = self.db.player[bagname] or {}
 	
 	--reset our tooltip data since we scanned new items (we want current data not old)
@@ -500,30 +500,30 @@ function BSYC:ScanEntireBank()
 end
 
 function BSYC:ScanVoidBank()
-	self.db.player["void"] = self.db.player["void"] or {}
-		
-	if VoidStorageFrame and VoidStorageFrame:IsShown() then
-
-		--reset our tooltip data since we scanned new items (we want current data not old)
-		self.PreviousItemLink = nil
-		self.PreviousItemTotals = {}
+	--for some reason blizzard pushes out events for void storage even after you close the window, to prevent this check for the frame
+	if not VoidStorageFrame or not VoidStorageFrame:IsVisible() then return end
 	
-		local numTabs = 2
-		local index = 0
-		local slotItems = {}
-		
-		for tab = 1, numTabs do
-			for i = 1, 80 do
-				local itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(tab, i)
-				if (itemID) then
-					index = index + 1
-					slotItems[index] = itemID and tostring(itemID) or nil
-				end
+	self.db.player["void"] = self.db.player["void"] or {}
+	self:Debug("void scanned")
+	--reset our tooltip data since we scanned new items (we want current data not old)
+	self.PreviousItemLink = nil
+	self.PreviousItemTotals = {}
+
+	local numTabs = 2
+	local index = 0
+	local slotItems = {}
+	
+	for tab = 1, numTabs do
+		for i = 1, 80 do
+			local itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(tab, i)
+			if (itemID) then
+				index = index + 1
+				slotItems[index] = itemID and tostring(itemID) or nil
 			end
 		end
-		
-		self.db.player["void"][0] = slotItems
 	end
+	
+	self.db.player["void"][0] = slotItems
 end
 
 function BSYC:ScanGuildBank()
@@ -792,101 +792,38 @@ function BSYC:ResetTooltip()
 end
 
 function BSYC:CreateItemTotals(countTable)
-	local info
+	local info = ""
 	local total = 0
+	local grouped = 0
 	
-	if countTable["bag"] > 0 then
-		info = L["Bags: %d"]:format(countTable["bag"])
-		total = total + countTable["bag"]
-	end
-
-	if countTable["bank"] > 0 then
-		local count = L["Bank: %d"]:format(countTable["bank"])
-		if info then
-			info = strjoin(", ", info, count)
-		else
-			info = count
-		end
-		total = total + countTable["bank"]
-	end
-	
-	if countTable["reagentbank"] > 0 then
-		local count = L["Reagent: %d"]:format(countTable["reagentbank"])
-		if info then
-			info = strjoin(", ", info, count)
-		else
-			info = count
-		end
-		total = total + countTable["reagentbank"]
-	end
-
-	if countTable["equip"] > 0 then
-		local count = L["Equip: %d"]:format(countTable["equip"])
-		if info then
-			info = strjoin(", ", info, count)
-		else
-			info = count
-		end
-		total = total + countTable["equip"]
-	end
-
-	if countTable["guild"] > 0 and self.options.enableGuild and not self.options.showGuildNames then
-		local count = L["Guild: %d"]:format(countTable["guild"])
-		if info then
-			info = strjoin(", ", info, count)
-		else
-			info = count
-		end
-		total = total + countTable["guild"] --add the guild count only if we don't have showguildnames on, otherwise it's counted twice
-	end
-	
-	if countTable["mailbox"] > 0 and self.options.enableMailbox then
-		local count = L["Mail: %d"]:format(countTable["mailbox"])
-		if info then
-			info = strjoin(", ", info, count)
-		else
-			info = count
-		end
-		total = total + countTable["mailbox"]
-	end
-	
-	if countTable["void"] > 0 then
-		local count = L["Void: %d"]:format(countTable["void"])
-		if info then
-			info = strjoin(", ", info, count)
-		else
-			info = count
-		end
-		total = total + countTable["void"]
-	end
-	
-	if countTable["auction"] > 0 and self.options.enableAuction then
-		local count = L["AH: %d"]:format(countTable["auction"])
-		if info then
-			info = strjoin(", ", info, count)
-		else
-			info = count
-		end
-		total = total + countTable["auction"]
-	end
-	
-	if info and info ~= "" then
-		--check to see if we show multiple items or just a single one per character
-		local totalPass = false
-		for q, v in pairs(countTable) do
-			if v == total then
-				totalPass = true
-				break
-			end
-		end
+	--order in which we want stuff displayed
+	local list = {
+		[1] = { "bag", 			L["Bags: %d"] },
+		[2] = { "bank", 		L["Bank: %d"] },
+		[3] = { "reagentbank", 	L["Reagent: %d"] },
+		[4] = { "equip", 		L["Equip: %d"] },
+		[5] = { "guild", 		L["Guild: %d"] },
+		[6] = { "mailbox", 		L["Mail: %d"] },
+		[7] = { "void", 		L["Void: %d"] },
+		[8] = { "auction", 		L["AH: %d"] },
+	}
 		
-		if not totalPass then
-			local totalStr = tooltipColor(self.options.colors.first, total)
-			return totalStr .. tooltipColor(self.options.colors.second, format(" (%s)", info))
-		else
-			return tooltipColor(self.options.colors.first, info)
+	for i = 1, #list do
+		local count = countTable[list[i][1]]
+		if count > 0 then
+			info = info..", "..list[i][2]:format(count)
+			total = total + count
+			grouped = grouped + 1
 		end
 	end
+
+	if grouped > 0 then
+		local totalStr = tooltipColor(self.options.colors.first, total)
+		return totalStr .. tooltipColor(self.options.colors.second, format(" (%s)", info))
+	else
+		return tooltipColor(self.options.colors.first, info)
+	end
+	
 end
 
 function BSYC:GetClassColor(sName, sClass)
@@ -900,7 +837,8 @@ function BSYC:GetClassColor(sName, sClass)
 	return tooltipColor(self.options.colors.first, sName)
 end
 
-function BSYC:AddCurrencyToTooltip(frame, currencyName)
+function BSYC:AddTokenTooltip(frame, currencyName)
+	if not BagSyncOpt.enableTooltips then return end
 	if currencyName and self.db.token[self.currentRealm][currencyName] then
 		if self.options.enableTooltipSeperator then
 			frame:AddLine(" ")
@@ -915,7 +853,8 @@ function BSYC:AddCurrencyToTooltip(frame, currencyName)
 end
 
 function BSYC:AddItemToTooltip(frame, link) --workaround
-
+	if not BagSyncOpt.enableTooltips then return end
+	
 	--if we can't convert the item link then lets just ignore it altogether	
 	local itemLink = ToShortLink(link)
 	if not itemLink then
@@ -1094,7 +1033,7 @@ function BSYC:HookTooltip(tooltip)
 	end)
 
 	tooltip:HookScript("OnTooltipSetItem", function(self)
-		if self.isModified or not BagSyncOpt.enableTooltips then return end
+		if self.isModified then return end
 		local name, link = self:GetItem()
 		if link and ToShortLink(link) then
 			self.isModified = true
@@ -1119,28 +1058,25 @@ function BSYC:HookTooltip(tooltip)
 	---------------------------------
 	--Special thanks to GetItem() being broken we need to capture the ItemLink before the tooltip shows sometimes
 	hooksecurefunc(tooltip, "SetBagItem", function(self, tab, slot)
-		if not BagSyncOpt.enableTooltips then return end
 		local link = GetContainerItemLink(tab, slot)
 		if link and ToShortLink(link) then
 			self.lastHyperLink = link
 		end
 	end)
 	hooksecurefunc(tooltip, "SetInventoryItem", function(self, tab, slot)
-		if not BagSyncOpt.enableTooltips then return end
 		local link = GetInventoryItemLink(tab, slot)
 		if link and ToShortLink(link) then
 			self.lastHyperLink = link
 		end
 	end)
 	hooksecurefunc(tooltip, "SetGuildBankItem", function(self, tab, slot)
-		if not BagSyncOpt.enableTooltips then return end
 		local link = GetGuildBankItemLink(tab, slot)
 		if link and ToShortLink(link) then
 			self.lastHyperLink = link
 		end
 	end)
 	hooksecurefunc(tooltip, "SetHyperlink", function(self, link)
-		if self.isModified or not BagSyncOpt.enableTooltips then return end
+		if self.isModified then return end
 		if link and ToShortLink(link) then
 			--I'm pretty sure there is a better way to do this but since Recipes fire OnTooltipSetItem with empty/nil GetItem().  There is really no way to my knowledge to grab the current itemID
 			--without storing the ItemLink from the bag parsing or at least grabbing the current SetHyperLink.
@@ -1153,7 +1089,7 @@ function BSYC:HookTooltip(tooltip)
 
 	--lets hook other frames so we can show tooltips there as well
 	hooksecurefunc(tooltip, "SetRecipeReagentItem", function(self, recipeID, reagentIndex)
-		if self.isModified or not BagSyncOpt.enableTooltips then return end
+		if self.isModified then return end
 		local link = C_TradeSkillUI.GetRecipeReagentItemLink(recipeID, reagentIndex)
 		if link and ToShortLink(link) then
 			self.isModified = true
@@ -1161,7 +1097,7 @@ function BSYC:HookTooltip(tooltip)
 		end
 	end)
 	hooksecurefunc(tooltip, "SetRecipeResultItem", function(self, recipeID)
-		if self.isModified or not BagSyncOpt.enableTooltips then return end
+		if self.isModified then return end
 		local link = C_TradeSkillUI.GetRecipeItemLink(recipeID)
 		if link and ToShortLink(link) then
 			self.isModified = true
@@ -1169,7 +1105,7 @@ function BSYC:HookTooltip(tooltip)
 		end
 	end)	
 	hooksecurefunc(tooltip, "SetQuestLogItem", function(self, itemType, index)
-		if self.isModified or not BagSyncOpt.enableTooltips then return end
+		if self.isModified then return end
 		local link = GetQuestLogItemLink(itemType, index)
 		if link and ToShortLink(link) then
 			self.isModified = true
@@ -1177,7 +1113,7 @@ function BSYC:HookTooltip(tooltip)
 		end
 	end)
 	hooksecurefunc(tooltip, "SetQuestItem", function(self, itemType, index)
-		if self.isModified or not BagSyncOpt.enableTooltips then return end
+		if self.isModified then return end
 		local link = GetQuestItemLink(itemType, index)
 		if link and ToShortLink(link) then
 			self.isModified = true
@@ -1194,28 +1130,28 @@ function BSYC:HookTooltip(tooltip)
 	
 	--------------------------------------------------
 	hooksecurefunc(tooltip, "SetCurrencyToken", function(self, index)
-		if self.isModified or not BagSyncOpt.enableTooltips then return end
+		if self.isModified then return end
 		self.isModified = true
 		local currencyName = GetCurrencyListInfo(index)
-		BSYC:AddCurrencyToTooltip(self, currencyName)
+		BSYC:AddTokenTooltip(self, currencyName)
 	end)
 	hooksecurefunc(tooltip, "SetCurrencyByID", function(self, id)
-		if self.isModified or not BagSyncOpt.enableTooltips then return end
+		if self.isModified then return end
 		self.isModified = true
 		local currencyName = GetCurrencyInfo(id)
-		BSYC:AddCurrencyToTooltip(self, currencyName)
+		BSYC:AddTokenTooltip(self, currencyName)
 	end)
 	hooksecurefunc(tooltip, "SetBackpackToken", function(self, index)
-		if self.isModified or not BagSyncOpt.enableTooltips then return end
+		if self.isModified then return end
 		self.isModified = true
 		local currencyName = GetBackpackCurrencyInfo(index)
-		BSYC:AddCurrencyToTooltip(self, currencyName)
+		BSYC:AddTokenTooltip(self, currencyName)
 	end)
 	-- hooksecurefunc(tooltip, 'SetTradeSkillReagentInfo', function(self, index)
-		-- if self.isModified or not BagSyncOpt.enableTooltips then return end
+		-- if self.isModified then return end
 		-- self.isModified = true
 		-- local currencyName = GetTradeSkillReagentInfo(index,1)
-		-- BSYC:AddCurrencyToTooltip(self, currencyName)
+		-- BSYC:AddTokenTooltip(self, currencyName)
 	-- end)
 	
 end
@@ -1611,10 +1547,10 @@ end
 --     PROFESSION           --
 ------------------------------
 
-function BSYC:doRegularTradeSkill(numIndex, dbIdx)
+function BSYC:doRegularTradeSkill(numIndex, dbPlayer, dbIdx)
 	local name, icon, skillLevel, maxSkillLevel, numAbilities, spelloffset, skillLine, skillModifier = GetProfessionInfo(numIndex)
 	if name and skillLevel then
-		self.db.profession[self.currentRealm][self.currentPlayer][dbIdx] = format("%s,%s", name, skillLevel)
+		dbPlayer[dbIdx] = format("%s,%s", name, skillLevel)
 	end
 end
 
@@ -1635,62 +1571,64 @@ function BSYC:TRADE_SKILL_SHOW()
 			["Interface\\Icons\\INV_Pick_02"] = true, --this is Mining
 		}
 		
+		local dbPlayer = self.db.profession[self.currentRealm][self.currentPlayer]
+		
 		--prof1
 		if prof1 and (GetProfessionInfo(prof1) == tradename) and C_TradeSkillUI.GetTradeSkillListLink() then
 			local skill = select(3, GetProfessionInfo(prof1))
-			self.db.profession[self.currentRealm][self.currentPlayer][1] = { tradename, C_TradeSkillUI.GetTradeSkillListLink(), skill }
+			dbPlayer[1] = { tradename, C_TradeSkillUI.GetTradeSkillListLink(), skill }
 		elseif prof1 and iconProf1 and noLinkTS[iconProf1] then
 			--only store if it's herbalism, skinning, or mining
-			self:doRegularTradeSkill(prof1, 1)
-		elseif not prof1 and self.db.profession[self.currentRealm][self.currentPlayer][1] then
+			self:doRegularTradeSkill(prof1, dbPlayer, 1)
+		elseif not prof1 and dbPlayer[1] then
 			--they removed a profession
-			self.db.profession[self.currentRealm][self.currentPlayer][1] = nil
+			dbPlayer[1] = nil
 		end
 
 		--prof2
 		if prof2 and (GetProfessionInfo(prof2) == tradename) and C_TradeSkillUI.GetTradeSkillListLink() then
 			local skill = select(3, GetProfessionInfo(prof2))
-			self.db.profession[self.currentRealm][self.currentPlayer][2] = { tradename, C_TradeSkillUI.GetTradeSkillListLink(), skill }
+			dbPlayer[2] = { tradename, C_TradeSkillUI.GetTradeSkillListLink(), skill }
 		elseif prof2 and iconProf2 and noLinkTS[iconProf2] then
 			--only store if it's herbalism, skinning, or mining
-			self:doRegularTradeSkill(prof2, 2)
-		elseif not prof2 and self.db.profession[self.currentRealm][self.currentPlayer][2] then
+			self:doRegularTradeSkill(prof2, dbPlayer, 2)
+		elseif not prof2 and dbPlayer[2] then
 			--they removed a profession
-			self.db.profession[self.currentRealm][self.currentPlayer][2] = nil
+			dbPlayer[2] = nil
 		end
 		
 		--archaeology
 		if archaeology then
-			self:doRegularTradeSkill(archaeology, 3)
-		elseif not archaeology and self.db.profession[self.currentRealm][self.currentPlayer][3] then
+			self:doRegularTradeSkill(archaeology, dbPlayer, 3)
+		elseif not archaeology and dbPlayer[3] then
 			--they removed a profession
-			self.db.profession[self.currentRealm][self.currentPlayer][3] = nil
+			dbPlayer[3] = nil
 		end
 		
 		--fishing
 		if fishing then
-			self:doRegularTradeSkill(fishing, 4)
-		elseif not fishing and self.db.profession[self.currentRealm][self.currentPlayer][4] then
+			self:doRegularTradeSkill(fishing, dbPlayer, 4)
+		elseif not fishing and dbPlayer[4] then
 			--they removed a profession
-			self.db.profession[self.currentRealm][self.currentPlayer][4] = nil
+			dbPlayer[4] = nil
 		end
 		
 		--cooking
 		if cooking and (GetProfessionInfo(cooking) == tradename) and C_TradeSkillUI.GetTradeSkillListLink() then
 			local skill = select(3, GetProfessionInfo(cooking))
-			self.db.profession[self.currentRealm][self.currentPlayer][5] = { tradename, C_TradeSkillUI.GetTradeSkillListLink(), skill }
-		elseif not cooking and self.db.profession[self.currentRealm][self.currentPlayer][5] then
+			dbPlayer[5] = { tradename, C_TradeSkillUI.GetTradeSkillListLink(), skill }
+		elseif not cooking and dbPlayer[5] then
 			--they removed a profession
-			self.db.profession[self.currentRealm][self.currentPlayer][5] = nil
+			dbPlayer[5] = nil
 		end
 		
 		--firstAid
 		if firstAid and (GetProfessionInfo(firstAid) == tradename) and C_TradeSkillUI.GetTradeSkillListLink() then
 			local skill = select(3, GetProfessionInfo(firstAid))
-			self.db.profession[self.currentRealm][self.currentPlayer][6] = { tradename, C_TradeSkillUI.GetTradeSkillListLink(), skill }
-		elseif not firstAid and self.db.profession[self.currentRealm][self.currentPlayer][6] then
+			dbPlayer[6] = { tradename, C_TradeSkillUI.GetTradeSkillListLink(), skill }
+		elseif not firstAid and dbPlayer[6] then
 			--they removed a profession
-			self.db.profession[self.currentRealm][self.currentPlayer][6] = nil
+			dbPlayer[6] = nil
 		end
 		
 	end
