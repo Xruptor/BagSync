@@ -1,3 +1,4 @@
+local BSYC = select(2, ...) --grab the addon namespace
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
 local testTable = {}
 local rows, anchor = {}
@@ -13,10 +14,11 @@ local frame = AceGUI:Create("Frame")
 
 frame:SetTitle("Example Frame")
 frame:SetStatusText("AceGUI-3.0 Example Container Frame")
+frame:EnableResize(false)
 
 local scrollframe = AceGUI:Create("ScrollFrame");
 scrollframe:SetFullWidth(true)
-scrollframe:SetLayout("List")
+scrollframe:SetLayout("Flow")
 
 frame:AddChild(scrollframe)
 
@@ -29,12 +31,13 @@ local function addEntry(entry, counter)
 	local highlightColor = {1, 0, 0}
 	local label = AceGUI:Create("InteractiveLabel")
 
-	local name, link, rarity = entry.name, entry.link, entry.rarity
+	local name, link, rarity, texture = entry.name, entry.link, entry.rarity, entry.texture
 
 	label:SetText(name)
 	label:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
 	label:SetFullWidth(true)
 	label:SetColor(unpack(color))
+	label:SetImage(texture)
 	label:SetCallback(
 		"OnClick", 
 		function (widget, sometable, button)
@@ -60,7 +63,6 @@ local function addEntry(entry, counter)
 end
 
 local function DoSearch()
-	if not BagSync or not BagSyncDB then return end
 	local searchStr = "red"
 	
 	searchStr = searchStr:lower()
@@ -89,7 +91,7 @@ local function DoSearch()
 		
 		if string.len(searchStr) > 1 and string.find(searchStr, "@") and allowList[string.sub(searchStr, 2)] ~= nil then playerSearch = true end
 		
-		local xDB = BagSync:getFilteredDB()
+		local xDB = BSYC:FilterDB()
 		
 		--loop through our characters
 		--k = player, v = stored data for player
@@ -99,7 +101,7 @@ local function DoSearch()
 			local yName, yRealm  = strsplit("^", k)
 			
 			--check if we should show both factions or not
-			if BagSyncOpt.enableFaction or pFaction == playerFaction then
+			if BSYC.options.enableFaction or pFaction == playerFaction then
 
 				--now count the stuff for the user
 				--q = bag name, r = stored data for bag name
@@ -113,16 +115,16 @@ local function DoSearch()
 								for slotID, itemValue in pairs(bagInfo) do
 									local dblink, dbcount = strsplit(",", itemValue)
 									if dblink then
-										local dName, dItemLink, dRarity = GetItemInfo(dblink)
+										local dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo(dblink)
 										if dName then
 											--are we checking in our bank,void, etc?
 											if playerSearch and string.sub(searchStr, 2) == q and string.sub(searchStr, 2) ~= "guild" and yName == currentPlayer and not tempList[dblink] then
-												addEntry({ name=dName, link=dItemLink, rarity=dRarity }, count)
+												addEntry({ name=dName, link=dItemLink, rarity=dRarity, texture=dTexture }, count)
 												tempList[dblink] = dName
 												count = count + 1
 											--we found a match
 											elseif not playerSearch and not tempList[dblink] and ItemSearch:Matches(dItemLink, searchStr) then
-												addEntry({ name=dName, link=dItemLink, rarity=dRarity }, count)
+												addEntry({ name=dName, link=dItemLink, rarity=dRarity, texture=dTexture }, count)
 												tempList[dblink] = dName
 												count = count + 1
 											end
@@ -136,29 +138,29 @@ local function DoSearch()
 					end
 				end
 				
-				if BagSyncOpt.enableGuild then
+				if BSYC.options.enableGuild then
 					local guildN = v.guild or nil
 
 					--check the guild bank if the character is in a guild
-					if BagSyncGUILD_DB and guildN and BagSyncGUILD_DB[v.realm][guildN] then
+					if guildN and BSYC.db.guild[v.realm][guildN] then
 						--check to see if this guild has already been done through this run (so we don't do it multiple times)
 						--check for XR/B.Net support
-						local gName = BagSync:getGuildRealmInfo(guildN, v.realm)
+						local gName = BSYC:GetGuildRealmInfo(guildN, v.realm)
 					
 						if not previousGuilds[gName] then
 							--we only really need to see this information once per guild
 							for q, r in pairs(BagSyncGUILD_DB[v.realm][guildN]) do
 								local dblink, dbcount = strsplit(",", r)
 								if dblink then
-									local dName, dItemLink, dRarity = GetItemInfo(dblink)
+									local dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo(dblink)
 									if dName then
 										if playerSearch and string.sub(searchStr, 2) == "guild" and GetGuildInfo("player") and guildN == GetGuildInfo("player") and not tempList[dblink] then
-											addEntry({ name=dName, link=dItemLink, rarity=dRarity }, count)
+											addEntry({ name=dName, link=dItemLink, rarity=dRarity, texture=dTexture }, count)
 											tempList[dblink] = dName
 											count = count + 1
 										--we found a match
 										elseif not playerSearch and not tempList[dblink] and ItemSearch:Matches(dItemLink, searchStr) then
-											addEntry({ name=dName, link=dItemLink, rarity=dRarity }, count)
+											addEntry({ name=dName, link=dItemLink, rarity=dRarity, texture=dTexture }, count)
 											tempList[dblink] = dName
 											count = count + 1
 										end
@@ -192,9 +194,25 @@ frame:AddChild(OKbutton)
 
 --lets create the warning frame.
 
---local warning = AceGUI:Create("Frame")
---f.statusbg:Hide() 
---f:SetWidth(400) f:SetHeight(320)
+local warning = AceGUI:Create("Window")
+warning:SetTitle(L.WarningHeader)
+warning:SetWidth(300)
+warning:SetHeight(170)
+warning.frame:SetParent(frame.frame)
+warning:SetLayout("Flow")
+warning:EnableResize(false)
+
+local warningLabel = AceGUI:Create("Label")
+warningLabel:SetText(L.WarningItemSearch)
+warningLabel:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
+warningLabel:SetColor(1, 165/255, 0) --orange, red is just too much sometimes
+warningLabel:SetFullWidth(true)
+warning:AddChild(warningLabel)
+
+warning:Hide()
+
+
+frame.warningFrame = warning
 
 frame:Hide()
 

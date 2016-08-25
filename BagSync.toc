@@ -30,6 +30,8 @@ locale\zhTW.lua
 locale\ptBR.lua
 locale\esES.lua
 
+BagSync.lua
+
 modules\minimap.lua
 modules\search.lua
 modules\tokens.lua
@@ -38,5 +40,3 @@ modules\blacklist.lua
 modules\profiles.lua
 modules\config.lua
 modules\test.lua
-
-BagSync.lua

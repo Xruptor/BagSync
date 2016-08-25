@@ -1,12 +1,9 @@
+
+local BSYC = select(2, ...) --grab the addon namespace
+local Search = BSYC:NewModule("Search")
+
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
-local searchTable = {}
-local rows, anchor = {}
-local currentRealm = select(2, UnitFullName("player"))
-local GetItemInfo = _G["GetItemInfo"]
-local currentPlayer = UnitName("player")
-
-local bgSearch = CreateFrame("Frame","BagSync_SearchFrame", UIParent)
-
+local AceGUI = LibStub("AceGUI-3.0")
 local customSearch = LibStub('CustomSearch-1.0')
 local ItemSearch = LibStub("LibItemSearch-1.2")
 
@@ -39,131 +36,143 @@ ItemSearch.Filters.class = {
 	end
 }
 
-local function LoadSlider()
+function Search:OnInitialize()
 
-	local function OnEnter(self)
-		if self.link then
-			GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
-			GameTooltip:SetHyperlink(self.link)
-			GameTooltip:Show()
-		end
-	end
-	local function OnLeave() GameTooltip:Hide() end
+	--lets create our widgets
+	local SearchFrame = AceGUI:Create("Window")
+	Search.frame = SearchFrame
 
-	local EDGEGAP, ROWHEIGHT, ROWGAP, GAP = 16, 20, 2, 4
-	local FRAME_HEIGHT = bgSearch:GetHeight() - 60
-	local SCROLL_TOP_POSITION = -90
-	local totalRows = math.floor((FRAME_HEIGHT-22)/(ROWHEIGHT + ROWGAP))
+	SearchFrame:SetTitle("BagSync "..L.Search)
+	SearchFrame:SetHeight(500)
+	SearchFrame:SetWidth(380)
+	SearchFrame:EnableResize(false)
 	
-	for i=1, totalRows do
-		if not rows[i] then
-			local row = CreateFrame("Button", "BagSyncSearchRow"..i, bgSearch)
-			if not anchor then row:SetPoint("BOTTOMLEFT", bgSearch, "TOPLEFT", 0, SCROLL_TOP_POSITION)
-			else row:SetPoint("TOP", anchor, "BOTTOM", 0, -ROWGAP) end
-			row:SetPoint("LEFT", EDGEGAP, 0)
-			row:SetPoint("RIGHT", -EDGEGAP*2-8, 0)
-			row:SetHeight(ROWHEIGHT)
-			row:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-			anchor = row
-			rows[i] = row
-
-			local title = row:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
-			title:SetPoint("LEFT")
-			title:SetJustifyH("LEFT") 
-			title:SetWidth(row:GetWidth())
-			title:SetHeight(ROWHEIGHT)
-			row.title = title
-
-			row:SetScript("OnEnter", OnEnter)
-			row:SetScript("OnLeave", OnLeave)
-			row:SetScript("OnClick", function(self)
-				if self.link then
-					if HandleModifiedItemClick(self.link) then
-						return
-					end
-					if IsModifiedClick("CHATLINK") then
-						local editBox = ChatEdit_ChooseBoxForSend()
-						if editBox then
-							editBox:Insert(self.link)
-							ChatFrame_OpenChat(editBox:GetText())
-						end
-					end
-				end
-			end)
-		end
-	end
-
-	local offset = 0
-	local RefreshSearch = function()
-		if not BagSync_SearchFrame:IsVisible() then return end
-		for i,row in ipairs(rows) do
-			if (i + offset) <= #searchTable then
-				if searchTable[i + offset] then
-					if searchTable[i + offset].rarity then
-						--local hex = (select(4, GetItemQualityColor(searchTable[i + offset].rarity)))
-						local hex = (select(4, GetItemQualityColor(searchTable[i + offset].rarity)))
-						row.title:SetText(format("|c%s%s|r", hex, searchTable[i + offset].name) or searchTable[i + offset].name)
-					else
-						row.title:SetText(searchTable[i + offset].name)
-					end
-					row.link = searchTable[i + offset].link
-					row:Show()
-				end
-			else
-				row.title:SetText(nil)
-				row:Hide()
-			end
-		end
-	end
-
-	RefreshSearch()
-
-	if not bgSearch.scrollbar then
-		bgSearch.scrollbar = LibStub("tekKonfig-Scroll").new(bgSearch, nil, #rows/2)
-		bgSearch.scrollbar:ClearAllPoints()
-		bgSearch.scrollbar:SetPoint("TOP", rows[1], 0, -16)
-		bgSearch.scrollbar:SetPoint("BOTTOM", rows[#rows], 0, 16)
-		bgSearch.scrollbar:SetPoint("RIGHT", -16, 0)
-	end
-	
-	if #searchTable > 0 then
-		bgSearch.scrollbar:SetMinMaxValues(0, math.max(0, #searchTable - #rows))
-		bgSearch.scrollbar:SetValue(0)
-		bgSearch.scrollbar:Show()
-	else
-		bgSearch.scrollbar:Hide()
-	end
-	
-	local f = bgSearch.scrollbar:GetScript("OnValueChanged")
-		bgSearch.scrollbar:SetScript("OnValueChanged", function(self, value, ...)
-		offset = math.floor(value)
-		RefreshSearch()
-		return f(self, value, ...)
+	local w = AceGUI:Create("SimpleGroup")
+	w:SetLayout("Flow")
+	w:SetFullWidth(true)
+	SearchFrame:AddChild(w)
+  
+	local searchbar = AceGUI:Create("EditBox")
+	searchbar:SetText()
+	searchbar:SetWidth(255)
+	searchbar:SetCallback("OnEnterPressed",function(widget)
+		searchbar:ClearFocus()
+		self:DoSearch(searchbar:GetText())
 	end)
-
-	bgSearch:EnableMouseWheel()
-	bgSearch:SetScript("OnMouseWheel", function(self, val)
-		bgSearch.scrollbar:SetValue(bgSearch.scrollbar:GetValue() - val*#rows/2)
+	
+	Search.searchbar = searchbar
+	w:AddChild(searchbar)
+	
+	local refreshbutton = AceGUI:Create("Button")
+	refreshbutton:SetText(L.Refresh)
+	refreshbutton:SetWidth(100)
+	refreshbutton:SetHeight(20)
+	refreshbutton:SetCallback("OnClick", function()
+		searchbar:ClearFocus()
+		self:DoSearch(searchbar:GetText())
 	end)
+	w:AddChild(refreshbutton)
+
+	local scrollframe = AceGUI:Create("ScrollFrame");
+	scrollframe:SetFullWidth(true)
+	scrollframe:SetLayout("Flow")
+
+	Search.scrollframe = scrollframe
+	SearchFrame:AddChild(scrollframe)
+
+	local warningframe = AceGUI:Create("Window")
+	warningframe:SetTitle(L.WarningHeader)
+	warningframe:SetWidth(300)
+	warningframe:SetHeight(170)
+	warningframe.frame:SetParent(SearchFrame.frame)
+	warningframe:SetLayout("Flow")
+	warningframe:EnableResize(false)
+
+	local warninglabel = AceGUI:Create("Label")
+	warninglabel:SetText(L.WarningItemSearch)
+	warninglabel:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
+	warninglabel:SetColor(1, 165/255, 0) --orange, red is just too much sometimes
+	warninglabel:SetFullWidth(true)
+	warningframe:AddChild(warninglabel)
+
+	Search.warningframe = warningframe
+	Search.warninglabel = warninglabel
+	
+	hooksecurefunc(warningframe, "Show" ,function()
+		--always show the warning frame on the right of the BagSync window
+		warningframe.frame:ClearAllPoints()
+		warningframe:SetPoint( "TOPLEFT", SearchFrame.frame, "TOPRIGHT", 0, 0)
+	end)
+	
+	--hide the warning window if they close the search window
+	SearchFrame:SetCallback("OnClose",function(widget)
+		warningframe:Hide()
+	end)
+	
+	warningframe:Hide()
+	SearchFrame:Hide()
 end
 
---do search routine
-local function DoSearch()
-	if not BagSync or not BagSyncDB then return end
-	local searchStr = bgSearch.SEARCHBTN:GetText()
+function Search:StartSearch(searchStr)
+	self.frame:Show()
+	self.searchbar:SetText(searchStr)
+	self:DoSearch(searchStr)
+end
 
+function Search:AddEntry(entry, counter)
+
+	local highlightColor = {1, 0, 0}
+	local label = AceGUI:Create("InteractiveLabel")
+
+	local name, link, rarity, texture = entry.name, entry.link, entry.rarity, entry.texture
+	local r, g, b, hex = GetItemQualityColor(rarity)
+	
+	label:SetText(name)
+	label:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
+	label:SetFullWidth(true)
+	label:SetColor( r, g, b)
+	label:SetImage(texture)
+	label:SetCallback(
+		"OnClick", 
+		function (widget, sometable, button)
+			if "LeftButton" == button then
+				print("left")
+			elseif "RightButton" == button then
+				print("right")
+			end
+		end)
+	label:SetCallback(
+		"OnEnter",
+		function (widget, sometable)
+			label:SetColor(unpack(highlightColor))
+			GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
+			GameTooltip:SetHyperlink(link)
+			GameTooltip:Show()
+		end)
+	label:SetCallback(
+		"OnLeave",
+		function (widget, sometable)
+			label:SetColor(r, g, b)
+			GameTooltip:Hide()
+		end)
+
+	self.scrollframe:AddChild(label)
+end
+
+function Search:DoSearch(searchStr)
+	local searchStr = searchStr or self.searchbar:GetText()
 	searchStr = searchStr:lower()
-	
-	searchTable = {} --reset
-	
+
 	local tempList = {}
 	local previousGuilds = {}
 	local count = 0
 	local playerSearch = false
+	local countWarning = 0
+	
+	self.scrollframe:ReleaseChildren() --clear out the scrollframe
 	
 	if strlen(searchStr) > 0 then
 		
-		local playerFaction = UnitFactionGroup("player")
 		local allowList = {
 			["bag"] = 0,
 			["bank"] = 0,
@@ -177,17 +186,17 @@ local function DoSearch()
 		
 		if string.len(searchStr) > 1 and string.find(searchStr, "@") and allowList[string.sub(searchStr, 2)] ~= nil then playerSearch = true end
 		
-		local xDB = BagSync:getFilteredDB()
+		local xDB = BSYC:FilterDB()
 		
 		--loop through our characters
 		--k = player, v = stored data for player
 		for k, v in pairs(xDB) do
 
-			local pFaction = v.faction or playerFaction --just in case ;) if we dont know the faction yet display it anyways
+			local pFaction = v.faction or BSYC.playerFaction --just in case ;) if we dont know the faction yet display it anyways
 			local yName, yRealm  = strsplit("^", k)
 			
 			--check if we should show both factions or not
-			if BagSyncOpt.enableFaction or pFaction == playerFaction then
+			if BSYC.options.enableFaction or pFaction == BSYC.playerFaction then
 
 				--now count the stuff for the user
 				--q = bag name, r = stored data for bag name
@@ -201,19 +210,21 @@ local function DoSearch()
 								for slotID, itemValue in pairs(bagInfo) do
 									local dblink, dbcount = strsplit(",", itemValue)
 									if dblink then
-										local dName, dItemLink, dRarity = GetItemInfo(dblink)
-										if dName and dItemLink then
+										local dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo(dblink)
+										if dName then
 											--are we checking in our bank,void, etc?
-											if playerSearch and string.sub(searchStr, 2) == q and string.sub(searchStr, 2) ~= "guild" and yName == currentPlayer and not tempList[dblink] then
-												table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
+											if playerSearch and string.sub(searchStr, 2) == q and string.sub(searchStr, 2) ~= "guild" and yName == BSYC.currentPlayer and not tempList[dblink] then
+												self:AddEntry({ name=dName, link=dItemLink, rarity=dRarity, texture=dTexture }, count)
 												tempList[dblink] = dName
 												count = count + 1
 											--we found a match
 											elseif not playerSearch and not tempList[dblink] and ItemSearch:Matches(dItemLink, searchStr) then
-												table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
+												self:AddEntry({ name=dName, link=dItemLink, rarity=dRarity, texture=dTexture }, count)
 												tempList[dblink] = dName
 												count = count + 1
 											end
+										else
+											countWarning = countWarning + 1
 										end
 									end
 								end
@@ -222,37 +233,40 @@ local function DoSearch()
 					end
 				end
 				
-				if BagSyncOpt.enableGuild then
+				if BSYC.options.enableGuild then
 					local guildN = v.guild or nil
 
 					--check the guild bank if the character is in a guild
-					if BagSyncGUILD_DB and guildN and BagSyncGUILD_DB[v.realm][guildN] then
+					if guildN and BSYC.db.guild[v.realm][guildN] then
 						--check to see if this guild has already been done through this run (so we don't do it multiple times)
 						--check for XR/B.Net support
-						local gName = BagSync:getGuildRealmInfo(guildN, v.realm)
+						local gName = BSYC:GetGuildRealmInfo(guildN, v.realm)
 					
 						if not previousGuilds[gName] then
 							--we only really need to see this information once per guild
-							for q, r in pairs(BagSyncGUILD_DB[v.realm][guildN]) do
+							for q, r in pairs(BSYC.db.guild[v.realm][guildN]) do
 								local dblink, dbcount = strsplit(",", r)
 								if dblink then
-									local dName, dItemLink, dRarity = GetItemInfo(dblink)
+									local dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo(dblink)
 									if dName then
-										if playerSearch and string.sub(searchStr, 2) == "guild" and GetGuildInfo("player") and guildN == GetGuildInfo("player") and not tempList[dblink] then
-											table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
+										if playerSearch and string.sub(searchStr, 2) == "guild" and BSYC.db.player.guild and guildN == BSYC.db.player.guild and not tempList[dblink] then
+											self:AddEntry({ name=dName, link=dItemLink, rarity=dRarity, texture=dTexture }, count)
 											tempList[dblink] = dName
 											count = count + 1
 										--we found a match
 										elseif not playerSearch and not tempList[dblink] and ItemSearch:Matches(dItemLink, searchStr) then
-											table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity } )
+											self:AddEntry({ name=dName, link=dItemLink, rarity=dRarity, texture=dTexture }, count)
 											tempList[dblink] = dName
 											count = count + 1
 										end
+									else
+										countWarning = countWarning + 1
 									end
 								end
 							end
 							previousGuilds[gName] = true
 						end
+						
 					end
 				end
 				
@@ -260,98 +274,21 @@ local function DoSearch()
 			
 		end
 		
-		table.sort(searchTable, function(a,b) return (a.name < b.name) end)
+		--show warning window if the server hasn't queried all the items yet
+		if countWarning > 0 then
+			self.warninglabel:SetText(L.WarningItemSearch:format(countWarning))
+			self.warningframe:Show()
+		else
+			self.warningframe:Hide()
+		end
+
 	end
 	
-	bgSearch.totalC:SetText("|cFFFFFFFF"..L.TooltipTotal.." "..count.."|r")
+	--show or hide the scrolling frame depending on count
+	if strlen(searchStr) > 0 and count > 0 then
+		self.scrollframe.frame:Show()
+	else
+		self.scrollframe.frame:Hide()
+	end
 	
-	LoadSlider()
 end
-
-local function escapeEditBox(self)
-  self:SetAutoFocus(false)
-end
-
-local function enterEditBox(self)
-	self:ClearFocus()
-	--self:GetParent():DoSearch()
-	DoSearch()
-end
-
-local function createEditBox(name, labeltext, obj, x, y)
-  local editbox = CreateFrame("EditBox", name, obj, "InputBoxTemplate")
-  editbox:SetAutoFocus(false)
-  editbox:SetWidth(180)
-  editbox:SetHeight(16)
-  editbox:SetPoint("TOPLEFT", obj, "TOPLEFT", x or 0, y or 0)
-  local label = editbox:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-  label:SetPoint("BOTTOMLEFT", editbox, "TOPLEFT", -6, 4)
-  label:SetText(labeltext)
-  editbox:SetScript("OnEnterPressed", enterEditBox)
-  editbox:HookScript("OnEscapePressed", escapeEditBox)
-  return editbox
-end
-
-bgSearch:SetFrameStrata("HIGH")
-bgSearch:SetToplevel(true)
-bgSearch:EnableMouse(true)
-bgSearch:SetMovable(true)
-bgSearch:SetClampedToScreen(true)
-bgSearch:SetWidth(380)
-bgSearch:SetHeight(500)
-
-bgSearch:SetBackdrop({
-		bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-		edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-		tile = true,
-		tileSize = 16,
-		edgeSize = 32,
-		insets = { left = 5, right = 5, top = 5, bottom = 5 }
-})
-
-bgSearch:SetBackdropColor(0,0,0,1)
-bgSearch:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-
-bgSearch.SEARCHBTN = createEditBox("$parentEdit1", (L.Search..":"), bgSearch, 60, -50)
-
-local addonTitle = bgSearch:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
-addonTitle:SetPoint("CENTER", bgSearch, "TOP", 0, -20)
-addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L.Search..")|r")
-
-local totalC = bgSearch:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
-totalC:SetPoint("RIGHT", bgSearch.SEARCHBTN, 70, 0)
-totalC:SetText("|cFFFFFFFF"..L.TooltipTotal.." 0|r")
-bgSearch.totalC = totalC
-		
-local closeButton = CreateFrame("Button", nil, bgSearch, "UIPanelCloseButton");
-closeButton:SetPoint("TOPRIGHT", bgSearch, -15, -8);
-
-bgSearch:SetScript("OnShow", function(self)
-	LoadSlider()
-	self.SEARCHBTN:SetFocus()
-end)
-bgSearch:SetScript("OnHide", function(self)
-	searchTable = {}
-	self.SEARCHBTN:SetText("")
-	self.totalC:SetText("|cFFFFFFFF"..L.TooltipTotal.." 0|r")
-end)
-
-bgSearch:SetScript("OnMouseDown", function(frame, button)
-	if frame:IsMovable() then
-		frame.isMoving = true
-		frame:StartMoving()
-	end
-end)
-
-bgSearch:SetScript("OnMouseUp", function(frame, button) 
-	if( frame.isMoving ) then
-		frame.isMoving = nil
-		frame:StopMovingOrSizing()
-	end
-end)
-
-function bgSearch:initSearch()
-	DoSearch()
-end
-
-bgSearch:Hide()

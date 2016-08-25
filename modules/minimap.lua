@@ -41,13 +41,13 @@ bgsMinimapDD.initialize = function(self, level)
 		PlaySound('gsTitleOptionExit')
 		addButton(level, 'BagSync        ', 1, 1)
 		addButton(level, L.Search, nil, 1, nil, 'search', function(frame, ...)
-			if BagSync_SearchFrame then BagSync_SearchFrame:Show() end
+			BSYC:GetModule("Search").frame:Show()
 		end)
 		addButton(level, L.Tokens, nil, 1, nil, 'tokens', function(frame, ...)
 			if BagSync_TokensFrame then BagSync_TokensFrame:Show() end
 		end)
 		addButton(level, L.Profiles, nil, 1, nil, 'profiles', function(frame, ...)
-			BSYC.FrameProfile:Show()
+			BSYC:GetModule("Profiles").frame:Show()
 		end)
 		addButton(level, L.Professions, nil, 1, nil, 'professions', function(frame, ...)
 			if BagSync_CraftsFrame then BagSync_CraftsFrame:Show() end

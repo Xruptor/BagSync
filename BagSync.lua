@@ -11,9 +11,7 @@
 
 local BSYC = select(2, ...) --grab the addon namespace
 BSYC = LibStub("AceAddon-3.0"):NewAddon(BSYC, "BagSync", "AceEvent-3.0", "AceConsole-3.0")
-BSYC.callbacks = BSYC.callbacks or LibStub("CallbackHandler-1.0"):New(BSYC)
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
-
 
 local strsub, strsplit, strlower, strmatch, strtrim = string.sub, string.split, string.lower, string.match, string.trim
 local format, tonumber, tostring, tostringall = string.format, tonumber, tostring, tostringall
@@ -41,12 +39,8 @@ local dataobj = ldb:NewDataObject("BagSyncLDB", {
 	text = "BagSync",
 		
 	OnClick = function(self, button)
-		if button == "LeftButton" and BagSync_SearchFrame then
-			if BagSync_SearchFrame:IsVisible() then
-				BagSync_SearchFrame:Hide()
-			else
-				BagSync_SearchFrame:Show()
-			end
+		if button == "LeftButton" then
+			BSYC:GetModule("Search").frame:Show()
 		elseif button == "RightButton" and BagSync_TokensFrame then
 			if bgsMinimapDD then
 				ToggleDropDownMenu(1, nil, bgsMinimapDD, "cursor", 0, 0)
@@ -904,7 +898,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 	local grandTotal = 0
 	local first = true
 	
-	local xDB = BSYC:FilterDB()
+	local xDB = self:FilterDB()
 	
 	--loop through our characters
 	--k = player, v = stored data for player
@@ -955,7 +949,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 				if guildN and self.db.guild[v.realm][guildN] then
 					--check to see if this guild has already been done through this run (so we don't do it multiple times)
 					--check for XR/B.Net support, you can have multiple guilds with same names on different servers
-					local gName = BSYC:GetGuildRealmInfo(guildN, v.realm)
+					local gName = self:GetGuildRealmInfo(guildN, v.realm)
 					
 					if not previousGuilds[gName] then
 						--we only really need to see this information once per guild
@@ -978,7 +972,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 			infoString = self:CreateItemTotals(allowList)
 
 			if infoString then
-				k = BSYC:GetCharacterRealmInfo(k, v.realm)
+				k = self:GetCharacterRealmInfo(k, v.realm)
 				table.insert(self.PreviousItemTotals, self:GetClassColor(k or "Unknown", pClass).."@"..(infoString or "unknown"))
 			end
 			
@@ -1287,11 +1281,7 @@ function BSYC:OnEnable()
 		
 		if a then
 			if c and c:lower() == L.SlashSearch then
-				if BagSync_SearchFrame:IsVisible() then
-					BagSync_SearchFrame:Hide()
-				else
-					BagSync_SearchFrame:Show()
-				end
+				self:GetModule("Search"):StartSearch()
 				return true
 			elseif c and c:lower() == L.SlashGold then
 				self:ShowMoneyTooltip()
@@ -1304,7 +1294,7 @@ function BSYC:OnEnable()
 				end
 				return true
 			elseif c and c:lower() == L.SlashProfiles then
-				self.FrameProfile:Show()
+				self:GetModule("Profiles").frame:Show()
 				return true
 			elseif c and c:lower() == L.SlashProfessions then
 				if BagSync_CraftsFrame:IsVisible() then
@@ -1328,11 +1318,7 @@ function BSYC:OnEnable()
 				return true
 			elseif c and c:lower() ~= "" then
 				--do an item search
-				if BagSync_SearchFrame then
-					if not BagSync_SearchFrame:IsVisible() then BagSync_SearchFrame:Show() end
-					BagSync_SearchFrame.SEARCHBTN:SetText(msg)
-					BagSync_SearchFrame:initSearch()
-				end
+				self:GetModule("Search"):StartSearch(msg)
 				return true
 			end
 		end
@@ -1350,10 +1336,6 @@ function BSYC:OnEnable()
 	end
 	
 	self:Print("[v|cFFDF2B2B"..ver.."|r] /bgs, /bagsync")
-	
-	--fire off the callback for BagSync fully loaded
-	BSYC.callbacks:Fire("BAGSYNC_LOADED")
-	
 end
 
 ------------------------------
