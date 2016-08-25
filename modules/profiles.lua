@@ -5,7 +5,7 @@ local Profiles = BSYC:NewModule("Profiles")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
 local AceGUI = LibStub("AceGUI-3.0")
 
-function Profiles:OnInitialize()
+function Profiles:OnEnable()
 
 	--lets create our widgets
 	local ProfilesFrame = AceGUI:Create("Window")

@@ -1,8 +1,4 @@
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
-local currentPlayer = UnitName("player")
-local currentRealm = select(2, UnitFullName("player"))
-local ver = GetAddOnMetadata("BagSync","Version") or 0
-
 local config = LibStub("AceConfig-3.0")
 local configDialog = LibStub("AceConfigDialog-3.0")
 

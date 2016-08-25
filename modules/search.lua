@@ -36,7 +36,7 @@ ItemSearch.Filters.class = {
 	end
 }
 
-function Search:OnInitialize()
+function Search:OnEnable()
 
 	--lets create our widgets
 	local SearchFrame = AceGUI:Create("Window")

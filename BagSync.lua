@@ -1304,11 +1304,7 @@ function BSYC:OnEnable()
 				end
 				return true
 			elseif c and c:lower() == L.SlashBlacklist then
-				if BagSync_BlackListFrame:IsVisible() then
-					BagSync_BlackListFrame:Hide()
-				else
-					BagSync_BlackListFrame:Show()
-				end
+				self:GetModule("Blacklist").frame:Show()
 				return true
 			elseif c and c:lower() == L.SlashFixDB then
 				self:FixDB()

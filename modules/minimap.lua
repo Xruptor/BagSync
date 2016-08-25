@@ -53,7 +53,7 @@ bgsMinimapDD.initialize = function(self, level)
 			if BagSync_CraftsFrame then BagSync_CraftsFrame:Show() end
 		end)
 		addButton(level, L.Blacklist, nil, 1, nil, 'blacklist', function(frame, ...)
-			if BagSync_BlackListFrame then BagSync_BlackListFrame:Show() end
+			BSYC:GetModule("Blacklist").frame:Show()
 		end)
 		addButton(level, L.Gold, nil, 1, nil, 'gold', function(frame, ...)
 			if BagSync then BagSync:ShowMoneyTooltip() end
