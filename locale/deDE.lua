@@ -2,6 +2,8 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "deDE")
 if not L then return end
 
+--PLEASE LOOK AT enUS.lua for a complete localization list
+
 --special thanks to GrimPala from wowinterface.com
 
 L.TooltipBag = "Taschen: %d"
@@ -14,7 +16,6 @@ L.TooltipReagent = "Materiallager: %d"
 L.TooltipAuction = "AH: %d"
 L.Search = "Suche"
 L.TooltipTotal = "Gesamt:"
-L.Tokens = "Abzeichen"
 L.Profiles = "Profile"
 L.Professions = "Berufe"
 L.Blacklist = "Blacklist"
@@ -26,7 +27,6 @@ L.DeleteWarning = "Wähle ein Profil zum löschen aus.\nINFO: Dies ist nicht umk
 L.Delete = "Löschen"
 L.Confirm = "Bestätigen"
 L.ToggleSearch = "Öffne/Schließe Suche"
-L.ToggleTokens = "Öffne/Schließe Abzeichen"
 L.ToggleProfiles = "Öffne/Schließe Profile"
 L.FixDBComplete = "Die Funktion FixDB wurde ausgeführt! Die Datenbank wurde optimiert!"
 L.ON = "An"
@@ -40,7 +40,6 @@ L.RemoveItemID = "Entferne ItemID"
 L.HelpSearchItemName = "/bgs [itemname] - Nach einem Item suchen"
 L.HelpSearchWindow = "/bgs search - Öffnet das Suchfenster"
 L.HelpGoldTooltip = "/bgs gold - Zeigt einen Tooltip mit dem Gold eines jeden Charakters."
-L.HelpTokensWindow = "/bgs tokens - Öffnet das Abzeichenfenster."
 L.HelpProfilesWindow = "/bgs profiles - Öffnet das Profilfenster."
 L.HelpFixDB = "/bgs fixdb - Führt eine Reparatur der Datenbank (FixDB) aus."
 L.HelpConfigWindow = "/bgs config - Öffnet die Einstellungen für BagSync"

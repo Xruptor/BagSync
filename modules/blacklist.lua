@@ -116,7 +116,7 @@ function Blacklist:RemoveItemID()
 	self:DisplayList()
 end
 
-function Blacklist:AddEntry(entry, counter)
+function Blacklist:AddEntry(entry)
 
 	local highlightColor = {1, 0, 0}
 	local label = AceGUI:Create("InteractiveLabel")
@@ -151,17 +151,22 @@ end
 function Blacklist:DisplayList()
 	
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
-
+	
+	local searchTable = {}
 	local count = 0
 	
 	--loop through our blacklist
 	for k, v in pairs(BSYC.db.blacklist[BSYC.currentRealm]) do
-		self:AddEntry(k, count)
+		table.insert(searchTable, k)
 		count = count + 1
 	end
 
 	--show or hide the scrolling frame depending on count
 	if count > 0 then
+		table.sort(searchTable, function(a,b) return (a < b) end)
+		for i=1, #searchTable do
+			self:AddEntry(searchTable[i])
+		end
 		self.scrollframe.frame:Show()
 	else
 		self.scrollframe.frame:Hide()

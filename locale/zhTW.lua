@@ -2,6 +2,8 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhTW")
 if not L then return end
 
+--PLEASE LOOK AT enUS.lua for a complete localization list
+
 --special thanks to ytzyt at Curse for the zhCN and zhTW translations!
 
 L.TooltipBag = "背包: %d"
@@ -14,7 +16,6 @@ L.TooltipReagent = "材料銀行: %d"
 L.TooltipAuction = "拍賣: %d"
 L.Search = "搜索"
 L.TooltipTotal = "總: "
-L.Tokens = "貨幣"
 L.Profiles = "設定檔"
 L.Professions = "專業"
 L.Blacklist = "忽略例表"
@@ -26,7 +27,6 @@ L.DeleteWarning = "選擇要刪除的設定檔.\n注意:此操作不可逆！"
 L.Delete = "刪除"
 L.Confirm = "確認"
 L.ToggleSearch = "切換搜索"
-L.ToggleTokens = "切換貨幣"
 L.ToggleProfiles = "切換設定檔"
 L.ToggleProfessions = "切換專業"
 L.ToggleBlacklist = "切換忽略例表"
@@ -35,7 +35,6 @@ L.ON = "開[ON]"
 L.OFF = "關[OFF]"
 L.LeftClickSearch = "左鍵 = 搜索窗"
 L.RightClickBagSyncMenu = "右鍵 = 選單"
-L.LeftClickViewTradeSkill = "左鍵 = 查看專業技能鏈接"
 L.RightClickInsertTradeskill = "右鍵 = 插入專業技能鏈接"
 L.ClickViewProfession = "點擊查看專業"
 L.ClickHere = "點這裡"
@@ -46,7 +45,6 @@ L.RemoveItemID = "移除物品ID"
 L.HelpSearchItemName = "/bgs [物品名稱] - 快速搜索一件物品"
 L.HelpSearchWindow = "/bgs search - 開啟搜索窗"
 L.HelpGoldTooltip = "/bgs gold - 顯示各角色的金錢統計提示"
-L.HelpTokensWindow = "/bgs tokens - 開啟貨幣視窗"
 L.HelpProfilesWindow = "/bgs profiles - 開啟設定檔視窗"
 L.HelpFixDB = "/bgs fixdb - 優化數據庫"
 L.HelpConfigWindow = "/bgs config - 設置"

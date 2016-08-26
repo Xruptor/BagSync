@@ -154,14 +154,14 @@ function BSYC:StartupDB()
 	BagSyncGUILD_DB[self.currentRealm] = BagSyncGUILD_DB[self.currentRealm] or {}
 	self.db.guild = BagSyncGUILD_DB
 
-	BagSyncTOKEN_DB = BagSyncTOKEN_DB or {}
-	BagSyncTOKEN_DB[self.currentRealm] = BagSyncTOKEN_DB[self.currentRealm] or {}
-	self.db.token = BagSyncTOKEN_DB
+	BagSyncCURRENCY_DB = BagSyncCURRENCY_DB or {}
+	BagSyncCURRENCY_DB[self.currentRealm] = BagSyncCURRENCY_DB[self.currentRealm] or {}
+	self.db.currency = BagSyncCURRENCY_DB
 	
-	BagSyncCRAFT_DB = BagSyncCRAFT_DB or {}
-	BagSyncCRAFT_DB[self.currentRealm] = BagSyncCRAFT_DB[self.currentRealm] or {}
-	BagSyncCRAFT_DB[self.currentRealm][self.currentPlayer] = BagSyncCRAFT_DB[self.currentRealm][self.currentPlayer] or {}
-	self.db.profession = BagSyncCRAFT_DB
+	BagSyncPROFESSION_DB = BagSyncPROFESSION_DB or {}
+	BagSyncPROFESSION_DB[self.currentRealm] = BagSyncPROFESSION_DB[self.currentRealm] or {}
+	BagSyncPROFESSION_DB[self.currentRealm][self.currentPlayer] = BagSyncPROFESSION_DB[self.currentRealm][self.currentPlayer] or {}
+	self.db.profession = BagSyncPROFESSION_DB
 	
 	BagSyncBLACKLIST_DB = BagSyncBLACKLIST_DB or {}
 	BagSyncBLACKLIST_DB[self.currentRealm] = BagSyncBLACKLIST_DB[self.currentRealm] or {}
@@ -176,7 +176,7 @@ end
 function BSYC:FixDB(onlyChkGuild)
 	--Removes obsolete character information
 	--Removes obsolete guild information
-	--Removes obsolete characters from tokens db
+	--Removes obsolete characters from currency db
 	--Removes obsolete profession information
 	--removes obsolete blacklist information
 	--Will only check guild related information if the paramater is passed as true
@@ -223,54 +223,46 @@ function BSYC:FixDB(onlyChkGuild)
 		end
 	end
 	
-	--token data and profession data, only do if were not doing a guild check
+	--currency data and profession data, only do if were not doing a guild check
 	--also display fixdb message only if were not doing a guild check
 	if not onlyChkGuild then
 	
-		--fix tokens
-		for realm, rd in pairs(BagSyncTOKEN_DB) do
+		--fix currency
+		for realm, rd in pairs(BagSyncCURRENCY_DB) do
 			if string.find(realm, " ") then
 				--get rid of old realm names with whitespaces, we aren't going to use it anymore
-				BagSyncTOKEN_DB[realm] = nil
+				BagSyncCURRENCY_DB[realm] = nil
 			else
 				--realm
 				if not storeUsers[realm] then
 					--if it's not a realm that ANY users are on then delete it
-					BagSyncTOKEN_DB[realm] = nil
+					BagSyncCURRENCY_DB[realm] = nil
 				else
-					--delete old db information for tokens if it exists
-					if BagSyncTOKEN_DB[realm] and BagSyncTOKEN_DB[realm][1] then BagSyncTOKEN_DB[realm][1] = nil end
-					if BagSyncTOKEN_DB[realm] and BagSyncTOKEN_DB[realm][2] then BagSyncTOKEN_DB[realm][2] = nil end
-					
 					for k, v in pairs(rd) do
-						for x, y in pairs(v) do
-							if x ~= "icon" and x ~= "header" then
-								if not storeUsers[realm][x] then
-									--if the user doesn't exist then delete data
-									BagSyncTOKEN_DB[realm][k][x] = nil
-								end
-							end
+						if not storeUsers[realm][k] then
+							--if the user doesn't exist then delete data
+							BagSyncCURRENCY_DB[realm][k] = nil
 						end
 					end
 				end
 			end
 		end
-		
+
 		--fix professions
-		for realm, rd in pairs(BagSyncCRAFT_DB) do
+		for realm, rd in pairs(BagSyncPROFESSION_DB) do
 			if string.find(realm, " ") then
 				--get rid of old realm names with whitespaces, we aren't going to use it anymore
-				BagSyncCRAFT_DB[realm] = nil
+				BagSyncPROFESSION_DB[realm] = nil
 			else
 				--realm
 				if not storeUsers[realm] then
 					--if it's not a realm that ANY users are on then delete it
-					BagSyncCRAFT_DB[realm] = nil
+					BagSyncPROFESSION_DB[realm] = nil
 				else
 					for k, v in pairs(rd) do
 						if not storeUsers[realm][k] then
 							--if the user doesn't exist then delete data
-							BagSyncCRAFT_DB[realm][k] = nil
+							BagSyncPROFESSION_DB[realm][k] = nil
 						end
 					end
 				end
@@ -290,7 +282,10 @@ function BSYC:FixDB(onlyChkGuild)
 				end
 			end
 		end
-
+		
+		if BagSyncCRAFT_DB then BagSyncCRAFT_DB = nil end --remove old crafting DB
+		if BagSyncTOKEN_DB then BagSyncTOKEN_DB = nil end --remove old tokens db
+		
 		self:Print("|cFFFF9900"..L.FixDBComplete.."|r")
 	end
 end
@@ -338,20 +333,26 @@ function BSYC:CleanAuctionsDB()
 	
 end
 
-function BSYC:FilterDB()
+function BSYC:FilterDB(dbSelect)
 
 	local xIndex = {}
+	local dbObj = self.db.global
+	
+	if dbSelect and dbSelect == 1 then
+		--use BagSyncPROFESSION_DB
+		dbObj = self.db.profession
+	end
 
 	--add more realm names if necessary based on BNet or Cross Realms
 	if self.options.enableBNetAccountItems then
-		for k, v in pairs(BagSyncDB) do
+		for k, v in pairs(dbObj) do
 			for q, r in pairs(v) do
 				--we do this incase there are multiple characters with same name
 				xIndex[q.."^"..k] = r
 			end
 		end
 	elseif self.options.enableCrossRealmsItems then
-		for k, v in pairs(BagSyncDB) do
+		for k, v in pairs(dbObj) do
 			if k == self.currentRealm or self.crossRealmNames[k] then
 				for q, r in pairs(v) do
 					----we do this incase there are multiple characters with same name
@@ -360,7 +361,7 @@ function BSYC:FilterDB()
 			end
 		end
 	else
-		xIndex = BagSyncDB[self.currentRealm]
+		xIndex = dbObj[self.currentRealm]
 	end
 	
 	return xIndex
@@ -738,15 +739,15 @@ function BSYC:ShowMoneyTooltip()
 end
 
 ------------------------
---      Tokens        --
+--      Currency      --
 ------------------------
 
-function BSYC:ScanTokens()
-	--LETS AVOID TOKEN SPAM AS MUCH AS POSSIBLE
-	if self.doTokenUpdate and self.doTokenUpdate > 0 then return end
+function BSYC:ScanCurrency()
+	--LETS AVOID CURRENCY SPAM AS MUCH AS POSSIBLE
+	if self.doCurrencyUpdate and self.doCurrencyUpdate > 0 then return end
 	if IsInBG() or IsInArena() or InCombatLockdown() or UnitAffectingCombat("player") then
 		--avoid (Honor point spam), avoid (arena point spam), if it's world PVP...well then it sucks to be you
-		self.doTokenUpdate = 1
+		self.doCurrencyUpdate = 1
 		BSYC:RegisterEvent("PLAYER_REGEN_ENABLED")
 		return
 	end
@@ -768,14 +769,12 @@ function BSYC:ScanTokens()
 				lastHeader = name
 			end
 			if (not isHeader) then
-				self.db.token[self.currentRealm][name] = self.db.token[self.currentRealm][name] or {}
-				self.db.token[self.currentRealm][name].icon = icon
-				self.db.token[self.currentRealm][name].header = lastHeader
-				self.db.token[self.currentRealm][name][self.currentPlayer] = count
+				self.db.currency[self.currentRealm][self.currentPlayer] = self.db.currency[self.currentRealm][self.currentPlayer] or {}
+				self.db.currency[self.currentRealm][self.currentPlayer][name] = format("%s,%s,%s", count, lastHeader, icon)
 			end
 		end
 	end
-	--we don't want to overwrite tokens, because some characters may have currency that the others dont have
+	--we don't want to overwrite currency, because some characters may have currency that the others dont have	
 end
 
 ------------------------
@@ -838,19 +837,19 @@ function BSYC:GetClassColor(sName, sClass)
 	return tooltipColor(self.options.colors.first, sName)
 end
 
-function BSYC:AddTokenTooltip(frame, currencyName)
+function BSYC:AddCurrencyTooltip(frame, currencyName)
 	if not BagSyncOpt.enableTooltips then return end
-	if currencyName and self.db.token[self.currentRealm][currencyName] then
+--[[ 	if currencyName and self.db.currency[self.currentRealm][currencyName] then
 		if self.options.enableTooltipSeperator then
 			frame:AddLine(" ")
 		end
-		for charName, count in pairsByKeys(self.db.token[self.currentRealm][currencyName]) do
+		for charName, count in pairsByKeys(self.db.currency[self.currentRealm][currencyName]) do
 			if charName ~= "icon" and charName ~= "header" and count > 0 then
 				frame:AddDoubleLine(charName, count)
 			end
 		end
 		frame:Show()
-	end
+	end ]]
 end
 
 function BSYC:AddItemToTooltip(frame, link) --workaround
@@ -1017,10 +1016,6 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 	frame:Show()
 end
 
---simplified tooltip function, similar to the past HookTooltip that was used before Jan 06, 2011 (commit:a89046f844e24585ab8db60d10f2f168498b9af4)
---Honestly we aren't going to care about throttleing or anything like that anymore.  The lastdisplay array token should take care of that
---Special thanks to Tuller for tooltip hook function
-
 function BSYC:HookTooltip(tooltip)
 
 	tooltip.isModified = false
@@ -1134,27 +1129,86 @@ function BSYC:HookTooltip(tooltip)
 		if self.isModified then return end
 		self.isModified = true
 		local currencyName = GetCurrencyListInfo(index)
-		BSYC:AddTokenTooltip(self, currencyName)
+		BSYC:AddCurrencyTooltip(self, currencyName)
 	end)
 	hooksecurefunc(tooltip, "SetCurrencyByID", function(self, id)
 		if self.isModified then return end
 		self.isModified = true
 		local currencyName = GetCurrencyInfo(id)
-		BSYC:AddTokenTooltip(self, currencyName)
+		BSYC:AddCurrencyTooltip(self, currencyName)
 	end)
 	hooksecurefunc(tooltip, "SetBackpackToken", function(self, index)
 		if self.isModified then return end
 		self.isModified = true
 		local currencyName = GetBackpackCurrencyInfo(index)
-		BSYC:AddTokenTooltip(self, currencyName)
+		BSYC:AddCurrencyTooltip(self, currencyName)
 	end)
 	-- hooksecurefunc(tooltip, 'SetTradeSkillReagentInfo', function(self, index)
 		-- if self.isModified then return end
 		-- self.isModified = true
 		-- local currencyName = GetTradeSkillReagentInfo(index,1)
-		-- BSYC:AddTokenTooltip(self, currencyName)
+		-- BSYC:AddCurrencyTooltip(self, currencyName)
 	-- end)
 	
+end
+
+------------------------------
+--    SLASH COMMAND         --
+------------------------------
+
+function BSYC:ChatCommand(input)
+
+	local parts = { (" "):split(input) }
+	local cmd, args = strlower(parts[1] or ""), table.concat(parts, " ", 2)
+
+	if string.len(cmd) > 0 then
+
+		if cmd == L.SlashSearch then
+			self:GetModule("Search"):StartSearch()
+			return true
+		elseif cmd == L.SlashGold then
+			self:ShowMoneyTooltip()
+			return true
+		elseif cmd == L.SlashCurrency then
+			if BagSync_TokensFrame:IsVisible() then
+				BagSync_TokensFrame:Hide()
+			else
+				BagSync_TokensFrame:Show()
+			end
+			return true
+		elseif cmd == L.SlashProfiles then
+			self:GetModule("Profiles").frame:Show()
+			return true
+		elseif cmd == L.SlashProfessions then
+			self:GetModule("Professions").frame:Show()
+			return true
+		elseif cmd == L.SlashBlacklist then
+			self:GetModule("Blacklist").frame:Show()
+			return true
+		elseif cmd == L.SlashFixDB then
+			self:FixDB()
+			return true
+		elseif cmd == L.SlashConfig then
+			LibStub("AceConfigDialog-3.0"):Open("BagSync")
+			return true
+		else
+			--do an item search, use the full command to search
+			self:GetModule("Search"):StartSearch(input)
+			return true
+		end
+
+	end
+
+	self:Print(L.HelpSearchItemName)
+	self:Print(L.HelpSearchWindow)
+	self:Print(L.HelpGoldTooltip)
+	self:Print(L.HelpCurrencyWindow)
+	self:Print(L.HelpProfilesWindow)
+	self:Print(L.HelpProfessionsWindow)
+	self:Print(L.HelpBlacklistWindow)
+	self:Print(L.HelpFixDB)
+	self:Print(L.HelpConfigWindow )
+
 end
 
 ------------------------------
@@ -1162,14 +1216,8 @@ end
 ------------------------------
 
 function BSYC:OnEnable()
-	--NOTE: Using OnEnable() instead of OnInitialize() because not all the SavedVarables are loaded and UnitFullName() will return nil for realm
-	
-	BINDING_HEADER_BAGSYNC = "BagSync"
-	BINDING_NAME_BAGSYNCTOGGLESEARCH = L.ToggleSearch
-	BINDING_NAME_BAGSYNCTOGGLETOKENS = L.ToggleTokens
-	BINDING_NAME_BAGSYNCTOGGLEPROFILES = L.ToggleProfiles
-	BINDING_NAME_BAGSYNCTOGGLECRAFTS = L.ToggleProfessions
-	BINDING_NAME_BAGSYNCTOGGLEBLACKLIST = L.ToggleBlacklist
+	--NOTE: Using OnEnable() instead of OnInitialize() because not all the SavedVarables fully loaded
+	--also one of the major issues is that UnitFullName() will return nil for the short named realm
 	
 	local ver = GetAddOnMetadata("BagSync","Version") or 0
 	
@@ -1179,6 +1227,9 @@ function BSYC:OnEnable()
 	self.playerClass = select(2, UnitClass("player"))
 	self.playerFaction = UnitFactionGroup("player")
 
+	--strip realm of whitespace and special characters, alternative to UnitFullName, since UnitFullName does not work on OnInitialize()
+	--BSYC:Debug(gsub(GetRealmName(),"[%s%-]",""))
+	
 	local autoCompleteRealms = GetAutoCompleteRealms() or { self.currentRealm }
 
 	self.crossRealmNames = {}
@@ -1227,8 +1278,8 @@ function BSYC:OnEnable()
 	self:SaveEquipment()
 	
 	--force token scan
-	hooksecurefunc("BackpackTokenFrame_Update", function(self) BSYC:ScanTokens() end)
-	self:ScanTokens()
+	hooksecurefunc("BackpackTokenFrame_Update", function(self) BSYC:ScanCurrency() end)
+	self:ScanCurrency()
 	
 	--clean up old auctions
 	self:CleanAuctionsDB()
@@ -1258,7 +1309,7 @@ function BSYC:OnEnable()
 	
 	--currency
 	self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
-	
+
 	--void storage
 	self:RegisterEvent("VOID_STORAGE_OPEN")
 	self:RegisterEvent("VOID_STORAGE_CLOSE")
@@ -1268,69 +1319,16 @@ function BSYC:OnEnable()
 	
 	--this will be used for getting the tradeskill link
 	self:RegisterEvent("TRADE_SKILL_SHOW")
+	self:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
 
 	--hook the tooltips
 	self:HookTooltip(GameTooltip)
 	self:HookTooltip(ItemRefTooltip)
 	
-	SLASH_BAGSYNC1 = "/bagsync"
-	SLASH_BAGSYNC2 = "/bgs"
-	SlashCmdList["BAGSYNC"] = function(msg)
-	
-		local a,b,c=strfind(msg, "(%S+)"); --contiguous string of non-space characters
-		
-		if a then
-			if c and c:lower() == L.SlashSearch then
-				self:GetModule("Search"):StartSearch()
-				return true
-			elseif c and c:lower() == L.SlashGold then
-				self:ShowMoneyTooltip()
-				return true
-			elseif c and c:lower() == L.SlashTokens then
-				if BagSync_TokensFrame:IsVisible() then
-					BagSync_TokensFrame:Hide()
-				else
-					BagSync_TokensFrame:Show()
-				end
-				return true
-			elseif c and c:lower() == L.SlashProfiles then
-				self:GetModule("Profiles").frame:Show()
-				return true
-			elseif c and c:lower() == L.SlashProfessions then
-				if BagSync_CraftsFrame:IsVisible() then
-					BagSync_CraftsFrame:Hide()
-				else
-					BagSync_CraftsFrame:Show()
-				end
-				return true
-			elseif c and c:lower() == L.SlashBlacklist then
-				self:GetModule("Blacklist").frame:Show()
-				return true
-			elseif c and c:lower() == L.SlashFixDB then
-				self:FixDB()
-				return true
-			elseif c and c:lower() == L.SlashConfig then
-				LibStub("AceConfigDialog-3.0"):Open("BagSync")
-				return true
-			elseif c and c:lower() ~= "" then
-				--do an item search
-				self:GetModule("Search"):StartSearch(msg)
-				return true
-			end
-		end
+	--register the slash command
+	self:RegisterChatCommand("bgs", "ChatCommand")
+	self:RegisterChatCommand("bagsync", "ChatCommand")
 
-		self:Print(L.HelpSearchItemName)
-		self:Print(L.HelpSearchWindow)
-		self:Print(L.HelpGoldTooltip)
-		self:Print(L.HelpTokensWindow)
-		self:Print(L.HelpProfilesWindow)
-		self:Print(L.HelpProfessionsWindow)
-		self:Print(L.HelpBlacklistWindow)
-		self:Print(L.HelpFixDB)
-		self:Print(L.HelpConfigWindow )
-
-	end
-	
 	self:Print("[v|cFFDF2B2B"..ver.."|r] /bgs, /bagsync")
 end
 
@@ -1340,16 +1338,16 @@ end
 
 function BSYC:CURRENCY_DISPLAY_UPDATE()
 	if IsInBG() or IsInArena() or InCombatLockdown() or UnitAffectingCombat("player") then return end
-	self.doTokenUpdate = 0
-	self:ScanTokens()
+	self.doCurrencyUpdate = 0
+	self:ScanCurrency()
 end
 
 function BSYC:PLAYER_REGEN_ENABLED()
 	if IsInBG() or IsInArena() or InCombatLockdown() or UnitAffectingCombat("player") then return end
 	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
 	--were out of an arena or battleground scan the points
-	self.doTokenUpdate = 0
-	self:ScanTokens()
+	self.doCurrencyUpdate = 0
+	self:ScanCurrency()
 end
 
 function BSYC:GUILD_ROSTER_UPDATE()
@@ -1535,35 +1533,31 @@ end
 function BSYC:doRegularTradeSkill(numIndex, dbPlayer, dbIdx)
 	local name, icon, skillLevel, maxSkillLevel, numAbilities, spelloffset, skillLine, skillModifier = GetProfessionInfo(numIndex)
 	if name and skillLevel then
-		dbPlayer[dbIdx] = format("%s,%s", name, skillLevel)
+		--don't overwrite recipe list
+		if dbPlayer[dbIdx] then
+			local name, level, list = strsplit(",", dbPlayer[dbIdx])
+			if list then
+				--only record list again if we even have a list to work with
+				dbPlayer[dbIdx] = format("%s,%s,%s", name, skillLevel, list)
+			else
+				dbPlayer[dbIdx] = format("%s,%s", name, skillLevel)
+			end
+		else
+			dbPlayer[dbIdx] = format("%s,%s", name, skillLevel)
+		end
 	end
 end
 
 function BSYC:TRADE_SKILL_SHOW()
 	--IsTradeSkillLinked() returns true only if trade window was opened from chat link (meaning another player)
-	if (not C_TradeSkillUI.IsTradeSkillLinked()) then
+	if (not _G.C_TradeSkillUI.IsTradeSkillLinked()) then
 		
-		local tradename = C_TradeSkillUI.GetTradeSkillLine()
 		local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions()
-		
-		local iconProf1 = prof1 and select(2, GetProfessionInfo(prof1))
-		local iconProf2 = prof2 and select(2, GetProfessionInfo(prof2))
-		
-		--list of tradeskills with NO skill link but can be used as primaries (ex. a person with two gathering skills)
-		local noLinkTS = {
-			["Interface\\Icons\\Trade_Herbalism"] = true, --this is Herbalism
-			["Interface\\Icons\\INV_Misc_Pelt_Wolf_01"] = true, --this is Skinning
-			["Interface\\Icons\\INV_Pick_02"] = true, --this is Mining
-		}
 		
 		local dbPlayer = self.db.profession[self.currentRealm][self.currentPlayer]
 		
 		--prof1
-		if prof1 and (GetProfessionInfo(prof1) == tradename) and C_TradeSkillUI.GetTradeSkillListLink() then
-			local skill = select(3, GetProfessionInfo(prof1))
-			dbPlayer[1] = { tradename, C_TradeSkillUI.GetTradeSkillListLink(), skill }
-		elseif prof1 and iconProf1 and noLinkTS[iconProf1] then
-			--only store if it's herbalism, skinning, or mining
+		if prof1 then
 			self:doRegularTradeSkill(prof1, dbPlayer, 1)
 		elseif not prof1 and dbPlayer[1] then
 			--they removed a profession
@@ -1571,11 +1565,7 @@ function BSYC:TRADE_SKILL_SHOW()
 		end
 
 		--prof2
-		if prof2 and (GetProfessionInfo(prof2) == tradename) and C_TradeSkillUI.GetTradeSkillListLink() then
-			local skill = select(3, GetProfessionInfo(prof2))
-			dbPlayer[2] = { tradename, C_TradeSkillUI.GetTradeSkillListLink(), skill }
-		elseif prof2 and iconProf2 and noLinkTS[iconProf2] then
-			--only store if it's herbalism, skinning, or mining
+		if prof2 then
 			self:doRegularTradeSkill(prof2, dbPlayer, 2)
 		elseif not prof2 and dbPlayer[2] then
 			--they removed a profession
@@ -1599,22 +1589,92 @@ function BSYC:TRADE_SKILL_SHOW()
 		end
 		
 		--cooking
-		if cooking and (GetProfessionInfo(cooking) == tradename) and C_TradeSkillUI.GetTradeSkillListLink() then
-			local skill = select(3, GetProfessionInfo(cooking))
-			dbPlayer[5] = { tradename, C_TradeSkillUI.GetTradeSkillListLink(), skill }
+		if cooking then
+			self:doRegularTradeSkill(cooking, dbPlayer, 5)
 		elseif not cooking and dbPlayer[5] then
 			--they removed a profession
 			dbPlayer[5] = nil
 		end
 		
 		--firstAid
-		if firstAid and (GetProfessionInfo(firstAid) == tradename) and C_TradeSkillUI.GetTradeSkillListLink() then
-			local skill = select(3, GetProfessionInfo(firstAid))
-			dbPlayer[6] = { tradename, C_TradeSkillUI.GetTradeSkillListLink(), skill }
+		if firstAid then
+			self:doRegularTradeSkill(firstAid, dbPlayer, 6)
 		elseif not firstAid and dbPlayer[6] then
 			--they removed a profession
 			dbPlayer[6] = nil
 		end
+	end
+	
+	--grab the player recipes but only scan once, TRADE_SKILL_LIST_UPDATE is triggered multiple times for some reason
+	self:RegisterEvent("TRADE_SKILL_LIST_UPDATE")
+end
+
+--this function pretty much only grabs the recipelist for the CURRENT opened profession, not all the profession info which TRADE_SKILL_SHOW does.
+--this is because you can't open up herbalism, mining, etc...
+function BSYC:TRADE_SKILL_LIST_UPDATE()
+
+	if (not _G.C_TradeSkillUI.IsTradeSkillLinked()) then
+
+		local getIndex = 0
+		local getProfIndex = 0
+		local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions()
+		local tradeid, tradename = _G.C_TradeSkillUI.GetTradeSkillLine()
+		
+		if not tradename then return end --don't do anything if no tradeskill name
+		
+		local dbPlayer = self.db.profession[self.currentRealm][self.currentPlayer]
+		
+		--prof1
+		if prof1 and GetProfessionInfo(prof1) == tradename then
+			getIndex = 1
+			getProfIndex = prof1
+		elseif prof2 and GetProfessionInfo(prof2) == tradename then
+			getIndex = 2
+			getProfIndex = prof2
+		elseif archaeology and GetProfessionInfo(archaeology) == tradename then
+			getIndex = 3
+			getProfIndex = archaeology
+		elseif fishing and GetProfessionInfo(fishing) == tradename then
+			getIndex = 4
+			getProfIndex = fishing
+		elseif cooking and GetProfessionInfo(cooking) == tradename then
+			getIndex = 5
+			getProfIndex = cooking
+		elseif firstAid and GetProfessionInfo(firstAid) == tradename then
+			getIndex = 6
+			getProfIndex = firstAid
+		end
+		
+		--don't do anything if we have nothing to work with
+		if getIndex < 1 then return end
+
+		local name, icon, skillLevel = GetProfessionInfo(getProfIndex)
+
+		local recipeString = ""
+		local recipeIDs = _G.C_TradeSkillUI.GetAllRecipeIDs()
+		local recipeInfo = {}
+
+		for idx = 1, #recipeIDs do
+			recipeInfo = _G.C_TradeSkillUI.GetRecipeInfo(recipeIDs[idx])
+			
+			if recipeInfo and recipeInfo.learned and recipeInfo.craftable then
+				recipeString = recipeString.."|"..recipeInfo.recipeID
+			end
+		end
+		
+		--only record if we have something to work with
+		if name and skillLevel and string.len(recipeString) > 0 then
+			recipeString = strsub(recipeString, string.len("|") + 1) --remove the delimiter in front of recipeID list
+			dbPlayer[getIndex] = format("%s,%s,%s", name, skillLevel, recipeString)
+		end
 		
 	end
+	
+	--unregister for next time the tradeskill window is opened
+	self:UnregisterEvent("TRADE_SKILL_LIST_UPDATE")
+end
+
+--if they have the tradeskill window opened and then click on another professions it keeps the window opened and thus TRADE_SKILL_LIST_UPDATE never gets fired
+function BSYC:TRADE_SKILL_DATA_SOURCE_CHANGED()
+	self:RegisterEvent("TRADE_SKILL_LIST_UPDATE")
 end

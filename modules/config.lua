@@ -1,3 +1,4 @@
+local BSYC = select(2, ...) --grab the addon namespace
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
 local config = LibStub("AceConfig-3.0")
 local configDialog = LibStub("AceConfigDialog-3.0")
@@ -14,13 +15,13 @@ local function get(info)
 	local p, c = string.split(".", info.arg)
 	
 	if p ~= "color" then
-		if BagSyncOpt[c] then --if this is nil then it will default to false
-			return BagSyncOpt[c]
+		if BSYC.options[c] then --if this is nil then it will default to false
+			return BSYC.options[c]
 		else
 			return false
 		end
 	elseif p == "color" then
-		return BagSyncOpt.colors[c].r, BagSyncOpt.colors[c].g, BagSyncOpt.colors[c].b
+		return BSYC.options.colors[c].r, BSYC.options.colors[c].g, BSYC.options.colors[c].b
 	end
 	
 end
@@ -30,16 +31,16 @@ local function set(info, arg1, arg2, arg3, arg4)
 	local p, c = string.split(".", info.arg)
 	
 	if p ~= "color" then
-		BagSyncOpt[c] = arg1
+		BSYC.options[c] = arg1
 		if p == "minimap" then
 			if arg1 then BagSync_MinimapButton:Show() else BagSync_MinimapButton:Hide() end
 		else
-			BagSync:resetTooltip()
+			BSYC:ResetTooltip()
 		end
 	elseif p == "color" then
-		BagSyncOpt.colors[c].r = arg1
-		BagSyncOpt.colors[c].g = arg2
-		BagSyncOpt.colors[c].b = arg3
+		BSYC.options.colors[c].r = arg1
+		BSYC.options.colors[c].g = arg2
+		BSYC.options.colors[c].b = arg3
 	end
 	
 end

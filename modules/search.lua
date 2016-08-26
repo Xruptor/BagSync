@@ -119,7 +119,7 @@ function Search:StartSearch(searchStr)
 	self:DoSearch(searchStr)
 end
 
-function Search:AddEntry(entry, counter)
+function Search:AddEntry(entry)
 
 	local highlightColor = {1, 0, 0}
 	local label = AceGUI:Create("InteractiveLabel")
@@ -163,6 +163,7 @@ function Search:DoSearch(searchStr)
 	local searchStr = searchStr or self.searchbar:GetText()
 	searchStr = searchStr:lower()
 
+	local searchTable = {}
 	local tempList = {}
 	local previousGuilds = {}
 	local count = 0
@@ -214,12 +215,12 @@ function Search:DoSearch(searchStr)
 										if dName then
 											--are we checking in our bank,void, etc?
 											if playerSearch and string.sub(searchStr, 2) == q and string.sub(searchStr, 2) ~= "guild" and yName == BSYC.currentPlayer and not tempList[dblink] then
-												self:AddEntry({ name=dName, link=dItemLink, rarity=dRarity, texture=dTexture }, count)
+												table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
 												tempList[dblink] = dName
 												count = count + 1
 											--we found a match
 											elseif not playerSearch and not tempList[dblink] and ItemSearch:Matches(dItemLink, searchStr) then
-												self:AddEntry({ name=dName, link=dItemLink, rarity=dRarity, texture=dTexture }, count)
+												table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
 												tempList[dblink] = dName
 												count = count + 1
 											end
@@ -250,12 +251,12 @@ function Search:DoSearch(searchStr)
 									local dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo(dblink)
 									if dName then
 										if playerSearch and string.sub(searchStr, 2) == "guild" and BSYC.db.player.guild and guildN == BSYC.db.player.guild and not tempList[dblink] then
-											self:AddEntry({ name=dName, link=dItemLink, rarity=dRarity, texture=dTexture }, count)
+											table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
 											tempList[dblink] = dName
 											count = count + 1
 										--we found a match
 										elseif not playerSearch and not tempList[dblink] and ItemSearch:Matches(dItemLink, searchStr) then
-											self:AddEntry({ name=dName, link=dItemLink, rarity=dRarity, texture=dTexture }, count)
+											table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
 											tempList[dblink] = dName
 											count = count + 1
 										end
@@ -272,6 +273,14 @@ function Search:DoSearch(searchStr)
 				
 			end
 			
+		end
+		
+		--display the rows
+		if count > 0 then
+			table.sort(searchTable, function(a,b) return (a.name < b.name) end)
+			for i=1, #searchTable do
+				self:AddEntry(searchTable[i])
+			end
 		end
 		
 		--show warning window if the server hasn't queried all the items yet

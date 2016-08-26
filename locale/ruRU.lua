@@ -2,6 +2,8 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "ruRU")
 if not L then return end
 
+--PLEASE LOOK AT enUS.lua for a complete localization list
+
 --special thanks to senryo
 
 L.TooltipBag = "В сумке: %d"
@@ -13,7 +15,6 @@ L.TooltipReagent = "Банк материалов: %d"
 L.TooltipAuction = "Аукцион: %d"
 L.Search = "Поиск"
 L.TooltipTotal = "Всего:"
-L.Tokens = "Токены"
 L.Profiles = "Профили"
 L.Professions = "Профессии"
 L.Blacklist = "Черный список"
@@ -33,7 +34,6 @@ L.RemoveItemID = "Удалить ItemID"
 L.HelpSearchItemName = "/bgs [имя предмета] - Быстрый поиск предмета."
 L.HelpSearchWindow = "/bgs search - Открыть окно поиска."
 L.HelpGoldTooltip = "/bgs gold - Показать количество золота на всех персонажах."
-L.HelpTokensWindow = "/bgs tokens - Открыть окно токенов/валюты."
 L.HelpProfilesWindow = "/bgs profiles - Открыть окно профилей."
 L.HelpFixDB = "/bgs fixdb - Запустить исправление БД в BagSync."
 L.HelpConfigWindow = "/bgs config - Открыть окно опций BagSync."
