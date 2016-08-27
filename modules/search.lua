@@ -135,11 +135,7 @@ function Search:AddEntry(entry)
 	label:SetCallback(
 		"OnClick", 
 		function (widget, sometable, button)
-			if "LeftButton" == button then
-				print("left")
-			elseif "RightButton" == button then
-				print("right")
-			end
+			ChatEdit_InsertLink(link)
 		end)
 	label:SetCallback(
 		"OnEnter",
