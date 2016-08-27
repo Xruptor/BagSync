@@ -23,7 +23,7 @@ function Profiles:OnEnable()
 	ProfilesFrame:AddChild(confirmButton)
 	
 	--set the defaults for the main frame
-	ProfilesFrame:SetTitle("BagSync "..L.Profiles)
+	ProfilesFrame:SetTitle("BagSync - "..L.Profiles)
 	ProfilesFrame:SetHeight(200)
 	ProfilesFrame:SetWidth(375)
 	ProfilesFrame:EnableResize(false)

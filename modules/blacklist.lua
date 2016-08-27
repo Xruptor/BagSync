@@ -11,7 +11,7 @@ function Blacklist:OnEnable()
 	local BlacklistFrame = AceGUI:Create("Window")
 	Blacklist.frame = BlacklistFrame
 
-	BlacklistFrame:SetTitle("BagSync "..L.Blacklist)
+	BlacklistFrame:SetTitle("BagSync - "..L.Blacklist)
 	BlacklistFrame:SetHeight(500)
 	BlacklistFrame:SetWidth(380)
 	BlacklistFrame:EnableResize(false)

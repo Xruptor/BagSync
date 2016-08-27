@@ -42,7 +42,7 @@ function Search:OnEnable()
 	local SearchFrame = AceGUI:Create("Window")
 	Search.frame = SearchFrame
 
-	SearchFrame:SetTitle("BagSync "..L.Search)
+	SearchFrame:SetTitle("BagSync - "..L.Search)
 	SearchFrame:SetHeight(500)
 	SearchFrame:SetWidth(380)
 	SearchFrame:EnableResize(false)

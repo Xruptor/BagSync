@@ -36,6 +36,7 @@ modules\minimap.lua
 modules\search.lua
 modules\currency.lua
 modules\professions.lua
+modules\recipes.lua
 modules\blacklist.lua
 modules\profiles.lua
 modules\config.lua

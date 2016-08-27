@@ -10,8 +10,9 @@ function Professions:OnEnable()
 	--lets create our widgets
 	local ProfessionsFrame = AceGUI:Create("Window")
 	Professions.frame = ProfessionsFrame
+	Professions.parentFrame = ProfessionsFrame.frame
 
-	ProfessionsFrame:SetTitle("BagSync "..L.Professions)
+	ProfessionsFrame:SetTitle("BagSync - "..L.Professions)
 	ProfessionsFrame:SetHeight(500)
 	ProfessionsFrame:SetWidth(380)
 	ProfessionsFrame:EnableResize(false)
@@ -72,7 +73,7 @@ function Professions:AddEntry(entry, isHeader)
 		label:SetFullWidth(true)
 		label:SetColor(unpack(label.userdata.color))
 		label.label:SetJustifyH("CENTER") --don't like doing this until they update Ace3GUI
-		label.userdata.isHeader = isHeader
+		label.userdata.isHeader = true
 		label.userdata.hasRecipes = false
 		label.headerhighlight:Show()
 	else
@@ -82,27 +83,27 @@ function Professions:AddEntry(entry, isHeader)
 		label:SetFullWidth(true)
 		if entry.recipes then
 			label.userdata.color = {153/255,204/255,51/255} --primary profession color it green
+			label.userdata.hasRecipes = true
 		else
 			label.userdata.color = {102/255,153/255,1} --gathering profession color it blue
+			label.userdata.hasRecipes = false
 		end
 		label:SetColor(unpack(label.userdata.color))
 		label.label:SetJustifyH("LEFT")--don't like doing this until they update Ace3GUI
-		label.userdata.isHeader = isHeader
-		label.userdata.hasRecipes = entry.recipes
+		label.userdata.isHeader = false
 	end
 
 	label:SetCallback(
 		"OnClick", 
 		function (widget, sometable, button)
 			if "LeftButton" == button and label.userdata.hasRecipes then
-				print("left")
+				BSYC:GetModule("Recipes"):ViewRecipes(entry.name, entry.level, entry.recipes)
 			end
 		end)
 	label:SetCallback(
 		"OnEnter",
 		function (widget, sometable)
 			label:SetColor(unpack(highlightColor))
-
 		end)
 	label:SetCallback(
 		"OnLeave",
@@ -132,10 +133,7 @@ function Professions:DisplayList()
 		local playerName = BSYC:GetCharacterRealmInfo(yName, yRealm)
 
 		for q, r in pairs(v) do
-			local chkRecipes = false
-			local tName, tLevel, tRecipeList = strsplit(",", r)
-			if tRecipeList then chkRecipes = true end
-			table.insert(tmp, { name=tName, level=tLevel, player=playerName, recipeIndex=q, recipes=chkRecipes } )
+			table.insert(tmp, { player=playerName, name=r.name, level=r.level, recipes=r.recipes } )
 			count = count + 1
 		end
 		

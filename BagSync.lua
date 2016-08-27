@@ -770,7 +770,10 @@ function BSYC:ScanCurrency()
 			end
 			if (not isHeader) then
 				self.db.currency[self.currentRealm][self.currentPlayer] = self.db.currency[self.currentRealm][self.currentPlayer] or {}
-				self.db.currency[self.currentRealm][self.currentPlayer][name] = format("%s,%s,%s", count, lastHeader, icon)
+				self.db.currency[self.currentRealm][self.currentPlayer][name] = {}
+				self.db.currency[self.currentRealm][self.currentPlayer][name].count = count
+				self.db.currency[self.currentRealm][self.currentPlayer][name].header = lastHeader
+				self.db.currency[self.currentRealm][self.currentPlayer][name].icon = icon
 			end
 		end
 	end
@@ -1533,18 +1536,9 @@ end
 function BSYC:doRegularTradeSkill(numIndex, dbPlayer, dbIdx)
 	local name, icon, skillLevel, maxSkillLevel, numAbilities, spelloffset, skillLine, skillModifier = GetProfessionInfo(numIndex)
 	if name and skillLevel then
-		--don't overwrite recipe list
-		if dbPlayer[dbIdx] then
-			local name, level, list = strsplit(",", dbPlayer[dbIdx])
-			if list then
-				--only record list again if we even have a list to work with
-				dbPlayer[dbIdx] = format("%s,%s,%s", name, skillLevel, list)
-			else
-				dbPlayer[dbIdx] = format("%s,%s", name, skillLevel)
-			end
-		else
-			dbPlayer[dbIdx] = format("%s,%s", name, skillLevel)
-		end
+		dbPlayer[dbIdx] = dbPlayer[dbIdx] or {}
+		dbPlayer[dbIdx].name = name
+		dbPlayer[dbIdx].level = skillLevel
 	end
 end
 
@@ -1665,7 +1659,8 @@ function BSYC:TRADE_SKILL_LIST_UPDATE()
 		--only record if we have something to work with
 		if name and skillLevel and string.len(recipeString) > 0 then
 			recipeString = strsub(recipeString, string.len("|") + 1) --remove the delimiter in front of recipeID list
-			dbPlayer[getIndex] = format("%s,%s,%s", name, skillLevel, recipeString)
+			dbPlayer[getIndex] = dbPlayer[getIndex] or {}
+			dbPlayer[getIndex].recipes = recipeString
 		end
 		
 	end
