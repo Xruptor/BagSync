@@ -41,7 +41,7 @@ local dataobj = ldb:NewDataObject("BagSyncLDB", {
 	OnClick = function(self, button)
 		if button == "LeftButton" then
 			BSYC:GetModule("Search").frame:Show()
-		elseif button == "RightButton" and BagSync_TokensFrame then
+		elseif button == "RightButton" then
 			if bgsMinimapDD then
 				ToggleDropDownMenu(1, nil, bgsMinimapDD, "cursor", 0, 0)
 			end
@@ -341,6 +341,9 @@ function BSYC:FilterDB(dbSelect)
 	if dbSelect and dbSelect == 1 then
 		--use BagSyncPROFESSION_DB
 		dbObj = self.db.profession
+	elseif dbSelect and dbSelect == 2 then
+		--use BagSyncCURRENCY_DB
+		dbObj = self.db.currency
 	end
 
 	--add more realm names if necessary based on BNet or Cross Realms
@@ -1173,11 +1176,7 @@ function BSYC:ChatCommand(input)
 			self:ShowMoneyTooltip()
 			return true
 		elseif cmd == L.SlashCurrency then
-			if BagSync_TokensFrame:IsVisible() then
-				BagSync_TokensFrame:Hide()
-			else
-				BagSync_TokensFrame:Show()
-			end
+			BSYC:GetModule("Currency").frame:Show()
 			return true
 		elseif cmd == L.SlashProfiles then
 			self:GetModule("Profiles").frame:Show()

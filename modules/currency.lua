@@ -1,238 +1,147 @@
+
+local BSYC = select(2, ...) --grab the addon namespace
+local Currency = BSYC:NewModule("Currency")
+
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
-local tokensTable = {}
-local tRows, tAnchor = {}
-local currentPlayer = UnitName("player")
-local currentRealm = select(2, UnitFullName("player"))
-local GetItemInfo = _G["GetItemInfo"]
+local AceGUI = LibStub("AceGUI-3.0")
 
-local bgTokens = CreateFrame("Frame","BagSync_TokensFrame", UIParent)
+function Currency:OnEnable()
 
-local function tooltipColor(color, str)
-  return string.format("|cff%02x%02x%02x%s|r", (color.r or 1) * 255, (color.g or 1) * 255, (color.b or 1) * 255, str)
+	--lets create our widgets
+	local CurrencyFrame = AceGUI:Create("Window")
+	Currency.frame = CurrencyFrame
+	Currency.parentFrame = CurrencyFrame.frame
+
+	CurrencyFrame:SetTitle("BagSync - "..L.Currency)
+	CurrencyFrame:SetHeight(500)
+	CurrencyFrame:SetWidth(380)
+	CurrencyFrame:EnableResize(false)
+	
+	local information = AceGUI:Create("Label")
+	information:SetText(L.ProfessionInformation)
+	information:SetFont("Fonts\\FRIZQT__.TTF", 12, THICKOUTLINE)
+	information:SetColor(1, 165/255, 0)
+	information:SetFullWidth(true)
+	CurrencyFrame:AddChild(information)
+	
+	local scrollframe = AceGUI:Create("ScrollFrame");
+	scrollframe:SetFullWidth(true)
+	scrollframe:SetLayout("Flow")
+
+	Currency.scrollframe = scrollframe
+	CurrencyFrame:AddChild(scrollframe)
+
+	hooksecurefunc(CurrencyFrame, "Show" ,function()
+		self:DisplayList()
+	end)
+	
+	CurrencyFrame:Hide()
+	
 end
 
-local function LoadSlider()
-	
-	local function OnEnter(self)
-		if self.name and self.tooltip then
-			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-			GameTooltip:AddLine(self.name)
-			GameTooltip:AddLine(" ")
-			for i=1, #self.tooltip do
-				GameTooltip:AddDoubleLine(tooltipColor(BagSyncOpt.colors.first, self.tooltip[i].name), tooltipColor(BagSyncOpt.colors.second, self.tooltip[i].count))
+function Currency:AddEntry(entry, isHeader)
+
+	local highlightColor = {1, 0, 0}
+	local label = AceGUI:Create("BagSyncInteractiveLabel")
+
+	label.userdata.color = {1, 1, 1}
+	label:SetHeaderHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+	label:ToggleHeaderHighlight(false)
+
+	if isHeader then
+		label:SetText(entry.player)
+		label:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
+		label:SetFullWidth(true)
+		label:SetColor(unpack(label.userdata.color))
+		label:ApplyJustifyH("CENTER")
+		label.userdata.isHeader = true
+		label.userdata.hasRecipes = false
+		label:ToggleHeaderHighlight(true)
+	else
+		local labelText = entry.name..format(" |cFFFFFFFF(%s)|r", entry.level)
+		label:SetText(labelText)
+		label:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
+		label:SetFullWidth(true)
+		if entry.recipes then
+			label.userdata.color = {153/255,204/255,51/255} --primary profession color it green
+			label.userdata.hasRecipes = true
+		else
+			label.userdata.color = {102/255,153/255,1} --gathering profession color it blue
+			label.userdata.hasRecipes = false
+		end
+		label:SetColor(unpack(label.userdata.color))
+		label:ApplyJustifyH("LEFT")
+		label.userdata.isHeader = false
+	end
+
+	label:SetCallback(
+		"OnClick", 
+		function (widget, sometable, button)
+			if "LeftButton" == button and label.userdata.hasRecipes then
+				BSYC:GetModule("Recipes"):ViewRecipes(entry.name, entry.level, entry.recipes)
+			end
+		end)
+	label:SetCallback(
+		"OnEnter",
+		function (widget, sometable)
+			label:SetColor(unpack(highlightColor))
+			GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
+			if label.userdata.hasRecipes then
+				GameTooltip:AddLine(L.ProfessionHasRecipes)
+			else
+				GameTooltip:AddLine(L.ProfessionHasNoRecipes)
 			end
 			GameTooltip:Show()
-		end
-	end
-	
-	local function OnLeave() GameTooltip:Hide() end
+		end)
+	label:SetCallback(
+		"OnLeave",
+		function (widget, sometable)
+			label:SetColor(unpack(label.userdata.color))
+			GameTooltip:Hide()
+		end)
 
-	local EDGEGAP, ROWHEIGHT, ROWGAP, GAP = 40, 20, 2, 4
-	local FRAME_HEIGHT = bgTokens:GetHeight() - 50
-	local SCROLL_TOP_POSITION = -80
-	local totaltRows = math.floor((FRAME_HEIGHT-22)/(ROWHEIGHT + ROWGAP))
-	
-	for i=1, totaltRows do
-		if not tRows[i] then
-			local row = CreateFrame("Button", nil, bgTokens)
-			if not tAnchor then row:SetPoint("BOTTOMLEFT", bgTokens, "TOPLEFT", 0, SCROLL_TOP_POSITION)
-			else row:SetPoint("TOP", tAnchor, "BOTTOM", 0, -ROWGAP) end
-			row:SetPoint("LEFT", EDGEGAP, 0)
-			row:SetPoint("RIGHT", -EDGEGAP*1-8, 0)
-			row:SetHeight(ROWHEIGHT)
-			row:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-			tAnchor = row
-			tRows[i] = row
-
-			local title = row:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
-			title:SetPoint("LEFT")
-			title:SetJustifyH("LEFT") 
-			title:SetWidth(row:GetWidth())
-			title:SetHeight(ROWHEIGHT)
-			row.title = title
-
-			local icon = row:CreateTexture(nil,"OVERLAY")
-			icon:SetPoint("LEFT", (ROWHEIGHT * -1) -3, 0)
-			icon:SetWidth(ROWHEIGHT)
-			icon:SetHeight(ROWHEIGHT)
-			icon:SetTexture("Interface\\Icons\\Spell_Shadow_Shadowbolt")
-			icon:Hide()
-			row.icon = icon
-	
-			row:SetScript("OnEnter", OnEnter)
-			row:SetScript("OnLeave", OnLeave)
-		end
-	end
-
-	local offset = 0
-	local RefreshTokens = function()
-		if not BagSync_TokensFrame:IsVisible() then return end
-		
-		for i,row in ipairs(tRows) do
-			if (i + offset) <= #tokensTable then
-				if tokensTable[i + offset] then
-
-					if tokensTable[i + offset].isHeader then
-						row.title:SetText("|cFFFFFFFF"..tokensTable[i + offset].name.."|r")
-					else
-						row.title:SetText(tokensTable[i + offset].name)
-					end
-					
-					--header texture and parameters
-					if tokensTable[i + offset].isHeader then
-						row:LockHighlight()
-						row.title:SetJustifyH("CENTER") 
-						row.tooltip = nil
-					else
-						row:UnlockHighlight()
-						row.title:SetJustifyH("LEFT")
-						row.name = row.title:GetText()
-						row.tooltip = tokensTable[i + offset].tooltip
-					end
-					
-					row.icon:SetTexture(tokensTable[i + offset].icon or nil)
-					row.icon:Show()
-					row:Show()
-				end
-			else
-				row.icon:SetTexture(nil)
-				row.icon:Hide()
-				row:Hide()
-			end
-		end
-	end
-
-	RefreshTokens()
-
-	if not bgTokens.scrollbar then
-		bgTokens.scrollbar = LibStub("tekKonfig-Scroll").new(bgTokens, nil, #tRows/2)
-		bgTokens.scrollbar:ClearAllPoints()
-		bgTokens.scrollbar:SetPoint("TOP", tRows[1], 0, -16)
-		bgTokens.scrollbar:SetPoint("BOTTOM", tRows[#tRows], 0, 16)
-		bgTokens.scrollbar:SetPoint("RIGHT", -16, 0)
-	end
-	
-	if #tokensTable > 0 then
-		bgTokens.scrollbar:SetMinMaxValues(0, math.max(0, #tokensTable - #tRows))
-		bgTokens.scrollbar:SetValue(0)
-		bgTokens.scrollbar:Show()
-	else
-		bgTokens.scrollbar:Hide()
-	end
-
-	local f = bgTokens.scrollbar:GetScript("OnValueChanged")
-	bgTokens.scrollbar:SetScript("OnValueChanged", function(self, value, ...)
-		offset = math.floor(value)
-		RefreshTokens()
-		return f(self, value, ...)
-	end)
-
-	bgTokens:EnableMouseWheel()
-	bgTokens:SetScript("OnMouseWheel", function(self, val)
-		bgTokens.scrollbar:SetValue(bgTokens.scrollbar:GetValue() - val*#tRows/2)
-	end)
+	self.scrollframe:AddChild(label)
 end
 
-local function DoTokens()
-	if not BagSync or not BagSyncTOKEN_DB then return end
-	if not BagSyncTOKEN_DB[currentRealm] then return end
+function Currency:DisplayList()
+
+	local CurrencyTable = {}
+	local tempList = {}
+	local count = 0
+
+	self.scrollframe:ReleaseChildren() --clear out the scrollframe
 	
-	tokensTable = {} --reset
-	local tmp = {}
+	local xDB = BSYC:FilterDB(1) --dbSelect 1
 	
 	--loop through our characters
-	-----------------------------------
-	if BagSyncTOKEN_DB[currentRealm] then
-		for k, v in pairs(BagSyncTOKEN_DB[currentRealm]) do
+	--k = player, v = stored data for player
+	for k, v in pairs(xDB) do
 
-			tmp = {}
-			--this will loop and store all characters whom have counts greater then zero, 
-			--ignoring the icon and header table entry, then it sorts it by character name
-			for q, r in pairs(v) do
-				if q ~= "icon" and q ~= "header" and r > 0 then
-					--only show counts that are greater then zero
-					table.insert(tmp, { name=q, count=r} )
-				end
+		local tmp = {}
+		local yName, yRealm  = strsplit("^", k)
+		local playerName = BSYC:GetCharacterRealmInfo(yName, yRealm)
+
+		for q, r in pairs(v) do
+			table.insert(tmp, { player=playerName, name=r.name, level=r.level, recipes=r.recipes } )
+			count = count + 1
+		end
+		
+		--add to master table
+		table.insert(CurrencyTable, { player=playerName, info=tmp } )
+	end
+		
+	--show or hide the scrolling frame depending on count
+	if count > 0 then
+		table.sort(CurrencyTable, function(a,b) return (a.player < b.player) end)
+		for i=1, #CurrencyTable do
+			self:AddEntry(CurrencyTable[i], true) --add header
+			for z=1, #CurrencyTable[i].info do
+				self:AddEntry(CurrencyTable[i].info[z], false)
 			end
-			table.sort(tmp, function(a,b) return (a.name < b.name) end)
-			
-			--now add it to master table to sort later
-			table.insert(tokensTable, {name=k, icon=v.icon, header=v.header, tooltip=tmp})
 		end
+		self.scrollframe.frame:Show()
+	else
+		self.scrollframe.frame:Hide()
 	end
-	-----------------------------------
 	
-	--sort it
-	table.sort(tokensTable, function(a,b)
-		if a.header < b.header then
-			return true;
-		elseif a.header == b.header then
-			return (a.name < b.name);
-		end
-	end)
-	
-	--add headers
-	local lastHeader = ""
-	tmp = {} --reset
-	
-	for i=1, #tokensTable do
-		if tokensTable[i].header ~= lastHeader then
-			lastHeader = tokensTable[i].header
-			table.insert(tmp, { name=lastHeader, header=lastHeader, isHeader=true } )
-			table.insert(tmp, tokensTable[i])
-		else
-			table.insert(tmp, tokensTable[i])
-		end
-	end
-	tokensTable = tmp
-
-	LoadSlider()
 end
-
-bgTokens:SetFrameStrata("HIGH")
-bgTokens:SetToplevel(true)
-bgTokens:EnableMouse(true)
-bgTokens:SetMovable(true)
-bgTokens:SetClampedToScreen(true)
-bgTokens:SetWidth(380)
-bgTokens:SetHeight(500)
-
-bgTokens:SetBackdrop({
-		bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-		edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-		tile = true,
-		tileSize = 16,
-		edgeSize = 32,
-		insets = { left = 5, right = 5, top = 5, bottom = 5 }
-})
-
-bgTokens:SetBackdropColor(0,0,0,1)
-bgTokens:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-
-local addonTitle = bgTokens:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
-addonTitle:SetPoint("CENTER", bgTokens, "TOP", 0, -20)
-addonTitle:SetText("|cFF99CC33BagSync|r |cFFFFFFFF("..L.Currency..")|r")
-
-local closeButton = CreateFrame("Button", nil, bgTokens, "UIPanelCloseButton");
-closeButton:SetPoint("TOPRIGHT", bgTokens, -15, -8);
-
-bgTokens:SetScript("OnShow", function(self) DoTokens(); LoadSlider(); end)
-bgTokens:SetScript("OnHide", function(self)
-	tokensTable = {}
-end)
-
-bgTokens:SetScript("OnMouseDown", function(frame, button)
-	if frame:IsMovable() then
-		frame.isMoving = true
-		frame:StartMoving()
-	end
-end)
-
-bgTokens:SetScript("OnMouseUp", function(frame, button) 
-	if( frame.isMoving ) then
-		frame.isMoving = nil
-		frame:StopMovingOrSizing()
-	end
-end)
-
-bgTokens:Hide()

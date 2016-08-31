@@ -13,43 +13,24 @@ function Recipes:OnEnable()
 
 	RecipesFrame:SetTitle("BagSync - "..L.Recipes)
 	RecipesFrame:SetHeight(500)
-	RecipesFrame:SetWidth(380)
+	RecipesFrame:SetWidth(570)
 	RecipesFrame:EnableResize(false)
 	
-	local information = AceGUI:Create("Label")
-	information:SetText(L.ProfessionLeftClick)
+	local information = AceGUI:Create("BagSyncInteractiveLabel")
 	information:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
 	information:SetColor(153/255,204/255,51/255)
 	information:SetFullWidth(true)
+	information:ApplyJustifyH("CENTER")
 	RecipesFrame:AddChild(information)
 	
 	Recipes.information = information
 	
-	local label = AceGUI:Create("InteractiveLabel")
+	local label = AceGUI:Create("BagSyncInteractiveLabel")
 	label:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
 	label:SetFullWidth(true)
 	label:SetText(" ") --add an empty space just to show the label
-	
-	--I know you aren't supposed to but I'm going to have to put it on the label object.  Only because when using userdata the texture sticks around even with release.
-	--So I'm forced to have to add it to label and do a custom OnRelease to get rid of it for other addons.
-	if not label.headerhighlight then
-		label.headerhighlight = label.frame:CreateTexture(nil, "BACKGROUND") --userdata gets deleted when widget is recycled
-		label.headerhighlight:SetAllPoints()
-		label.headerhighlight:SetBlendMode("ADD")
-		label.headerhighlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight") --userdata gets deleted when widget is recycled
-		label.headerhighlight:Show()
-	end
-	--remove the highlight texture on widget release for other addons
-	local oldOnRelease = label.OnRelease
-	label.OnRelease = function(self)
-		if self.headerhighlight then
-			self.headerhighlight:SetTexture(nil)
-			self.headerhighlight = nil
-		end
-		if oldOnRelease then
-			oldOnRelease(self)
-		end
-	end
+	label:SetHeaderHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+	label:ToggleHeaderHighlight(true)
 	RecipesFrame:AddChild(label)
 	
 	local scrollframe = AceGUI:Create("ScrollFrame");
@@ -69,7 +50,7 @@ end
 
 function Recipes:AddEntry(entry)
 
-	local name, recipeID = entry.name, entry.recipeID
+	local name, recipeID, icon = entry.name, entry.recipeID, entry.icon
 	
 	local highlightColor = {1, 0, 0}
 	local label = AceGUI:Create("InteractiveLabel")
@@ -78,6 +59,7 @@ function Recipes:AddEntry(entry)
 	label:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
 	label:SetFullWidth(true)
 	label:SetColor( 1,1,1)
+	label:SetImage(icon)
 	label:SetCallback(
 		"OnClick", 
 		function (widget, sometable, button)
@@ -121,17 +103,22 @@ function Recipes:DisplayList(tradeRecipes)
 	
 		local recipe_info = _G.C_TradeSkillUI.GetRecipeInfo(valuesList[idx])
 		local craftName = valuesList[idx]
+		local iconTexture = "Interface\\Icons\\INV_Misc_QuestionMark"
+	
+		local gName, gRank, gIcon = GetSpellInfo(valuesList[idx])
 		
 		if recipe_info and recipe_info.name then
 			craftName = recipe_info.name
-		elseif GetSpellInfo(valuesList[idx]) then
-			craftName = GetSpellInfo(valuesList[idx])
+			iconTexture = recipe_info.icon
+		elseif gName then
+			craftName = gName
+			iconTexture = gIcon
 		else
 			craftName = L.ProfessionsFailedRequest:format(valuesList[idx])
 		end
 		
 		count = count + 1
-		table.insert(searchTable, {name=craftName, recipeID=valuesList[idx]})
+		table.insert(searchTable, {name=craftName, recipeID=valuesList[idx], icon=iconTexture})
 	end
 
 	--show or hide the scrolling frame depending on count

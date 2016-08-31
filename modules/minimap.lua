@@ -44,7 +44,7 @@ bgsMinimapDD.initialize = function(self, level)
 			BSYC:GetModule("Search").frame:Show()
 		end)
 		addButton(level, L.Currency, nil, 1, nil, 'currency', function(frame, ...)
-			if BagSync_TokensFrame then BagSync_TokensFrame:Show() end
+			BSYC:GetModule("Currency").frame:Show()
 		end)
 		addButton(level, L.Profiles, nil, 1, nil, 'profiles', function(frame, ...)
 			BSYC:GetModule("Profiles").frame:Show()
@@ -72,13 +72,9 @@ bgsMinimapDD.initialize = function(self, level)
 end
 	
 bgMinimapButton:SetScript('OnMouseUp', function(self, button)
-	if button == 'LeftButton' and BagSync_SearchFrame then
-		if BagSync_SearchFrame:IsVisible() then
-			BagSync_SearchFrame:Hide()
-		else
-			BagSync_SearchFrame:Show()
-		end
-	elseif button == 'RightButton' and BagSync_TokensFrame then
+	if button == 'LeftButton' then
+		BSYC:GetModule("Search").frame:Show()
+	elseif button == 'RightButton' then
 		ToggleDropDownMenu(1, nil, bgsMinimapDD, 'cursor', 0, 0)
 	end
 end)

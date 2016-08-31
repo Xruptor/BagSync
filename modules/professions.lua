@@ -18,7 +18,7 @@ function Professions:OnEnable()
 	ProfessionsFrame:EnableResize(false)
 	
 	local information = AceGUI:Create("Label")
-	information:SetText(L.ProfessionLeftClick)
+	information:SetText(L.ProfessionInformation)
 	information:SetFont("Fonts\\FRIZQT__.TTF", 12, THICKOUTLINE)
 	information:SetColor(1, 165/255, 0)
 	information:SetFullWidth(true)
@@ -42,40 +42,21 @@ end
 function Professions:AddEntry(entry, isHeader)
 
 	local highlightColor = {1, 0, 0}
-	local label = AceGUI:Create("InteractiveLabel")
-
-	--I know you aren't supposed to but I'm going to have to put it on the label object.  Only because when using userdata the texture sticks around even with release.
-	--So I'm forced to have to add it to label and do a custom OnRelease to get rid of it for other addons.
-	if not label.headerhighlight then
-		label.headerhighlight = label.frame:CreateTexture(nil, "BACKGROUND") --userdata gets deleted when widget is recycled
-		label.headerhighlight:SetAllPoints()
-		label.headerhighlight:SetBlendMode("ADD")
-		label.headerhighlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight") --userdata gets deleted when widget is recycled
-	end
-	--remove the highlight texture on widget release for other addons
-	local oldOnRelease = label.OnRelease
-	label.OnRelease = function(self)
-		if self.headerhighlight then
-			self.headerhighlight:SetTexture(nil)
-			self.headerhighlight = nil
-		end
-		if oldOnRelease then
-			oldOnRelease(self)
-		end
-	end
+	local label = AceGUI:Create("BagSyncInteractiveLabel")
 
 	label.userdata.color = {1, 1, 1}
-	label.headerhighlight:Hide() --hide on default
+	label:SetHeaderHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+	label:ToggleHeaderHighlight(false)
 
 	if isHeader then
 		label:SetText(entry.player)
 		label:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
 		label:SetFullWidth(true)
 		label:SetColor(unpack(label.userdata.color))
-		label.label:SetJustifyH("CENTER") --don't like doing this until they update Ace3GUI
+		label:ApplyJustifyH("CENTER")
 		label.userdata.isHeader = true
 		label.userdata.hasRecipes = false
-		label.headerhighlight:Show()
+		label:ToggleHeaderHighlight(true)
 	else
 		local labelText = entry.name..format(" |cFFFFFFFF(%s)|r", entry.level)
 		label:SetText(labelText)
@@ -89,7 +70,7 @@ function Professions:AddEntry(entry, isHeader)
 			label.userdata.hasRecipes = false
 		end
 		label:SetColor(unpack(label.userdata.color))
-		label.label:SetJustifyH("LEFT")--don't like doing this until they update Ace3GUI
+		label:ApplyJustifyH("LEFT")
 		label.userdata.isHeader = false
 	end
 
@@ -104,11 +85,19 @@ function Professions:AddEntry(entry, isHeader)
 		"OnEnter",
 		function (widget, sometable)
 			label:SetColor(unpack(highlightColor))
+			GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
+			if label.userdata.hasRecipes then
+				GameTooltip:AddLine(L.ProfessionHasRecipes)
+			else
+				GameTooltip:AddLine(L.ProfessionHasNoRecipes)
+			end
+			GameTooltip:Show()
 		end)
 	label:SetCallback(
 		"OnLeave",
 		function (widget, sometable)
 			label:SetColor(unpack(label.userdata.color))
+			GameTooltip:Hide()
 		end)
 
 	self.scrollframe:AddChild(label)
