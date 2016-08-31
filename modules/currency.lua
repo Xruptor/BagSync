@@ -17,13 +17,6 @@ function Currency:OnEnable()
 	CurrencyFrame:SetWidth(380)
 	CurrencyFrame:EnableResize(false)
 	
-	local information = AceGUI:Create("Label")
-	information:SetText(L.ProfessionInformation)
-	information:SetFont("Fonts\\FRIZQT__.TTF", 12, THICKOUTLINE)
-	information:SetColor(1, 165/255, 0)
-	information:SetFullWidth(true)
-	CurrencyFrame:AddChild(information)
-	
 	local scrollframe = AceGUI:Create("ScrollFrame");
 	scrollframe:SetFullWidth(true)
 	scrollframe:SetLayout("Flow")
@@ -45,53 +38,38 @@ function Currency:AddEntry(entry, isHeader)
 	local label = AceGUI:Create("BagSyncInteractiveLabel")
 
 	label.userdata.color = {1, 1, 1}
+
 	label:SetHeaderHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
 	label:ToggleHeaderHighlight(false)
 
 	if isHeader then
-		label:SetText(entry.player)
+		label:SetText(entry.header)
 		label:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
 		label:SetFullWidth(true)
 		label:SetColor(unpack(label.userdata.color))
 		label:ApplyJustifyH("CENTER")
 		label.userdata.isHeader = true
-		label.userdata.hasRecipes = false
+		label.userdata.text = entry.header
 		label:ToggleHeaderHighlight(true)
 	else
-		local labelText = entry.name..format(" |cFFFFFFFF(%s)|r", entry.level)
-		label:SetText(labelText)
+		label:SetText(entry.name)
 		label:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
 		label:SetFullWidth(true)
-		if entry.recipes then
-			label.userdata.color = {153/255,204/255,51/255} --primary profession color it green
-			label.userdata.hasRecipes = true
-		else
-			label.userdata.color = {102/255,153/255,1} --gathering profession color it blue
-			label.userdata.hasRecipes = false
-		end
+		label.userdata.color = {64/255, 224/255, 208/255}
 		label:SetColor(unpack(label.userdata.color))
 		label:ApplyJustifyH("LEFT")
 		label.userdata.isHeader = false
+		label.userdata.text = entry.name
 	end
 
-	label:SetCallback(
-		"OnClick", 
-		function (widget, sometable, button)
-			if "LeftButton" == button and label.userdata.hasRecipes then
-				BSYC:GetModule("Recipes"):ViewRecipes(entry.name, entry.level, entry.recipes)
-			end
-		end)
 	label:SetCallback(
 		"OnEnter",
 		function (widget, sometable)
 			label:SetColor(unpack(highlightColor))
 			GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
-			if label.userdata.hasRecipes then
-				GameTooltip:AddLine(L.ProfessionHasRecipes)
-			else
-				GameTooltip:AddLine(L.ProfessionHasNoRecipes)
+			if not label.userdata.isHeader then
+				BSYC:AddCurrencyTooltip(GameTooltip, label.userdata.text, true)
 			end
-			GameTooltip:Show()
 		end)
 	label:SetCallback(
 		"OnLeave",
@@ -105,38 +83,47 @@ end
 
 function Currency:DisplayList()
 
-	local CurrencyTable = {}
+	local tmp = {}
 	local tempList = {}
 	local count = 0
 
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
 	
-	local xDB = BSYC:FilterDB(1) --dbSelect 1
+	local xDB = BSYC:FilterDB(2) --dbSelect 2
 	
 	--loop through our characters
 	--k = player, v = stored data for player
 	for k, v in pairs(xDB) do
 
-		local tmp = {}
-		local yName, yRealm  = strsplit("^", k)
-		local playerName = BSYC:GetCharacterRealmInfo(yName, yRealm)
-
 		for q, r in pairs(v) do
-			table.insert(tmp, { player=playerName, name=r.name, level=r.level, recipes=r.recipes } )
-			count = count + 1
+			if not tempList[q] then
+				--we only really want to list the currency once for display
+				table.insert(tmp, { header=r.header, icon=r.icon, name=q} )
+				tempList[q] = true
+				count = count + 1
+			end
 		end
 		
-		--add to master table
-		table.insert(CurrencyTable, { player=playerName, info=tmp } )
 	end
 		
 	--show or hide the scrolling frame depending on count
 	if count > 0 then
-		table.sort(CurrencyTable, function(a,b) return (a.player < b.player) end)
-		for i=1, #CurrencyTable do
-			self:AddEntry(CurrencyTable[i], true) --add header
-			for z=1, #CurrencyTable[i].info do
-				self:AddEntry(CurrencyTable[i].info[z], false)
+		table.sort(tmp, function(a,b)
+			if a.header < b.header then
+				return true;
+			elseif a.header == b.header then
+				return (a.name < b.name);
+			end
+		end)
+		
+		local lastHeader = ""
+		for i=1, #tmp do
+			if lastHeader ~= tmp[i].header then
+				self:AddEntry(tmp[i], true) --add header
+				self:AddEntry(tmp[i], false) --add entry
+				lastHeader = tmp[i].header
+			else
+				self:AddEntry(tmp[i], false) --add entry
 			end
 		end
 		self.scrollframe.frame:Show()

@@ -41,3 +41,5 @@ modules\recipes.lua
 modules\blacklist.lua
 modules\profiles.lua
 modules\config.lua
+
+Bindings.xml

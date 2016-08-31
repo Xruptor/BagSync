@@ -86,12 +86,14 @@ function Professions:AddEntry(entry, isHeader)
 		function (widget, sometable)
 			label:SetColor(unpack(highlightColor))
 			GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
-			if label.userdata.hasRecipes then
-				GameTooltip:AddLine(L.ProfessionHasRecipes)
-			else
-				GameTooltip:AddLine(L.ProfessionHasNoRecipes)
+			if not label.userdata.isHeader then
+				if label.userdata.hasRecipes then
+					GameTooltip:AddLine(L.ProfessionHasRecipes)
+				else
+					GameTooltip:AddLine(L.ProfessionHasNoRecipes)
+				end
+				GameTooltip:Show()
 			end
-			GameTooltip:Show()
 		end)
 	label:SetCallback(
 		"OnLeave",
@@ -106,7 +108,6 @@ end
 function Professions:DisplayList()
 
 	local professionsTable = {}
-	local tempList = {}
 	local count = 0
 
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe

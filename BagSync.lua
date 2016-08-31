@@ -843,19 +843,42 @@ function BSYC:GetClassColor(sName, sClass)
 	return tooltipColor(self.options.colors.first, sName)
 end
 
-function BSYC:AddCurrencyTooltip(frame, currencyName)
+function BSYC:AddCurrencyTooltip(frame, currencyName, addHeader)
 	if not BagSyncOpt.enableTooltips then return end
---[[ 	if currencyName and self.db.currency[self.currentRealm][currencyName] then
-		if self.options.enableTooltipSeperator then
-			frame:AddLine(" ")
-		end
-		for charName, count in pairsByKeys(self.db.currency[self.currentRealm][currencyName]) do
-			if charName ~= "icon" and charName ~= "header" and count > 0 then
-				frame:AddDoubleLine(charName, count)
+	
+	local tmp = {}
+	local count = 0
+	
+	local xDB = BSYC:FilterDB(2) --dbSelect 2
+		
+	for k, v in pairs(xDB) do
+		local yName, yRealm  = strsplit("^", k)
+		local playerName = BSYC:GetCharacterRealmInfo(yName, yRealm)
+	
+		for q, r in pairs(v) do
+			if q == currencyName then
+				--we only really want to list the currency once for display
+				table.insert(tmp, { name=playerName, count=r.count} )
+				count = count + 1
 			end
 		end
-		frame:Show()
-	end ]]
+	end
+	
+	if count > 0 then
+		table.sort(tmp, function(a,b) return (a.name < b.name) end)
+		if self.options.enableTooltipSeperator and not addHeader then
+			frame:AddLine(" ")
+		end
+		if addHeader then
+			local color = { r = 64/255, g = 224/255, b = 208/255 } --same color as header in Currency window
+			frame:AddLine(rgbhex(color)..currencyName.."|r")
+		end
+		for i=1, #tmp do
+			frame:AddDoubleLine(tooltipColor(BagSyncOpt.colors.first, tmp[i].name), tooltipColor(BagSyncOpt.colors.second, tmp[i].count))
+		end
+	end
+	
+	frame:Show()
 end
 
 function BSYC:AddItemToTooltip(frame, link) --workaround
@@ -875,10 +898,10 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 	end
 	
 	--ignore the hearthstone and blacklisted items
-	-- if itemLink and tonumber(itemLink) and (tonumber(itemLink) == 6948 or tonumber(itemLink) == 110560 or tonumber(itemLink) == 140192 or self.db.blacklist[self.currentRealm][tonumber(itemLink)]) then
-		-- frame:Show()
-		-- return
-	-- end
+	if itemLink and tonumber(itemLink) and (tonumber(itemLink) == 6948 or tonumber(itemLink) == 110560 or tonumber(itemLink) == 140192 or self.db.blacklist[self.currentRealm][tonumber(itemLink)]) then
+		frame:Show()
+		return
+	end
 	
 	--lag check (check for previously displayed data) if so then display it
 	if self.PreviousItemLink and itemLink and itemLink == self.PreviousItemLink then
@@ -1176,7 +1199,7 @@ function BSYC:ChatCommand(input)
 			self:ShowMoneyTooltip()
 			return true
 		elseif cmd == L.SlashCurrency then
-			BSYC:GetModule("Currency").frame:Show()
+			self:GetModule("Currency").frame:Show()
 			return true
 		elseif cmd == L.SlashProfiles then
 			self:GetModule("Profiles").frame:Show()
@@ -1214,13 +1237,36 @@ function BSYC:ChatCommand(input)
 end
 
 ------------------------------
+--    KEYBINDING            --
+------------------------------
+
+function BagSync_ShowWindow(windowName)
+	if windowName == "Search" then
+		BSYC:GetModule("Search"):StartSearch()
+	elseif windowName == "Gold" then
+		BSYC:ShowMoneyTooltip()
+	else
+		BSYC:GetModule(windowName).frame:Show()
+	end
+end
+
+------------------------------
 --    LOGIN HANDLER         --
 ------------------------------
 
 function BSYC:OnEnable()
 	--NOTE: Using OnEnable() instead of OnInitialize() because not all the SavedVarables fully loaded
 	--also one of the major issues is that UnitFullName() will return nil for the short named realm
-	
+
+	--load the keybinding locale information
+	BINDING_HEADER_BAGSYNC = "BagSync"
+	BINDING_NAME_BAGSYNCBLACKLIST = L.KeybindBlacklist
+	BINDING_NAME_BAGSYNCCURRENCY = L.KeybindCurrency
+	BINDING_NAME_BAGSYNCGOLD = L.KeybindGold
+	BINDING_NAME_BAGSYNCPROFESSIONS = L.KeybindProfessions
+	BINDING_NAME_BAGSYNCPROFILES = L.KeybindProfiles
+	BINDING_NAME_BAGSYNCSEARCH = L.KeybindSearch
+
 	local ver = GetAddOnMetadata("BagSync","Version") or 0
 	
 	--load our player info after login

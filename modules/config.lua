@@ -14,14 +14,16 @@ local function get(info)
 
 	local p, c = string.split(".", info.arg)
 	
-	if p ~= "color" then
+	if p == "color" then
+		return BSYC.options.colors[c].r, BSYC.options.colors[c].g, BSYC.options.colors[c].b
+	elseif p == "keybind" then
+		return GetBindingKey(c)
+	else
 		if BSYC.options[c] then --if this is nil then it will default to false
 			return BSYC.options[c]
 		else
 			return false
 		end
-	elseif p == "color" then
-		return BSYC.options.colors[c].r, BSYC.options.colors[c].g, BSYC.options.colors[c].b
 	end
 	
 end
@@ -30,17 +32,23 @@ local function set(info, arg1, arg2, arg3, arg4)
 
 	local p, c = string.split(".", info.arg)
 	
-	if p ~= "color" then
+	if p == "color" then
+		BSYC.options.colors[c].r = arg1
+		BSYC.options.colors[c].g = arg2
+		BSYC.options.colors[c].b = arg3
+	elseif p == "keybind" then
+	   local b1, b2 = GetBindingKey(c)
+	   if b1 then SetBinding(b1) end
+	   if b2 then SetBinding(b2) end
+	   SetBinding(arg1, c)
+	   SaveBindings(GetCurrentBindingSet())
+	else
 		BSYC.options[c] = arg1
 		if p == "minimap" then
 			if arg1 then BagSync_MinimapButton:Show() else BagSync_MinimapButton:Hide() end
 		else
 			BSYC:ResetTooltip()
 		end
-	elseif p == "color" then
-		BSYC.options.colors[c].r = arg1
-		BSYC.options.colors[c].g = arg2
-		BSYC.options.colors[c].b = arg3
 	end
 	
 end
@@ -88,6 +96,66 @@ options.args.main = {
 			get = get,
 			set = set,
 			arg = "minimap.enableMinimap",
+		},
+		keybindblacklist = {
+			order = 4,
+			type = "keybinding",
+			name = L.KeybindBlacklist,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "keybind.BAGSYNCBLACKLIST",
+		},
+		keybindcurrency = {
+			order = 5,
+			type = "keybinding",
+			name = L.KeybindCurrency,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "keybind.BAGSYNCCURRENCY",
+		},
+		keybindgold = {
+			order = 6,
+			type = "keybinding",
+			name = L.KeybindGold,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "keybind.BAGSYNCGOLD",
+		},
+		keybindprofessions = {
+			order = 7,
+			type = "keybinding",
+			name = L.KeybindProfessions,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "keybind.BAGSYNCPROFESSIONS",
+		},
+		keybindprofiles = {
+			order = 8,
+			type = "keybinding",
+			name = L.KeybindProfiles,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "keybind.BAGSYNCPROFILES",
+		},
+		keybindsearch = {
+			order = 9,
+			type = "keybinding",
+			name = L.KeybindSearch,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "keybind.BAGSYNCSEARCH",
 		},
 	},
 }

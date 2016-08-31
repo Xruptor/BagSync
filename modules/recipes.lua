@@ -53,12 +53,13 @@ function Recipes:AddEntry(entry)
 	local name, recipeID, icon = entry.name, entry.recipeID, entry.icon
 	
 	local highlightColor = {1, 0, 0}
+	local color = {1, 1, 1}
 	local label = AceGUI:Create("InteractiveLabel")
 
 	label:SetText(name)
 	label:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
 	label:SetFullWidth(true)
-	label:SetColor( 1,1,1)
+	label:SetColor(unpack(color))
 	label:SetImage(icon)
 	label:SetCallback(
 		"OnClick", 
@@ -76,7 +77,7 @@ function Recipes:AddEntry(entry)
 	label:SetCallback(
 		"OnLeave",
 		function (widget, sometable)
-			label:SetColor(1,1,1)
+			label:SetColor(unpack(color))
 			GameTooltip:Hide()
 		end)
 
