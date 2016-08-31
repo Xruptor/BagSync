@@ -76,6 +76,7 @@ end
 
 local function ToShortLink(link)
 	if not link then return nil end
+	if tonumber(link) then return link end
 	return link:match("item:(%d+):") or nil
 end
 
@@ -1060,6 +1061,7 @@ function BSYC:HookTooltip(tooltip)
 	tooltip:HookScript("OnTooltipSetItem", function(self)
 		if self.isModified then return end
 		local name, link = self:GetItem()
+
 		if link and ToShortLink(link) then
 			self.isModified = true
 			BSYC:AddItemToTooltip(self, link)
@@ -1080,6 +1082,7 @@ function BSYC:HookTooltip(tooltip)
 			end		
 		end
 	end)
+
 	---------------------------------
 	--Special thanks to GetItem() being broken we need to capture the ItemLink before the tooltip shows sometimes
 	hooksecurefunc(tooltip, "SetBagItem", function(self, tab, slot)
@@ -1112,7 +1115,31 @@ function BSYC:HookTooltip(tooltip)
 	end)
 	---------------------------------
 
-	--lets hook other frames so we can show tooltips there as well
+	--lets hook other frames so we can show tooltips there as well, sometimes GetItem() doesn't work right and returns nil
+	hooksecurefunc(tooltip, "SetVoidItem", function(self, tab, slot)
+		if self.isModified then return end
+		local link = GetVoidItemInfo(tab, slot)
+		if link and ToShortLink(link) then
+			self.isModified = true
+			BSYC:AddItemToTooltip(self, link)
+		end
+	end)
+	hooksecurefunc(tooltip, "SetVoidDepositItem", function(self, slot)
+		if self.isModified then return end
+		local link = GetVoidTransferDepositInfo(slot)
+		if link and ToShortLink(link) then
+			self.isModified = true
+			BSYC:AddItemToTooltip(self, link)
+		end
+	end)
+	hooksecurefunc(tooltip, "SetVoidWithdrawalItem", function(self, slot)
+		if self.isModified then return end
+		local link = GetVoidTransferWithdrawalInfo(slot)
+		if link and ToShortLink(link) then
+			self.isModified = true
+			BSYC:AddItemToTooltip(self, link)
+		end
+	end)
 	hooksecurefunc(tooltip, "SetRecipeReagentItem", function(self, recipeID, reagentIndex)
 		if self.isModified then return end
 		local link = C_TradeSkillUI.GetRecipeReagentItemLink(recipeID, reagentIndex)
