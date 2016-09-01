@@ -6,15 +6,15 @@ if not L then return end
 
 --special thanks to ytzyt at Curse for the zhCN and zhTW translations!
 
-L.TooltipBag = "背包: %d"
-L.TooltipBank = "银行: %d"
-L.TooltipEquip = "已装备: %d"
-L.TooltipMail = "信箱: %d"
-L.TooltipVoid = "虚空仓库: %d"
-L.TooltipReagent = "材料银行: %d"
-L.TooltipAuction = "拍卖: %d"
+L.TooltipBag = "背包:"
+L.TooltipBank = "银行:"
+L.TooltipEquip = "已装备:"
+L.TooltipMail = "信箱:"
+L.TooltipVoid = "虚空仓库:"
+L.TooltipReagent = "材料银行:"
+L.TooltipAuction = "拍卖:"
 L.Search = "搜索"
-L.TooltipTotal = "总计: "
+L.TooltipTotal = "总计:"
 L.Profiles = "设定档"
 L.Professions = "专业"
 L.Blacklist = "忽略例表"

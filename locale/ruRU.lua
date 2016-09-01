@@ -6,13 +6,13 @@ if not L then return end
 
 --special thanks to senryo
 
-L.TooltipBag = "В сумке: %d"
-L.TooltipBank = "В банке: %d"
-L.TooltipEquip = "На персонаже: %d"
-L.TooltipGuild = "В гильдбанке: %d"
-L.TooltipMail = "На почте: %d"
-L.TooltipReagent = "Банк материалов: %d"
-L.TooltipAuction = "Аукцион: %d"
+L.TooltipBag = "В сумке:"
+L.TooltipBank = "В банке:"
+L.TooltipEquip = "На персонаже:"
+L.TooltipGuild = "В гильдбанке:"
+L.TooltipMail = "На почте:"
+L.TooltipReagent = "Банк материалов:"
+L.TooltipAuction = "Аукцион:"
 L.Search = "Поиск"
 L.TooltipTotal = "Всего:"
 L.Profiles = "Профили"

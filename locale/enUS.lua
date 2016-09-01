@@ -2,14 +2,14 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "enUS", true)
 if not L then return end
 
-L.TooltipBag = "Bags: %d"
-L.TooltipBank = "Bank: %d"
-L.TooltipEquip = "Equip: %d"
-L.TooltipGuild = "Guild: %d"
-L.TooltipMail = "Mail: %d"
-L.TooltipVoid = "Void: %d"
-L.TooltipReagent = "Reagent: %d"
-L.TooltipAuction = "AH: %d"
+L.TooltipBag = "Bags:"
+L.TooltipBank = "Bank:"
+L.TooltipEquip = "Equip:"
+L.TooltipGuild = "Guild:"
+L.TooltipMail = "Mail:"
+L.TooltipVoid = "Void:"
+L.TooltipReagent = "Reagent:"
+L.TooltipAuction = "AH:"
 L.TooltipTotal = "Total:"
 L.TooltipDelimiter = ", "
 L.Search = "Search"

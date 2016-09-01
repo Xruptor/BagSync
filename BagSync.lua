@@ -60,23 +60,24 @@ local dataobj = ldb:NewDataObject("BagSyncLDB", {
 ----------------------
 
 local function rgbhex(r, g, b)
-  if type(r) == "table" then
-	if r.r then
-	  r, g, b = r.r, r.g, r.b
-	else
-	  r, g, b = unpack(r)
+	if type(r) == "table" then
+		if r.r then
+			r, g, b = r.r, r.g, r.b
+		else
+			r, g, b = unpack(r)
+		end
 	end
-  end
-  return string.format("|cff%02x%02x%02x", (r or 1) * 255, (g or 1) * 255, (b or 1) * 255)
+	return string.format("|cff%02x%02x%02x", (r or 1) * 255, (g or 1) * 255, (b or 1) * 255)
 end
 
 local function tooltipColor(color, str)
-  return string.format("|cff%02x%02x%02x%s|r", (color.r or 1) * 255, (color.g or 1) * 255, (color.b or 1) * 255, str)
+	return string.format("|cff%02x%02x%02x%s|r", (color.r or 1) * 255, (color.g or 1) * 255, (color.b or 1) * 255, tostring(str))
 end
 
 local function ToShortLink(link)
 	if not link then return nil end
 	if tonumber(link) then return link end
+	--local itemString = string.match(link, "item[%-?%d:]+")
 	return link:match("item:(%d+):") or nil
 end
 
@@ -136,7 +137,7 @@ function BSYC:StartupDB()
 	--setup the default colors
 	if self.options.colors == nil then self.options.colors = {} end
 	if self.options.colors.first == nil then self.options.colors.first = { r = 128/255, g = 1, b = 0 }  end
-	if self.options.colors.second == nil then self.options.colors.second = { r = 199/255, g = 199/255, b = 207/255 }  end
+	if self.options.colors.second == nil then self.options.colors.second = { r = 1, g = 1, b = 1 }  end
 	if self.options.colors.total == nil then self.options.colors.total = { r = 244/255, g = 164/255, b = 96/255 }  end
 	if self.options.colors.guild == nil then self.options.colors.guild = { r = 101/255, g = 184/255, b = 192/255 }  end
 	if self.options.colors.cross == nil then self.options.colors.cross = { r = 1, g = 125/255, b = 10/255 }  end
@@ -814,7 +815,7 @@ function BSYC:CreateItemTotals(countTable)
 		local count = countTable[list[i][1]]
 		if count > 0 then
 			grouped = grouped + 1
-			info = info..L.TooltipDelimiter..list[i][2]:format(count)
+			info = info..L.TooltipDelimiter..tooltipColor(self.options.colors.first, list[i][2]).." "..tooltipColor(self.options.colors.second, count)
 			total = total + count
 		end
 	end
@@ -825,12 +826,10 @@ function BSYC:CreateItemTotals(countTable)
 	
 	--if it's groupped up and has more then one item then use a different color and show total
 	if grouped > 1 then
-		local totalStr = tooltipColor(self.options.colors.first, total)
-		return totalStr .. tooltipColor(self.options.colors.second, format(" (%s)", info))
-	else
-		return tooltipColor(self.options.colors.first, info)
+		info = tooltipColor(self.options.colors.second, total).." ("..info..")"
 	end
 	
+	return info
 end
 
 function BSYC:GetClassColor(sName, sClass)
@@ -910,7 +909,8 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 			for i = 1, #self.PreviousItemTotals do
 				local ename, ecount  = strsplit("@", self.PreviousItemTotals[i])
 				if ename and ecount then
-					frame:AddDoubleLine(ename, ecount)
+					local color = self.options.colors.total
+					frame:AddDoubleLine(ename, ecount, color.r, color.g, color.b, color.r, color.g, color.b)
 				end
 			end
 		end
@@ -1038,7 +1038,8 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 		for i = 1, #self.PreviousItemTotals do
 			local ename, ecount  = strsplit("@", self.PreviousItemTotals[i])
 			if ename and ecount then
-				frame:AddDoubleLine(ename, ecount)
+				local color = self.options.colors.total
+				frame:AddDoubleLine(ename, ecount, color.r, color.g, color.b, color.r, color.g, color.b)
 			end
 		end
 	end

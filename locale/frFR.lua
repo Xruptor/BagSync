@@ -6,7 +6,7 @@ if not L then return end
 
 --Really wish someone would do the french translation
 
-L.TooltipBag = "Sacs: %d"
-L.TooltipBank = "Banque: %d"
-L.TooltipEquip = "Équipé: %d"
-L.TooltipGuild = "Guilde: %d"
+L.TooltipBag = "Sacs:"
+L.TooltipBank = "Banque:"
+L.TooltipEquip = "Équipé:"
+L.TooltipGuild = "Guilde:"

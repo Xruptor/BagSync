@@ -4,14 +4,14 @@ if not L then return end
 
 --PLEASE LOOK AT enUS.lua for a complete localization list
 
-L.TooltipBag = "가방: %d"
-L.TooltipBank = "은행: %d"
-L.TooltipEquip = "착용중: %d"
-L.TooltipGuild = "길드은행: %d"
-L.TooltipMail = "우편함: %d"
-L.TooltipVoid = "공허보관소: %d"
-L.TooltipReagent = "재료은행: %d"
-L.TooltipAuction = "경매장: %d"
+L.TooltipBag = "가방:"
+L.TooltipBank = "은행:"
+L.TooltipEquip = "착용중:"
+L.TooltipGuild = "길드은행:"
+L.TooltipMail = "우편함:"
+L.TooltipVoid = "공허보관소:"
+L.TooltipReagent = "재료은행:"
+L.TooltipAuction = "경매장:"
 L.Search = "검색"
 L.TooltipTotal = "총:"
 L.Profiles = "프로필"
