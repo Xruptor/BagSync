@@ -207,7 +207,7 @@ function Search:DoSearch(searchStr)
 								for slotID, itemValue in pairs(bagInfo) do
 									local dblink, dbcount = strsplit(",", itemValue)
 									if dblink then
-										local dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo(dblink)
+										local dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo("item:"..dblink)
 										if dName then
 											--are we checking in our bank,void, etc?
 											if playerSearch and string.sub(searchStr, 2) == q and string.sub(searchStr, 2) ~= "guild" and yName == BSYC.currentPlayer and not tempList[dblink] then
@@ -244,7 +244,7 @@ function Search:DoSearch(searchStr)
 							for q, r in pairs(BSYC.db.guild[v.realm][guildN]) do
 								local dblink, dbcount = strsplit(",", r)
 								if dblink then
-									local dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo(dblink)
+									local dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo("item:"..dblink)
 									if dName then
 										if playerSearch and string.sub(searchStr, 2) == "guild" and BSYC.db.player.guild and guildN == BSYC.db.player.guild and not tempList[dblink] then
 											table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )

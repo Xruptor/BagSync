@@ -13,7 +13,7 @@ local BSYC = select(2, ...) --grab the addon namespace
 BSYC = LibStub("AceAddon-3.0"):NewAddon(BSYC, "BagSync", "AceEvent-3.0", "AceConsole-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
 
-local strsub, strsplit, strlower, strmatch, strtrim = string.sub, string.split, string.lower, string.match, string.trim
+local strsub, strsplit, strlower, strmatch, strtrim, gsub, strrep = string.sub, string.split, string.lower, string.match, string.trim, string.gsub, string.rep
 local format, tonumber, tostring, tostringall = string.format, tonumber, tostring, tostringall
 local tsort, tinsert, unpack = table.sort, table.insert, unpack
 local select, pairs, next, type = select, pairs, next, type
@@ -74,11 +74,52 @@ local function tooltipColor(color, str)
 	return string.format("|cff%02x%02x%02x%s|r", (color.r or 1) * 255, (color.g or 1) * 255, (color.b or 1) * 255, tostring(str))
 end
 
-local function ToShortLink(link)
+local function ParseItemLink(link)
 	if not link then return nil end
 	if tonumber(link) then return link end
-	--local itemString = string.match(link, "item[%-?%d:]+")
-	return link:match("item:(%d+):") or nil
+	local result = link:match("item:([%d:]+)") --strip the item: portion of the string
+	
+	if result then
+		result = gsub(result, ":0:", "::") --supposedly blizzard removed all the zero's in patch 7.0. Lets do it just in case!
+
+		--return the number of times it has split the item string
+		local countSplit = {strsplit(":", result)}
+		
+		--make sure we have a bonusID count
+		if countSplit and #countSplit > 13 then
+			local count = countSplit[13] -- do we have a bonusID number count?
+			count = count == "" and 0 or count --make sure we have a count if not default to zero
+			count = tonumber(count)
+			
+			--check if we have even anything to work with for the amount of bonusID's
+			--btw any numbers after the bonus ID are either upgradeValue which we don't care about or unknown use right now
+			--http://wow.gamepedia.com/ItemString
+			if count > 0 and countSplit[1] then
+				--return the string with just the bonusID's in it
+				local newItemStr = ""
+				
+				--11th place because 13 is bonus ID, one less from 13 (12) would be technically correct, but we have to compensate for ItemID we added so substract another (11).
+				--string.rep repeats a pattern.
+				newItemStr = countSplit[1]..string.rep(":", 11)
+				
+				--lets add the bonusID's, ignore the end past bonusID's
+				for i=13, (13 + count) do
+					newItemStr = newItemStr..":"..countSplit[i]
+				end
+				
+				--add the unknowns at the end, upgradeValue doesn't always have to be supplied.
+				newItemStr = newItemStr..":::"
+
+				return newItemStr
+			end
+		end
+		
+		--we don't have any bonusID's that we care about, so return just the ItemID which is the first number
+		return result:match("(%d+):")
+	end
+	
+	--nothing to return so result will return nil
+	return result
 end
 
 local function IsInBG()
@@ -450,12 +491,12 @@ function BSYC:SaveBag(bagname, bagid)
 		local slotItems = {}
 		for slot = 1, GetContainerNumSlots(bagid) do
 			local _, count, _,_,_,_, link = GetContainerItemInfo(bagid, slot)
-			if ToShortLink(link) then
+			if ParseItemLink(link) then
 				count = (count > 1 and count) or nil
 				if count then
-					slotItems[slot] = format("%s,%d", ToShortLink(link), count)
+					slotItems[slot] = format("%s,%d", ParseItemLink(link), count)
 				else
-					slotItems[slot] = ToShortLink(link)
+					slotItems[slot] = ParseItemLink(link)
 				end
 			end
 		end
@@ -478,13 +519,13 @@ function BSYC:SaveEquipment()
 	--start at 1, 0 used to be the old range slot (not needed anymore)
 	for slot = 1, NUM_EQUIPMENT_SLOTS do
 		local link = GetInventoryItemLink("player", slot)
-		if link and ToShortLink(link) then
+		if link and ParseItemLink(link) then
 			local count =  GetInventoryItemCount("player", slot)
 			count = (count and count > 1) or nil
 			if count then
-				slotItems[slot] = format("%s,%d", ToShortLink(link), count)
+				slotItems[slot] = format("%s,%d", ParseItemLink(link), count)
 			else
-				slotItems[slot] = ToShortLink(link)
+				slotItems[slot] = ParseItemLink(link)
 			end
 		end
 	end
@@ -549,15 +590,15 @@ function BSYC:ScanGuildBank()
 			
 				local link = GetGuildBankItemLink(tab, slot)
 
-				if link and ToShortLink(link) then
+				if link and ParseItemLink(link) then
 					index = index + 1
 					local _, count = GetGuildBankItemInfo(tab, slot)
 					count = (count > 1 and count) or nil
 					
 					if count then
-						slotItems[index] = format("%s,%d", ToShortLink(link), count)
+						slotItems[index] = format("%s,%d", ParseItemLink(link), count)
 					else
-						slotItems[index] = ToShortLink(link)
+						slotItems[index] = ParseItemLink(link)
 					end
 				end
 			end
@@ -594,13 +635,13 @@ function BSYC:ScanMailbox()
 				local name, itemID, itemTexture, count, quality, canUse = GetInboxItem(mailIndex, i)
 				local link = GetInboxItemLink(mailIndex, i)
 				
-				if name and link and ToShortLink(link) then
+				if name and link and ParseItemLink(link) then
 					mailCount = mailCount + 1
 					count = (count > 1 and count) or nil
 					if count then
-						slotItems[mailCount] = format("%s,%d", ToShortLink(link), count)
+						slotItems[mailCount] = format("%s,%d", ParseItemLink(link), count)
 					else
-						slotItems[mailCount] = ToShortLink(link)
+						slotItems[mailCount] = ParseItemLink(link)
 					end
 				end
 			end
@@ -629,10 +670,10 @@ function BSYC:ScanAuctionHouse()
 			if name then
 				local link = GetAuctionItemLink("owner", ahIndex)
 				local timeLeft = GetAuctionItemTimeLeft("owner", ahIndex)
-				if link and ToShortLink(link) and timeLeft then
+				if link and ParseItemLink(link) and timeLeft then
 					ahCount = ahCount + 1
 					count = (count or 1)
-					slotItems[ahCount] = format("%s,%s,%s", ToShortLink(link), count, timeLeft)
+					slotItems[ahCount] = format("%s,%s,%s", ParseItemLink(link), count, timeLeft)
 				end
 			end
 		end
@@ -885,7 +926,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 	if not BagSyncOpt.enableTooltips then return end
 	
 	--if we can't convert the item link then lets just ignore it altogether	
-	local itemLink = ToShortLink(link)
+	local itemLink = ParseItemLink(link)
 	if not itemLink then
 		frame:Show()
 		return
@@ -1063,7 +1104,7 @@ function BSYC:HookTooltip(tooltip)
 		if self.isModified then return end
 		local name, link = self:GetItem()
 
-		if link and ToShortLink(link) then
+		if link and ParseItemLink(link) then
 			self.isModified = true
 			BSYC:AddItemToTooltip(self, link)
 			return
@@ -1073,11 +1114,11 @@ function BSYC:HookTooltip(tooltip)
 		if not self.isModified and self.lastHyperLink then
 			local xName, xLink = GetItemInfo(self.lastHyperLink)
 			--local title = _G[tooltip:GetName().."TextLeft1"]
-			-- if xName and xLink and title and title:GetText() and title:GetText() == xName and ToShortLink(xLink) then  --only show info if the tooltip text matches the link
+			-- if xName and xLink and title and title:GetText() and title:GetText() == xName and ParseItemLink(xLink) then  --only show info if the tooltip text matches the link
 				-- self.isModified = true
 				-- BSYC:AddItemToTooltip(self, xLink)
 			-- end
-			if xLink and ToShortLink(xLink) then  --only show info if the tooltip text matches the link
+			if xLink and ParseItemLink(xLink) then  --only show info if the tooltip text matches the link
 				self.isModified = true
 				BSYC:AddItemToTooltip(self, xLink)
 			end		
@@ -1088,25 +1129,25 @@ function BSYC:HookTooltip(tooltip)
 	--Special thanks to GetItem() being broken we need to capture the ItemLink before the tooltip shows sometimes
 	hooksecurefunc(tooltip, "SetBagItem", function(self, tab, slot)
 		local link = GetContainerItemLink(tab, slot)
-		if link and ToShortLink(link) then
+		if link and ParseItemLink(link) then
 			self.lastHyperLink = link
 		end
 	end)
 	hooksecurefunc(tooltip, "SetInventoryItem", function(self, tab, slot)
 		local link = GetInventoryItemLink(tab, slot)
-		if link and ToShortLink(link) then
+		if link and ParseItemLink(link) then
 			self.lastHyperLink = link
 		end
 	end)
 	hooksecurefunc(tooltip, "SetGuildBankItem", function(self, tab, slot)
 		local link = GetGuildBankItemLink(tab, slot)
-		if link and ToShortLink(link) then
+		if link and ParseItemLink(link) then
 			self.lastHyperLink = link
 		end
 	end)
 	hooksecurefunc(tooltip, "SetHyperlink", function(self, link)
 		if self.isModified then return end
-		if link and ToShortLink(link) then
+		if link and ParseItemLink(link) then
 			--I'm pretty sure there is a better way to do this but since Recipes fire OnTooltipSetItem with empty/nil GetItem().  There is really no way to my knowledge to grab the current itemID
 			--without storing the ItemLink from the bag parsing or at least grabbing the current SetHyperLink.
 			if tooltip:IsVisible() then self.isModified = true end --only do the modifier if the tooltip is showing, because this interferes with ItemRefTooltip if someone clicks it twice in chat
@@ -1120,7 +1161,7 @@ function BSYC:HookTooltip(tooltip)
 	hooksecurefunc(tooltip, "SetVoidItem", function(self, tab, slot)
 		if self.isModified then return end
 		local link = GetVoidItemInfo(tab, slot)
-		if link and ToShortLink(link) then
+		if link and ParseItemLink(link) then
 			self.isModified = true
 			BSYC:AddItemToTooltip(self, link)
 		end
@@ -1128,7 +1169,7 @@ function BSYC:HookTooltip(tooltip)
 	hooksecurefunc(tooltip, "SetVoidDepositItem", function(self, slot)
 		if self.isModified then return end
 		local link = GetVoidTransferDepositInfo(slot)
-		if link and ToShortLink(link) then
+		if link and ParseItemLink(link) then
 			self.isModified = true
 			BSYC:AddItemToTooltip(self, link)
 		end
@@ -1136,7 +1177,7 @@ function BSYC:HookTooltip(tooltip)
 	hooksecurefunc(tooltip, "SetVoidWithdrawalItem", function(self, slot)
 		if self.isModified then return end
 		local link = GetVoidTransferWithdrawalInfo(slot)
-		if link and ToShortLink(link) then
+		if link and ParseItemLink(link) then
 			self.isModified = true
 			BSYC:AddItemToTooltip(self, link)
 		end
@@ -1144,7 +1185,7 @@ function BSYC:HookTooltip(tooltip)
 	hooksecurefunc(tooltip, "SetRecipeReagentItem", function(self, recipeID, reagentIndex)
 		if self.isModified then return end
 		local link = C_TradeSkillUI.GetRecipeReagentItemLink(recipeID, reagentIndex)
-		if link and ToShortLink(link) then
+		if link and ParseItemLink(link) then
 			self.isModified = true
 			BSYC:AddItemToTooltip(self, link)
 		end
@@ -1152,7 +1193,7 @@ function BSYC:HookTooltip(tooltip)
 	hooksecurefunc(tooltip, "SetRecipeResultItem", function(self, recipeID)
 		if self.isModified then return end
 		local link = C_TradeSkillUI.GetRecipeItemLink(recipeID)
-		if link and ToShortLink(link) then
+		if link and ParseItemLink(link) then
 			self.isModified = true
 			BSYC:AddItemToTooltip(self, link)
 		end
@@ -1160,7 +1201,7 @@ function BSYC:HookTooltip(tooltip)
 	hooksecurefunc(tooltip, "SetQuestLogItem", function(self, itemType, index)
 		if self.isModified then return end
 		local link = GetQuestLogItemLink(itemType, index)
-		if link and ToShortLink(link) then
+		if link and ParseItemLink(link) then
 			self.isModified = true
 			AddItemToTooltip(self, link)
 		end
@@ -1168,14 +1209,14 @@ function BSYC:HookTooltip(tooltip)
 	hooksecurefunc(tooltip, "SetQuestItem", function(self, itemType, index)
 		if self.isModified then return end
 		local link = GetQuestItemLink(itemType, index)
-		if link and ToShortLink(link) then
+		if link and ParseItemLink(link) then
 			self.isModified = true
 			BSYC:AddItemToTooltip(self, link)
 		end
 	end)	
 	-- hooksecurefunc(tooltip, 'SetItemByID', function(self, link)
 		-- if self.isModified or not BagSyncOpt.enableTooltips then return end
-		-- if link and ToShortLink(link) then
+		-- if link and ParseItemLink(link) then
 			-- self.isModified = true
 			-- BSYC:AddItemToTooltip(self, link)
 		-- end
