@@ -87,7 +87,7 @@ local function ParseItemLink(link)
 		
 		--make sure we have a bonusID count
 		if countSplit and #countSplit > 13 then
-			local count = countSplit[13] -- do we have a bonusID number count?
+			local count = countSplit[13] or 0 -- do we have a bonusID number count?
 			count = count == "" and 0 or count --make sure we have a count if not default to zero
 			count = tonumber(count)
 			
@@ -118,8 +118,14 @@ local function ParseItemLink(link)
 		return result:match("(%d+):")
 	end
 	
-	--nothing to return so result will return nil
-	return result
+	--nothing to return so return nil
+	return nil
+end
+
+local function ToShortItemID(link)
+	if not link then return nil end
+	if tonumber(link) then return link end
+	return link:match("(%d+):") or nil
 end
 
 local function IsInBG()
@@ -174,6 +180,7 @@ function BSYC:StartupDB()
 	if self.options.enableTooltipSeperator == nil then self.options.enableTooltipSeperator = true end
 	if self.options.enableCrossRealmsItems == nil then self.options.enableCrossRealmsItems = true end
 	if self.options.enableBNetAccountItems == nil then self.options.enableBNetAccountItems = false end
+	if self.options.enableTooltipItemID == nil then self.options.enableTooltipItemID = false end
 
 	--setup the default colors
 	if self.options.colors == nil then self.options.colors = {} end
@@ -183,7 +190,8 @@ function BSYC:StartupDB()
 	if self.options.colors.guild == nil then self.options.colors.guild = { r = 101/255, g = 184/255, b = 192/255 }  end
 	if self.options.colors.cross == nil then self.options.colors.cross = { r = 1, g = 125/255, b = 10/255 }  end
 	if self.options.colors.bnet == nil then self.options.colors.bnet = { r = 53/255, g = 136/255, b = 1 }  end
-	
+	if self.options.colors.itemid == nil then self.options.colors.itemid = { r = 82/255, g = 211/255, b = 134/255 }  end
+
 	self.db = {}
 	
 	--the player DB defaults to the current realm, if you want more then you need to iterate BagSyncDB
@@ -931,6 +939,9 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 		frame:Show()
 		return
 	end
+	
+	--use our stripped itemlink, not the full link
+	local shortItemID = ToShortItemID(itemLink)
 
 	--only show tooltips in search frame if the option is enabled
 	if self.options.tooltipOnlySearch and frame:GetOwner() and frame:GetOwner():GetName() and string.sub(frame:GetOwner():GetName(), 1, 16) ~= "BagSyncSearchRow" then
@@ -939,9 +950,11 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 	end
 	
 	--ignore the hearthstone and blacklisted items
-	if itemLink and tonumber(itemLink) and (tonumber(itemLink) == 6948 or tonumber(itemLink) == 110560 or tonumber(itemLink) == 140192 or self.db.blacklist[self.currentRealm][tonumber(itemLink)]) then
-		frame:Show()
-		return
+	if shortItemID and tonumber(shortItemID) then
+		if tonumber(shortItemID) == 6948 or tonumber(shortItemID) == 110560 or tonumber(shortItemID) == 140192 or self.db.blacklist[self.currentRealm][tonumber(shortItemID)] then
+			frame:Show()
+			return
+		end
 	end
 	
 	--lag check (check for previously displayed data) if so then display it
@@ -952,6 +965,9 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 				if ename and ecount then
 					local color = self.options.colors.total
 					frame:AddDoubleLine(ename, ecount, color.r, color.g, color.b, color.r, color.g, color.b)
+				else
+					local color = self.options.colors.second
+					frame:AddLine(self.PreviousItemTotals[i], color.r, color.g, color.b)				
 				end
 			end
 		end
@@ -1069,9 +1085,14 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 		table.insert(self.PreviousItemTotals, tooltipColor(self.options.colors.total, L.TooltipTotal).."@"..tooltipColor(self.options.colors.second, grandTotal))
 	end
 	
+	--add ItemID if it's enabled
+	if table.getn(self.PreviousItemTotals) > 0 and self.options.enableTooltipItemID and shortItemID and tonumber(shortItemID) then
+		table.insert(self.PreviousItemTotals, 1 , tooltipColor(self.options.colors.itemid, L.TooltipItemID).." "..tooltipColor(self.options.colors.second, shortItemID))
+	end
+	
 	--now check for seperater and only add if we have something in the table already
 	if table.getn(self.PreviousItemTotals) > 0 and self.options.enableTooltipSeperator then
-		table.insert(self.PreviousItemTotals, 1 , " @ ")
+		table.insert(self.PreviousItemTotals, 1 , " ")
 	end
 	
 	--add it all together now
@@ -1081,6 +1102,9 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 			if ename and ecount then
 				local color = self.options.colors.total
 				frame:AddDoubleLine(ename, ecount, color.r, color.g, color.b, color.r, color.g, color.b)
+			else
+				local color = self.options.colors.second
+				frame:AddLine(self.PreviousItemTotals[i], color.r, color.g, color.b)				
 			end
 		end
 	end

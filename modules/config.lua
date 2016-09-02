@@ -266,7 +266,16 @@ options.args.display = {
 			set = set,
 			arg = "display.enableBNetAccountItems",
 		},
-
+		itemid = {
+			order = 11,
+			type = "toggle",
+			name = L.DisplayItemID,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.enableTooltipItemID",
+		},
 	},
 }
 	
@@ -341,6 +350,17 @@ options.args.color = {
 			get = get,
 			set = set,
 			arg = "color.bnet",
+		},
+		itemid = {
+			order = 7,
+			type = "color",
+			name = L.ColorItemID,
+			width = "full",
+			hasAlpha = false,
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "color.itemid",
 		},
 	},
 }
