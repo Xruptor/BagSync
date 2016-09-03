@@ -916,9 +916,16 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 		return
 	end
 	
+	local permIgnore ={
+		[6948] = "Hearthstone",
+		[110560] = "Garrison Hearthstone",
+		[140192] = "Dalaran Hearthstone",
+		[128353] = "Admiral's Compass",
+	}
+	
 	--ignore the hearthstone and blacklisted items
 	if shortItemID and tonumber(shortItemID) then
-		if tonumber(shortItemID) == 6948 or tonumber(shortItemID) == 110560 or tonumber(shortItemID) == 140192 or self.db.blacklist[self.currentRealm][tonumber(shortItemID)] then
+		if permIgnore[tonumber(shortItemID)] or self.db.blacklist[self.currentRealm][tonumber(shortItemID)] then
 			frame:Show()
 			return
 		end
@@ -1010,7 +1017,10 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 						for q, r in pairs(self.db.guild[v.realm][guildN]) do
 							local dblink, dbcount = strsplit(",", r)
 							if dblink and dblink == itemLink then
-								allowList["guild"] = allowList["guild"] + (dbcount or 1)
+								--if we have show guild names then don't show any guild info for the character, otherwise it gets repeated twice
+								if not self.options.showGuildNames then
+									allowList["guild"] = allowList["guild"] + (dbcount or 1)
+								end
 								tmpCount = tmpCount + (dbcount or 1)
 								grandTotal = grandTotal + (dbcount or 1)
 							end
