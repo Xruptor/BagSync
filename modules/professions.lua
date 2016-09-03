@@ -120,7 +120,7 @@ function Professions:DisplayList()
 
 		local tmp = {}
 		local yName, yRealm  = strsplit("^", k)
-		local playerName = BSYC:GetCharacterRealmInfo(yName, yRealm)
+		local playerName = BSYC:GetRealmTags(yName, yRealm)
 
 		for q, r in pairs(v) do
 			table.insert(tmp, { player=playerName, name=r.name, level=r.level, recipes=r.recipes } )

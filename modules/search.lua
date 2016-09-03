@@ -237,7 +237,7 @@ function Search:DoSearch(searchStr)
 					if guildN and BSYC.db.guild[v.realm][guildN] then
 						--check to see if this guild has already been done through this run (so we don't do it multiple times)
 						--check for XR/B.Net support
-						local gName = BSYC:GetGuildRealmInfo(guildN, v.realm)
+						local gName = BSYC:GetRealmTags(guildN, v.realm, true)
 					
 						if not previousGuilds[gName] then
 							--we only really need to see this information once per guild

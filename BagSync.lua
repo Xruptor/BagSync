@@ -421,66 +421,33 @@ function BSYC:FilterDB(dbSelect)
 	return xIndex
 end
 
-function BSYC:GetCharacterRealmInfo(charName, charRealm)
-
-	local yName, yRealm  = strsplit("^", charName)
-	local realmFullName = charRealm --default to shortened realm first
+function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 	
-	if self.db.realmkey[charRealm] then realmFullName = self.db.realmkey[charRealm] end --second, if we have a realmkey with a true realm name then use it
+	local fullRealmName = srcRealm --default to shortened realm first
+	
+	if not isGuild then
+		local yName, yRealm  = strsplit("^", srcName)
+		srcName = yName
+	end
+	
+	if self.db.realmkey[srcRealm] then fullRealmName = self.db.realmkey[srcRealm] end --second, if we have a realmkey with a true realm name then use it
 	
 	--add Cross-Realm and BNet identifiers to Characters not on same realm
 	if self.options.enableBNetAccountItems then
-		if charRealm and charRealm ~= self.currentRealm then
-			if not self.crossRealmNames[charRealm] then
-				charName = yName.." "..rgbhex(self.options.colors.bnet).."[BNet-"..realmFullName.."]|r"
+		if srcRealm and srcRealm ~= self.currentRealm then
+			if not self.crossRealmNames[srcRealm] then
+				srcName = srcName.." "..rgbhex(self.options.colors.bnet).."[BNet-"..fullRealmName.."]|r"
 			else
-				charName = yName.." "..rgbhex(self.options.colors.cross).."[XR-"..realmFullName.."]|r"
+				srcName = srcName.." "..rgbhex(self.options.colors.cross).."[XR-"..fullRealmName.."]|r"
 			end
-		else
-			charName = yName
 		end
 	elseif self.options.enableCrossRealmsItems then
-		if charRealm and charRealm ~= self.currentRealm then
-			charName = yName.." "..rgbhex(self.options.colors.cross).."[XR-"..realmFullName.."]|r"
-		else
-			charName = yName
+		if srcRealm and srcRealm ~= self.currentRealm then
+			srcName = srcName.." "..rgbhex(self.options.colors.cross).."[XR-"..fullRealmName.."]|r"
 		end
-	else
-		charName = yName
 	end
 		
-	return charName
-end
-
-function BSYC:GetGuildRealmInfo(guildName, guildRealm)
-
-	local realmFullName = guildRealm
-	
-	if self.db.realmkey[guildRealm] then realmFullName = self.db.realmkey[guildRealm] end
-	
-	--add Cross-Realm and BNet identifiers to Guilds not on same realm
-	if self.options.enableBNetAccountItems then
-		if guildRealm and guildRealm ~= self.currentRealm then
-			if not self.crossRealmNames[guildRealm] then
-				guildName = guildName.." "..rgbhex(self.options.colors.bnet).."[BNet-"..realmFullName.."]|r"
-			else
-				guildName = guildName.." "..rgbhex(self.options.colors.cross).."[XR-"..realmFullName.."]|r"
-			end
-		else
-			guildName = guildName
-		end
-	elseif self.options.enableCrossRealmsItems then
-		if guildRealm and guildRealm ~= self.currentRealm then
-			guildName = guildName.." "..rgbhex(self.options.colors.cross).."[XR-"..realmFullName.."]|r"
-		else
-			guildName = guildName
-		end
-	else
-		--to cover our buttocks lol, JUST IN CASE
-		guildName = guildName
-	end
-		
-	return guildName
+	return srcName
 end
 
 ----------------------
@@ -771,7 +738,7 @@ function BSYC:ShowMoneyTooltip()
 
 	for k, v in pairs(xDB) do
 		if v.gold then
-			k = self:GetCharacterRealmInfo(k, v.realm)
+			k = self:GetRealmTags(k, v.realm)
 			table.insert(usrData, { name=k, gold=v.gold } )
 		end
 	end
@@ -902,7 +869,7 @@ function BSYC:AddCurrencyTooltip(frame, currencyName, addHeader)
 		
 	for k, v in pairs(xDB) do
 		local yName, yRealm  = strsplit("^", k)
-		local playerName = BSYC:GetCharacterRealmInfo(yName, yRealm)
+		local playerName = BSYC:GetRealmTags(yName, yRealm)
 	
 		for q, r in pairs(v) do
 			if q == currencyName then
@@ -1035,7 +1002,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 				if guildN and self.db.guild[v.realm][guildN] then
 					--check to see if this guild has already been done through this run (so we don't do it multiple times)
 					--check for XR/B.Net support, you can have multiple guilds with same names on different servers
-					local gName = self:GetGuildRealmInfo(guildN, v.realm)
+					local gName = self:GetRealmTags(guildN, v.realm, true)
 					
 					if not previousGuilds[gName] then
 						--we only really need to see this information once per guild
@@ -1058,7 +1025,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 			infoString = self:CreateItemTotals(allowList)
 
 			if infoString then
-				k = self:GetCharacterRealmInfo(k, v.realm)
+				k = self:GetRealmTags(k, v.realm)
 				table.insert(self.PreviousItemTotals, self:GetClassColor(k or "Unknown", pClass).."@"..(infoString or "unknown"))
 			end
 			
