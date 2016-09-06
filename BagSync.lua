@@ -82,7 +82,7 @@ local function ParseItemLink(link)
 	if result then
 		result = gsub(result, ":0:", "::") --supposedly blizzard removed all the zero's in patch 7.0. Lets do it just in case!
 
-		--return the number of times it has split the item string
+		--split everything into a table so we can count up to the bonusID portion
 		local countSplit = {strsplit(":", result)}
 		
 		--make sure we have a bonusID count
@@ -98,7 +98,7 @@ local function ParseItemLink(link)
 				--return the string with just the bonusID's in it
 				local newItemStr = ""
 				
-				--11th place because 13 is bonus ID, one less from 13 (12) would be technically correct, but we have to compensate for ItemID we added so substract another (11).
+				--11th place because 13 is bonus ID, one less from 13 (12) would be technically correct, but we have to compensate for ItemID we added in front so substract another one (11).
 				--string.rep repeats a pattern.
 				newItemStr = countSplit[1]..string.rep(":", 11)
 				
@@ -194,9 +194,11 @@ function BSYC:StartupDB()
 
 	self.db = {}
 	
-	--the player DB defaults to the current realm, if you want more then you need to iterate BagSyncDB
+	--initiate global db variable
 	BagSyncDB = BagSyncDB or {}
 	self.db.global = BagSyncDB
+	
+	--the player DB defaults to the current realm, if you want more then you need to use db.global
 	BagSyncDB[self.currentRealm] = BagSyncDB[self.currentRealm] or {}
 	BagSyncDB[self.currentRealm][self.currentPlayer] = BagSyncDB[self.currentRealm][self.currentPlayer] or {}
 	self.db.player = BagSyncDB[self.currentRealm][self.currentPlayer]
@@ -1766,7 +1768,7 @@ function BSYC:TRADE_SKILL_LIST_UPDATE()
 		for idx = 1, #recipeIDs do
 			recipeInfo = _G.C_TradeSkillUI.GetRecipeInfo(recipeIDs[idx])
 			
-			if recipeInfo and recipeInfo.learned and recipeInfo.craftable then
+			if recipeInfo and recipeInfo.learned then
 				recipeString = recipeString.."|"..recipeInfo.recipeID
 			end
 		end
