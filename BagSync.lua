@@ -81,7 +81,6 @@ local function ParseItemLink(link)
 	
 	if result then
 		result = gsub(result, ":0:", "::") --supposedly blizzard removed all the zero's in patch 7.0. Lets do it just in case!
-
 		--split everything into a table so we can count up to the bonusID portion
 		local countSplit = {strsplit(":", result)}
 		
@@ -104,6 +103,11 @@ local function ParseItemLink(link)
 				
 				--lets add the bonusID's, ignore the end past bonusID's
 				for i=13, (13 + count) do
+					--check for certain bonus ID's
+					if i == 14 and tonumber(countSplit[i]) == 3407 then
+						--the tradeskill window returns a 1:3407 for bonusID on regeant info and craft item in C_TradeSkillUI, ignore it
+						return result:match("^(%d+):")
+					end
 					newItemStr = newItemStr..":"..countSplit[i]
 				end
 				
@@ -115,7 +119,7 @@ local function ParseItemLink(link)
 		end
 		
 		--we don't have any bonusID's that we care about, so return just the ItemID which is the first number
-		return result:match("(%d+):")
+		return result:match("^(%d+):")
 	end
 	
 	--nothing to return so return nil
@@ -125,7 +129,8 @@ end
 local function ToShortItemID(link)
 	if not link then return nil end
 	if tonumber(link) then return link end
-	return link:match("(%d+):") or nil
+	link = gsub(link, ":0:", "::")
+	return link:match("^(%d+):") or nil
 end
 
 local function IsInBG()
@@ -1244,13 +1249,7 @@ function BSYC:HookTooltip(tooltip)
 		local currencyName = GetBackpackCurrencyInfo(index)
 		BSYC:AddCurrencyTooltip(self, currencyName)
 	end)
-	-- hooksecurefunc(tooltip, 'SetTradeSkillReagentInfo', function(self, index)
-		-- if self.isModified then return end
-		-- self.isModified = true
-		-- local currencyName = GetTradeSkillReagentInfo(index,1)
-		-- BSYC:AddCurrencyTooltip(self, currencyName)
-	-- end)
-	
+
 end
 
 ------------------------------
