@@ -1,0 +1,8 @@
+## Interface: 50400
+## Title: Unfit-1.0
+## Notes: Determines which items are usable or not for the player's class.
+## Author: João Cardoso (Jaliborc)
+## OptionalDeps: LibStub
+## X-Category: Library
+
+Unfit-1.0.lua
