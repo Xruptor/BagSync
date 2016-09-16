@@ -1,0 +1,7 @@
+package-as: BagSync
+
+externals:
+    libs/CustomSearch-1.0: https://github.com/Jaliborc/CustomSearch-1.0.git
+    libs/LibDataBroker-1.1: https://github.com/tekkub/libdatabroker-1-1.git
+    libs/LibItemSearch-1.2: https://github.com/Jaliborc/LibItemSearch-1.2.git
+    libs/Unfit-1.0: https://github.com/Jaliborc/Unfit-1.0.git
