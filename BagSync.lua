@@ -186,6 +186,7 @@ function BSYC:StartupDB()
 	if self.options.enableCrossRealmsItems == nil then self.options.enableCrossRealmsItems = true end
 	if self.options.enableBNetAccountItems == nil then self.options.enableBNetAccountItems = false end
 	if self.options.enableTooltipItemID == nil then self.options.enableTooltipItemID = false end
+	if self.options.enableTooltipGreenCheck == nil then self.options.enableTooltipGreenCheck = true end
 
 	--setup the default colors
 	if self.options.colors == nil then self.options.colors = {} end
@@ -435,6 +436,14 @@ function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 	if not isGuild then
 		local yName, yRealm  = strsplit("^", srcName)
 		srcName = yName
+		
+		local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
+		--local NotReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-NotReady:0|t]]
+		
+		--put a green check next to the currently logged in character name
+		if yName == self.currentPlayer and self.options.enableTooltipGreenCheck then
+			srcName = srcName.." "..ReadyCheck
+		end
 	end
 	
 	if self.db.realmkey[srcRealm] then fullRealmName = self.db.realmkey[srcRealm] end --second, if we have a realmkey with a true realm name then use it
@@ -704,7 +713,7 @@ function BSYC:CreateMoneyString(money, color)
 	return moneystring
 end
 
-function BSYC:ShowMoneyTooltip()
+function BSYC:ShowMoneyTooltip(objTooltip)
 	local tooltip = _G["BagSyncMoneyTooltip"] or nil
 	
 	if (not tooltip) then
@@ -732,10 +741,16 @@ function BSYC:ShowMoneyTooltip()
 
 	local usrData = {}
 	
-	tooltip:SetOwner(UIParent, "ANCHOR_NONE")
 	tooltip:ClearLines()
 	tooltip:ClearAllPoints()
-	tooltip:SetPoint("CENTER",UIParent,"CENTER",0,0)
+	
+	if objTooltip then
+		tooltip:SetOwner(objTooltip, "ANCHOR_NONE")
+		tooltip:SetPoint("CENTER",objTooltip,"CENTER",0,0)
+	else
+		tooltip:SetOwner(UIParent, "ANCHOR_NONE")
+		tooltip:SetPoint("CENTER",UIParent,"CENTER",0,0)
+	end
 
 	tooltip:AddLine("BagSync")
 	tooltip:AddLine(" ")
@@ -765,6 +780,19 @@ function BSYC:ShowMoneyTooltip()
 	tooltip:AddLine(" ")
 	tooltip:Show()
 end
+
+function BSYC:HideMoneyTooltip()
+	local tooltip = _G["BagSyncMoneyTooltip"] or nil
+	if tooltip then
+		tooltip:Hide()
+	end
+end
+
+--hooksecurefunc("SmallMoneyFrame_OnLoad", function(tooltip) BSYC:Debug(1, tooltip:GetName()) end)
+--hooksecurefunc("MoneyFrame_OnEnter", function(tooltip) BSYC:Debug(2, tooltip:GetName()) end)
+--hooksecurefunc("MoneyFrame_OnLeave", function(tooltip)BSYC:Debug(3, tooltip:GetName()) end)
+--hooksecurefunc("MoneyFrame_UpdateMoney", function(tooltip)BSYC:Debug(3, tooltip:GetName()) end)
+--hooksecurefunc("MoneyFrame_Update", function(tooltip)BSYC:Debug(4, tooltip) end)
 
 ------------------------
 --      Currency      --
@@ -877,6 +905,8 @@ function BSYC:AddCurrencyTooltip(frame, currencyName, addHeader)
 	for k, v in pairs(xDB) do
 		local yName, yRealm  = strsplit("^", k)
 		local playerName = BSYC:GetRealmTags(yName, yRealm)
+		
+		playerName = self:GetClassColor(playerName or "Unknown", self.db.global[yRealm][yName].class)
 	
 		for q, r in pairs(v) do
 			if q == currencyName then
@@ -901,7 +931,6 @@ function BSYC:AddCurrencyTooltip(frame, currencyName, addHeader)
 		end
 	end
 	
-	frame:Show()
 end
 
 function BSYC:AddItemToTooltip(frame, link) --workaround
@@ -910,7 +939,6 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 	--if we can't convert the item link then lets just ignore it altogether	
 	local itemLink = ParseItemLink(link)
 	if not itemLink then
-		frame:Show()
 		return
 	end
 	
@@ -919,7 +947,6 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 
 	--only show tooltips in search frame if the option is enabled
 	if self.options.tooltipOnlySearch and frame:GetOwner() and frame:GetOwner():GetName() and string.sub(frame:GetOwner():GetName(), 1, 16) ~= "BagSyncSearchRow" then
-		frame:Show()
 		return
 	end
 	
@@ -933,7 +960,6 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 	--ignore the hearthstone and blacklisted items
 	if shortItemID and tonumber(shortItemID) then
 		if permIgnore[tonumber(shortItemID)] or self.db.blacklist[self.currentRealm][tonumber(shortItemID)] then
-			frame:Show()
 			return
 		end
 	end
@@ -952,7 +978,6 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 				end
 			end
 		end
-		frame:Show()
 		return
 	end
 
@@ -1092,8 +1117,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 			end
 		end
 	end
-		
-	frame:Show()
+
 end
 
 function BSYC:HookTooltip(tooltip)

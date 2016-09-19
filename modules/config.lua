@@ -4,6 +4,7 @@ local config = LibStub("AceConfig-3.0")
 local configDialog = LibStub("AceConfigDialog-3.0")
 
 local options = {}
+local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
 
 options.type = "group"
 options.name = "BagSync"
@@ -275,6 +276,16 @@ options.args.display = {
 			get = get,
 			set = set,
 			arg = "display.enableTooltipItemID",
+		},
+		greencheck = {
+			order = 12,
+			type = "toggle",
+			name = string.format(L.DisplayGreenCheck, ReadyCheck),
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.enableTooltipGreenCheck",
 		},
 	},
 }
