@@ -788,12 +788,6 @@ function BSYC:HideMoneyTooltip()
 	end
 end
 
---hooksecurefunc("SmallMoneyFrame_OnLoad", function(tooltip) BSYC:Debug(1, tooltip:GetName()) end)
---hooksecurefunc("MoneyFrame_OnEnter", function(tooltip) BSYC:Debug(2, tooltip:GetName()) end)
---hooksecurefunc("MoneyFrame_OnLeave", function(tooltip)BSYC:Debug(3, tooltip:GetName()) end)
---hooksecurefunc("MoneyFrame_UpdateMoney", function(tooltip)BSYC:Debug(3, tooltip:GetName()) end)
---hooksecurefunc("MoneyFrame_Update", function(tooltip)BSYC:Debug(4, tooltip) end)
-
 ------------------------
 --      Currency      --
 ------------------------
