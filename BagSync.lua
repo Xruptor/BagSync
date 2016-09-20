@@ -1229,7 +1229,7 @@ function BSYC:HookTooltip(tooltip)
 		local link = GetQuestLogItemLink(itemType, index)
 		if link and ParseItemLink(link) then
 			self.isModified = true
-			AddItemToTooltip(self, link)
+			BSYC:AddItemToTooltip(self, link)
 		end
 	end)
 	hooksecurefunc(tooltip, "SetQuestItem", function(self, itemType, index)
