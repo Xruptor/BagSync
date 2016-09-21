@@ -91,10 +91,10 @@ function Currency:DisplayList()
 	
 	local xDB = BSYC:FilterDB(2) --dbSelect 2
 	
-	--loop through our characters
-	--k = player, v = stored data for player
+	--loop through our database and collect the currenry headers
 	for k, v in pairs(xDB) do
-
+		--no need to split to get playername and realm as it's not important, we let AddCurrencyTooltip() handle that
+		--loop through each player table and grab only the headers and insert it into a temp table if it doesn't already exist
 		for q, r in pairs(v) do
 			if not tempList[q] then
 				--we only really want to list the currency once for display
@@ -103,7 +103,6 @@ function Currency:DisplayList()
 				count = count + 1
 			end
 		end
-		
 	end
 		
 	--show or hide the scrolling frame depending on count

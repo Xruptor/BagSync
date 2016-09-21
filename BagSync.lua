@@ -423,7 +423,15 @@ function BSYC:FilterDB(dbSelect)
 			end
 		end
 	else
-		xIndex = dbObj[self.currentRealm]
+		--do only the current realm if they don't have anything else configured
+		for k, v in pairs(dbObj) do
+			if k == self.currentRealm then
+				for q, r in pairs(v) do
+					----can't have multiple characters on same realm, but we need formatting anyways
+					xIndex[q.."^"..k] = r
+				end
+			end
+		end
 	end
 	
 	return xIndex
@@ -434,14 +442,16 @@ function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 	local fullRealmName = srcRealm --default to shortened realm first
 	
 	if not isGuild then
+		--check just in case!  we only want the name not the realm
 		local yName, yRealm  = strsplit("^", srcName)
+
 		srcName = yName
 		
 		local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
 		--local NotReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-NotReady:0|t]]
 		
 		--put a green check next to the currently logged in character name
-		if yName == self.currentPlayer and self.options.enableTooltipGreenCheck then
+		if srcName == self.currentPlayer and self.options.enableTooltipGreenCheck then
 			srcName = srcName.." "..ReadyCheck
 		end
 	end
@@ -899,9 +909,9 @@ function BSYC:AddCurrencyTooltip(frame, currencyName, addHeader)
 	for k, v in pairs(xDB) do
 		local yName, yRealm  = strsplit("^", k)
 		local playerName = BSYC:GetRealmTags(yName, yRealm)
-		
+
 		playerName = self:GetClassColor(playerName or "Unknown", self.db.global[yRealm][yName].class)
-	
+
 		for q, r in pairs(v) do
 			if q == currencyName then
 				--we only really want to list the currency once for display
@@ -925,6 +935,7 @@ function BSYC:AddCurrencyTooltip(frame, currencyName, addHeader)
 		end
 	end
 	
+	frame:Show()
 end
 
 function BSYC:AddItemToTooltip(frame, link) --workaround
@@ -933,6 +944,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 	--if we can't convert the item link then lets just ignore it altogether	
 	local itemLink = ParseItemLink(link)
 	if not itemLink then
+		frame:Show()
 		return
 	end
 	
@@ -941,6 +953,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 
 	--only show tooltips in search frame if the option is enabled
 	if self.options.tooltipOnlySearch and frame:GetOwner() and frame:GetOwner():GetName() and string.sub(frame:GetOwner():GetName(), 1, 16) ~= "BagSyncSearchRow" then
+		frame:Show()
 		return
 	end
 	
@@ -954,6 +967,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 	--ignore the hearthstone and blacklisted items
 	if shortItemID and tonumber(shortItemID) then
 		if permIgnore[tonumber(shortItemID)] or self.db.blacklist[self.currentRealm][tonumber(shortItemID)] then
+			frame:Show()
 			return
 		end
 	end
@@ -972,6 +986,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 				end
 			end
 		end
+		frame:Show()
 		return
 	end
 
@@ -1112,6 +1127,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 		end
 	end
 
+	frame:Show()
 end
 
 function BSYC:HookTooltip(tooltip)
