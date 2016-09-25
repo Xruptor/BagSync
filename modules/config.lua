@@ -287,6 +287,16 @@ options.args.display = {
 			set = set,
 			arg = "display.enableTooltipGreenCheck",
 		},
+		realmidtags = {
+			order = 13,
+			type = "toggle",
+			name = L.DisplayRealmIDTags,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.enableRealmIDTags",
+		},
 	},
 }
 	

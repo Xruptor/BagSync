@@ -187,7 +187,8 @@ function BSYC:StartupDB()
 	if self.options.enableBNetAccountItems == nil then self.options.enableBNetAccountItems = false end
 	if self.options.enableTooltipItemID == nil then self.options.enableTooltipItemID = false end
 	if self.options.enableTooltipGreenCheck == nil then self.options.enableTooltipGreenCheck = true end
-
+	if self.options.enableRealmIDTags == nil then self.options.enableRealmIDTags = true end
+	
 	--setup the default colors
 	if self.options.colors == nil then self.options.colors = {} end
 	if self.options.colors.first == nil then self.options.colors.first = { r = 128/255, g = 1, b = 0 }  end
@@ -454,22 +455,39 @@ function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 		if srcName == self.currentPlayer and self.options.enableTooltipGreenCheck then
 			srcName = srcName.." "..ReadyCheck
 		end
+	else
+		--sometimes a person has characters on multiple connected servers joined to the same guild.
+		--the guild information is saved twice because although the guild is on the connected server, the characters themselves are on different servers.
+		--too compensate for this, lets check the connected server and return only the guild name.  So it doesn't get processed twice.
+		--This is because it will be caught by previousGuilds{}
+		if srcRealm == self.currentRealm or self.crossRealmNames[srcRealm] then
+			--return non-modified guild name
+			return srcName
+		end
 	end
 	
 	if self.db.realmkey[srcRealm] then fullRealmName = self.db.realmkey[srcRealm] end --second, if we have a realmkey with a true realm name then use it
 	
 	--add Cross-Realm and BNet identifiers to Characters not on same realm
+	local crossString = ""
+	local bnetString = ""
+	
+	if self.options.enableRealmIDTags then
+		crossString = "XR-"
+		bnetString = "BNet-"
+	end
+	
 	if self.options.enableBNetAccountItems then
 		if srcRealm and srcRealm ~= self.currentRealm then
 			if not self.crossRealmNames[srcRealm] then
-				srcName = srcName.." "..rgbhex(self.options.colors.bnet).."[BNet-"..fullRealmName.."]|r"
+				srcName = srcName.." "..rgbhex(self.options.colors.bnet).."["..bnetString..fullRealmName.."]|r"
 			else
-				srcName = srcName.." "..rgbhex(self.options.colors.cross).."[XR-"..fullRealmName.."]|r"
+				srcName = srcName.." "..rgbhex(self.options.colors.cross).."["..crossString..fullRealmName.."]|r"
 			end
 		end
 	elseif self.options.enableCrossRealmsItems then
 		if srcRealm and srcRealm ~= self.currentRealm then
-			srcName = srcName.." "..rgbhex(self.options.colors.cross).."[XR-"..fullRealmName.."]|r"
+			srcName = srcName.." "..rgbhex(self.options.colors.cross).."["..crossString..fullRealmName.."]|r"
 		end
 	end
 		

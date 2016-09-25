@@ -4,6 +4,8 @@ if not L then return end
 
 --PLEASE LOOK AT enUS.lua for a complete localization list
 
+--special thanks to WetU @ GitHub
+
 L.TooltipBag = "가방:"
 L.TooltipBank = "은행:"
 L.TooltipEquip = "착용중:"
@@ -90,6 +92,7 @@ L.DisplayCrossRealm = "다른 서버 캐릭터의 아이템을 표시합니다."
 L.DisplayBNET = "Battle.Net 계정 캐릭터의 아이템을 표시합니다 |cFFDF2B2B(권장하지 않음)|r."
 L.DisplayItemID = "툴팁에 아이템ID를 표시합니다."
 L.DisplayGreenCheck = "현재 캐릭터 이름 옆에 %s를 표시합니다."
+L.DisplayRealmIDTags = "서버 식별자 |cffff7d0a[XR]|r 과 |cff3587ff[BNet]|r을 표시합니다."
 L.ColorPrimary = "주 BagSync 툴팁 색상."
 L.ColorSecondary = "보조 BagSync 툴팁 색상."
 L.ColorTotal = "BagSync [총] 툴팁 색상."
