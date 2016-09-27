@@ -162,6 +162,7 @@ function Search:DoSearch(searchStr)
 	local searchTable = {}
 	local tempList = {}
 	local previousGuilds = {}
+	local previousGuildsXRList = {}
 	local count = 0
 	local playerSearch = false
 	local countWarning = 0
@@ -239,7 +240,13 @@ function Search:DoSearch(searchStr)
 						--check for XR/B.Net support
 						local gName = BSYC:GetRealmTags(guildN, v.realm, true)
 					
-						if not previousGuilds[gName] then
+						--check to make sure we didn't already add a guild from a connected-realm
+						local trueRealmList = BSYC.db.realmkey[0][v.realm] --get the connected realms
+						table.sort(trueRealmList, function(a,b) return (a < b) end) --sort them alphabetically
+						trueRealmList = table.concat(trueRealmList, "|") --concat them together
+						trueRealmList = guildN.."-"..trueRealmList --add the guild name in front of concat realm list
+					
+						if not previousGuilds[gName] and not previousGuildsXRList[trueRealmList] then
 							--we only really need to see this information once per guild
 							for q, r in pairs(BSYC.db.guild[v.realm][guildN]) do
 								local dblink, dbcount = strsplit(",", r)
@@ -262,6 +269,7 @@ function Search:DoSearch(searchStr)
 								end
 							end
 							previousGuilds[gName] = true
+							previousGuildsXRList[trueRealmList] = true
 						end
 						
 					end

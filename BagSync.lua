@@ -229,6 +229,7 @@ function BSYC:StartupDB()
 	
 	BagSync_REALMKEY = BagSync_REALMKEY or {}
 	BagSync_REALMKEY[self.currentRealm] = GetRealmName()
+	BagSync_REALMKEY[0] = BagSync_REALMKEY[0] or {} --this will maintain a list of connected realms
 	self.db.realmkey = BagSync_REALMKEY
 	
 end
@@ -442,6 +443,8 @@ function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 	
 	local fullRealmName = srcRealm --default to shortened realm first
 	
+	if self.db.realmkey[srcRealm] then fullRealmName = self.db.realmkey[srcRealm] end --second, if we have a realmkey with a true realm name then use it
+	
 	if not isGuild then
 		--check just in case!  we only want the name not the realm
 		local yName, yRealm  = strsplit("^", srcName)
@@ -459,14 +462,14 @@ function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 		--sometimes a person has characters on multiple connected servers joined to the same guild.
 		--the guild information is saved twice because although the guild is on the connected server, the characters themselves are on different servers.
 		--too compensate for this, lets check the connected server and return only the guild name.  So it doesn't get processed twice.
-		--This is because it will be caught by previousGuilds{}
-		if srcRealm == self.currentRealm or self.crossRealmNames[srcRealm] then
-			--return non-modified guild name
-			return srcName
+		for k, v in pairs(self.crossRealmNames) do
+			--check to see if the guild exists already on a connected realm
+			if k ~= srcRealm and self.db.guild[k] and self.db.guild[k][srcName] then
+				--return non-modified guild name, we only want the guild listed once for the cross-realm
+				return srcName
+			end
 		end
 	end
-	
-	if self.db.realmkey[srcRealm] then fullRealmName = self.db.realmkey[srcRealm] end --second, if we have a realmkey with a true realm name then use it
 	
 	--add Cross-Realm and BNet identifiers to Characters not on same realm
 	local crossString = ""
@@ -1014,6 +1017,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 	
 	--this is so we don't scan the same guild multiple times
 	local previousGuilds = {}
+	local previousGuildsXRList = {}
 	local grandTotal = 0
 	local first = true
 	
@@ -1070,7 +1074,13 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 					--check for XR/B.Net support, you can have multiple guilds with same names on different servers
 					local gName = self:GetRealmTags(guildN, v.realm, true)
 					
-					if not previousGuilds[gName] then
+					--check to make sure we didn't already add a guild from a connected-realm
+					local trueRealmList = self.db.realmkey[0][v.realm] --get the connected realms
+					table.sort(trueRealmList, function(a,b) return (a < b) end) --sort them alphabetically
+					trueRealmList = table.concat(trueRealmList, "|") --concat them together
+					trueRealmList = guildN.."-"..trueRealmList --add the guild name in front of concat realm list
+					
+					if not previousGuilds[gName] and not previousGuildsXRList[trueRealmList] then
 						--we only really need to see this information once per guild
 						local tmpCount = 0
 						for q, r in pairs(self.db.guild[v.realm][guildN]) do
@@ -1085,6 +1095,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 							end
 						end
 						previousGuilds[gName] = tmpCount
+						previousGuildsXRList[trueRealmList] = true
 					end
 				end
 			end
@@ -1401,12 +1412,16 @@ function BSYC:OnEnable()
 	--strip realm of whitespace and special characters, alternative to UnitFullName, since UnitFullName does not work on OnInitialize()
 	--BSYC:Debug(gsub(GetRealmName(),"[%s%-]",""))
 	
+	local realmList = {} --we are going to use this to store a list of connected realms, including the current realm
 	local autoCompleteRealms = GetAutoCompleteRealms() or { self.currentRealm }
-
+	
+	table.insert(realmList, self.currentRealm)
+	
 	self.crossRealmNames = {}
 	for k, v in pairs(autoCompleteRealms) do
 		if v ~= self.currentRealm then
 			self.crossRealmNames[v] = true
+			table.insert(realmList, v)
 		end
 	end
 	
@@ -1418,7 +1433,10 @@ function BSYC:OnEnable()
 		self:FixDB()
 		self.options.dbversion = ver
 	end
-	
+
+	--save the connected realm list, if there is any
+	self.db.realmkey[0][self.currentRealm] = realmList
+
 	--save the current user money (before bag update)
 	self.db.player.gold = GetMoney()
 
