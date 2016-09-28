@@ -188,6 +188,8 @@ function BSYC:StartupDB()
 	if self.options.enableTooltipItemID == nil then self.options.enableTooltipItemID = false end
 	if self.options.enableTooltipGreenCheck == nil then self.options.enableTooltipGreenCheck = true end
 	if self.options.enableRealmIDTags == nil then self.options.enableRealmIDTags = true end
+	if self.options.enableRealmAstrickName == nil then self.options.enableRealmAstrickName = false end
+	if self.options.enableRealmShortName == nil then self.options.enableRealmShortName = false end
 	
 	--setup the default colors
 	if self.options.colors == nil then self.options.colors = {} end
@@ -463,7 +465,7 @@ function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 		--the guild information is saved twice because although the guild is on the connected server, the characters themselves are on different servers.
 		--too compensate for this, lets check the connected server and return only the guild name.  So it doesn't get processed twice.
 		for k, v in pairs(self.crossRealmNames) do
-			--check to see if the guild exists already on a connected realm
+			--check to see if the guild exists already on a connected realm and not the current realm
 			if k ~= srcRealm and self.db.guild[k] and self.db.guild[k][srcName] then
 				--return non-modified guild name, we only want the guild listed once for the cross-realm
 				return srcName
@@ -478,6 +480,12 @@ function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 	if self.options.enableRealmIDTags then
 		crossString = "XR-"
 		bnetString = "BNet-"
+	end
+	
+	if self.options.enableRealmAstrickName then
+		fullRealmName = "*"
+	elseif self.options.enableRealmShortName then
+		fullRealmName = string.sub(fullRealmName, 1, 5) --only use 5 characters of the server name
 	end
 	
 	if self.options.enableBNetAccountItems then
@@ -792,6 +800,7 @@ function BSYC:ShowMoneyTooltip(objTooltip)
 	for k, v in pairs(xDB) do
 		if v.gold then
 			k = self:GetRealmTags(k, v.realm)
+			k = self:GetClassColor(k or "Unknown", v.class)
 			table.insert(usrData, { name=k, gold=v.gold } )
 		end
 	end

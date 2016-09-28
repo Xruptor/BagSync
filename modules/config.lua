@@ -297,6 +297,26 @@ options.args.display = {
 			set = set,
 			arg = "display.enableRealmIDTags",
 		},
+		realmastrick = {
+			order = 14,
+			type = "toggle",
+			name = L.DisplayRealmAstrick,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.enableRealmAstrickName",
+		},
+		realmshortname = {
+			order = 15,
+			type = "toggle",
+			name = L.DisplayShortRealmName,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.enableRealmShortName",
+		},
 	},
 }
 	
