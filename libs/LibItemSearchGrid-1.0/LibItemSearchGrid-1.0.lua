@@ -278,6 +278,23 @@ Lib:RegisterTypedSearch{
 	end,
 }
 
+--[[ Required Item level ]]--
+
+Lib:RegisterTypedSearch{
+	id = 'reqItemLevel',
+	tags = {'r', 'req', 'rl', 'reql', 'reqlvl'},
+
+	canSearch = function(self, _, search)
+		return tonumber(search)
+	end,
+
+	findItem = function(self, link, operator, num)
+		local lvl = select(5, GetItemInfo(link))
+		if lvl then
+			return compare(operator, lvl, num)
+		end
+	end,
+}
 
 --[[ Tooltip searches ]]--
 
@@ -324,7 +341,7 @@ local function link_FindSearchInTooltip(itemLink, search)
 end
 
 Lib:RegisterTypedSearch{
-	id = 'bindType',
+	id = 'tipPhrases',
 
 	canSearch = function(self, _, search)
 		return self.keywords[search]
@@ -335,14 +352,31 @@ Lib:RegisterTypedSearch{
 	end,
 
 	keywords = {
+		[ITEM_SOULBOUND:lower()] = ITEM_BIND_ON_PICKUP,
     	['soulbound'] = ITEM_BIND_ON_PICKUP,
     	['bound'] = ITEM_BIND_ON_PICKUP,
 		['boe'] = ITEM_BIND_ON_EQUIP,
 		['bop'] = ITEM_BIND_ON_PICKUP,
 		['bou'] = ITEM_BIND_ON_USE,
-		['quest'] = ITEM_BIND_QUEST,
 		['boa'] = ITEM_BIND_TO_BNETACCOUNT,
+		['quest'] = ITEM_BIND_QUEST,
+		[GetItemClassInfo(LE_ITEM_CLASS_QUESTITEM):lower()] = ITEM_BIND_QUEST,
+		[QUESTS_LABEL:lower()] = ITEM_BIND_QUEST,
 		['unique'] = ITEM_UNIQUE,
+		[TOY:lower()] = TOY,
+		[MINIMAP_TRACKING_VENDOR_REAGENT:lower()] = PROFESSIONS_USED_IN_COOKING,
+		['reagent'] = PROFESSIONS_USED_IN_COOKING,
+		['crafting'] = PROFESSIONS_USED_IN_COOKING,
+		['naval'] = 'naval equipment',
+		['follower'] = 'follower',
+		['followe'] = 'follower',
+		['follow'] = 'follower',
+		["relic"] = (GetItemSubClassInfo(LE_ITEM_CLASS_GEM, 11)),
+		["reli"] = (GetItemSubClassInfo(LE_ITEM_CLASS_GEM, 11)),
+		["rel"] = (GetItemSubClassInfo(LE_ITEM_CLASS_GEM, 11)),
+		["power"] = ARTIFACT_POWER,
+		["powe"] = ARTIFACT_POWER,
+		["pow"] = ARTIFACT_POWER,
 	}
 }
 
