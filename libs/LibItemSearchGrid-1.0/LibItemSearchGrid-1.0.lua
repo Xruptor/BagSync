@@ -284,6 +284,17 @@ Lib:RegisterTypedSearch{
 local tooltipCache = setmetatable({}, {__index = function(t, k) local v = {} t[k] = v return v end})
 local tooltipScanner = _G['LibItemSearchTooltipScanner'] or CreateFrame('GameTooltip', 'LibItemSearchTooltipScanner', UIParent, 'GameTooltipTemplate')
 
+local function stripColor(text)
+	if not text or type(text) ~= "string" then return nil end
+
+	local cleanText = text:match("|c[ %x]%x[ %x]%x[ %x]%x[ %x]%x(.+)|r")
+	if cleanText then
+		return cleanText
+	end
+
+	return text
+end
+
 local function link_FindSearchInTooltip(itemLink, search)
 	local itemID = itemLink:match('item:(%d+)')
 	if not itemID then
@@ -299,16 +310,18 @@ local function link_FindSearchInTooltip(itemLink, search)
 	tooltipScanner:SetHyperlink(itemLink)
 
 	local result = false
-	if tooltipScanner:NumLines() > 1 and _G[tooltipScanner:GetName() .. 'TextLeft2']:GetText() == search then
-		result = true
-	elseif tooltipScanner:NumLines() > 2 and _G[tooltipScanner:GetName() .. 'TextLeft3']:GetText() == search then
-		result = true
+	local maxLines = math.min(4, tooltipScanner:NumLines())
+	for i = 2, maxLines do
+		local text = stripColor(_G[tooltipScanner:GetName() .. 'TextLeft' .. i]:GetText())
+		if text == search then
+			result = true
+			break
+		end
 	end
 
 	tooltipCache[search][itemID] = result
 	return result
 end
-
 
 Lib:RegisterTypedSearch{
 	id = 'bindType',
@@ -322,13 +335,14 @@ Lib:RegisterTypedSearch{
 	end,
 
 	keywords = {
-    		['soulbound'] = ITEM_BIND_ON_PICKUP,
-    		['bound'] = ITEM_BIND_ON_PICKUP,
+    	['soulbound'] = ITEM_BIND_ON_PICKUP,
+    	['bound'] = ITEM_BIND_ON_PICKUP,
 		['boe'] = ITEM_BIND_ON_EQUIP,
 		['bop'] = ITEM_BIND_ON_PICKUP,
 		['bou'] = ITEM_BIND_ON_USE,
 		['quest'] = ITEM_BIND_QUEST,
-		['boa'] = ITEM_BIND_TO_BNETACCOUNT
+		['boa'] = ITEM_BIND_TO_BNETACCOUNT,
+		['unique'] = ITEM_UNIQUE,
 	}
 }
 
@@ -345,12 +359,13 @@ Lib:RegisterTypedSearch{
 		tooltipScanner:SetOwner(UIParent, 'ANCHOR_NONE')
 		tooltipScanner:SetHyperlink(link)
 
-		for i = 1, tooltipScanner:NumLines() do
+		local i = 1
+		while i <= tooltipScanner:NumLines() do
 			local text =  _G[tooltipScanner:GetName() .. 'TextLeft' .. i]:GetText():lower()
-			
 			if text:find(search) then
 				return true
 			end
+			i = i + 1
 		end
 
 		return false
