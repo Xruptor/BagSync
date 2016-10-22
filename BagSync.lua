@@ -13,12 +13,6 @@ local BSYC = select(2, ...) --grab the addon namespace
 BSYC = LibStub("AceAddon-3.0"):NewAddon(BSYC, "BagSync", "AceEvent-3.0", "AceConsole-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
 
-local strsub, strsplit, strlower, strmatch, strtrim, gsub, strrep = string.sub, string.split, string.lower, string.match, string.trim, string.gsub, string.rep
-local format, tonumber, tostring, tostringall = string.format, tonumber, tostring, tostringall
-local tsort, tinsert, unpack = table.sort, table.insert, unpack
-local select, pairs, next, type = select, pairs, next, type
-local error, assert = error, assert
-
 local debugf = tekDebug and tekDebug:GetFrame("BagSync")
 
 function BSYC:Debug(...)

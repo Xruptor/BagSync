@@ -4,37 +4,7 @@ local Search = BSYC:NewModule("Search")
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
 local AceGUI = LibStub("AceGUI-3.0")
-local customSearch = LibStub('CustomSearch-1.0')
-local ItemSearch = LibStub("LibItemSearch-1.2")
-
-local scanner = LibItemSearchTooltipScanner or CreateFrame('GameTooltip', 'LibItemSearchTooltipScanner', UIParent, 'GameTooltipTemplate')
-
---add classes to the LibItemSearch-1.2
-ItemSearch.Filters.class = {
-	tags = {'c', 'class'},
-
-	canSearch = function(self, _, search)
-		return search
-	end,
-
-	match = function(self, link, _, search)
-		if link:find('item:') then
-			scanner:SetOwner(UIParent, 'ANCHOR_NONE')
-			scanner:SetHyperlink(link)
-			
-			local pattern = string.gsub(ITEM_CLASSES_ALLOWED:lower(), "%%s", "(.+)")
-			
-			for i = 1, scanner:NumLines() do
-				local text =  _G[scanner:GetName() .. 'TextLeft' .. i]:GetText():lower()
-				local textChk = string.find(text, pattern)
-				
-				if textChk and customSearch:Find(search, _G[scanner:GetName() .. 'TextLeft' .. i]:GetText()) then
-					return true
-				end
-			end
-		end
-	end
-}
+local ItemSearch = LibStub('LibItemSearchGrid-1.0')
 
 function Search:OnEnable()
 
@@ -157,7 +127,7 @@ end
 
 function Search:DoSearch(searchStr)
 	local searchStr = searchStr or self.searchbar:GetText()
-	searchStr = searchStr:lower()
+	searchStr = searchStr:lower() --always make sure everything is lowercase when doing searches
 
 	local searchTable = {}
 	local tempList = {}
@@ -216,7 +186,7 @@ function Search:DoSearch(searchStr)
 												tempList[dblink] = dName
 												count = count + 1
 											--we found a match
-											elseif not playerSearch and not tempList[dblink] and ItemSearch:Matches(dItemLink, searchStr) then
+											elseif not playerSearch and not tempList[dblink] and ItemSearch:Find(dItemLink, searchStr) then
 												table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
 												tempList[dblink] = dName
 												count = count + 1
@@ -258,7 +228,7 @@ function Search:DoSearch(searchStr)
 											tempList[dblink] = dName
 											count = count + 1
 										--we found a match
-										elseif not playerSearch and not tempList[dblink] and ItemSearch:Matches(dItemLink, searchStr) then
+										elseif not playerSearch and not tempList[dblink] and ItemSearch:Find(dItemLink, searchStr) then
 											table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
 											tempList[dblink] = dName
 											count = count + 1
