@@ -442,11 +442,6 @@ function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 	if self.db.realmkey[srcRealm] then fullRealmName = self.db.realmkey[srcRealm] end --second, if we have a realmkey with a true realm name then use it
 	
 	if not isGuild then
-		--check just in case!  we only want the name not the realm
-		local yName, yRealm  = strsplit("^", srcName)
-
-		srcName = yName
-		
 		local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
 		--local NotReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-NotReady:0|t]]
 		
@@ -792,10 +787,12 @@ function BSYC:ShowMoneyTooltip(objTooltip)
 	local xDB = self:FilterDB()
 
 	for k, v in pairs(xDB) do
+		local yName, yRealm  = strsplit("^", k)
+		local playerName = BSYC:GetRealmTags(yName, yRealm)
+		
 		if v.gold then
-			k = self:GetRealmTags(k, v.realm)
-			k = self:GetClassColor(k or "Unknown", v.class)
-			table.insert(usrData, { name=k, gold=v.gold } )
+			playerName = self:GetClassColor(playerName or "Unknown", v.class)
+			table.insert(usrData, { name=playerName, gold=v.gold } )
 		end
 	end
 	table.sort(usrData, function(a,b) return (a.name < b.name) end)
@@ -934,7 +931,7 @@ function BSYC:AddCurrencyTooltip(frame, currencyName, addHeader)
 		local yName, yRealm  = strsplit("^", k)
 		local playerName = BSYC:GetRealmTags(yName, yRealm)
 
-		playerName = self:GetClassColor(playerName or "Unknown", self.db.global[yRealm][yName].class)
+		playerName = self:GetClassColor(playerName or "Unknown", v.class)
 
 		for q, r in pairs(v) do
 			if q == currencyName then
@@ -1104,12 +1101,12 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 			end
 			
 			--get class for the unit if there is one
-			local pClass = v.class or nil
 			infoString = self:CreateItemTotals(allowList)
 
 			if infoString then
-				k = self:GetRealmTags(k, v.realm)
-				table.insert(self.PreviousItemTotals, self:GetClassColor(k or "Unknown", pClass).."@"..(infoString or "unknown"))
+				local yName, yRealm  = strsplit("^", k)
+				local playerName = self:GetRealmTags(yName, yRealm)
+				table.insert(self.PreviousItemTotals, self:GetClassColor(playerName or "Unknown", v.class).."@"..(infoString or "unknown"))
 			end
 			
 		end

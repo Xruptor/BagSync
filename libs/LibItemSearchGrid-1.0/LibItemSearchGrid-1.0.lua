@@ -369,14 +369,9 @@ Lib:RegisterTypedSearch{
 		['crafting'] = PROFESSIONS_USED_IN_COOKING,
 		['naval'] = 'naval equipment',
 		['follower'] = 'follower',
-		['followe'] = 'follower',
 		['follow'] = 'follower',
 		["relic"] = (GetItemSubClassInfo(LE_ITEM_CLASS_GEM, 11)),
-		["reli"] = (GetItemSubClassInfo(LE_ITEM_CLASS_GEM, 11)),
-		["rel"] = (GetItemSubClassInfo(LE_ITEM_CLASS_GEM, 11)),
 		["power"] = ARTIFACT_POWER,
-		["powe"] = ARTIFACT_POWER,
-		["pow"] = ARTIFACT_POWER,
 	}
 }
 
