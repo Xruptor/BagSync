@@ -931,7 +931,7 @@ function BSYC:AddCurrencyTooltip(frame, currencyName, addHeader)
 		local yName, yRealm  = strsplit("^", k)
 		local playerName = BSYC:GetRealmTags(yName, yRealm)
 
-		playerName = self:GetClassColor(playerName or "Unknown", v.class)
+		playerName = self:GetClassColor(playerName or "Unknown", self.db.global[yRealm][yName].class)
 
 		for q, r in pairs(v) do
 			if q == currencyName then
