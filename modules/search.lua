@@ -212,8 +212,12 @@ function Search:DoSearch(searchStr)
 					
 						--check to make sure we didn't already add a guild from a connected-realm
 						local trueRealmList = BSYC.db.realmkey[0][v.realm] --get the connected realms
-						table.sort(trueRealmList, function(a,b) return (a < b) end) --sort them alphabetically
-						trueRealmList = table.concat(trueRealmList, "|") --concat them together
+						if trueRealmList then
+							table.sort(trueRealmList, function(a,b) return (a < b) end) --sort them alphabetically
+							trueRealmList = table.concat(trueRealmList, "|") --concat them together
+						else
+							trueRealmList = v.realm
+						end
 						trueRealmList = guildN.."-"..trueRealmList --add the guild name in front of concat realm list
 					
 						if not previousGuilds[gName] and not previousGuildsXRList[trueRealmList] then
