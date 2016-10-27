@@ -21,7 +21,7 @@
 		<op>				:=  : | = | == | != | ~= | < | > | <= | >=
 --]]
 
-local Lib = LibStub:NewLibrary('LibItemSearchGrid-1.0', 1)
+local Lib = LibStub:NewLibrary('LibItemSearchGrid-1.0', 2)
 if not Lib then
   return
 else
