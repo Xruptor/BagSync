@@ -68,7 +68,7 @@ options.args.main = {
 	name = L.ConfigMain,
 	desc = L.ConfigMainHeader,
 	args = {
-		tooltip = {
+		enablebagsynctooltip = {
 			order = 1,
 			type = "toggle",
 			name = L.EnableBagSyncTooltip,
@@ -78,7 +78,7 @@ options.args.main = {
 			set = set,
 			arg = "main.enableTooltips",
 		},
-		enable = {
+		enabletooltipsearchonly = {
 			order = 2,
 			type = "toggle",
 			name = L.DisplayTooltipOnlySearch,
@@ -88,7 +88,7 @@ options.args.main = {
 			set = set,
 			arg = "main.tooltipOnlySearch",
 		},
-		enable = {
+		enableminimap = {
 			order = 3,
 			type = "toggle",
 			name = L.DisplayMinimap,
@@ -98,8 +98,18 @@ options.args.main = {
 			set = set,
 			arg = "minimap.enableMinimap",
 		},
-		keybindblacklist = {
+		enableversiontext = {
 			order = 4,
+			type = "toggle",
+			name = L.EnableLoginVersionInfo,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "main.enableLoginVersionInfo",
+		},
+		keybindblacklist = {
+			order = 5,
 			type = "keybinding",
 			name = L.KeybindBlacklist,
 			width = "full",
@@ -109,7 +119,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCBLACKLIST",
 		},
 		keybindcurrency = {
-			order = 5,
+			order = 6,
 			type = "keybinding",
 			name = L.KeybindCurrency,
 			width = "full",
@@ -119,7 +129,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCCURRENCY",
 		},
 		keybindgold = {
-			order = 6,
+			order = 7,
 			type = "keybinding",
 			name = L.KeybindGold,
 			width = "full",
@@ -129,7 +139,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCGOLD",
 		},
 		keybindprofessions = {
-			order = 7,
+			order = 8,
 			type = "keybinding",
 			name = L.KeybindProfessions,
 			width = "full",
@@ -139,7 +149,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCPROFESSIONS",
 		},
 		keybindprofiles = {
-			order = 8,
+			order = 9,
 			type = "keybinding",
 			name = L.KeybindProfiles,
 			width = "full",
@@ -149,7 +159,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCPROFILES",
 		},
 		keybindsearch = {
-			order = 9,
+			order = 10,
 			type = "keybinding",
 			name = L.KeybindSearch,
 			width = "full",

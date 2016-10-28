@@ -184,6 +184,7 @@ function BSYC:StartupDB()
 	if self.options.enableRealmIDTags == nil then self.options.enableRealmIDTags = true end
 	if self.options.enableRealmAstrickName == nil then self.options.enableRealmAstrickName = false end
 	if self.options.enableRealmShortName == nil then self.options.enableRealmShortName = false end
+	if self.options.enableLoginVersionInfo == nil then self.options.enableLoginVersionInfo = true end
 	
 	--setup the default colors
 	if self.options.colors == nil then self.options.colors = {} end
@@ -1521,8 +1522,10 @@ function BSYC:OnEnable()
 	--register the slash command
 	self:RegisterChatCommand("bgs", "ChatCommand")
 	self:RegisterChatCommand("bagsync", "ChatCommand")
-
-	self:Print("[v|cFFDF2B2B"..ver.."|r] /bgs, /bagsync")
+	
+	if self.options.enableLoginVersionInfo then
+		self:Print("[v|cFFDF2B2B"..ver.."|r] /bgs, /bagsync")
+	end
 end
 
 ------------------------------
