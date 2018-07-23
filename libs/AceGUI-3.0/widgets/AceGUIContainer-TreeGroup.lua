@@ -2,11 +2,11 @@
 TreeGroup Container
 Container that uses a tree control to switch between groups.
 -------------------------------------------------------------------------------]]
-local Type, Version = "TreeGroup", 40
+local Type, Version = "TreeGroup", 41
 local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
-local IsLegion = select(4, GetBuildInfo()) >= 70000
+local WoW80 = select(4, GetBuildInfo()) >= 80000
 
 -- Lua APIs
 local next, pairs, ipairs, assert, type = next, pairs, ipairs, assert, type
@@ -164,7 +164,7 @@ end
 local function FirstFrameUpdate(frame)
 	local self = frame.obj
 	frame:SetScript("OnUpdate", nil)
-	self:RefreshTree()
+	self:RefreshTree(nil, true)
 end
 
 local function BuildUniqueValue(...)
@@ -302,6 +302,8 @@ local methods = {
 
 	["OnRelease"] = function(self)
 		self.status = nil
+		self.tree = nil
+		self.frame:SetScript("OnUpdate", nil)
 		for k, v in pairs(self.localstatus) do
 			if k == "groups" then
 				for k2 in pairs(v) do
@@ -390,8 +392,8 @@ local methods = {
 		end
 	end,
 
-	["RefreshTree"] = function(self,scrollToSelection)
-		local buttons = self.buttons 
+	["RefreshTree"] = function(self,scrollToSelection,fromOnUpdate)
+		local buttons = self.buttons
 		local lines = self.lines
 
 		for i, v in ipairs(buttons) do
@@ -421,6 +423,12 @@ local methods = {
 
 		local maxlines = (floor(((self.treeframe:GetHeight()or 0) - 20 ) / 18))
 		if maxlines <= 0 then return end
+
+		-- workaround for lag spikes on WoW 8.0
+		if WoW80 and self.frame:GetParent() == UIParent and not fromOnUpdate then
+			self.frame:SetScript("OnUpdate", FirstFrameUpdate)
+			return
+		end
 
 		local first, last
 		
@@ -672,12 +680,7 @@ local function Constructor()
 
 	local scrollbg = scrollbar:CreateTexture(nil, "BACKGROUND")
 	scrollbg:SetAllPoints(scrollbar)
-
-	if IsLegion then
-		scrollbg:SetColorTexture(0,0,0,0.4)
-	else
-		scrollbg:SetTexture(0,0,0,0.4)
-	end
+	scrollbg:SetColorTexture(0,0,0,0.4)
 
 	local border = CreateFrame("Frame",nil,frame)
 	border:SetPoint("TOPLEFT", treeframe, "TOPRIGHT")
