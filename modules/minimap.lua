@@ -38,7 +38,7 @@ end
 bgsMinimapDD.initialize = function(self, level)
 
 	if level == 1 then
-		PlaySound('gsTitleOptionExit')
+		PlaySound(SOUNDKIT.GS_TITLE_OPTION_EXIT)
 		addButton(level, 'BagSync        ', 1, 1)
 		addButton(level, L.Search, nil, 1, nil, 'search', function(frame, ...)
 			BSYC:GetModule("Search").frame:Show()
