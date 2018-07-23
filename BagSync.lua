@@ -158,6 +158,20 @@ local function pairsByKeys (t, f)
 end
 
 ----------------------
+--   Utilities      --
+----------------------
+
+function BSYC:GetFontType()
+	--apparently the russian local has an issue with the font type.  FRIZQT__.TTF is unable to show russian characters.
+	local gameLocale = GetLocale()
+	if gameLocale == "ruRU" then
+		return "Fonts\\ARIALN.TTF"
+	else
+		return "Fonts\\FRIZQT__.TTF"
+	end
+end
+
+----------------------
 --   DB Functions   --
 ----------------------
 

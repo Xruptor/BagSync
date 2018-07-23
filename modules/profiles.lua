@@ -31,7 +31,7 @@ function Profiles:OnEnable()
 	--I wish Ace3 had better methods for modifying the alignment of widgets on a container....
 	--list has to be in order for editing, warning, ddlist, deletebutton, confirmbutton, etc..
 	warning:SetText(L.DeleteWarning)
-	warning:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
+	warning:SetFont(BSYC:GetFontType(), 14, THICKOUTLINE)
 	warning:ClearAllPoints()
 	warning:SetPoint( "CENTER", ProfilesFrame.frame, "CENTER", 10, 55)
 	

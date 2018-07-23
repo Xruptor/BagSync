@@ -17,7 +17,7 @@ function Recipes:OnEnable()
 	RecipesFrame:EnableResize(false)
 	
 	local information = AceGUI:Create("BagSyncInteractiveLabel")
-	information:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
+	information:SetFont(BSYC:GetFontType(), 14, THICKOUTLINE)
 	information:SetColor(153/255,204/255,51/255)
 	information:SetFullWidth(true)
 	information:ApplyJustifyH("CENTER")
@@ -26,7 +26,7 @@ function Recipes:OnEnable()
 	Recipes.information = information
 	
 	local label = AceGUI:Create("BagSyncInteractiveLabel")
-	label:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
+	label:SetFont(BSYC:GetFontType(), 14, THICKOUTLINE)
 	label:SetFullWidth(true)
 	label:SetText(" ") --add an empty space just to show the label
 	label:SetHeaderHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
@@ -57,7 +57,7 @@ function Recipes:AddEntry(entry)
 	local label = AceGUI:Create("InteractiveLabel")
 
 	label:SetText(name)
-	label:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
+	label:SetFont(BSYC:GetFontType(), 14, THICKOUTLINE)
 	label:SetFullWidth(true)
 	label:SetColor(unpack(color))
 	label:SetImage(icon)

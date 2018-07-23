@@ -60,7 +60,7 @@ function Search:OnEnable()
 
 	local warninglabel = AceGUI:Create("Label")
 	warninglabel:SetText(L.WarningItemSearch)
-	warninglabel:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
+	warninglabel:SetFont(BSYC:GetFontType(), 14, THICKOUTLINE)
 	warninglabel:SetColor(1, 165/255, 0) --orange, red is just too much sometimes
 	warninglabel:SetFullWidth(true)
 	warningframe:AddChild(warninglabel)
@@ -98,7 +98,7 @@ function Search:AddEntry(entry)
 	local r, g, b, hex = GetItemQualityColor(rarity)
 	
 	label:SetText(name)
-	label:SetFont("Fonts\\FRIZQT__.TTF", 14, THICKOUTLINE)
+	label:SetFont(BSYC:GetFontType(), 14, THICKOUTLINE)
 	label:SetFullWidth(true)
 	label:SetColor( r, g, b)
 	label:SetImage(texture)
