@@ -199,6 +199,7 @@ function BSYC:StartupDB()
 	if self.options.enableRealmAstrickName == nil then self.options.enableRealmAstrickName = false end
 	if self.options.enableRealmShortName == nil then self.options.enableRealmShortName = false end
 	if self.options.enableLoginVersionInfo == nil then self.options.enableLoginVersionInfo = true end
+	if self.options.enableFactionIcons == nil then self.options.enableFactionIcons = true end
 	
 	--setup the default colors
 	if self.options.colors == nil then self.options.colors = {} end
@@ -459,9 +460,10 @@ function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 	if not isGuild then
 		local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
 		--local NotReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-NotReady:0|t]]
-		
-		--put a green check next to the currently logged in character name
-		if srcName == self.currentPlayer and self.options.enableTooltipGreenCheck then
+		--Interface\\TargetingFrame\\UI-PVP-FFA
+
+		--put a green check next to the currently logged in character name, make sure to put it as current realm only.  You can have toons with same name on multiple realms
+		if srcName == self.currentPlayer and srcRealm == self.currentRealm and self.options.enableTooltipGreenCheck then
 			srcName = srcName.." "..ReadyCheck
 		end
 	else
@@ -475,6 +477,19 @@ function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 				return srcName
 			end
 		end
+	end
+	
+	--make sure we work with player data not guild data
+	if self.options.enableFactionIcons and self.db.global[srcRealm] and self.db.global[srcRealm][srcName] then
+		local FactionIcon = [[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]
+		
+		if self.db.global[srcRealm][srcName].faction == "Alliance" then
+			FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]]
+		elseif self.db.global[srcRealm][srcName].faction == "Horde" then
+			FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
+		end
+		
+		srcName = FactionIcon.." "..srcName
 	end
 	
 	--add Cross-Realm and BNet identifiers to Characters not on same realm
@@ -1463,7 +1478,7 @@ function BSYC:OnEnable()
 	self.db.player.class = self.playerClass
 
 	--save the faction information
-	--"Alliance", "Horde" or nil
+	--"Alliance", "Horde" or nil (Neutral)
 	self.db.player.faction = self.playerFaction
 	
 	--save player Realm for quick access later

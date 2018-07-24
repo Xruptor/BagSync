@@ -6,6 +6,10 @@ local configDialog = LibStub("AceConfigDialog-3.0")
 local options = {}
 local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
 
+local 	factionString = " ( "..[[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
+		factionString = factionString.." "..[[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]]
+		factionString = factionString.." "..[[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]..")"
+
 options.type = "group"
 options.name = "BagSync"
 
@@ -326,6 +330,16 @@ options.args.display = {
 			get = get,
 			set = set,
 			arg = "display.enableRealmShortName",
+		},
+		factionicon = {
+			order = 16,
+			type = "toggle",
+			name = L.DisplayFactionIcons..factionString,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.enableFactionIcons",
 		},
 	},
 }
