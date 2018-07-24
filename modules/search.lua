@@ -128,7 +128,8 @@ end
 function Search:DoSearch(searchStr)
 	local searchStr = searchStr or self.searchbar:GetText()
 	searchStr = searchStr:lower() --always make sure everything is lowercase when doing searches
-
+	self.searchbar:SetText() --erase current text
+	
 	local searchTable = {}
 	local tempList = {}
 	local previousGuilds = {}
