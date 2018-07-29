@@ -341,6 +341,35 @@ options.args.display = {
 			set = set,
 			arg = "display.enableFactionIcons",
 		},
+		showuniqueitemsgroup = {
+			order = 17,
+			name = L.DisplayShowUniqueItemsTotalsTitle,
+			type = 'group',
+			guiInline = true,
+			args = {
+				title = {
+				  order = 0,
+				  type = "description",
+				  name = L.DisplayShowUniqueItemsTotals,
+				},
+				title_2 = {
+				  order = 1,
+				  type = "description",
+				  name = L.DisplayShowUniqueItemsTotals_2,
+				},
+				showuniqueitems = {
+					order = 2,
+					type = 'toggle',
+					name = L.DisplayShowUniqueItemsEnableText,
+					width = "full",
+					desc = "hide",
+					get = get,
+					set = set,
+					arg = "display.enableShowUniqueItemsTotals",
+				}
+			}
+		}
+	
 	},
 }
 	

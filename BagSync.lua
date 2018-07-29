@@ -200,7 +200,8 @@ function BSYC:StartupDB()
 	if self.options.enableRealmShortName == nil then self.options.enableRealmShortName = false end
 	if self.options.enableLoginVersionInfo == nil then self.options.enableLoginVersionInfo = true end
 	if self.options.enableFactionIcons == nil then self.options.enableFactionIcons = true end
-	
+	if self.options.enableShowUniqueItemsTotals == nil then self.options.enableShowUniqueItemsTotals = true end
+
 	--setup the default colors
 	if self.options.colors == nil then self.options.colors = {} end
 	if self.options.colors.first == nil then self.options.colors.first = { r = 128/255, g = 1, b = 0 }  end
@@ -453,6 +454,7 @@ end
 
 function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 	
+	local tagName = srcName
 	local fullRealmName = srcRealm --default to shortened realm first
 	
 	if self.db.realmkey[srcRealm] then fullRealmName = self.db.realmkey[srcRealm] end --second, if we have a realmkey with a true realm name then use it
@@ -464,7 +466,7 @@ function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 
 		--put a green check next to the currently logged in character name, make sure to put it as current realm only.  You can have toons with same name on multiple realms
 		if srcName == self.currentPlayer and srcRealm == self.currentRealm and self.options.enableTooltipGreenCheck then
-			srcName = srcName.." "..ReadyCheck
+			tagName = tagName.." "..ReadyCheck
 		end
 	else
 		--sometimes a person has characters on multiple connected servers joined to the same guild.
@@ -489,7 +491,7 @@ function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 			FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
 		end
 		
-		srcName = FactionIcon.." "..srcName
+		tagName = FactionIcon.." "..tagName
 	end
 	
 	--add Cross-Realm and BNet identifiers to Characters not on same realm
@@ -510,18 +512,18 @@ function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 	if self.options.enableBNetAccountItems then
 		if srcRealm and srcRealm ~= self.currentRealm then
 			if not self.crossRealmNames[srcRealm] then
-				srcName = srcName.." "..rgbhex(self.options.colors.bnet).."["..bnetString..fullRealmName.."]|r"
+				tagName = tagName.." "..rgbhex(self.options.colors.bnet).."["..bnetString..fullRealmName.."]|r"
 			else
-				srcName = srcName.." "..rgbhex(self.options.colors.cross).."["..crossString..fullRealmName.."]|r"
+				tagName = tagName.." "..rgbhex(self.options.colors.cross).."["..crossString..fullRealmName.."]|r"
 			end
 		end
 	elseif self.options.enableCrossRealmsItems then
 		if srcRealm and srcRealm ~= self.currentRealm then
-			srcName = srcName.." "..rgbhex(self.options.colors.cross).."["..crossString..fullRealmName.."]|r"
+			tagName = tagName.." "..rgbhex(self.options.colors.cross).."["..crossString..fullRealmName.."]|r"
 		end
 	end
 		
-	return srcName
+	return tagName
 end
 
 ----------------------
@@ -1002,6 +1004,9 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 	--use our stripped itemlink, not the full link
 	local shortItemID = ToShortItemID(itemLink)
 
+	--short the shortID and ignore all BonusID's and stats
+	if self.options.enableShowUniqueItemsTotals then itemLink = shortItemID end
+	
 	--only show tooltips in search frame if the option is enabled
 	if self.options.tooltipOnlySearch and frame:GetOwner() and frame:GetOwner():GetName() and string.sub(frame:GetOwner():GetName(), 1, 16) ~= "BagSyncSearchRow" then
 		frame:Show()
@@ -1085,6 +1090,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 						if type(bagInfo) == "table" then
 							for slotID, itemValue in pairs(bagInfo) do
 								local dblink, dbcount = strsplit(",", itemValue)
+								if dblink and self.options.enableShowUniqueItemsTotals then dblink = ToShortItemID(dblink) end
 								if dblink and dblink == itemLink then
 									allowList[q] = allowList[q] + (dbcount or 1)
 									grandTotal = grandTotal + (dbcount or 1)
@@ -1119,6 +1125,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 						local tmpCount = 0
 						for q, r in pairs(self.db.guild[v.realm][guildN]) do
 							local dblink, dbcount = strsplit(",", r)
+							if dblink and self.options.enableShowUniqueItemsTotals then dblink = ToShortItemID(dblink) end
 							if dblink and dblink == itemLink then
 								--if we have show guild names then don't show any guild info for the character, otherwise it gets repeated twice
 								if not self.options.showGuildNames then

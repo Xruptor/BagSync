@@ -19,7 +19,7 @@ function Professions:OnEnable()
 	
 	local information = AceGUI:Create("Label")
 	information:SetText(L.ProfessionInformation)
-	information:SetFont(BSYC:GetFontType(), 12, THICKOUTLINE)
+	information:SetFont(L.GetFontType, 12, THICKOUTLINE)
 	information:SetColor(1, 165/255, 0)
 	information:SetFullWidth(true)
 	ProfessionsFrame:AddChild(information)
@@ -50,7 +50,7 @@ function Professions:AddEntry(entry, isHeader)
 
 	if isHeader then
 		label:SetText(entry.player)
-		label:SetFont(BSYC:GetFontType(), 14, THICKOUTLINE)
+		label:SetFont(L.GetFontType, 14, THICKOUTLINE)
 		label:SetFullWidth(true)
 		label:SetColor(unpack(label.userdata.color))
 		label:ApplyJustifyH("CENTER")
@@ -60,7 +60,7 @@ function Professions:AddEntry(entry, isHeader)
 	else
 		local labelText = entry.name..format(" |cFFFFFFFF(%s)|r", entry.level)
 		label:SetText(labelText)
-		label:SetFont(BSYC:GetFontType(), 14, THICKOUTLINE)
+		label:SetFont(L.GetFontType, 14, THICKOUTLINE)
 		label:SetFullWidth(true)
 		if entry.recipes then
 			label.userdata.color = {153/255,204/255,51/255} --primary profession color it green

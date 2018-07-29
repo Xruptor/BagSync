@@ -53,18 +53,25 @@ function Search:OnEnable()
 	local warningframe = AceGUI:Create("Window")
 	warningframe:SetTitle(L.WarningHeader)
 	warningframe:SetWidth(300)
-	warningframe:SetHeight(170)
+	warningframe:SetHeight(280)
 	warningframe.frame:SetParent(SearchFrame.frame)
 	warningframe:SetLayout("Flow")
 	warningframe:EnableResize(false)
 
 	local warninglabel = AceGUI:Create("Label")
 	warninglabel:SetText(L.WarningItemSearch)
-	warninglabel:SetFont(BSYC:GetFontType(), 14, THICKOUTLINE)
+	warninglabel:SetFont(L.GetFontType, 14, THICKOUTLINE)
 	warninglabel:SetColor(1, 165/255, 0) --orange, red is just too much sometimes
 	warninglabel:SetFullWidth(true)
 	warningframe:AddChild(warninglabel)
 
+	local warninglabel2 = AceGUI:Create("Label")
+	warninglabel2:SetText(L.ObsoleteWarning)
+	warninglabel2:SetFont(L.GetFontType, 14, THICKOUTLINE)
+	warninglabel2:SetColor(50/255, 165/255, 0)
+	warninglabel2:SetFullWidth(true)
+	warningframe:AddChild(warninglabel2)
+	
 	Search.warningframe = warningframe
 	Search.warninglabel = warninglabel
 	
@@ -98,7 +105,7 @@ function Search:AddEntry(entry)
 	local r, g, b, hex = GetItemQualityColor(rarity)
 	
 	label:SetText(name)
-	label:SetFont(BSYC:GetFontType(), 14, THICKOUTLINE)
+	label:SetFont(L.GetFontType, 14, THICKOUTLINE)
 	label:SetFullWidth(true)
 	label:SetColor( r, g, b)
 	label:SetImage(texture)
@@ -128,7 +135,6 @@ end
 function Search:DoSearch(searchStr)
 	local searchStr = searchStr or self.searchbar:GetText()
 	searchStr = searchStr:lower() --always make sure everything is lowercase when doing searches
-	self.searchbar:SetText() --erase current text
 	
 	local searchTable = {}
 	local tempList = {}

@@ -2,6 +2,10 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "enUS", true)
 if not L then return end
 
+--Get the best possible font for the localization langugage.
+--Some fonts are better than others to display special character sets.
+L.GetFontType = "Fonts\\FRIZQT__.TTF"
+
 L.TooltipBag = "Bags:"
 L.TooltipBank = "Bank:"
 L.TooltipEquip = "Equip:"
@@ -53,6 +57,7 @@ L.KeybindGold = "Show Gold tooltip."
 L.KeybindProfessions = "Show Professions window."
 L.KeybindProfiles = "Show Profiles window."
 L.KeybindSearch = "Show Search window."
+L.ObsoleteWarning = "\n\nNote: Obsolete items will continue to show as missing.  To repair this issue, scan your characters again in order to remove obsolete items.\n(Bags, Bank, Reagent, Void, etc...)"
 -- ----THESE ARE FOR SLASH COMMANDS
 L.SlashItemName = "[itemname]"
 L.SlashSearch = "search"
@@ -93,6 +98,10 @@ L.DisplayRealmIDTags = "Display |cffff7d0a[XR]|r and |cff3587ff[BNet]|r realm id
 L.DisplayRealmAstrick = "Display [*] instead of server names for |cffff7d0a[XR]|r and |cff3587ff[BNet]|r."
 L.DisplayShortRealmName = "Display short realm names for |cffff7d0a[XR]|r and |cff3587ff[BNet]|r."
 L.DisplayFactionIcons = "Display faction icons in tooltip."
+L.DisplayShowUniqueItemsTotals = "Enabling this option will add unique items towards the total item count, regardless of item stats. |cFF99CC33(Recommended)|r."
+L.DisplayShowUniqueItemsTotals_2 = "Certain items like |cffff7d0a[Legendaries]|r can share the same name but have different stats.  Since these items are treated as independent from each other, they are sometimes not counted towards the total item count. Enabling this option will completely disregard the unique item stats and treat them all the same, so long as they share the same item name.\n\nDisabling this option will display the item counts independently.  Item totals will only display for each character that share the same unique item with the exact same stats. |cFFDF2B2B(Not Recommended)|r"
+L.DisplayShowUniqueItemsTotalsTitle = "Show Unique Item Tooltip Totals"
+L.DisplayShowUniqueItemsEnableText = "Enable unique item totals."
 L.ColorPrimary = "Primary BagSync tooltip color."
 L.ColorSecondary = "Secondary BagSync tooltip color."
 L.ColorTotal = "BagSync [Total] tooltip color."
