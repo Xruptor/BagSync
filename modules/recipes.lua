@@ -1,3 +1,7 @@
+--[[
+	recipes.lua
+		A recipes frame for BagSync
+--]]
 
 local BSYC = select(2, ...) --grab the addon namespace
 local Recipes = BSYC:NewModule("Recipes")

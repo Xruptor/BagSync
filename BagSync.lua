@@ -19,36 +19,6 @@ function BSYC:Debug(...)
     if debugf then debugf:AddMessage(string.join(", ", tostringall(...))) end
 end
 
-------------------------------
---    LibDataBroker-1.1	    --
-------------------------------
-
-local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
-
-local dataobj = ldb:NewDataObject("BagSyncLDB", {
-	type = "data source",
-	--icon = "Interface\\Icons\\INV_Misc_Bag_12",
-	icon = "Interface\\AddOns\\BagSync\\media\\icon",
-	label = "BagSync",
-	text = "BagSync",
-		
-	OnClick = function(self, button)
-		if button == "LeftButton" then
-			BSYC:GetModule("Search").frame:Show()
-		elseif button == "RightButton" then
-			if bgsMinimapDD then
-				ToggleDropDownMenu(1, nil, bgsMinimapDD, "cursor", 0, 0)
-			end
-		end
-	end,
-
-	OnTooltipShow = function(self)
-		self:AddLine("BagSync")
-		self:AddLine(L.LeftClickSearch)
-		self:AddLine(L.RightClickBagSyncMenu)
-	end
-})
-
 ----------------------
 --      Local       --
 ----------------------
@@ -155,20 +125,6 @@ local function pairsByKeys (t, f)
 			end
 		end
 	return iter
-end
-
-----------------------
---   Utilities      --
-----------------------
-
-function BSYC:GetFontType()
-	--apparently the russian local has an issue with the font type.  FRIZQT__.TTF is unable to show russian characters.
-	local gameLocale = GetLocale()
-	if gameLocale == "ruRU" then
-		return "Fonts\\ARIALN.TTF"
-	else
-		return "Fonts\\FRIZQT__.TTF"
-	end
 end
 
 ----------------------
@@ -738,41 +694,6 @@ end
 --   Money Tooltip    --
 ------------------------
 
-function BSYC:CreateMoneyString(money, color)
- 
-	local iconSize = 14
-	local goldicon = string.format("\124TInterface\\MoneyFrame\\UI-GoldIcon:%d:%d:1:0\124t ", iconSize, iconSize)
-	local silvericon = string.format("\124TInterface\\MoneyFrame\\UI-SilverIcon:%d:%d:1:0\124t ", iconSize, iconSize)
-	local coppericon = string.format("\124TInterface\\MoneyFrame\\UI-CopperIcon:%d:%d:1:0\124t ", iconSize, iconSize)
-	local moneystring
-	local g,s,c
-	local neg = false
-  
-	if(money <0) then 
-		neg = true
-		money = money * -1
-	end
-	
-	g=floor(money/10000)
-	s=floor((money-(g*10000))/100)
-	c=money-s*100-g*10000
-	moneystring = g..goldicon..s..silvericon..c..coppericon
-	
-	if(neg) then
-		moneystring = "-"..moneystring
-	end
-	
-	if(color) then
-		if(neg) then
-			moneystring = "|cffff0000"..moneystring.."|r"
-		elseif(money ~= 0) then
-			moneystring = "|cff44dd44"..moneystring.."|r"
-		end
-	end
-	
-	return moneystring
-end
-
 function BSYC:ShowMoneyTooltip(objTooltip)
 	local tooltip = _G["BagSyncMoneyTooltip"] or nil
 	
@@ -832,12 +753,12 @@ function BSYC:ShowMoneyTooltip(objTooltip)
 	local gldTotal = 0
 	
 	for i=1, table.getn(usrData) do
-		tooltip:AddDoubleLine(usrData[i].name, self:CreateMoneyString(usrData[i].gold, false), 1, 1, 1, 1, 1, 1)
+		tooltip:AddDoubleLine(usrData[i].name, GetCoinTextureString(usrData[i].gold), 1, 1, 1, 1, 1, 1)
 		gldTotal = gldTotal + usrData[i].gold
 	end
 	if self.options.showTotal and gldTotal > 0 then
 		tooltip:AddLine(" ")
-		tooltip:AddDoubleLine(tooltipColor(self.options.colors.total, L.TooltipTotal), self:CreateMoneyString(gldTotal, false), 1, 1, 1, 1, 1, 1)
+		tooltip:AddDoubleLine(tooltipColor(self.options.colors.total, L.TooltipTotal), GetCoinTextureString(gldTotal), 1, 1, 1, 1, 1, 1)
 	end
 	
 	tooltip:AddLine(" ")
@@ -1560,7 +1481,7 @@ function BSYC:OnEnable()
 	self:RegisterChatCommand("bagsync", "ChatCommand")
 	
 	if self.options.enableLoginVersionInfo then
-		self:Print("[v|cFFDF2B2B"..ver.."|r] /bgs, /bagsync")
+		self:Print("[v|cFF20ff20"..ver.."|r] /bgs, /bagsync")
 	end
 end
 

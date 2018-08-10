@@ -1,3 +1,7 @@
+--[[
+	search.lua
+		A search frame for BagSync items
+--]]
 
 local BSYC = select(2, ...) --grab the addon namespace
 local Search = BSYC:NewModule("Search")

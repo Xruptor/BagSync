@@ -1,3 +1,7 @@
+--[[
+	professions.lua
+		A professions frame for BagSync
+--]]
 
 local BSYC = select(2, ...) --grab the addon namespace
 local Professions = BSYC:NewModule("Professions")

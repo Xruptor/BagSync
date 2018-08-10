@@ -1,3 +1,7 @@
+--[[
+	blacklist.lua
+		A blacklist frame for BagSync items
+--]]
 
 local BSYC = select(2, ...) --grab the addon namespace
 local Blacklist = BSYC:NewModule("Blacklist")

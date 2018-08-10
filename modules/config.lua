@@ -1,3 +1,8 @@
+--[[
+	config.lua
+		A config frame for BagSync
+--]]
+
 local BSYC = select(2, ...) --grab the addon namespace
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
 local config = LibStub("AceConfig-3.0")
@@ -362,7 +367,7 @@ options.args.display = {
 					type = 'toggle',
 					name = L.DisplayShowUniqueItemsEnableText,
 					width = "full",
-					desc = "hide",
+					descStyle = "hide",
 					get = get,
 					set = set,
 					arg = "display.enableShowUniqueItemsTotals",

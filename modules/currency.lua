@@ -1,3 +1,7 @@
+--[[
+	currency.lua
+		A currency frame for BagSync
+--]]
 
 local BSYC = select(2, ...) --grab the addon namespace
 local Currency = BSYC:NewModule("Currency")

@@ -1,3 +1,7 @@
+--[[
+	profiles.lua
+		A profiles editor frame for BagSync
+--]]
 
 local BSYC = select(2, ...) --grab the addon namespace
 local Profiles = BSYC:NewModule("Profiles")

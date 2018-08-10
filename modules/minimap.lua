@@ -1,6 +1,11 @@
---Minimap Button for BagSync
+--[[
+	minimap.lua
+		A minimap button for BagSync
+--]]
+
 local BSYC = select(2, ...) --grab the addon namespace
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
+local Module = BSYC:NewModule("Minimap")
 
 local bgMinimapButton = CreateFrame("Frame","BagSync_MinimapButton", Minimap)
 
@@ -20,9 +25,14 @@ bgMinimapButtonTexture:SetHeight(32)
 bgMinimapButtonTexture:SetTexture('Interface\\AddOns\\BagSync\\media\\minimap.tga')
 bgMinimapButtonTexture:SetPoint('CENTER')
 
+Module.button = bgMinimapButton
+Module.buttonTexture = bgMinimapButtonTexture
+
 --lets do the dropdown menu of DOOM
 local bgsMinimapDD = CreateFrame("Frame", "bgsMinimapDD")
 bgsMinimapDD.displayMode = 'MENU'
+
+Module.dropdown = bgsMinimapDD
 
 local function addButton(level, text, isTitle, notCheckable, hasArrow, value, func)
 	local info = UIDropDownMenu_CreateInfo()
