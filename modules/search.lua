@@ -175,7 +175,7 @@ function Search:DoSearch(searchStr)
 			local yName, yRealm  = strsplit("^", k)
 			
 			--check if we should show both factions or not
-			if BSYC.options.enableFaction or pFaction == BSYC.playerFaction then
+			if BSYC.db.options.enableFaction or pFaction == BSYC.playerFaction then
 
 				--now count the stuff for the user
 				--q = bag name, r = stored data for bag name
@@ -212,7 +212,7 @@ function Search:DoSearch(searchStr)
 					end
 				end
 				
-				if BSYC.options.enableGuild then
+				if BSYC.db.options.enableGuild then
 					local guildN = v.guild or nil
 
 					--check the guild bank if the character is in a guild

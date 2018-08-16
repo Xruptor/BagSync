@@ -25,12 +25,12 @@ local function get(info)
 	local p, c = string.split(".", info.arg)
 	
 	if p == "color" then
-		return BSYC.options.colors[c].r, BSYC.options.colors[c].g, BSYC.options.colors[c].b
+		return BSYC.db.options.colors[c].r, BSYC.db.options.colors[c].g, BSYC.db.options.colors[c].b
 	elseif p == "keybind" then
 		return GetBindingKey(c)
 	else
-		if BSYC.options[c] then --if this is nil then it will default to false
-			return BSYC.options[c]
+		if BSYC.db.options[c] then --if this is nil then it will default to false
+			return BSYC.db.options[c]
 		else
 			return false
 		end
@@ -43,9 +43,9 @@ local function set(info, arg1, arg2, arg3, arg4)
 	local p, c = string.split(".", info.arg)
 	
 	if p == "color" then
-		BSYC.options.colors[c].r = arg1
-		BSYC.options.colors[c].g = arg2
-		BSYC.options.colors[c].b = arg3
+		BSYC.db.options.colors[c].r = arg1
+		BSYC.db.options.colors[c].g = arg2
+		BSYC.db.options.colors[c].b = arg3
 	elseif p == "keybind" then
 	   local b1, b2 = GetBindingKey(c)
 	   if b1 then SetBinding(b1) end
@@ -53,7 +53,7 @@ local function set(info, arg1, arg2, arg3, arg4)
 	   SetBinding(arg1, c)
 	   SaveBindings(GetCurrentBindingSet())
 	else
-		BSYC.options[c] = arg1
+		BSYC.db.options[c] = arg1
 		if p == "minimap" then
 			if arg1 then BagSync_MinimapButton:Show() else BagSync_MinimapButton:Hide() end
 		else
@@ -464,5 +464,67 @@ options.args.color = {
 	},
 }
 
-config:RegisterOptionsTable("BagSync", options)
-configDialog:AddToBlizOptions("BagSync", "BagSync")
+local function LoadAboutFrame()
+
+	--Code inspired from tekKonfigAboutPanel
+	local about = CreateFrame("Frame", "BagSyncAboutPanel", InterfaceOptionsFramePanelContainer)
+	about.name = "BagSync"
+	about:Hide()
+	
+    local fields = {"Version", "Author"}
+	local notes = GetAddOnMetadata("BagSync", "Notes")
+
+    local title = about:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+
+	title:SetPoint("TOPLEFT", 16, -16)
+	title:SetText("BagSync")
+
+	local subtitle = about:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+	subtitle:SetHeight(32)
+	subtitle:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -8)
+	subtitle:SetPoint("RIGHT", about, -32, 0)
+	subtitle:SetNonSpaceWrap(true)
+	subtitle:SetJustifyH("LEFT")
+	subtitle:SetJustifyV("TOP")
+	subtitle:SetText(notes)
+
+	local anchor
+	for _,field in pairs(fields) do
+		local val = GetAddOnMetadata("BagSync", field)
+		if val then
+			local title = about:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+			title:SetWidth(75)
+			if not anchor then title:SetPoint("TOPLEFT", subtitle, "BOTTOMLEFT", -2, -8)
+			else title:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -6) end
+			title:SetJustifyH("RIGHT")
+			title:SetText(field:gsub("X%-", ""))
+
+			local detail = about:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+			detail:SetPoint("LEFT", title, "RIGHT", 4, 0)
+			detail:SetPoint("RIGHT", -16, 0)
+			detail:SetJustifyH("LEFT")
+			detail:SetText(val)
+
+			anchor = title
+		end
+	end
+	
+	InterfaceOptions_AddCategory(about)
+
+	return about
+end
+
+BSYC.aboutPanel = LoadAboutFrame()
+
+-- General Options
+config:RegisterOptionsTable("BagSync-General", options.args.main)
+BSYC.blizzPanel = configDialog:AddToBlizOptions("BagSync-General", options.args.main.name, "BagSync")
+
+-- Display Options
+config:RegisterOptionsTable("BagSync-Display", options.args.display)
+configDialog:AddToBlizOptions("BagSync-Display", options.args.display.name, "BagSync")
+
+-- Color Options
+config:RegisterOptionsTable("BagSync-Color", options.args.color)
+configDialog:AddToBlizOptions("BagSync-Color", options.args.color.name, "BagSync")
+

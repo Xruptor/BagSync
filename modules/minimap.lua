@@ -72,7 +72,8 @@ bgsMinimapDD.initialize = function(self, level)
 			BSYC:FixDB()
 		end)
 		addButton(level, L.Config, nil, 1, nil, 'config', function(frame, ...)
-			LibStub("AceConfigDialog-3.0"):Open("BagSync")
+			InterfaceOptionsFrame:Show() --has to be here to load the about frame onLoad
+			InterfaceOptionsFrame_OpenToCategory(BSYC.aboutPanel) --force the panel to show
 		end)
 		addButton(level, "", nil, 1) --space ;)
 		addButton(level, L.Close, nil, 1)

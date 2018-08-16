@@ -16,8 +16,7 @@ libs\AceConsole-3.0\AceConsole-3.0.xml
 libs\AceEvent-3.0\AceEvent-3.0.xml
 libs\LibItemSearchGrid-1.0\LibItemSearchGrid-1.0.lua
 libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
-
-widgets\BagSyncInteractiveLabel.lua
+libs\LibItemCache-2.0\LibItemCache-2.0.lua
 
 locale\enUS.lua
 locale\deDE.lua
@@ -30,6 +29,9 @@ locale\ptBR.lua
 locale\esES.lua
 
 BagSync.lua
+
+wireframe\BagSyncInteractiveLabel.lua
+wireframe\api.lua
 
 modules\minimap.lua
 modules\databrokerplugin.lua
