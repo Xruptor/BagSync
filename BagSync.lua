@@ -101,121 +101,7 @@ function BSYC:StartupDB()
 end
 
 function BSYC:FixDB(onlyChkGuild)
-
-	--Removes obsolete character information
-	--Removes obsolete guild information
-	--Removes obsolete characters from currency db
-	--Removes obsolete profession information
-	--removes obsolete blacklist information
-	--Will only check guild related information if the paramater is passed as true
-	--Adds realm name to characters profiles if missing, v8.6
-
-	local storeUsers = {}
-	local storeGuilds = {}
-	
-	for realm, rd in pairs(BagSyncDB) do
-		if string.find(realm, " ") then
-			--get rid of old realm names with whitespaces, we aren't going to use it anymore
-			BagSyncDB[realm] = nil
-		else
-			--realm
-			storeUsers[realm] = storeUsers[realm] or {}
-			storeGuilds[realm] = storeGuilds[realm] or {}
-			for k, v in pairs(rd) do
-				--users
-				storeUsers[realm][k] = storeUsers[realm][k] or 1
-				if v.realm == nil then v.realm = realm end  --Adds realm name to characters profiles if missing, v8.6
-				for q, r in pairs(v) do
-					if q == "guild" then
-						storeGuilds[realm][r] = true
-					end
-				end
-			end
-		end
-	end
-
-	--guildbank data
-	for realm, rd in pairs(BagSyncGUILD_DB) do
-		if string.find(realm, " ") then
-			--get rid of old realm names with whitespaces, we aren't going to use it anymore
-			BagSyncGUILD_DB[realm] = nil
-		else
-			--realm
-			for k, v in pairs(rd) do
-				--users
-				if not storeGuilds[realm][k] then
-					--delete the guild because no one has it
-					BagSyncGUILD_DB[realm][k] = nil
-				end
-			end
-		end
-	end
-	
-	--currency data and profession data, only do if were not doing a guild check
-	--also display fixdb message only if were not doing a guild check
-	if not onlyChkGuild then
-	
-		--fix currency
-		for realm, rd in pairs(BagSyncCURRENCY_DB) do
-			if string.find(realm, " ") then
-				--get rid of old realm names with whitespaces, we aren't going to use it anymore
-				BagSyncCURRENCY_DB[realm] = nil
-			else
-				--realm
-				if not storeUsers[realm] then
-					--if it's not a realm that ANY users are on then delete it
-					BagSyncCURRENCY_DB[realm] = nil
-				else
-					for k, v in pairs(rd) do
-						if not storeUsers[realm][k] then
-							--if the user doesn't exist then delete data
-							BagSyncCURRENCY_DB[realm][k] = nil
-						end
-					end
-				end
-			end
-		end
-
-		--fix professions
-		for realm, rd in pairs(BagSyncPROFESSION_DB) do
-			if string.find(realm, " ") then
-				--get rid of old realm names with whitespaces, we aren't going to use it anymore
-				BagSyncPROFESSION_DB[realm] = nil
-			else
-				--realm
-				if not storeUsers[realm] then
-					--if it's not a realm that ANY users are on then delete it
-					BagSyncPROFESSION_DB[realm] = nil
-				else
-					for k, v in pairs(rd) do
-						if not storeUsers[realm][k] then
-							--if the user doesn't exist then delete data
-							BagSyncPROFESSION_DB[realm][k] = nil
-						end
-					end
-				end
-			end
-		end
-		
-		--fix blacklist
-		for realm, rd in pairs(BagSyncBLACKLIST_DB) do
-			if string.find(realm, " ") then
-				--get rid of old realm names with whitespaces, we aren't going to use it anymore
-				BagSyncBLACKLIST_DB[realm] = nil
-			else
-				--realm
-				if not storeUsers[realm] then
-					--if it's not a realm that ANY users are on then delete it
-					BagSyncBLACKLIST_DB[realm] = nil
-				end
-			end
-		end
-		
-		if BagSyncCRAFT_DB then BagSyncCRAFT_DB = nil end --remove old crafting DB
-		if BagSyncTOKEN_DB then BagSyncTOKEN_DB = nil end --remove old tokens db
-		
-		self:Print("|cFFFF9900"..L.FixDBComplete.."|r")
-	end
+	self:Print("|cFFFF9900"..L.FixDBComplete.."|r")
 end
 
 function BSYC:CleanAuctionsDB()
@@ -437,7 +323,7 @@ end
 function BSYC:ScanVoidBank()
 	if not self.atVoidBank then return end
 	
-	self.db.player["void"] = self.db.player["void"] or {}
+	self.db.player["vault"] = self.db.player["vault"] or {}
 
 	--reset our tooltip data since we scanned new items (we want current data not old)
 	self.PreviousItemLink = nil
@@ -457,7 +343,7 @@ function BSYC:ScanVoidBank()
 		end
 	end
 	
-	self.db.player["void"][0] = slotItems
+	self.db.player["vault"][0] = slotItems
 end
 
 function BSYC:ScanGuildBank()
@@ -488,8 +374,7 @@ function BSYC:ScanGuildBank()
 		end
 	end
 	
-	local index = self.db.player.guild.."©"
-	self.db.realm[index] = slotItems
+	self.db.realm[self.db.player.guild] = slotItems
 end
 
 function BSYC:ScanMailbox()
@@ -702,7 +587,7 @@ function BSYC:CreateItemTotals(countTable)
 		[4] = { "equip", 		L.TooltipEquip },
 		[5] = { "guild", 		L.TooltipGuild },
 		[6] = { "mailbox", 		L.TooltipMail },
-		[7] = { "void", 		L.TooltipVoid },
+		[7] = { "vault", 		L.TooltipVoid },
 		[8] = { "auction", 		L.TooltipAuction },
 	}
 		
@@ -855,7 +740,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 			["reagentbank"] = 0,
 			["equip"] = 0,
 			["mailbox"] = 0,
-			["void"] = 0,
+			["vault"] = 0,
 			["auction"] = 0,
 			["guild"] = 0,
 		}
@@ -1314,6 +1199,7 @@ end
 ------------------------------
 
 function BSYC:CURRENCY_DISPLAY_UPDATE()
+--if C_PetBattles.IsInBattle() then return end
 	if self:IsInBG() or self:IsInArena() or InCombatLockdown() or UnitAffectingCombat("player") then return end
 	self.doCurrencyUpdate = 0
 	self:ScanCurrency()
