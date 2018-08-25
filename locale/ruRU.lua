@@ -2,13 +2,16 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "ruRU")
 if not L then return end
 
+--for non-english fonts
+--https://github.com/tomrus88/BlizzardInterfaceCode/blob/master/Interface/FrameXML/Fonts.xml
+
 --PLEASE LOOK AT enUS.lua for a complete localization list
 
 --special thanks to senryo
 
 --Get the best possible font for the localization langugage.
 --Some fonts are better than others to display special character sets.
-L.GetFontType = "Fonts\\ARIALN.TTF"
+L.GetFontType = "Fonts\\FRIZQT___CYR.TTF"
 
 L.TooltipBag = "В сумке:"
 L.TooltipBank = "В банке:"

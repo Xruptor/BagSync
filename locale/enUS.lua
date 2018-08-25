@@ -2,6 +2,9 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "enUS", true)
 if not L then return end
 
+--for non-english fonts
+--https://github.com/tomrus88/BlizzardInterfaceCode/blob/master/Interface/FrameXML/Fonts.xml
+
 --Get the best possible font for the localization langugage.
 --Some fonts are better than others to display special character sets.
 L.GetFontType = "Fonts\\FRIZQT__.TTF"

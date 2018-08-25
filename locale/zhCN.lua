@@ -6,6 +6,10 @@ if not L then return end
 
 --special thanks to ytzyt at Curse for the zhCN and zhTW translations!
 
+--Get the best possible font for the localization langugage.
+--Some fonts are better than others to display special character sets.
+L.GetFontType = "Fonts\\ARKai_T.ttf"
+
 L.TooltipBag = "背包:"
 L.TooltipBank = "银行:"
 L.TooltipEquip = "已装备:"
