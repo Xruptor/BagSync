@@ -36,6 +36,7 @@ function BSYC:StartupDB()
 	
 	--main DB call
 	self.db = self.db or {}
+	self.db.global = BagSyncDB
 	
 	--realm DB
 	BagSyncDB[player.realm] = BagSyncDB[player.realm] or {}
@@ -492,15 +493,21 @@ function BSYC:ShowMoneyTooltip(objTooltip)
 	tooltip:AddLine(" ")
 	
 	--loop through our characters
-	local xDB = self:FilterDB()
 
-	for k, v in pairs(xDB) do
-		local yName, yRealm  = strsplit("^", k)
-		local playerName = BSYC:GetRealmTags(yName, yRealm)
-		
-		if v.gold then
-			playerName = self:GetClassColor(playerName or "Unknown", v.class)
-			table.insert(usrData, { name=playerName, gold=v.gold } )
+	local playerName = ""
+
+
+	for k, v in pairs(self.db.global) do
+		if not k:find('§*') then --no options (astrick at end to start from right)
+			for q, x in pairs(v) do
+				if not q:find('*®') then --no guilds (well for right now lol)
+					if x.money then
+						playerName = self:GetClassColor(q or "Unknown", x.class)
+						table.insert(usrData, { name=playerName, gold=x.money } )
+					end
+				end
+			end
+			
 		end
 	end
 	table.sort(usrData, function(a,b) return (a.name < b.name) end)
@@ -513,7 +520,7 @@ function BSYC:ShowMoneyTooltip(objTooltip)
 	end
 	if self.db.options.showTotal and gldTotal > 0 then
 		tooltip:AddLine(" ")
-		tooltip:AddDoubleLine(tooltipColor(self.db.options.colors.total, L.TooltipTotal), GetCoinTextureString(gldTotal), 1, 1, 1, 1, 1, 1)
+		tooltip:AddDoubleLine(self:tooltipColor(self.db.options.colors.total, L.TooltipTotal), GetCoinTextureString(gldTotal), 1, 1, 1, 1, 1, 1)
 	end
 	
 	tooltip:AddLine(" ")
@@ -595,7 +602,7 @@ function BSYC:CreateItemTotals(countTable)
 		local count = countTable[list[i][1]]
 		if count > 0 then
 			grouped = grouped + 1
-			info = info..L.TooltipDelimiter..tooltipColor(self.db.options.colors.first, list[i][2]).." "..tooltipColor(self.db.options.colors.second, count)
+			info = info..L.TooltipDelimiter..self:tooltipColor(self.db.options.colors.first, list[i][2]).." "..self:tooltipColor(self.db.options.colors.second, count)
 			total = total + count
 		end
 	end
@@ -606,7 +613,7 @@ function BSYC:CreateItemTotals(countTable)
 	
 	--if it's groupped up and has more then one item then use a different color and show total
 	if grouped > 1 then
-		info = tooltipColor(self.db.options.colors.second, total).." ("..info..")"
+		info = self:tooltipColor(self.db.options.colors.second, total).." ("..info..")"
 	end
 	
 	return info
@@ -614,13 +621,13 @@ end
 
 function BSYC:GetClassColor(sName, sClass)
 	if not self.db.options.enableUnitClass then
-		return tooltipColor(self.db.options.colors.first, sName)
+		return self:tooltipColor(self.db.options.colors.first, sName)
 	else
 		if sName ~= "Unknown" and sClass and RAID_CLASS_COLORS[sClass] then
 			return rgbhex(RAID_CLASS_COLORS[sClass])..sName.."|r"
 		end
 	end
-	return tooltipColor(self.db.options.colors.first, sName)
+	return self:tooltipColor(self.db.options.colors.first, sName)
 end
 
 function BSYC:AddCurrencyTooltip(frame, currencyName, addHeader)
@@ -656,7 +663,7 @@ function BSYC:AddCurrencyTooltip(frame, currencyName, addHeader)
 			frame:AddLine(rgbhex(color)..currencyName.."|r")
 		end
 		for i=1, #tmp do
-			frame:AddDoubleLine(tooltipColor(self.db.options.colors.first, tmp[i].name), tooltipColor(self.db.options.colors.second, tmp[i].count))
+			frame:AddDoubleLine(self:tooltipColor(self.db.options.colors.first, tmp[i].name), self:tooltipColor(self.db.options.colors.second, tmp[i].count))
 		end
 	end
 	
@@ -834,7 +841,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 		for k, v in self:pairsByKeys(previousGuilds) do
 			--only print stuff higher then zero
 			if v > 0 then
-				table.insert(self.PreviousItemTotals, tooltipColor(self.db.options.colors.guild, k).."@"..tooltipColor(self.db.options.colors.second, v))
+				table.insert(self.PreviousItemTotals, self:tooltipColor(self.db.options.colors.guild, k).."@"..self:tooltipColor(self.db.options.colors.second, v))
 			end
 		end
 	end
@@ -842,12 +849,12 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 	--show grand total if we have something
 	--don't show total if there is only one item
 	if self.db.options.showTotal and grandTotal > 0 and getn(self.PreviousItemTotals) > 1 then
-		table.insert(self.PreviousItemTotals, tooltipColor(self.db.options.colors.total, L.TooltipTotal).."@"..tooltipColor(self.db.options.colors.second, grandTotal))
+		table.insert(self.PreviousItemTotals, self:tooltipColor(self.db.options.colors.total, L.TooltipTotal).."@"..self:tooltipColor(self.db.options.colors.second, grandTotal))
 	end
 	
 	--add ItemID if it's enabled
 	if table.getn(self.PreviousItemTotals) > 0 and self.db.options.enableTooltipItemID and shortItemID and tonumber(shortItemID) then
-		table.insert(self.PreviousItemTotals, 1 , tooltipColor(self.db.options.colors.itemid, L.TooltipItemID).." "..tooltipColor(self.db.options.colors.second, shortItemID))
+		table.insert(self.PreviousItemTotals, 1 , self:tooltipColor(self.db.options.colors.itemid, L.TooltipItemID).." "..self:tooltipColor(self.db.options.colors.second, shortItemID))
 	end
 	
 	--now check for seperater and only add if we have something in the table already
