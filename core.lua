@@ -1,9 +1,10 @@
 --[[
-	api.lua
-		Standard core API calls for BagSync
+	core.lua
+		Initiates the BagSync addon within Ace3, very important!
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
+BSYC = LibStub("AceAddon-3.0"):NewAddon(BSYC, "BagSync", "AceEvent-3.0", "AceConsole-3.0")
 
 function BSYC:rgbhex(r, g, b)
 	if type(r) == "table" then

@@ -1,18 +1,11 @@
 --[[
-	BagSync.lua
-		A item tracking addon that works with practically any bag addon available.
-		This addon has been heavily rewritten several times since it's creation back in 2007.
-		
-		This addon was inspired by Tuller and his Bagnon addon.  (Thanks Tuller!)
-
-	Author: Xruptor
-
+	data.lua
+		Handles all the data elements for BagSync
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
-BSYC = LibStub("AceAddon-3.0"):NewAddon(BSYC, "BagSync", "AceEvent-3.0", "AceConsole-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
-local Cache = LibStub('LibItemCache-2.0')
+local Unit = BSYC:GetModule("Unit")
 
 local debugf = tekDebug and tekDebug:GetFrame("BagSync")
 
@@ -26,8 +19,8 @@ end
 
 function BSYC:StartupDB()
 	
-	--get player information from Cache
-	local player = Cache:GetOwnerInfo()
+	--get player information from Unit
+	local player = Unit:GetUnitInfo()
 
 	--initiate global db variable
 	BagSyncDB = BagSyncDB or {}
@@ -1221,11 +1214,11 @@ function BSYC:PLAYER_REGEN_ENABLED()
 end
 
 function BSYC:GUILD_ROSTER_UPDATE()
-	self.db.player.guild = Cache:GetOwnerInfo().guild
+	self.db.player.guild = Unit:GetUnitInfo().guild
 end
 
 function BSYC:PLAYER_MONEY()
-	self.db.player.money = Cache:GetOwnerInfo().money
+	self.db.player.money = Unit:GetUnitInfo().money
 end
 
 ------------------------------
