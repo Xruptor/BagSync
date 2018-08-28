@@ -7,18 +7,12 @@ local BSYC = select(2, ...) --grab the addon namespace
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
 local Unit = BSYC:GetModule("Unit")
 
-local debugf = tekDebug and tekDebug:GetFrame("BagSync")
-
-function BSYC:Debug(...)
-    if debugf then debugf:AddMessage(string.join(", ", tostringall(...))) end
-end
-
 ----------------------
 --   DB Functions   --
 ----------------------
 
 function BSYC:StartupDB()
-	
+
 	--get player information from Unit
 	local player = Unit:GetUnitInfo()
 
@@ -139,125 +133,6 @@ function BSYC:CleanAuctionsDB()
 		end
 	end
 	
-end
-
-function BSYC:FilterDB(dbSelect)
-
-	local xIndex = {}
-	local dbObj = self.db.global
-	
-	if dbSelect and dbSelect == 1 then
-		--use BagSyncPROFESSION_DB
-		dbObj = self.db.profession
-	elseif dbSelect and dbSelect == 2 then
-		--use BagSyncCURRENCY_DB
-		dbObj = self.db.currency
-	end
-
-	--add more realm names if necessary based on BNet or Cross Realms
-	if self.db.options.enableBNetAccountItems then
-		for k, v in pairs(dbObj) do
-			for q, r in pairs(v) do
-				--we do this incase there are multiple characters with same name
-				xIndex[q.."^"..k] = r
-			end
-		end
-	elseif self.db.options.enableCrossRealmsItems then
-		for k, v in pairs(dbObj) do
-			if k == self.currentRealm or self.crossRealmNames[k] then
-				for q, r in pairs(v) do
-					----we do this incase there are multiple characters with same name
-					xIndex[q.."^"..k] = r
-				end
-			end
-		end
-	else
-		--do only the current realm if they don't have anything else configured
-		for k, v in pairs(dbObj) do
-			if k == self.currentRealm then
-				for q, r in pairs(v) do
-					----can't have multiple characters on same realm, but we need formatting anyways
-					xIndex[q.."^"..k] = r
-				end
-			end
-		end
-	end
-	
-	return xIndex
-end
-
-function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
-	
-	local tagName = srcName
-	local fullRealmName = srcRealm --default to shortened realm first
-	
-	if self.db.realmkey[srcRealm] then fullRealmName = self.db.realmkey[srcRealm] end --second, if we have a realmkey with a true realm name then use it
-	
-	if not isGuild then
-		local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
-		--local NotReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-NotReady:0|t]]
-		--Interface\\TargetingFrame\\UI-PVP-FFA
-
-		--put a green check next to the currently logged in character name, make sure to put it as current realm only.  You can have toons with same name on multiple realms
-		if srcName == self.currentPlayer and srcRealm == self.currentRealm and self.db.options.enableTooltipGreenCheck then
-			tagName = tagName.." "..ReadyCheck
-		end
-	else
-		--sometimes a person has characters on multiple connected servers joined to the same guild.
-		--the guild information is saved twice because although the guild is on the connected server, the characters themselves are on different servers.
-		--too compensate for this, lets check the connected server and return only the guild name.  So it doesn't get processed twice.
-		for k, v in pairs(self.crossRealmNames) do
-			--check to see if the guild exists already on a connected realm and not the current realm
-			if k ~= srcRealm and self.db.guild[k] and self.db.guild[k][srcName] then
-				--return non-modified guild name, we only want the guild listed once for the cross-realm
-				return srcName
-			end
-		end
-	end
-	
-	--make sure we work with player data not guild data
-	if self.db.options.enableFactionIcons and self.db.global[srcRealm] and self.db.global[srcRealm][srcName] then
-		local FactionIcon = [[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]
-		
-		if self.db.global[srcRealm][srcName].faction == "Alliance" then
-			FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]]
-		elseif self.db.global[srcRealm][srcName].faction == "Horde" then
-			FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
-		end
-		
-		tagName = FactionIcon.." "..tagName
-	end
-	
-	--add Cross-Realm and BNet identifiers to Characters not on same realm
-	local crossString = ""
-	local bnetString = ""
-	
-	if self.db.options.enableRealmIDTags then
-		crossString = "XR-"
-		bnetString = "BNet-"
-	end
-	
-	if self.db.options.enableRealmAstrickName then
-		fullRealmName = "*"
-	elseif self.db.options.enableRealmShortName then
-		fullRealmName = string.sub(fullRealmName, 1, 5) --only use 5 characters of the server name
-	end
-	
-	if self.db.options.enableBNetAccountItems then
-		if srcRealm and srcRealm ~= self.currentRealm then
-			if not self.crossRealmNames[srcRealm] then
-				tagName = tagName.." "..rgbhex(self.db.options.colors.bnet).."["..bnetString..fullRealmName.."]|r"
-			else
-				tagName = tagName.." "..rgbhex(self.db.options.colors.cross).."["..crossString..fullRealmName.."]|r"
-			end
-		end
-	elseif self.db.options.enableCrossRealmsItems then
-		if srcRealm and srcRealm ~= self.currentRealm then
-			tagName = tagName.." "..rgbhex(self.db.options.colors.cross).."["..crossString..fullRealmName.."]|r"
-		end
-	end
-		
-	return tagName
 end
 
 ----------------------
@@ -493,7 +368,7 @@ function BSYC:ShowMoneyTooltip(objTooltip)
 	for k, v in pairs(self.db.global) do
 		if not k:find('§*') then --no options (astrick at end to start from right)
 			for q, x in pairs(v) do
-				if not q:find('*®') then --no guilds (well for right now lol)
+				if not q:find('©*') then --no guilds (well for right now lol)
 					if x.money then
 						playerName = self:GetClassColor(q or "Unknown", x.class)
 						table.insert(usrData, { name=playerName, gold=x.money } )
@@ -673,6 +548,9 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 		return
 	end
 	
+	--get player information from Unit
+	local player = Unit:GetUnitInfo()
+
 	--use our stripped itemlink, not the full link
 	local shortItemID = self:GetShortItemID(itemLink)
 
@@ -686,20 +564,15 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 	end
 	
 	local permIgnore ={
-		[6948] = "Hearthstone",
-		[110560] = "Garrison Hearthstone",
-		[140192] = "Dalaran Hearthstone",
-		[128353] = "Admiral's Compass",
+		["6948"] = "Hearthstone",
+		["110560"] = "Garrison Hearthstone",
+		["140192"] = "Dalaran Hearthstone",
+		["128353"] = "Admiral's Compass",
 	}
 	
-	--ignore the hearthstone and blacklisted items
-	if shortItemID and tonumber(shortItemID) then
-		if permIgnore[tonumber(shortItemID)] or self.db.blacklist[self.currentRealm][tonumber(shortItemID)] then
-			frame:Show()
-			return
-		end
-	end
-	
+	local blocked = permIgnore[shortItemID] or self.db.blacklist[shortItemID]
+	if blocked then frame:Show() return end
+
 	--lag check (check for previously displayed data) if so then display it
 	if self.PreviousItemLink and itemLink and itemLink == self.PreviousItemLink then
 		if table.getn(self.PreviousItemTotals) > 0 then
@@ -1104,28 +977,6 @@ function BSYC:OnEnable()
 
 	local ver = GetAddOnMetadata("BagSync","Version") or 0
 	
-	--load our player info after login
-	self.currentPlayer = UnitName("player")
-	self.currentRealm = select(2, UnitFullName("player")) --get shortend realm name with no spaces and dashes
-	self.playerClass = select(2, UnitClass("player"))
-	self.playerFaction = UnitFactionGroup("player")
-
-	--strip realm of whitespace and special characters, alternative to UnitFullName, since UnitFullName does not work on OnInitialize()
-	--BSYC:Debug(gsub(GetRealmName(),"[%s%-]",""))
-	
-	local realmList = {} --we are going to use this to store a list of connected realms, including the current realm
-	local autoCompleteRealms = GetAutoCompleteRealms() or { self.currentRealm }
-	
-	table.insert(realmList, self.currentRealm)
-	
-	self.crossRealmNames = {}
-	for k, v in pairs(autoCompleteRealms) do
-		if v ~= self.currentRealm then
-			self.crossRealmNames[v] = true
-			table.insert(realmList, v)
-		end
-	end
-	
 	--initiate the db
 	self:StartupDB()
 	
@@ -1150,8 +1001,7 @@ function BSYC:OnEnable()
 	elseif not self.db.options.enableMinimap and BagSync_MinimapButton and BagSync_MinimapButton:IsVisible() then
 		BagSync_MinimapButton:Hide()
 	end
-				
-	self:RegisterEvent("PLAYER_MONEY")
+	
 	self:RegisterEvent("BANKFRAME_OPENED")
 	self:RegisterEvent("BANKFRAME_CLOSED")
 	self:RegisterEvent("GUILDBANKFRAME_OPENED")
@@ -1161,7 +1011,6 @@ function BSYC:OnEnable()
 	self:RegisterEvent("BAG_UPDATE")
 	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED")
 	self:RegisterEvent("UNIT_INVENTORY_CHANGED")
-	self:RegisterEvent("GUILD_ROSTER_UPDATE")
 	self:RegisterEvent("MAIL_SHOW")
 	self:RegisterEvent("MAIL_INBOX_UPDATE")
 	self:RegisterEvent("AUCTION_HOUSE_SHOW")
@@ -1192,6 +1041,7 @@ function BSYC:OnEnable()
 	if self.db.options.enableLoginVersionInfo then
 		self:Print("[v|cFF20ff20"..ver.."|r] /bgs, /bagsync")
 	end
+
 end
 
 ------------------------------
@@ -1211,14 +1061,6 @@ function BSYC:PLAYER_REGEN_ENABLED()
 	--were out of an arena or battleground scan the points
 	self.doCurrencyUpdate = 0
 	self:ScanCurrency()
-end
-
-function BSYC:GUILD_ROSTER_UPDATE()
-	self.db.player.guild = Unit:GetUnitInfo().guild
-end
-
-function BSYC:PLAYER_MONEY()
-	self.db.player.money = Unit:GetUnitInfo().money
 end
 
 ------------------------------

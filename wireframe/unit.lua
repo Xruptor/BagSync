@@ -5,30 +5,28 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
-local Unit = BSYC:NewModule("Unit")
+local Unit = BSYC:NewModule("Unit", 'AceEvent-3.0')
 
 local REALM = GetRealmName()
 local PLAYER = UnitName('player')
 local FACTION = UnitFactionGroup('player')
 
---[[ BSYC:RegisterEvent('BANKFRAME_OPENED', function() Unit.AtBank = true end)
-BSYC:RegisterEvent('BANKFRAME_CLOSED', function() Unit.AtBank = false end)
+Unit:RegisterEvent('BANKFRAME_OPENED', function() Unit.atBank = true end)
+Unit:RegisterEvent('BANKFRAME_CLOSED', function() Unit.atBank = false end)
 
-BSYC:RegisterEvent('VOID_STORAGE_OPEN', function() Unit.AtVault = true end)
-BSYC:RegisterEvent('VOID_STORAGE_CLOSE', function() Unit.AtVault = false end)
+Unit:RegisterEvent('VOID_STORAGE_OPEN', function() Unit.atVault = true end)
+Unit:RegisterEvent('VOID_STORAGE_CLOSE', function() Unit.atVault = false end)
 
-BSYC:RegisterEvent('GUILDBANKFRAME_OPENED', function() Unit.AtGuild = true end)
-BSYC:RegisterEvent('GUILDBANKFRAME_CLOSED', function() Unit.AtGuild = false end)
- ]]
- 
+Unit:RegisterEvent('GUILDBANKFRAME_OPENED', function() Unit.atGuild = true end)
+Unit:RegisterEvent('GUILDBANKFRAME_CLOSED', function() Unit.atGuild = false end)
+
 function Unit:GetUnitAddress(unit)
 	if not unit then
 		return REALM, PLAYER
 	end
 
-	local first, realm = strmatch(unit, '^(.-) *%- *(.+)$')
-	local isguild, name = strmatch(first or unit, '^(®) *(.+)')
-	return realm or REALM, name or first or unit, isguild and true
+	local guildName = strmatch(unit, '(.+)©')
+	return REALM, guildName or unit, guildName and true
 end
 
 function Unit:GetUnitInfo(unit)
@@ -45,9 +43,13 @@ function Unit:GetUnitInfo(unit)
 		unit.gender = UnitSex('player')
 	end
 
-	unit.guild = unit.guild and ('® ' .. unit.guild .. ' - ' .. realm)
+	unit.guild = unit.guild and (unit.guild..'©')
 	unit.name, unit.realm, unit.isguild = name, realm, isguild
-	unit.cached = cached
 
 	return unit
+end
+
+function Unit:GetUnitTag(unit)
+	--return here the full unit tag for the tooltip
+	
 end

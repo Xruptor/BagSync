@@ -31,6 +31,8 @@ locale\esES.lua
 
 wireframe\BagSyncInteractiveLabel.lua
 wireframe\unit.lua
+wireframe\scanner.lua
+wireframe\events.lua
 
 modules\minimap.lua
 modules\databrokerplugin.lua

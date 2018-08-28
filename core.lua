@@ -3,8 +3,15 @@
 		Initiates the BagSync addon within Ace3, very important!
 --]]
 
-local BSYC = select(2, ...) --grab the addon namespace
-BSYC = LibStub("AceAddon-3.0"):NewAddon(BSYC, "BagSync", "AceEvent-3.0", "AceConsole-3.0")
+local BAGSYNC, BSYC = ... --grab the addon namespace
+LibStub("AceAddon-3.0"):NewAddon(BSYC, "BagSync", "AceEvent-3.0", "AceConsole-3.0")
+_G[BAGSYNC] = BSYC --add it to the global frame space, otherwise you won't be able to call it
+
+local debugf = tekDebug and tekDebug:GetFrame("BagSync")
+
+function BSYC:Debug(...)
+    if debugf then debugf:AddMessage(string.join(", ", tostringall(...))) end
+end
 
 function BSYC:rgbhex(r, g, b)
 	if type(r) == "table" then
