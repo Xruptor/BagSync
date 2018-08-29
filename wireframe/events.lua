@@ -6,10 +6,23 @@
 local BSYC = select(2, ...) --grab the addon namespace
 local Events = BSYC:NewModule("Events", 'AceEvent-3.0')
 local Unit = BSYC:GetModule("Unit")
+local Scanner = BSYC:GetModule("Scanner")
+
+local FirstEquipped = INVSLOT_FIRST_EQUIPPED
+local LastEquipped = INVSLOT_LAST_EQUIPPED
 
 function Events:OnEnable()
 	self:RegisterEvent('PLAYER_MONEY')
 	self:RegisterEvent('GUILD_ROSTER_UPDATE')
+	self:RegisterEvent("UNIT_INVENTORY_CHANGED")
+	
+	self:RegisterEvent('VOID_STORAGE_OPEN', function() Scanner:ScanVoidBank() end)
+	self:RegisterEvent('VOID_STORAGE_UPDATE', function() Scanner:ScanVoidBank() end)
+	self:RegisterEvent('VOID_STORAGE_CONTENTS_UPDATE', function() Scanner:ScanVoidBank() end)
+	self:RegisterEvent('VOID_TRANSFER_DONE', function() Scanner:ScanVoidBank() end)
+	
+	self:RegisterEvent('MAIL_SHOW', function() Scanner:ScanMailbox() end)
+	self:RegisterEvent('MAIL_INBOX_UPDATE', function() Scanner:ScanMailbox() end)
 end
 
 function Events:PLAYER_MONEY()
@@ -20,34 +33,10 @@ function Events:GUILD_ROSTER_UPDATE()
 	BSYC.db.player.guild = Unit:GetUnitInfo().guild
 end
 
---[[ 	
-
-	self:RegisterEvent("BANKFRAME_OPENED")
-	self:RegisterEvent("BANKFRAME_CLOSED")
-	self:RegisterEvent("GUILDBANKFRAME_OPENED")
-	self:RegisterEvent("GUILDBANKFRAME_CLOSED")
-	self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
-	self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED")
-	self:RegisterEvent("BAG_UPDATE")
-	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED")
-	self:RegisterEvent("UNIT_INVENTORY_CHANGED")
-
-	self:RegisterEvent("MAIL_SHOW")
-	self:RegisterEvent("MAIL_INBOX_UPDATE")
-	self:RegisterEvent("AUCTION_HOUSE_SHOW")
-	self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE")
-	
-	--currency
-	self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
-
-	--void storage
-	self:RegisterEvent("VOID_STORAGE_OPEN")
-	self:RegisterEvent("VOID_STORAGE_CLOSE")
-	self:RegisterEvent("VOID_STORAGE_UPDATE")
-	self:RegisterEvent("VOID_STORAGE_CONTENTS_UPDATE")
-	self:RegisterEvent("VOID_TRANSFER_DONE")
-	
-	--this will be used for getting the tradeskill link
-	self:RegisterEvent("TRADE_SKILL_SHOW")
-	self:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
- ]]
+function Events:UNIT_INVENTORY_CHANGED(event, unit)
+	if unit == "player" then
+		for i = FirstEquipped, LastEquipped do
+			Scanner:SaveEquipment(i)
+		end
+	end
+end

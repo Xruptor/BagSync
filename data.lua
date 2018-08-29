@@ -6,6 +6,7 @@
 local BSYC = select(2, ...) --grab the addon namespace
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
 local Unit = BSYC:GetModule("Unit")
+local Events = BSYC:GetModule("Events")
 
 ----------------------
 --   DB Functions   --
@@ -159,25 +160,6 @@ function BSYC:SaveBag(bagname, bagid)
 	end
 end
 
-function BSYC:SaveEquipment()
-	self.db.player["equip"] = self.db.player["equip"] or {}
-	
-	--reset our tooltip data since we scanned new items (we want current data not old)
-	self.PreviousItemLink = nil
-	self.PreviousItemTotals = {}
-	
-	local slotItems = {}
-	local NUM_EQUIPMENT_SLOTS = 19
-	
-	--start at 1, 0 used to be the old range slot (not needed anymore)
-	for slot = 1, NUM_EQUIPMENT_SLOTS do
-		local link = GetInventoryItemLink("player", slot)
-		local count =  GetInventoryItemCount("player", slot)
-		slotItems[slot] = self:ParseItemLink(link, count)
-	end
-	self.db.player["equip"][0] = slotItems
-end
-
 function BSYC:ScanEntireBank()
 	--force scan of bank bag -1, since blizzard never sends updates for it
 	self:SaveBag("bank", BANK_CONTAINER)
@@ -187,32 +169,8 @@ function BSYC:ScanEntireBank()
 	if IsReagentBankUnlocked() then 
 		self:SaveBag("reagentbank", REAGENTBANK_CONTAINER)
 	end
-end
-
-function BSYC:ScanVoidBank()
-	if not self.atVoidBank then return end
 	
-	self.db.player["vault"] = self.db.player["vault"] or {}
-
-	--reset our tooltip data since we scanned new items (we want current data not old)
-	self.PreviousItemLink = nil
-	self.PreviousItemTotals = {}
-
-	local numTabs = 2
-	local index = 0
-	local slotItems = {}
-	
-	for tab = 1, numTabs do
-		for i = 1, 80 do
-			local itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(tab, i)
-			if (itemID) then
-				index = index + 1
-				slotItems[index] = itemID and tostring(itemID) or nil
-			end
-		end
-	end
-	
-	self.db.player["vault"][0] = slotItems
+	--https://wow.gamepedia.com/BagId#/search
 end
 
 function BSYC:ScanGuildBank()
@@ -244,43 +202,6 @@ function BSYC:ScanGuildBank()
 	end
 	
 	self.db.realm[self.db.player.guild] = slotItems
-end
-
-function BSYC:ScanMailbox()
-	--this is to prevent buffer overflow from the CheckInbox() function calling ScanMailbox too much :)
-	if self.isCheckingMail then return end
-	self.isCheckingMail = true
-
-	 --used to initiate mail check from server, for some reason GetInboxNumItems() returns zero sometimes
-	 --even though the user has mail in the mailbox.  This can be attributed to lag.
-	CheckInbox()
-
-	self.db.player["mailbox"] = self.db.player["mailbox"] or {}
-	
-	local slotItems = {}
-	local mailCount = 0
-	local numInbox = GetInboxNumItems()
-
-	--reset our tooltip data since we scanned new items (we want current data not old)
-	self.PreviousItemLink = nil
-	self.PreviousItemTotals = {}
-	
-	--scan the inbox
-	if (numInbox > 0) then
-		for mailIndex = 1, numInbox do
-			for i=1, ATTACHMENTS_MAX_RECEIVE do
-				local name, itemID, itemTexture, count, quality, canUse = GetInboxItem(mailIndex, i)
-				local link = GetInboxItemLink(mailIndex, i)
-				if name and link then
-					mailCount = mailCount + 1
-					slotItems[mailCount] = self:ParseItemLink(link, count)
-				end
-			end
-		end
-	end
-	
-	self.db.player["mailbox"][0] = slotItems
-	self.isCheckingMail = false
 end
 
 function BSYC:ScanAuctionHouse()
@@ -462,7 +383,7 @@ function BSYC:CreateItemTotals(countTable)
 		[4] = { "equip", 		L.TooltipEquip },
 		[5] = { "guild", 		L.TooltipGuild },
 		[6] = { "mailbox", 		L.TooltipMail },
-		[7] = { "vault", 		L.TooltipVoid },
+		[7] = { "void", 		L.TooltipVoid },
 		[8] = { "auction", 		L.TooltipAuction },
 	}
 		
@@ -962,7 +883,7 @@ end
 --    LOGIN HANDLER         --
 ------------------------------
 
-function BSYC:OnEnable()
+function BSYC:OnEnable_Old()
 	--NOTE: Using OnEnable() instead of OnInitialize() because not all the SavedVarables fully loaded
 	--also one of the major issues is that UnitFullName() will return nil for the short named realm
 
@@ -985,9 +906,6 @@ function BSYC:OnEnable()
 		self:SaveBag("bag", i)
 	end
 
-	--force an equipment scan
-	self:SaveEquipment()
-	
 	--force token scan
 	hooksecurefunc("BackpackTokenFrame_Update", function(self) BSYC:ScanCurrency() end)
 	self:ScanCurrency()
@@ -1010,22 +928,12 @@ function BSYC:OnEnable()
 	self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED")
 	self:RegisterEvent("BAG_UPDATE")
 	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED")
-	self:RegisterEvent("UNIT_INVENTORY_CHANGED")
-	self:RegisterEvent("MAIL_SHOW")
-	self:RegisterEvent("MAIL_INBOX_UPDATE")
 	self:RegisterEvent("AUCTION_HOUSE_SHOW")
 	self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE")
 	
 	--currency
 	self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
 
-	--void storage
-	self:RegisterEvent("VOID_STORAGE_OPEN")
-	self:RegisterEvent("VOID_STORAGE_CLOSE")
-	self:RegisterEvent("VOID_STORAGE_UPDATE")
-	self:RegisterEvent("VOID_STORAGE_CONTENTS_UPDATE")
-	self:RegisterEvent("VOID_TRANSFER_DONE")
-	
 	--this will be used for getting the tradeskill link
 	self:RegisterEvent("TRADE_SKILL_SHOW")
 	self:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
@@ -1042,6 +950,10 @@ function BSYC:OnEnable()
 		self:Print("[v|cFF20ff20"..ver.."|r] /bgs, /bagsync")
 	end
 
+end
+
+function BSYC:StartupScans()
+	Events:UNIT_INVENTORY_CHANGED(nil, "player")
 end
 
 ------------------------------
@@ -1091,12 +1003,6 @@ function BSYC:BAG_UPDATE(event, bagid)
 	end
 end
 
-function BSYC:UNIT_INVENTORY_CHANGED(event, unit)
-	if unit == "player" then
-		self:SaveEquipment()
-	end
-end
-
 ------------------------------
 --      BANK	            --
 ------------------------------
@@ -1123,31 +1029,6 @@ end
 
 function BSYC:PLAYERREAGENTBANKSLOTS_CHANGED()
 	self:SaveBag("reagentbank", REAGENTBANK_CONTAINER)
-end
-
-------------------------------
---      VOID BANK	        --
-------------------------------
-
-function BSYC:VOID_STORAGE_OPEN()
-	self.atVoidBank = true
-	self:ScanVoidBank()
-end
-
-function BSYC:VOID_STORAGE_CLOSE()
-	self.atVoidBank = false
-end
-
-function BSYC:VOID_STORAGE_UPDATE()
-	self:ScanVoidBank()
-end
-
-function BSYC:VOID_STORAGE_CONTENTS_UPDATE()
-	self:ScanVoidBank()
-end
-
-function BSYC:VOID_TRANSFER_DONE()
-	self:ScanVoidBank()
 end
 
 ------------------------------
@@ -1187,22 +1068,6 @@ function BSYC:GUILDBANKBAGSLOTS_CHANGED()
 			self:ScanGuildBank()
 		end
 	end
-end
-
-------------------------------
---      MAILBOX  	        --
-------------------------------
-
-function BSYC:MAIL_SHOW()
-	if self.isCheckingMail then return end
-	if not self.db.options.enableMailbox then return end
-	self:ScanMailbox()
-end
-
-function BSYC:MAIL_INBOX_UPDATE()
-	if self.isCheckingMail then return end
-	if not self.db.options.enableMailbox then return end
-	self:ScanMailbox()
 end
 
 ------------------------------

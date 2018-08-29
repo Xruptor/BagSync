@@ -13,6 +13,16 @@ function BSYC:Debug(...)
     if debugf then debugf:AddMessage(string.join(", ", tostringall(...))) end
 end
 
+function BSYC:OnEnable()
+	
+	--call the old function until we clean things up
+	self:OnEnable_Old()
+	
+	--do the initial player scans
+	self:StartupScans()
+	
+end
+
 function BSYC:rgbhex(r, g, b)
 	if type(r) == "table" then
 		if r.r then
@@ -94,7 +104,7 @@ function BSYC:ParseItemLink(link, count)
 		
 		return link
 	end
-	
+
 end
 
 function BSYC:GetShortItemID(link)

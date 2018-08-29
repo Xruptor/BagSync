@@ -14,11 +14,14 @@ local FACTION = UnitFactionGroup('player')
 Unit:RegisterEvent('BANKFRAME_OPENED', function() Unit.atBank = true end)
 Unit:RegisterEvent('BANKFRAME_CLOSED', function() Unit.atBank = false end)
 
-Unit:RegisterEvent('VOID_STORAGE_OPEN', function() Unit.atVault = true end)
-Unit:RegisterEvent('VOID_STORAGE_CLOSE', function() Unit.atVault = false end)
+Unit:RegisterEvent('VOID_STORAGE_OPEN', function() Unit.atVoidBank = true end)
+Unit:RegisterEvent('VOID_STORAGE_CLOSE', function() Unit.atVoidBank = false end)
 
-Unit:RegisterEvent('GUILDBANKFRAME_OPENED', function() Unit.atGuild = true end)
-Unit:RegisterEvent('GUILDBANKFRAME_CLOSED', function() Unit.atGuild = false end)
+Unit:RegisterEvent('GUILDBANKFRAME_OPENED', function() Unit.atGuildBank = true end)
+Unit:RegisterEvent('GUILDBANKFRAME_CLOSED', function() Unit.atGuildBank = false end)
+
+Unit:RegisterEvent('MAIL_SHOW', function() Unit.atMailbox = true end)
+Unit:RegisterEvent('MAIL_CLOSED', function() Unit.atMailbox = false end)
 
 function Unit:GetUnitAddress(unit)
 	if not unit then
