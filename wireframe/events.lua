@@ -8,9 +8,6 @@ local Events = BSYC:NewModule("Events", 'AceEvent-3.0')
 local Unit = BSYC:GetModule("Unit")
 local Scanner = BSYC:GetModule("Scanner")
 
-local FirstEquipped = INVSLOT_FIRST_EQUIPPED
-local LastEquipped = INVSLOT_LAST_EQUIPPED
-
 function Events:OnEnable()
 	self:RegisterEvent('PLAYER_MONEY')
 	self:RegisterEvent('GUILD_ROSTER_UPDATE')
@@ -23,6 +20,12 @@ function Events:OnEnable()
 	
 	self:RegisterEvent('MAIL_SHOW', function() Scanner:ScanMailbox() end)
 	self:RegisterEvent('MAIL_INBOX_UPDATE', function() Scanner:ScanMailbox() end)
+	
+	self:RegisterEvent("BANKFRAME_OPENED", function() Scanner:ScanBank() end)
+	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", function() Scanner:ScanBank(true) end)
+	self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED", function() Scanner:ScanReagents() end)
+	self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:ScanReagents() end)
+
 end
 
 function Events:PLAYER_MONEY()
@@ -35,8 +38,6 @@ end
 
 function Events:UNIT_INVENTORY_CHANGED(event, unit)
 	if unit == "player" then
-		for i = FirstEquipped, LastEquipped do
-			Scanner:SaveEquipment(i)
-		end
+		Scanner:SaveEquipment()
 	end
 end

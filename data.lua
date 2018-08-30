@@ -160,19 +160,6 @@ function BSYC:SaveBag(bagname, bagid)
 	end
 end
 
-function BSYC:ScanEntireBank()
-	--force scan of bank bag -1, since blizzard never sends updates for it
-	self:SaveBag("bank", BANK_CONTAINER)
-	for i = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
-		self:SaveBag("bank", i)
-	end
-	if IsReagentBankUnlocked() then 
-		self:SaveBag("reagentbank", REAGENTBANK_CONTAINER)
-	end
-	
-	--https://wow.gamepedia.com/BagId#/search
-end
-
 function BSYC:ScanGuildBank()
 	if not IsInGuild() then return end
 	
@@ -484,6 +471,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 		return
 	end
 	
+	--HEARTHSTONE_ITEM_ID
 	local permIgnore ={
 		["6948"] = "Hearthstone",
 		["110560"] = "Garrison Hearthstone",
@@ -494,6 +482,11 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 	local blocked = permIgnore[shortItemID] or self.db.blacklist[shortItemID]
 	if blocked then frame:Show() return end
 
+--[[ 	local itemID = tonumber(link and GetItemInfo(link) and link:match('item:(%d+)')) -- Blizzard doing craziness when doing GetItemInfo
+	if not itemID or itemID == HEARTHSTONE_ITEM_ID then
+		return
+	end ]]
+	
 	--lag check (check for previously displayed data) if so then display it
 	if self.PreviousItemLink and itemLink and itemLink == self.PreviousItemLink then
 		if table.getn(self.PreviousItemTotals) > 0 then
@@ -902,9 +895,9 @@ function BSYC:OnEnable_Old()
 	self:StartupDB()
 	
 	--save all inventory data, including backpack(0)
-	for i = BACKPACK_CONTAINER, BACKPACK_CONTAINER + NUM_BAG_SLOTS do
+--[[ 	for i = BACKPACK_CONTAINER, BACKPACK_CONTAINER + NUM_BAG_SLOTS do
 		self:SaveBag("bag", i)
-	end
+	end ]]
 
 	--force token scan
 	hooksecurefunc("BackpackTokenFrame_Update", function(self) BSYC:ScanCurrency() end)
@@ -920,7 +913,7 @@ function BSYC:OnEnable_Old()
 		BagSync_MinimapButton:Hide()
 	end
 	
-	self:RegisterEvent("BANKFRAME_OPENED")
+	--[[ self:RegisterEvent("BANKFRAME_OPENED")
 	self:RegisterEvent("BANKFRAME_CLOSED")
 	self:RegisterEvent("GUILDBANKFRAME_OPENED")
 	self:RegisterEvent("GUILDBANKFRAME_CLOSED")
@@ -936,7 +929,7 @@ function BSYC:OnEnable_Old()
 
 	--this will be used for getting the tradeskill link
 	self:RegisterEvent("TRADE_SKILL_SHOW")
-	self:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
+	self:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED") ]]
 
 	--hook the tooltips
 	self:HookTooltip(GameTooltip)
@@ -1001,34 +994,6 @@ function BSYC:BAG_UPDATE(event, bagid)
 		self:SaveBag(bagname, bagid)
 		
 	end
-end
-
-------------------------------
---      BANK	            --
-------------------------------
-
-function BSYC:BANKFRAME_OPENED()
-	self.atBank = true
-	self:ScanEntireBank()
-end
-
-function BSYC:BANKFRAME_CLOSED()
-	self.atBank = false
-end
-
-function BSYC:PLAYERBANKSLOTS_CHANGED(event, slotid)
-	--Remove self.atBank when/if Blizzard allows Bank access without being at the bank
-	if self.atBank then
-		self:SaveBag("bank", BANK_CONTAINER)
-	end
-end
-
-------------------------------
---		REAGENT BANK		--
-------------------------------
-
-function BSYC:PLAYERREAGENTBANKSLOTS_CHANGED()
-	self:SaveBag("reagentbank", REAGENTBANK_CONTAINER)
 end
 
 ------------------------------
