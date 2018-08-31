@@ -14,13 +14,8 @@ function BSYC:Debug(...)
 end
 
 function BSYC:OnEnable()
-	
 	--call the old function until we clean things up
 	self:OnEnable_Old()
-	
-	--do the initial player scans
-	self:StartupScans()
-	
 end
 
 function BSYC:rgbhex(r, g, b)

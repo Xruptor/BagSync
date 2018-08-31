@@ -17,8 +17,8 @@ local FirstEquipped = INVSLOT_FIRST_EQUIPPED
 local LastEquipped = INVSLOT_LAST_EQUIPPED
 
 function Scanner:SaveBag(bagtype, bagid)
-	if not not bagid then return end
-	BSYC.db.player[bagtype] = BSYC.db.player[bagtype] or {}
+	if not bagtype or not bagid then return end
+	if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
 
 	if GetContainerNumSlots(bagid) > 0 then
 		local slotItems = {}
@@ -33,7 +33,7 @@ function Scanner:SaveBag(bagtype, bagid)
 end
 
 function Scanner:SaveEquipment()
-	BSYC.db.player.equip = BSYC.db.player.equip or {}
+	if not BSYC.db.player.equip then BSYC.db.player.equip = {} end
 
 	for slot = FirstEquipped, LastEquipped do
 		local link = GetInventoryItemLink("player", slot)
@@ -42,10 +42,34 @@ function Scanner:SaveEquipment()
 	end
 end
 
+function Scanner:ScanBank(rootOnly)
+	if not Unit.atBank then return end
+	
+	--force scan of bank bag -1, since blizzard never sends updates for it
+	self:SaveBag("bank", BANK_CONTAINER)
+	
+	if not rootOnly then
+		--https://wow.gamepedia.com/BagId#/search
+		for i = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
+			self:SaveBag("bank", i)
+		end
+		--scan the reagents as part of the bank scan
+		self:ScanReagents()
+	end
+end
+
+function Scanner:ScanReagents()
+	if not Unit.atBank then return end
+	
+	if IsReagentBankUnlocked() then 
+		self:SaveBag("reagents", REAGENTBANK_CONTAINER)
+	end
+end
+
 function Scanner:ScanVoidBank()
 	if not Unit.atVoidBank then return end
+	if not BSYC.db.player.void then BSYC.db.player.void = {} end
 	
-	BSYC.db.player.void = BSYC.db.player.void or {}
 	local slot = 0
 
 	for tab = 1, VOID_STORAGE_PAGES do
@@ -57,8 +81,36 @@ function Scanner:ScanVoidBank()
 	end
 end
 
+function Scanner:ScanGuildBank()
+	if not IsInGuild() then return end
+	if not BSYC.db.realm[BSYC.db.player.guild] then BSYC.db.realm[BSYC.db.player.guild] = {} end
+	
+	local numTabs = GetNumGuildBankTabs()
+	local index = 0
+	local slotItems = {}
+	
+	for tab = 1, numTabs do
+		local name, icon, isViewable, canDeposit, numWithdrawals, remainingWithdrawals = GetGuildBankTabInfo(tab)
+		--if we don't check for isViewable we get a weirdo permissions error for the player when they attempt it
+		if isViewable then
+			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
+				local link = GetGuildBankItemLink(tab, slot)
+				if link then
+					index = index + 1
+					local _, count = GetGuildBankItemInfo(tab, slot)
+					slotItems[index] = BSYC:ParseItemLink(link, count)
+				end
+			end
+		end
+	end
+
+	BSYC.db.realm[BSYC.db.player.guild].bag = slotItems
+	BSYC.db.realm[BSYC.db.player.guild].money = GetGuildBankMoney()
+end
+
 function Scanner:ScanMailbox()
 	if not Unit.atMailbox then return end
+	if not BSYC.db.player.mailbox then BSYC.db.player.mailbox = {} end
 	
 	if self.isCheckingMail then return end --prevent overflow from CheckInbox()
 	self.isCheckingMail = true
@@ -90,27 +142,10 @@ function Scanner:ScanMailbox()
 	self.isCheckingMail = false
 end
 
-function Scanner:ScanBank(rootOnly)
-	if not Unit.atBank then return end
-	
-	--force scan of bank bag -1, since blizzard never sends updates for it
-	self:SaveBag("bank", BANK_CONTAINER)
-	
-	if not rootOnly then
-		--https://wow.gamepedia.com/BagId#/search
-		for i = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
-			self:SaveBag("bank", i)
-		end
-	
-		--scan the reagents as part of the bank scan
-		self:ScanReagents()
-	end
-end
+function Scanner:StartupScans()
+	self:SaveEquipment()
 
-function Scanner:ScanReagents()
-	if not Unit.atBank then return end
-	
-	if IsReagentBankUnlocked() then 
-		self:SaveBag("reagents", REAGENTBANK_CONTAINER)
+	for i = BACKPACK_CONTAINER, BACKPACK_CONTAINER + NUM_BAG_SLOTS do
+		self:SaveBag("bag", i)
 	end
 end

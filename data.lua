@@ -140,57 +140,6 @@ end
 --  Bag Functions   --
 ----------------------
 
-function BSYC:SaveBag(bagname, bagid)
-	if not bagname or not bagid then return end
-	self.db.player[bagname] = self.db.player[bagname] or {}
-	
-	--reset our tooltip data since we scanned new items (we want current data not old)
-	self.PreviousItemLink = nil
-	self.PreviousItemTotals = {}
-
-	if GetContainerNumSlots(bagid) > 0 then
-		local slotItems = {}
-		for slot = 1, GetContainerNumSlots(bagid) do
-			local _, count, _,_,_,_, link = GetContainerItemInfo(bagid, slot)
-			slotItems[slot] = self:ParseItemLink(link, count)
-		end
-		self.db.player[bagname][bagid] = slotItems
-	else
-		self.db.player[bagname][bagid] = nil
-	end
-end
-
-function BSYC:ScanGuildBank()
-	if not IsInGuild() then return end
-	
-	local MAX_GUILDBANK_SLOTS_PER_TAB = 98
-	
-	--reset our tooltip data since we scanned new items (we want current data not old)
-	self.PreviousItemLink = nil
-	self.PreviousItemTotals = {}
-	
-	local numTabs = GetNumGuildBankTabs()
-	local index = 0
-	local slotItems = {}
-	
-	for tab = 1, numTabs do
-		local name, icon, isViewable, canDeposit, numWithdrawals, remainingWithdrawals = GetGuildBankTabInfo(tab)
-		--if we don't check for isViewable we get a weirdo permissions error for the player when they attempt it
-		if isViewable then
-			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
-				local link = GetGuildBankItemLink(tab, slot)
-				if link then
-					index = index + 1
-					local _, count = GetGuildBankItemInfo(tab, slot)
-					slotItems[index] = self:ParseItemLink(link, count)
-				end
-			end
-		end
-	end
-	
-	self.db.realm[self.db.player.guild] = slotItems
-end
-
 function BSYC:ScanAuctionHouse()
 	self.db.player["auction"] = self.db.player["auction"] or {}
 	
@@ -894,11 +843,6 @@ function BSYC:OnEnable_Old()
 	--initiate the db
 	self:StartupDB()
 	
-	--save all inventory data, including backpack(0)
---[[ 	for i = BACKPACK_CONTAINER, BACKPACK_CONTAINER + NUM_BAG_SLOTS do
-		self:SaveBag("bag", i)
-	end ]]
-
 	--force token scan
 	hooksecurefunc("BackpackTokenFrame_Update", function(self) BSYC:ScanCurrency() end)
 	self:ScanCurrency()
@@ -945,10 +889,6 @@ function BSYC:OnEnable_Old()
 
 end
 
-function BSYC:StartupScans()
-	Events:UNIT_INVENTORY_CHANGED(nil, "player")
-end
-
 ------------------------------
 --      Event Handlers      --
 ------------------------------
@@ -966,73 +906,6 @@ function BSYC:PLAYER_REGEN_ENABLED()
 	--were out of an arena or battleground scan the points
 	self.doCurrencyUpdate = 0
 	self:ScanCurrency()
-end
-
-------------------------------
---      BAG UPDATES  	    --
-------------------------------
-
-function BSYC:BAG_UPDATE(event, bagid)
-	-- -1 happens to be the primary bank slot ;)
-	if (bagid > BANK_CONTAINER) then
-	
-		--this will update the bank/bag slots
-		local bagname
-
-		--get the correct bag name based on it's id, trying NOT to use numbers as Blizzard may change bagspace in the future
-		--so instead I'm using constants :)
-		if ((bagid >= NUM_BAG_SLOTS + 1) and (bagid <= NUM_BAG_SLOTS + NUM_BANKBAGSLOTS)) then
-			bagname = "bank"
-		elseif (bagid >= BACKPACK_CONTAINER) and (bagid <= BACKPACK_CONTAINER + NUM_BAG_SLOTS) then
-			bagname = "bag"
-		else
-			return
-		end
-		
-		if bagname == "bank" and not self.atBank then return; end
-		--now save the item information in the bag from bagupdate, this could be bag or bank
-		self:SaveBag(bagname, bagid)
-		
-	end
-end
-
-------------------------------
---      GUILD BANK	        --
-------------------------------
-
-function BSYC:GUILDBANKFRAME_OPENED()
-	self.atGuildBank = true
-	if not self.db.options.enableGuild then return end
-	if not self.GuildTabQueryQueue then self.GuildTabQueryQueue = {} end
-	
-	local numTabs = GetNumGuildBankTabs()
-	for tab = 1, numTabs do
-		-- add this tab to the queue to refresh; if we do them all at once the server bugs and sends massive amounts of events
-		local name, icon, isViewable, canDeposit, numWithdrawals, remainingWithdrawals = GetGuildBankTabInfo(tab)
-		if isViewable then
-			self.GuildTabQueryQueue[tab] = true
-		end
-	end
-end
-
-function BSYC:GUILDBANKFRAME_CLOSED()
-	self.atGuildBank = false
-end
-
-function BSYC:GUILDBANKBAGSLOTS_CHANGED()
-	if not self.db.options.enableGuild then return end
-
-	if self.atGuildBank then
-		-- check if we need to process the queue
-		local tab = next(self.GuildTabQueryQueue)
-		if tab then
-			QueryGuildBankTab(tab)
-			self.GuildTabQueryQueue[tab] = nil
-		else
-			-- the bank is ready for reading
-			self:ScanGuildBank()
-		end
-	end
 end
 
 ------------------------------
