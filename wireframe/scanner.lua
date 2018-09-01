@@ -4,7 +4,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
-local Scanner = BSYC:NewModule("Scanner", 'AceEvent-3.0')
+local Scanner = BSYC:NewModule("Scanner")
 local Unit = BSYC:GetModule("Unit")
 
 --https://github.com/tomrus88/BlizzardInterfaceCode/blob/master/Interface/AddOns/Blizzard_VoidStorageUI/Blizzard_VoidStorageUI.lua
