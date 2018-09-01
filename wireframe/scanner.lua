@@ -142,6 +142,35 @@ function Scanner:ScanMailbox()
 	self.isCheckingMail = false
 end
 
+function Scanner:ScanAuctionHouse()
+	if not Unit.atAuction then return end
+	if not BSYC.db.player.auction then BSYC.db.player.auction = {} end
+
+	local slotItems = {}
+	local ahCount = 0
+	local numActiveAuctions = GetNumAuctionItems("owner")
+
+	--scan the auction house
+	if (numActiveAuctions > 0) then
+		for ahIndex = 1, numActiveAuctions do
+			local name, texture, count, quality, canUse, level, minBid, minIncrement, buyoutPrice, bidAmount, highBidder, owner, saleStatus  = GetAuctionItemInfo("owner", ahIndex)
+			if name then
+				local link = GetAuctionItemLink("owner", ahIndex)
+				local timeLeft = GetAuctionItemTimeLeft("owner", ahIndex)
+				if link and timeLeft then
+					ahCount = ahCount + 1
+					count = (count or 1)
+					slotItems[ahCount] = BSYC:ParseItemLink(link, count)..";"..timeLeft
+				end
+			end
+		end
+	end
+	
+	BSYC.db.player.auction.bag = slotItems
+	BSYC.db.player.auction.count = ahCount
+	BSYC.db.player.auction.lastscan = time()
+end
+
 function Scanner:StartupScans()
 	self:SaveEquipment()
 

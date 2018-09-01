@@ -140,36 +140,6 @@ end
 --  Bag Functions   --
 ----------------------
 
-function BSYC:ScanAuctionHouse()
-	self.db.player["auction"] = self.db.player["auction"] or {}
-	
-	local slotItems = {}
-	local ahCount = 0
-	local numActiveAuctions = GetNumAuctionItems("owner")
-	
-	--reset our tooltip data since we scanned new items (we want current data not old)
-	self.PreviousItemLink = nil
-	self.PreviousItemTotals = {}
-	
-	--scan the auction house
-	if (numActiveAuctions > 0) then
-		for ahIndex = 1, numActiveAuctions do
-			local name, texture, count, quality, canUse, level, minBid, minIncrement, buyoutPrice, bidAmount, highBidder, owner, saleStatus  = GetAuctionItemInfo("owner", ahIndex)
-			if name then
-				local link = GetAuctionItemLink("owner", ahIndex)
-				local timeLeft = GetAuctionItemTimeLeft("owner", ahIndex)
-				if link and timeLeft then
-					ahCount = ahCount + 1
-					count = (count or 1)
-					slotItems[ahCount] = self:ParseItemLink(link, count)..";"..timeLeft
-				end
-			end
-		end
-	end
-	
-	self.db.player["auction"][0] = slotItems
-	self.db.player.AH_Count = ahCount
-end
 
 ------------------------
 --   Money Tooltip    --
@@ -906,21 +876,6 @@ function BSYC:PLAYER_REGEN_ENABLED()
 	--were out of an arena or battleground scan the points
 	self.doCurrencyUpdate = 0
 	self:ScanCurrency()
-end
-
-------------------------------
---     AUCTION HOUSE        --
-------------------------------
-
-function BSYC:AUCTION_HOUSE_SHOW()
-	if not self.db.options.enableAuction then return end
-	self:ScanAuctionHouse()
-end
-
-function BSYC:AUCTION_OWNED_LIST_UPDATE()
-	if not self.db.options.enableAuction then return end
-	self.db.player.AH_LastScan = time()
-	self:ScanAuctionHouse()
 end
 
 ------------------------------

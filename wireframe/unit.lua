@@ -23,6 +23,9 @@ Unit:RegisterEvent('GUILDBANKFRAME_CLOSED', function() Unit.atGuildBank = false 
 Unit:RegisterEvent('MAIL_SHOW', function() Unit.atMailbox = true end)
 Unit:RegisterEvent('MAIL_CLOSED', function() Unit.atMailbox = false end)
 
+Unit:RegisterEvent('AUCTION_HOUSE_SHOW', function() Unit.atAuction = true end)
+Unit:RegisterEvent('AUCTION_HOUSE_CLOSED', function() Unit.atAuction = false end)
+
 function Unit:GetUnitAddress(unit)
 	if not unit then
 		return REALM, PLAYER

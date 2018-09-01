@@ -30,6 +30,8 @@ function Events:OnEnable()
 	self:RegisterEvent("GUILDBANKFRAME_OPENED")
 	self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
 	
+	self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE", function() Scanner:ScanAuctionHouse() end)
+	
 	Scanner:StartupScans() --do the login player scans
 end
 
