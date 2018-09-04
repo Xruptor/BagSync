@@ -13,11 +13,6 @@ function BSYC:Debug(...)
     if debugf then debugf:AddMessage(string.join(", ", tostringall(...))) end
 end
 
-function BSYC:OnEnable()
-	--call the old function until we clean things up
-	self:OnEnable_Old()
-end
-
 function BSYC:rgbhex(r, g, b)
 	if type(r) == "table" then
 		if r.r then
@@ -137,3 +132,12 @@ function BSYC:pairsByKeys (t, f)
 		end
 	return iter
 end
+
+function BSYC:TableLength(tbl)
+	local n = 0
+	for k in pairs(tbl) do
+		n = n + 1
+	end
+	return n
+end
+	

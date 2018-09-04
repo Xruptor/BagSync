@@ -11,6 +11,26 @@ local REALM = GetRealmName()
 local PLAYER = UnitName('player')
 local FACTION = UnitFactionGroup('player')
 
+local BROKEN_REALMS = {
+	['Aggra(Português)'] = 'Aggra (Português)',
+	['AzjolNerub'] = 'Azjol-Nerub',
+	['Arakarahm'] = 'Arak-arahm',
+	['Корольлич'] = 'Король-лич',
+}
+
+local Realms = GetAutoCompleteRealms()
+local RealmKeys = {}
+if not Realms or #Realms == 0 then
+	Realms = {REALM}
+end
+
+for i,realm in ipairs(Realms) do
+		realm = BROKEN_REALMS[realm] or realm
+		realm = realm:gsub('(%l)(%u)', '%1 %2') -- names like Blade'sEdge to Blade's Edge
+		Realms[i] = realm
+		RealmKeys[realm] = true
+end
+
 Unit:RegisterEvent('BANKFRAME_OPENED', function() Unit.atBank = true end)
 Unit:RegisterEvent('BANKFRAME_CLOSED', function() Unit.atBank = false end)
 
@@ -53,6 +73,10 @@ function Unit:GetUnitInfo(unit)
 	unit.name, unit.realm, unit.isguild = name, realm, isguild
 
 	return unit
+end
+
+function Unit:isConnectedRealm(realm)
+	return RealmKeys[realm]
 end
 
 function Unit:GetUnitTag(unit)

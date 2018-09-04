@@ -17,8 +17,6 @@ libs\AceEvent-3.0\AceEvent-3.0.xml
 libs\LibItemSearchGrid-1.0\LibItemSearchGrid-1.0.lua
 libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 
-core.lua
-
 locale\enUS.lua
 locale\deDE.lua
 locale\frFR.lua
@@ -29,10 +27,14 @@ locale\zhTW.lua
 locale\ptBR.lua
 locale\esES.lua
 
+core.lua
+
+wireframe\label.lua
 wireframe\unit.lua
+wireframe\data.lua
 wireframe\scanner.lua
 wireframe\events.lua
-wireframe\BagSyncInteractiveLabel.lua
+wireframe\tooltip.lua
 
 modules\minimap.lua
 modules\databrokerplugin.lua
@@ -43,7 +45,5 @@ modules\recipes.lua
 modules\blacklist.lua
 modules\profiles.lua
 modules\config.lua
-
-data.lua
 
 Bindings.xml

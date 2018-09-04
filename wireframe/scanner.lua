@@ -106,6 +106,7 @@ function Scanner:ScanGuildBank()
 
 	BSYC.db.realm[BSYC.db.player.guild].bag = slotItems
 	BSYC.db.realm[BSYC.db.player.guild].money = GetGuildBankMoney()
+	BSYC.db.realm[BSYC.db.player.guild].faction = BSYC.db.player.faction
 end
 
 function Scanner:ScanMailbox()

@@ -122,3 +122,10 @@ bgMinimapButton:SetScript('OnLeave', function(self)
 	GameTooltip:Hide()
 end)
 
+function Module:OnEnable()
+	if BSYC.db.options.enableMinimap and not bgMinimapButton:IsVisible() then
+		bgMinimapButton:Show()
+	elseif not BSYC.db.options.enableMinimap and bgMinimapButton:IsVisible() then
+		bgMinimapButton:Hide()
+	end
+end
