@@ -9,8 +9,14 @@ local Unit = BSYC:GetModule("Unit")
 local Scanner = BSYC:GetModule("Scanner")
 
 function Events:OnEnable()
+	--Force guild roster update, so we can grab guild name.  Note this is nil on login
+	--https://wow.gamepedia.com/API_GetGuildInfo
+	GuildRoster()
+	
 	self:RegisterEvent('PLAYER_MONEY')
 	self:RegisterEvent('GUILD_ROSTER_UPDATE')
+	self:RegisterEvent('PLAYER_GUILD_UPDATE')
+
 	self:RegisterEvent("UNIT_INVENTORY_CHANGED")
 	self:RegisterEvent("BAG_UPDATE")
 	
@@ -40,6 +46,10 @@ function Events:PLAYER_MONEY()
 end
 
 function Events:GUILD_ROSTER_UPDATE()
+	BSYC.db.player.guild = Unit:GetUnitInfo().guild
+end
+
+function Events:PLAYER_GUILD_UPDATE()
 	BSYC.db.player.guild = Unit:GetUnitInfo().guild
 end
 

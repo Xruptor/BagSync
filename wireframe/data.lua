@@ -83,10 +83,11 @@ function Data:OnEnable()
 	BSYC.db.player.money = player.money
 	BSYC.db.player.class = player.class
 	BSYC.db.player.race = player.race
-	BSYC.db.player.guild = player.guild
 	BSYC.db.player.gender = player.gender
 	BSYC.db.player.faction = player.faction
-	
+	--we cannot store guild as on login the guild name returns nil
+	--https://wow.gamepedia.com/API_GetGuildInfo
+
 	--load the slash commands
 	self:LoadSlashCommand()
 	
@@ -95,8 +96,8 @@ function Data:OnEnable()
 	if BSYC.db.options.enableLoginVersionInfo then
 		BSYC:Print("[v|cFF20ff20"..ver.."|r] /bgs, /bagsync")
 	end
-	
-	self:Testing()
+
+	--self:Testing()
 end
 
 function Data:FixDB(onlyChkGuild)
@@ -178,6 +179,7 @@ function Data:IterateUnits()
 BSYC:Debug("BSYC:TableLength", count)
 	
 	local player = Unit:GetUnitInfo()
+	local previousGuilds = {}
 	local argKey, argValue = next(BagSyncDB)
 	local i, k, v = 1
 
@@ -191,16 +193,27 @@ BSYC:Debug("BSYC:TableLength", count)
 				k, v = next(argValue, k)
 
 				if k then
-					--check if all realms
-					--check for connected realms
-					--check for faction
-					
 					if v.faction and (v.faction == BSYC.db.player.faction or BSYC.db.options.enableFaction) then
 						local isGuild = (k:find('©*') and true) or false
 						local isConnectedRealm = (Unit:isConnectedRealm(argKey) and true) or false
 						
 						if (argKey == player.realm) or (isConnectedRealm and BSYC.db.options.enableCrossRealmsItems) or (BSYC.db.options.enableBNetAccountItems) then
-							return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm}
+							
+							local skipChk = false
+							
+							--check for previous listed guilds just in case, because of connected realms (can have same guild on multiple connected realms)
+							if isGuild and v.realmKey then
+								local XRName = k .. v.realmKey
+								if not previousGuilds[XRName] then
+									previousGuilds[XRName] = true
+								else
+									skipChk = true
+								end
+							end
+							
+							if not skipChk then
+								return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm}
+							end
 						end
 					end
 				else
@@ -217,7 +230,6 @@ BSYC:Debug("BSYC:TableLength", count)
 
 end
 
-
 function Data:Testing()
 
 	BSYC:Debug("#BSYC.db.global", #BSYC.db.global)
@@ -232,5 +244,6 @@ function Data:Testing()
 		end
 	end
 	
-	BSYC:Debug("Unit:GetCrossXRKey()", Unit:GetCrossXRKey())
+	BSYC:Debug("Unit:GetRealmKey()", Unit:GetRealmKey())
+
 end

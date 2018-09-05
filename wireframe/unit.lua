@@ -19,7 +19,7 @@ local BROKEN_REALMS = {
 }
 
 local Realms = GetAutoCompleteRealms()
-local RealmKeys = {}
+local RealmsCR = {}
 
 if not Realms or #Realms == 0 then
 	Realms = {REALM}
@@ -29,13 +29,13 @@ for i,realm in ipairs(Realms) do
 		realm = BROKEN_REALMS[realm] or realm
 		realm = realm:gsub('(%l)(%u)', '%1 %2') -- names like Blade'sEdge to Blade's Edge
 		Realms[i] = realm
-		RealmKeys[realm] = true
+		RealmsCR[realm] = true
 end
 
 --this is used to identify cross servers as a unique key.
 --for example guilds that are on cross servers with players from different servers in same guild
 table.sort(Realms, function(a,b) return (a < b) end) --sort them alphabetically
-local crossXRKey = table.concat(Realms, "|") --concat them together
+local realmKey = table.concat(Realms, ";") --concat them together
 
 Unit:RegisterEvent('BANKFRAME_OPENED', function() Unit.atBank = true end)
 Unit:RegisterEvent('BANKFRAME_CLOSED', function() Unit.atBank = false end)
@@ -57,8 +57,9 @@ function Unit:GetUnitAddress(unit)
 		return REALM, PLAYER
 	end
 
-	local guildName = strmatch(unit, '(.+)©')
-	return REALM, guildName or unit, guildName and true
+	local name, realm = strmatch(unit, '^(.-) *%- *(.+)$')
+	local guildName = strmatch(name or unit, '(.+)©')
+	return realm or REALM, guildName or unit, guildName and true
 end
 
 function Unit:GetUnitInfo(unit)
@@ -77,20 +78,19 @@ function Unit:GetUnitInfo(unit)
 
 	unit.guild = unit.guild and (unit.guild..'©')
 	unit.name, unit.realm, unit.isguild = name, realm, isguild
-	unit.crossXRKey = crossXRKey
+	unit.realmKey = realmKey
 
 	return unit
 end
 
 function Unit:isConnectedRealm(realm)
-	return RealmKeys[realm]
+	return RealmsCR[realm]
 end
 
-function Unit:GetCrossXRKey()
-	return crossXRKey
+function Unit:GetRealmKey()
+	return realmKey
 end
 
 function Unit:GetUnitTag(unit)
 	--return here the full unit tag for the tooltip
-	
 end

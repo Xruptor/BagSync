@@ -81,10 +81,28 @@ function Scanner:ScanVoidBank()
 	end
 end
 
+function Scanner:GetXRGuild()
+	if not IsInGuild() then return end
+	
+	--only return one guild stored from a connected realm list, otherwise we will have multiple entries of the same guild on several connected realms
+	local realms = {strsplit(';', Unit:GetRealmKey())}
+	local player = Unit:GetUnitInfo()
+	
+	if #realms > 0 then
+		for i = 1, #realms do
+			if player.guild and BagSyncDB[realms[i]] and BagSyncDB[realms[i]][player.guild] then
+				return BagSyncDB[realms[i]][player.guild]
+			end
+		end
+	end
+	
+	if not BSYC.db.realm[player.guild] then BSYC.db.realm[player.guild] = {} end
+	return BSYC.db.realm[player.guild]
+end
+
 function Scanner:ScanGuildBank()
 	if not IsInGuild() then return end
-	if not BSYC.db.realm[BSYC.db.player.guild] then BSYC.db.realm[BSYC.db.player.guild] = {} end
-	
+
 	local numTabs = GetNumGuildBankTabs()
 	local index = 0
 	local slotItems = {}
@@ -104,10 +122,13 @@ function Scanner:ScanGuildBank()
 		end
 	end
 
-	BSYC.db.realm[BSYC.db.player.guild].bag = slotItems
-	BSYC.db.realm[BSYC.db.player.guild].money = GetGuildBankMoney()
-	BSYC.db.realm[BSYC.db.player.guild].faction = BSYC.db.player.faction
-	BSYC.db.realm[BSYC.db.player.guild].crossXRKey = Unit:GetCrossXRKey()
+	local guildDB = self:GetXRGuild()
+	if guildDB then
+		guildDB.bag = slotItems
+		guildDB.money = GetGuildBankMoney()
+		guildDB.faction = Unit:GetUnitInfo().faction
+		guildDB.realmKey = Unit:GetRealmKey()
+	end
 end
 
 function Scanner:ScanMailbox()
