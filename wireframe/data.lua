@@ -173,7 +173,11 @@ function Data:IterateUnits()
 
 	BSYC:Debug("IT", "ENTERED")
 	local count = BSYC:TableLength(BagSyncDB)
+	if not count or count <= 0 then return end
+	
 BSYC:Debug("BSYC:TableLength", count)
+	
+	local player = Unit:GetUnitInfo()
 	local argKey, argValue = next(BagSyncDB)
 	local i, k, v = 1
 
@@ -195,7 +199,9 @@ BSYC:Debug("BSYC:TableLength", count)
 						local isGuild = (k:find('©*') and true) or false
 						local isConnectedRealm = (Unit:isConnectedRealm(argKey) and true) or false
 						
-						return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm }
+						if (argKey == player.realm) or (isConnectedRealm and BSYC.db.options.enableCrossRealmsItems) or (BSYC.db.options.enableBNetAccountItems) then
+							return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm}
+						end
 					end
 				else
 					i = i + 1
@@ -203,7 +209,7 @@ BSYC:Debug("BSYC:TableLength", count)
 				end
 			else
 				--escape clause JUST IN CASE, we don't want an infinite loop
-				i = i + 1
+				i = count
 			end
 			
 		end
@@ -225,4 +231,6 @@ function Data:Testing()
 			break
 		end
 	end
+	
+	BSYC:Debug("Unit:GetCrossXRKey()", Unit:GetCrossXRKey())
 end

@@ -57,7 +57,7 @@ local function set(info, arg1, arg2, arg3, arg4)
 		if p == "minimap" then
 			if arg1 then BagSync_MinimapButton:Show() else BagSync_MinimapButton:Hide() end
 		else
-			BSYC:ResetTooltip()
+			--BSYC:ResetTooltip()
 		end
 	end
 	

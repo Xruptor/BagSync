@@ -20,6 +20,7 @@ local BROKEN_REALMS = {
 
 local Realms = GetAutoCompleteRealms()
 local RealmKeys = {}
+
 if not Realms or #Realms == 0 then
 	Realms = {REALM}
 end
@@ -30,6 +31,11 @@ for i,realm in ipairs(Realms) do
 		Realms[i] = realm
 		RealmKeys[realm] = true
 end
+
+--this is used to identify cross servers as a unique key.
+--for example guilds that are on cross servers with players from different servers in same guild
+table.sort(Realms, function(a,b) return (a < b) end) --sort them alphabetically
+local crossXRKey = table.concat(Realms, "|") --concat them together
 
 Unit:RegisterEvent('BANKFRAME_OPENED', function() Unit.atBank = true end)
 Unit:RegisterEvent('BANKFRAME_CLOSED', function() Unit.atBank = false end)
@@ -71,12 +77,17 @@ function Unit:GetUnitInfo(unit)
 
 	unit.guild = unit.guild and (unit.guild..'©')
 	unit.name, unit.realm, unit.isguild = name, realm, isguild
+	unit.crossXRKey = crossXRKey
 
 	return unit
 end
 
 function Unit:isConnectedRealm(realm)
 	return RealmKeys[realm]
+end
+
+function Unit:GetCrossXRKey()
+	return crossXRKey
 end
 
 function Unit:GetUnitTag(unit)
