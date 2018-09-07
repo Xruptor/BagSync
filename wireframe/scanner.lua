@@ -21,11 +21,16 @@ function Scanner:SaveBag(bagtype, bagid)
 	if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
 
 	if GetContainerNumSlots(bagid) > 0 then
+		
 		local slotItems = {}
+		
 		for slot = 1, GetContainerNumSlots(bagid) do
 			local _, count, _,_,_,_, link = GetContainerItemInfo(bagid, slot)
-			slotItems[slot] = BSYC:ParseItemLink(link, count)
+			if link then
+				table.insert(slotItems,  BSYC:ParseItemLink(link, count))
+			end
 		end
+		
 		BSYC.db.player[bagtype][bagid] = slotItems
 	else
 		BSYC.db.player[bagtype][bagid] = nil
@@ -34,12 +39,18 @@ end
 
 function Scanner:SaveEquipment()
 	if not BSYC.db.player.equip then BSYC.db.player.equip = {} end
-
+	
+	local slotItems = {}
+	
 	for slot = FirstEquipped, LastEquipped do
 		local link = GetInventoryItemLink("player", slot)
 		local count =  GetInventoryItemCount("player", slot)
-		BSYC.db.player.equip[slot] = link and BSYC:ParseItemLink(link, count) or nil
+		if link then
+			table.insert(slotItems,  BSYC:ParseItemLink(link, count))
+		end
 	end
+	
+	BSYC.db.player.equip = slotItems
 end
 
 function Scanner:ScanBank(rootOnly)
@@ -70,15 +81,18 @@ function Scanner:ScanVoidBank()
 	if not Unit.atVoidBank then return end
 	if not BSYC.db.player.void then BSYC.db.player.void = {} end
 	
-	local slot = 0
-
+	local slotItems = {}
+	
 	for tab = 1, VOID_STORAGE_PAGES do
 		for i = 1, VOID_STORAGE_MAX do
-			local itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(tab, i)
-			slot = slot + 1
-			BSYC.db.player.void[slot] = itemID and tostring(itemID) or nil
+			local link, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(tab, i)
+			if link then
+				table.insert(slotItems, BSYC:ParseItemLink(link))
+			end
 		end
 	end
+	
+	BSYC.db.player.void = slotItems
 end
 
 function Scanner:GetXRGuild()
@@ -104,7 +118,6 @@ function Scanner:ScanGuildBank()
 	if not IsInGuild() then return end
 
 	local numTabs = GetNumGuildBankTabs()
-	local index = 0
 	local slotItems = {}
 	
 	for tab = 1, numTabs do
@@ -114,9 +127,8 @@ function Scanner:ScanGuildBank()
 			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
 				local link = GetGuildBankItemLink(tab, slot)
 				if link then
-					index = index + 1
 					local _, count = GetGuildBankItemInfo(tab, slot)
-					slotItems[index] = BSYC:ParseItemLink(link, count)
+					table.insert(slotItems, BSYC:ParseItemLink(link, count))
 				end
 			end
 		end
@@ -143,7 +155,6 @@ function Scanner:ScanMailbox()
 	CheckInbox()
 	
 	local slotItems = {}
-	local mailCount = 0
 	local numInbox = GetInboxNumItems()
 
 	--scan the inbox
@@ -153,8 +164,7 @@ function Scanner:ScanMailbox()
 				local name, itemID, itemTexture, count, quality, canUse = GetInboxItem(mailIndex, i)
 				local link = GetInboxItemLink(mailIndex, i)
 				if name and link then
-					mailCount = mailCount + 1
-					slotItems[mailCount] = BSYC:ParseItemLink(link, count)
+					table.insert(slotItems, BSYC:ParseItemLink(link, count))
 				end
 			end
 		end
@@ -170,7 +180,6 @@ function Scanner:ScanAuctionHouse()
 	if not BSYC.db.player.auction then BSYC.db.player.auction = {} end
 
 	local slotItems = {}
-	local ahCount = 0
 	local numActiveAuctions = GetNumAuctionItems("owner")
 
 	--scan the auction house
@@ -181,16 +190,15 @@ function Scanner:ScanAuctionHouse()
 				local link = GetAuctionItemLink("owner", ahIndex)
 				local timeLeft = GetAuctionItemTimeLeft("owner", ahIndex)
 				if link and timeLeft then
-					ahCount = ahCount + 1
 					count = (count or 1)
-					slotItems[ahCount] = BSYC:ParseItemLink(link, count)..";"..timeLeft
+					table.insert(slotItems, BSYC:ParseItemLink(link, count)..";"..timeLeft)
 				end
 			end
 		end
 	end
 	
 	BSYC.db.player.auction.bag = slotItems
-	BSYC.db.player.auction.count = ahCount
+	BSYC.db.player.auction.count = #slotItems
 	BSYC.db.player.auction.lastscan = time()
 end
 
@@ -200,4 +208,7 @@ function Scanner:StartupScans()
 	for i = BACKPACK_CONTAINER, BACKPACK_CONTAINER + NUM_BAG_SLOTS do
 		self:SaveBag("bag", i)
 	end
+	
+	--cleanup the auction DB
+	BSYC:GetModule("Data"):CheckExpiredAuctions()
 end

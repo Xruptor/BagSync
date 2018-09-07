@@ -90,7 +90,3 @@ end
 function Unit:GetRealmKey()
 	return realmKey
 end
-
-function Unit:GetUnitTag(unit)
-	--return here the full unit tag for the tooltip
-end

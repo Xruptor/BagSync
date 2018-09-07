@@ -97,7 +97,6 @@ function Data:OnEnable()
 		BSYC:Print("[v|cFF20ff20"..ver.."|r] /bgs, /bagsync")
 	end
 
-	--self:Testing()
 end
 
 function Data:FixDB(onlyChkGuild)
@@ -125,7 +124,7 @@ function Data:LoadSlashCommand()
 				BSYC:GetModule("Search"):StartSearch()
 				return true
 			elseif cmd == L.SlashGold then
-				BSYC:ShowMoneyTooltip()
+				BSYC:GetModule("Tooltip"):MoneyTooltip()
 				return true
 			elseif cmd == L.SlashCurrency then
 				BSYC:GetModule("Currency").frame:Show()
@@ -170,14 +169,47 @@ function Data:LoadSlashCommand()
 	
 end
 
-function Data:IterateUnits()
+function Data:CheckExpiredAuctions()
+	--this function will remove expired auctions for all characters in every realm
+	local timestampChk = { 30*60, 2*60*60, 12*60*60, 48*60*60 }
+	
+	local slotItems = {}
 
-	BSYC:Debug("IT", "ENTERED")
+	for unitObj in self:IterateUnits(true) do
+		if not unitObj.isGuild and unitObj.data.auction then
+		
+			for x = 1, unitObj.data.auction.count do
+				if unitObj.data.auction.bag[x] then
+					--check for expired and remove if necessary
+					--it's okay if the auction count is showing more then actually stored, it's just used as a means
+					--to scan through all our items.  Even if we have only 3 and the count is 6 it will just skip the last 3.
+					local link, count, timeleft = strsplit(";", unitObj.data.auction.bag[x])
+					
+					--only proceed if we have everything to work with, otherwise this auction data is corrupt
+					if link and timeleft then
+						if tonumber(timeleft) < 1 or tonumber(timeleft) > 4 then timeleft = 4 end --just in case
+						--now do the time checks
+						local diff = time() - unitObj.data.auction.lastscan
+						if diff < timestampChk[tonumber(timeleft)] then
+							table.insert(slotItems, unitObj.data.auction.bag[x])
+						end
+					end
+				end
+			end
+			
+			unitObj.data.auction.bag = slotItems
+			unitObj.data.auction.count = #slotItems
+			
+		end
+	end
+	
+end
+
+function Data:IterateUnits(dumpAll)
+
 	local count = BSYC:TableLength(BagSyncDB)
 	if not count or count <= 0 then return end
-	
-BSYC:Debug("BSYC:TableLength", count)
-	
+
 	local player = Unit:GetUnitInfo()
 	local previousGuilds = {}
 	local argKey, argValue = next(BagSyncDB)
@@ -197,7 +229,11 @@ BSYC:Debug("BSYC:TableLength", count)
 						local isGuild = (k:find('©*') and true) or false
 						local isConnectedRealm = (Unit:isConnectedRealm(argKey) and true) or false
 						
-						if (argKey == player.realm) or (isConnectedRealm and BSYC.db.options.enableCrossRealmsItems) or (BSYC.db.options.enableBNetAccountItems) then
+						--return everything regardless of user settings
+						if dumpAll then
+							return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm}
+							
+						elseif (argKey == player.realm) or (isConnectedRealm and BSYC.db.options.enableCrossRealmsItems) or (BSYC.db.options.enableBNetAccountItems) then
 							
 							local skipChk = false
 							
@@ -227,23 +263,5 @@ BSYC:Debug("BSYC:TableLength", count)
 			
 		end
 	end
-
-end
-
-function Data:Testing()
-
-	BSYC:Debug("#BSYC.db.global", #BSYC.db.global)
-	
-	local i = 0
-	for unitObj in self:IterateUnits() do
-		i = i + 1
-		BSYC:Debug("BSYC:Testing", unitObj.realm, unitObj.name, unitObj.isGuild, unitObj.isConnectedRealm )
-		if i > 30 then
-			BSYC:Debug("BSYC:Testing()", "forced exit")
-			break
-		end
-	end
-	
-	BSYC:Debug("Unit:GetRealmKey()", Unit:GetRealmKey())
 
 end

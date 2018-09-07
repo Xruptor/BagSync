@@ -9,6 +9,8 @@ if not L then return end
 --Some fonts are better than others to display special character sets.
 L.GetFontType = "Fonts\\FRIZQT__.TTF"
 
+L.TooltipCrossRealmTag = "XR-"
+L.TooltipBattleNetTag = "BNet-"
 L.TooltipBag = "Bags:"
 L.TooltipBank = "Bank:"
 L.TooltipEquip = "Equip:"

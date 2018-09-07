@@ -13,21 +13,6 @@ function BSYC:Debug(...)
     if debugf then debugf:AddMessage(string.join(", ", tostringall(...))) end
 end
 
-function BSYC:rgbhex(r, g, b)
-	if type(r) == "table" then
-		if r.r then
-			r, g, b = r.r, r.g, r.b
-		else
-			r, g, b = unpack(r)
-		end
-	end
-	return string.format("|cff%02x%02x%02x", (r or 1) * 255, (g or 1) * 255, (b or 1) * 255)
-end
-
-function BSYC:tooltipColor(color, str)
-	return string.format("|cff%02x%02x%02x%s|r", (color.r or 1) * 255, (color.g or 1) * 255, (color.b or 1) * 255, tostring(str))
-end
-
 function BSYC:ParseItemLink(link, count)
 
 	if link then
@@ -58,14 +43,14 @@ function BSYC:ParseItemLink(link, count)
 			
 			--make sure we have a bonusID count
 			if countSplit and #countSplit > 13 then
-				local count = countSplit[13] or 0 -- do we have a bonusID number count?
-				count = count == "" and 0 or count --make sure we have a count if not default to zero
-				count = tonumber(count)
+				local bonusCount = countSplit[13] or 0 -- do we have a bonusID number count?
+				bonusCount = bonusCount == "" and 0 or bonusCount --make sure we have a count if not default to zero
+				bonusCount = tonumber(bonusCount)
 				
 				--check if we have even anything to work with for the amount of bonusID's
 				--btw any numbers after the bonus ID are either upgradeValue which we don't care about or unknown use right now
 				--http://wow.gamepedia.com/ItemString
-				if count > 0 and countSplit[1] then
+				if bonusCount > 0 and countSplit[1] then
 					--return the string with just the bonusID's in it
 					local newItemStr = ""
 					
@@ -74,7 +59,7 @@ function BSYC:ParseItemLink(link, count)
 					newItemStr = countSplit[1]..string.rep(":", 11)
 					
 					--lets add the bonusID's, ignore the end past bonusID's
-					for i=13, (13 + count) do
+					for i=13, (13 + bonusCount) do
 						newItemStr = newItemStr..":"..countSplit[i]
 					end
 					
