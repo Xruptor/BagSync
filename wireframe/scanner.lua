@@ -255,7 +255,7 @@ function Scanner:SaveCurrency()
 	
 	BSYC.db.player.currency = slotItems
 end
-
+	
 function Scanner:SaveProfessions()
 	--we don't want to do linked tradeskills, guild tradeskills, or a tradeskill from an NPC
 	if _G.C_TradeSkillUI.IsTradeSkillLinked() or _G.C_TradeSkillUI.IsTradeSkillGuild() or _G.C_TradeSkillUI.IsNPCCrafting() then return end
@@ -269,11 +269,22 @@ function Scanner:SaveProfessions()
 		
 		if categoryData and not tmpCategories[catID] then
 			tmpCategories[catID] = true
-			if categoryData.skillLineCurrentLevel or categoryData.skillLineMaxLevel then
-				BSYC.db.player.professions[catID] = BSYC.db.player.professions[catID] or {}
-				BSYC.db.player.professions[catID].name = categoryData.name
-				BSYC.db.player.professions[catID].skillLineCurrentLevel = categoryData.skillLineCurrentLevel
-				BSYC.db.player.professions[catID].skillLineMaxLevel = categoryData.skillLineMaxLevel
+			
+			local tradeSkillID, skillLineName, skillLineRank, skillLineMaxRank, skillLineModifier, parentSkillLineID, parentSkillLineName = _G.C_TradeSkillUI.GetTradeSkillLine(catID)
+			
+			if parentSkillLineID and parentSkillLineName and (categoryData.skillLineCurrentLevel or categoryData.skillLineMaxLevel) then
+				--grab the parent name, Engineering, Herbalism, Blacksmithing, etc...
+				BSYC.db.player.professions[parentSkillLineID] = BSYC.db.player.professions[parentSkillLineID] or {}
+				BSYC.db.player.professions[parentSkillLineID].name = parentSkillLineName
+				
+				local parentIDSlot = BSYC.db.player.professions[parentSkillLineID]
+				parentIDSlot.categories = parentIDSlot.categories or {}
+
+				--now create the categories
+				parentIDSlot.categories[catID] = parentIDSlot.categories[catID] or {}
+				parentIDSlot.categories[catID].name = categoryData.name
+				parentIDSlot.categories[catID].skillLineCurrentLevel = categoryData.skillLineCurrentLevel
+				parentIDSlot.categories[catID].skillLineMaxLevel = categoryData.skillLineMaxLevel
 			end
 		end
 	end
