@@ -270,7 +270,7 @@ function Scanner:SaveProfessions()
 		if categoryData and not tmpCategories[catID] then
 			tmpCategories[catID] = true
 			
-			local tradeSkillID, skillLineName, skillLineRank, skillLineMaxRank, skillLineModifier, parentSkillLineID, parentSkillLineName = _G.C_TradeSkillUI.GetTradeSkillLine(catID)
+			local _, _, _, _, _, parentSkillLineID, parentSkillLineName = _G.C_TradeSkillUI.GetTradeSkillLine(catID)
 			
 			if parentSkillLineID and parentSkillLineName and (categoryData.skillLineCurrentLevel or categoryData.skillLineMaxLevel) then
 				--grab the parent name, Engineering, Herbalism, Blacksmithing, etc...
@@ -280,7 +280,7 @@ function Scanner:SaveProfessions()
 				local parentIDSlot = BSYC.db.player.professions[parentSkillLineID]
 				parentIDSlot.categories = parentIDSlot.categories or {}
 
-				--now create the categories
+				--now create the categories, Legion Engineering, Cateclysm Engineering, etc...
 				parentIDSlot.categories[catID] = parentIDSlot.categories[catID] or {}
 				parentIDSlot.categories[catID].name = categoryData.name
 				parentIDSlot.categories[catID].skillLineCurrentLevel = categoryData.skillLineCurrentLevel
@@ -288,5 +288,65 @@ function Scanner:SaveProfessions()
 			end
 		end
 	end
+
+	local recipeData = {}
+	local recipeIDs = C_TradeSkillUI.GetAllRecipeIDs()
+	
+	for i = 1, #recipeIDs do
+	
+		if C_TradeSkillUI.GetRecipeInfo(recipeIDs[i], recipeData) then
+			catID = recipeData.categoryID
+			
+			local categoryData = C_TradeSkillUI.GetCategoryInfo(catID)
+			local _, _, _, _, _, parentSkillLineID, parentSkillLineName = _G.C_TradeSkillUI.GetTradeSkillLine(catID)
+			
+			--grab the parent name, Engineering, Herbalism, Blacksmithing, etc...
+			if recipeData.learned and parentSkillLineID and parentSkillLineName then
+				BSYC:Debug("CAT: ", recipeData.name, catID, categoryData.name, categoryData.parentCategoryID, parentSkillLineID, parentSkillLineName)
 				
+				--grab categories, Legion Engineering, Cateclysm Engineering, etc...
+				local subCatData = C_TradeSkillUI.GetCategoryInfo(categoryData.parentCategoryID)
+				
+				--make sure we have something to work with, we don't want to store stuff that doesn't have levels
+				if subCatData and subCatData.skillLineCurrentLevel or subCatData.skillLineMaxLevel then
+				
+					--check if we have the root profession already stored or not
+					if not BSYC.db.player.professions[parentSkillLineID] then
+						BSYC.db.player.professions[parentSkillLineID] = BSYC.db.player.professions[parentSkillLineID] or {}
+						BSYC.db.player.professions[parentSkillLineID].name = parentSkillLineName
+					end
+					
+					local parentIDSlot = BSYC.db.player.professions[parentSkillLineID]
+					parentIDSlot.categories = parentIDSlot.categories or {}
+					
+					--store the sub category information, Legion Engineering, Cateclysm Engineering, etc...
+					parentIDSlot.categories[categoryData.parentCategoryID] = parentIDSlot.categories[categoryData.parentCategoryID] or {}
+					parentIDSlot.categories[categoryData.parentCategoryID].name = subCatData.name
+					parentIDSlot.categories[categoryData.parentCategoryID].skillLineCurrentLevel = subCatData.skillLineCurrentLevel
+					parentIDSlot.categories[categoryData.parentCategoryID].skillLineMaxLevel = subCatData.skillLineMaxLevel
+					
+					--now store the recipe information
+					
+					
+--[[ 					parentIDSlot.categories[categoryData.categoryID] = parentIDSlot.categories[categoryData.categoryID] or {}
+					parentIDSlot.categories[catID].name = categoryData.name
+					parentIDSlot.categories[catID].skillLineCurrentLevel = categoryData.skillLineCurrentLevel
+					parentIDSlot.categories[catID].skillLineMaxLevel = categoryData.skillLineMaxLevel
+					
+					--now create the categories, Legion Engineering, Cateclysm Engineering, etc...
+					parentIDSlot.categories[catID] = parentIDSlot.categories[catID] or {}
+					parentIDSlot.categories[catID].name = categoryData.name
+					parentIDSlot.categories[catID].skillLineCurrentLevel = categoryData.skillLineCurrentLevel
+					parentIDSlot.categories[catID].skillLineMaxLevel = categoryData.skillLineMaxLevel ]]
+
+					
+				end
+			
+			end
+			
+
+
+		end
+	end
+	
 end
