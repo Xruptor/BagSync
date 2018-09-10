@@ -263,6 +263,7 @@ function Scanner:SaveProfessions()
 	local recipeData = {}
 	local tmpRecipe = {}
 	local catCheck = {}
+	local orderIndex = 0
 	local recipeIDs = C_TradeSkillUI.GetAllRecipeIDs()
 	
 	for i = 1, #recipeIDs do
@@ -304,6 +305,9 @@ function Scanner:SaveProfessions()
 					if not catCheck[categoryData.parentCategoryID] then
 						catCheck[categoryData.parentCategoryID] = true
 						subCatSlot.recipes = nil
+						--store the order in which the categories appear in the tradeskill window
+						orderIndex = orderIndex + 1
+						subCatSlot.orderIndex = orderIndex
 					end
 					
 					--now store the recipe information, but make sure we don't already have the recipe stored
