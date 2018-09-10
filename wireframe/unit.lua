@@ -90,3 +90,22 @@ end
 function Unit:GetRealmKey()
 	return realmKey
 end
+
+function Unit:IsInBG()
+	if (GetNumBattlefieldScores() > 0) then
+		return true
+	end
+	return false
+end
+
+function Unit:IsInArena()
+	local a,b = IsActiveBattlefieldArena()
+	if not a then
+		return false
+	end
+	return true
+end
+
+function Unit:InCombatLockdown()
+	return self:IsInBG() or self:IsInArena() or InCombatLockdown() or UnitAffectingCombat("player") or C_PetBattles.IsInBattle()
+end

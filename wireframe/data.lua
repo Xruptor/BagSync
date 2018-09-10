@@ -34,7 +34,7 @@ function Data:OnEnable()
 	BSYC.db.realm[player.name] = BSYC.db.realm[player.name] or {}
 	BSYC.db.player = BSYC.db.realm[player.name]
 	BSYC.db.player.currency = BSYC.db.player.currency or {}
-	BSYC.db.player.profession = BSYC.db.player.profession or {}
+	BSYC.db.player.professions = BSYC.db.player.professions or {}
 	
 	--blacklist DB
 	BSYC.db.blacklist = BagSyncDB["blacklist§"]
@@ -62,6 +62,7 @@ function Data:OnEnable()
 	if BSYC.db.options.enableLoginVersionInfo == nil then BSYC.db.options.enableLoginVersionInfo = true end
 	if BSYC.db.options.enableFactionIcons == nil then BSYC.db.options.enableFactionIcons = true end
 	if BSYC.db.options.enableShowUniqueItemsTotals == nil then BSYC.db.options.enableShowUniqueItemsTotals = true end
+	if BSYC.db.options.No_XR_BNET_RealmNames == nil then BSYC.db.options.No_XR_BNET_RealmNames = false end
 
 	--setup the default colors
 	if BSYC.db.options.colors == nil then BSYC.db.options.colors = {} end

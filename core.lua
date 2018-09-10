@@ -88,21 +88,6 @@ function BSYC:GetShortItemID(link)
 	end
 end
 
-function BSYC:IsInBG()
-	if (GetNumBattlefieldScores() > 0) then
-		return true
-	end
-	return false
-end
-
-function BSYC:IsInArena()
-	local a,b = IsActiveBattlefieldArena()
-	if not a then
-		return false
-	end
-	return true
-end
-
 --sort by key element rather then value
 function BSYC:pairsByKeys (t, f)
 	local a = {}

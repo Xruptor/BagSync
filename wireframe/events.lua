@@ -19,25 +19,30 @@ function Events:OnEnable()
 
 	self:RegisterEvent("UNIT_INVENTORY_CHANGED")
 	self:RegisterEvent("BAG_UPDATE")
+	self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
 	
-	self:RegisterEvent('VOID_STORAGE_OPEN', function() Scanner:ScanVoidBank() end)
-	self:RegisterEvent('VOID_STORAGE_UPDATE', function() Scanner:ScanVoidBank() end)
-	self:RegisterEvent('VOID_STORAGE_CONTENTS_UPDATE', function() Scanner:ScanVoidBank() end)
-	self:RegisterEvent('VOID_TRANSFER_DONE', function() Scanner:ScanVoidBank() end)
+	self:RegisterEvent("TRADE_SKILL_SHOW")
+	self:RegisterEvent("TRADE_SKILL_LIST_UPDATE")
+	self:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
+
+	self:RegisterEvent('VOID_STORAGE_OPEN', function() Scanner:SaveVoidBank() end)
+	self:RegisterEvent('VOID_STORAGE_UPDATE', function() Scanner:SaveVoidBank() end)
+	self:RegisterEvent('VOID_STORAGE_CONTENTS_UPDATE', function() Scanner:SaveVoidBank() end)
+	self:RegisterEvent('VOID_TRANSFER_DONE', function() Scanner:SaveVoidBank() end)
 	
-	self:RegisterEvent('MAIL_SHOW', function() Scanner:ScanMailbox() end)
-	self:RegisterEvent('MAIL_INBOX_UPDATE', function() Scanner:ScanMailbox() end)
+	self:RegisterEvent('MAIL_SHOW', function() Scanner:SaveMailbox() end)
+	self:RegisterEvent('MAIL_INBOX_UPDATE', function() Scanner:SaveMailbox() end)
 	
-	self:RegisterEvent("BANKFRAME_OPENED", function() Scanner:ScanBank() end)
-	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", function() Scanner:ScanBank(true) end)
-	self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED", function() Scanner:ScanReagents() end)
-	self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:ScanReagents() end)
+	self:RegisterEvent("BANKFRAME_OPENED", function() Scanner:SaveBank() end)
+	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", function() Scanner:SaveBank(true) end)
+	self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED", function() Scanner:SaveReagents() end)
+	self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:SaveReagents() end)
 	
 	self:RegisterEvent("GUILDBANKFRAME_OPENED")
 	self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
 	
-	self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE", function() Scanner:ScanAuctionHouse() end)
-	
+	self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE", function() Scanner:SaveAuctionHouse() end)
+
 	Scanner:StartupScans() --do the login player scans
 end
 
@@ -97,6 +102,44 @@ function Events:GUILDBANKBAGSLOTS_CHANGED()
 		self.GuildTabQueryQueue[tab] = nil
 	else
 		-- the bank is ready for reading
-		Scanner:ScanGuildBank()
+		Scanner:SaveGuildBank()
+	end
+end
+
+function Events:CURRENCY_DISPLAY_UPDATE()
+	if Unit:InCombatLockdown() then
+		if not self.doCurrencyUpdate then
+			self.doCurrencyUpdate = true
+			self:RegisterEvent("PLAYER_REGEN_ENABLED")
+		end
+		return
+	end
+	Scanner:SaveCurrency()
+end
+
+function Events:PLAYER_REGEN_ENABLED()
+	if Unit:InCombatLockdown() then return end
+	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+	self.doCurrencyUpdate = nil
+	Scanner:SaveCurrency()
+end
+
+function Events:TRADE_SKILL_SHOW()
+	if not self._TradeSkillEvent then
+		self._TradeSkillEvent = true
+	end
+end
+
+function Events:TRADE_SKILL_LIST_UPDATE()
+	if self._TradeSkillEvent then
+		self._TradeSkillEvent = nil
+		Scanner:SaveProfessions()
+	end
+end
+
+function Events:TRADE_SKILL_DATA_SOURCE_CHANGED()
+	--this gets fired when they switch professions while still having the tradeskill window open
+	if not self._TradeSkillEvent then
+		self._TradeSkillEvent = true
 	end
 end

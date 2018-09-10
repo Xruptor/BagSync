@@ -18,6 +18,19 @@ function Tooltip:HexColor(color, str)
 	return str
 end
 
+function Tooltip:GetSortIndex(unitObj)
+	if unitObj then
+		if not unitObj.isGuild and unitObj.realm == Unit:GetUnitInfo().realm then
+			return 1
+		elseif not unitObj.isGuild and unitObj.isConnectedRealm then
+			return 2
+		elseif not unitObj.isGuild then
+			return 3
+		end
+	end
+	return 4
+end
+
 function Tooltip:ColorizeUnit(unitObj)
 	if not unitObj.data then return nil end
 	
@@ -65,12 +78,12 @@ function Tooltip:ColorizeUnit(unitObj)
 	end
 	
 	if BSYC.db.options.enableBNetAccountItems and not unitObj.isConnectedRealm then
-		realmTag = BSYC.db.options.enableRealmIDTags and L.TooltipBattleNetTag
+		realmTag = BSYC.db.options.enableRealmIDTags and L.TooltipBattleNetTag.." "
 		tmpTag = self:HexColor(BSYC.db.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
 	end
 	
 	if BSYC.db.options.enableCrossRealmsItems and unitObj.isConnectedRealm and unitObj.realm ~= player.realm then
-		realmTag = BSYC.db.options.enableRealmIDTags and L.TooltipCrossRealmTag
+		realmTag = BSYC.db.options.enableRealmIDTags and L.TooltipCrossRealmTag.." "
 		tmpTag = self:HexColor(BSYC.db.options.colors.cross, "["..realmTag..realm.."]").." "..tmpTag
 	end
 	
@@ -114,66 +127,32 @@ function Tooltip:MoneyTooltip()
 	
 	--loop through our characters
 	local usrData = {}
-	local usrDataGuild = {}
+	local total = 0
 	local player = Unit:GetUnitInfo()
 	
 	for unitObj in Data:IterateUnits() do
 		if unitObj.data.money and unitObj.data.money > 0 then
-			if not unitObj.isGuild then
-				table.insert(usrData, { name=unitObj.name, realm=unitObj.realm, colorized=self:ColorizeUnit(unitObj), unitObj=unitObj } )
-			else
-				table.insert(usrDataGuild, { name=unitObj.name,  realm=unitObj.realm, colorized=self:ColorizeUnit(unitObj), unitObj=unitObj } )
-			end
+			table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=Tooltip:GetSortIndex(unitObj) } )
 		end
 	end
 	
-	--sort the regular list by realm then by character
+	--sort the list by our sortIndex then by realm and finally by name
 	table.sort(usrData, function(a, b)
-	  if a.realm == b.realm then
-		return a.name < b.name;
-	  else
-		return a.realm < b.realm
-	  end
-
+		if a.sortIndex  == b.sortIndex then
+			if a.unitObj.realm == b.unitObj.realm then
+				return a.unitObj.name < b.unitObj.name;
+			end
+			return a.unitObj.realm < b.unitObj.realm;
+		else
+			return a.sortIndex < b.sortIndex;
+		end
+	  
 	end)
-	
-	--sort guild list by name only
-	table.sort(usrDataGuild, function(a, b) return (a.name < b.name) end)
-
-	--now lets do our complex sort, I could do it in a table.sort function but it causes several complications
-	local tmpSort = {}
-
-	local playerIdx, connectIdx, otherIdx = 0, 0, 0
 
 	for i=1, table.getn(usrData) do
-		--first by player server
-		if usrData[i].realm == player.realm then
-			playerIdx = playerIdx + 1
-			table.insert(tmpSort, playerIdx, usrData[i])
-		
-		--then by connected realm
-		elseif usrData[i].isConnected then
-			connectIdx = (playerIdx + connectIdx) + 1
-			table.insert(tmpSort, connectIdx, usrData[i])
-		
-		--finally any other realms
-		else
-			otherIdx = (connectIdx + otherIdx) + 1
-			table.insert(tmpSort, otherIdx, usrData[i])
-		end
-	end
-	
-	--add the guild data if any
-	for i=1, table.getn(usrDataGuild) do
-		table.insert(tmpSort, usrDataGuild[i])
-	end
-
-	local total = 0
-	
-	for i=1, table.getn(tmpSort) do
 		--use GetMoneyString and true to seperate it by thousands
-		tooltip:AddDoubleLine(tmpSort[i].colorized, GetMoneyString(tmpSort[i].unitObj.data.money, true), 1, 1, 1, 1, 1, 1)
-		total = total + tmpSort[i].unitObj.data.money
+		tooltip:AddDoubleLine(usrData[i].colorized, GetMoneyString(usrData[i].unitObj.data.money, true), 1, 1, 1, 1, 1, 1)
+		total = total + usrData[i].unitObj.data.money
 	end
 	if BSYC.db.options.showTotal and total > 0 then
 		tooltip:AddLine(" ")
