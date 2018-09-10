@@ -323,4 +323,26 @@ function Scanner:SaveProfessions()
 		
 	end
 	
+	--grab archaeology, fishing
+	--first aid was removed in battle for azeroth
+	local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions()
+	
+	if archaeology then
+		local name, _, rank, maxRank, _, _, skillLine = GetProfessionInfo(archaeology)
+		BSYC.db.player.professions[skillLine] = BSYC.db.player.professions[skillLine] or {}
+		BSYC.db.player.professions[skillLine].name = name
+		BSYC.db.player.professions[skillLine].skillLineCurrentLevel = rank
+		BSYC.db.player.professions[skillLine].skillLineMaxLevel = maxRank
+		BSYC.db.player.professions[skillLine].secondary = true --mark is as a secondary profession
+	end
+	
+	if fishing then
+		local name, _, rank, maxRank, _, _, skillLine = GetProfessionInfo(fishing)
+		BSYC.db.player.professions[skillLine] = BSYC.db.player.professions[skillLine] or {}
+		BSYC.db.player.professions[skillLine].name = name
+		BSYC.db.player.professions[skillLine].skillLineCurrentLevel = rank
+		BSYC.db.player.professions[skillLine].skillLineMaxLevel = maxRank
+		BSYC.db.player.professions[skillLine].secondary = true --mark is as a secondary profession
+	end
+
 end
