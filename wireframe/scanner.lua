@@ -16,6 +16,19 @@ local VOID_STORAGE_PAGES = 2
 local FirstEquipped = INVSLOT_FIRST_EQUIPPED
 local LastEquipped = INVSLOT_LAST_EQUIPPED
 
+function Scanner:StartupScans()
+	self:SaveEquipment()
+
+	for i = BACKPACK_CONTAINER, BACKPACK_CONTAINER + NUM_BAG_SLOTS do
+		self:SaveBag("bag", i)
+	end
+	
+	self:SaveCurrency()
+	
+	--cleanup the auction DB
+	BSYC:GetModule("Data"):CheckExpiredAuctions()
+end
+
 function Scanner:SaveBag(bagtype, bagid)
 	if not bagtype or not bagid then return end
 	if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
@@ -31,6 +44,15 @@ function Scanner:SaveBag(bagtype, bagid)
 			end
 		end
 		
+		--lets also store the bags themselves
+		if bagid ~= BACKPACK_CONTAINER and bagid ~= BANK_CONTAINER and bagid ~= REAGENTBANK_CONTAINER then
+			local slot = ContainerIDToInventoryID(bagid)
+			local link = GetInventoryItemLink('player', slot)
+			if link then
+				table.insert(slotItems,  BSYC:ParseItemLink(link))
+			end
+		end
+			
 		BSYC.db.player[bagtype][bagid] = slotItems
 	else
 		BSYC.db.player[bagtype][bagid] = nil
@@ -53,7 +75,7 @@ function Scanner:SaveEquipment()
 	BSYC.db.player.equip = slotItems
 end
 
-function Scanner:ScanBank(rootOnly)
+function Scanner:SaveBank(rootOnly)
 	if not Unit.atBank then return end
 	
 	--force scan of bank bag -1, since blizzard never sends updates for it
@@ -65,11 +87,11 @@ function Scanner:ScanBank(rootOnly)
 			self:SaveBag("bank", i)
 		end
 		--scan the reagents as part of the bank scan
-		self:ScanReagents()
+		self:SaveReagents()
 	end
 end
 
-function Scanner:ScanReagents()
+function Scanner:SaveReagents()
 	if not Unit.atBank then return end
 	
 	if IsReagentBankUnlocked() then 
@@ -77,7 +99,7 @@ function Scanner:ScanReagents()
 	end
 end
 
-function Scanner:ScanVoidBank()
+function Scanner:SaveVoidBank()
 	if not Unit.atVoidBank then return end
 	if not BSYC.db.player.void then BSYC.db.player.void = {} end
 	
@@ -114,7 +136,7 @@ function Scanner:GetXRGuild()
 	return BSYC.db.realm[player.guild]
 end
 
-function Scanner:ScanGuildBank()
+function Scanner:SaveGuildBank()
 	if not IsInGuild() then return end
 
 	local numTabs = GetNumGuildBankTabs()
@@ -143,7 +165,7 @@ function Scanner:ScanGuildBank()
 	end
 end
 
-function Scanner:ScanMailbox()
+function Scanner:SaveMailbox()
 	if not Unit.atMailbox then return end
 	if not BSYC.db.player.mailbox then BSYC.db.player.mailbox = {} end
 	
@@ -175,7 +197,7 @@ function Scanner:ScanMailbox()
 	self.isCheckingMail = false
 end
 
-function Scanner:ScanAuctionHouse()
+function Scanner:SaveAuctionHouse()
 	if not Unit.atAuction then return end
 	if not BSYC.db.player.auction then BSYC.db.player.auction = {} end
 
@@ -202,13 +224,34 @@ function Scanner:ScanAuctionHouse()
 	BSYC.db.player.auction.lastscan = time()
 end
 
-function Scanner:StartupScans()
-	self:SaveEquipment()
+function Scanner:SaveCurrency()
+	if Unit:InCombatLockdown() then return end
 
-	for i = BACKPACK_CONTAINER, BACKPACK_CONTAINER + NUM_BAG_SLOTS do
-		self:SaveBag("bag", i)
+	local lastHeader
+	local limit = GetCurrencyListSize()
+	local slotItems = {}
+	
+	for i=1, limit do
+	
+		local name, isHeader, isExpanded, _, _, count, icon = GetCurrencyListInfo(i)
+		--extraCurrencyType = 1 for arena points, 2 for honor points; 0 otherwise (an item-based currency).
+
+		if name then
+			if(isHeader and not isExpanded) then
+				ExpandCurrencyList(i,1)
+				lastHeader = name
+				limit = GetCurrencyListSize()
+			elseif isHeader then
+				lastHeader = name
+			end
+			if (not isHeader) then
+				slotItems[icon] = slotItems[icon] or {}
+				slotItems[icon].name = name
+				slotItems[icon].header = lastHeader
+				slotItems[icon].count = count
+			end
+		end
 	end
 	
-	--cleanup the auction DB
-	BSYC:GetModule("Data"):CheckExpiredAuctions()
+	BSYC.db.player.currency = slotItems
 end

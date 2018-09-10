@@ -133,7 +133,7 @@ end
 function Events:TRADE_SKILL_LIST_UPDATE()
 	if self._TradeSkillEvent then
 		self._TradeSkillEvent = nil
-		Scanner:SaveProfessions()
+		--Scanner:SaveProfessions()
 	end
 end
 
