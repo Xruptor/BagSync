@@ -260,36 +260,9 @@ function Scanner:SaveProfessions()
 	--we don't want to do linked tradeskills, guild tradeskills, or a tradeskill from an NPC
 	if _G.C_TradeSkillUI.IsTradeSkillLinked() or _G.C_TradeSkillUI.IsTradeSkillGuild() or _G.C_TradeSkillUI.IsNPCCrafting() then return end
 	
-	local tmpCategories = {}
-	local categoryIDs = { C_TradeSkillUI.GetCategories() }
-	
-	for i = 1, #categoryIDs do
-		local catID = categoryIDs[i]
-		local categoryData = C_TradeSkillUI.GetCategoryInfo(catID)
-		
-		if categoryData and not tmpCategories[catID] then
-			tmpCategories[catID] = true
-			
-			local _, _, _, _, _, parentSkillLineID, parentSkillLineName = _G.C_TradeSkillUI.GetTradeSkillLine(catID)
-			
-			if parentSkillLineID and parentSkillLineName and (categoryData.skillLineCurrentLevel or categoryData.skillLineMaxLevel) then
-				--grab the parent name, Engineering, Herbalism, Blacksmithing, etc...
-				BSYC.db.player.professions[parentSkillLineID] = BSYC.db.player.professions[parentSkillLineID] or {}
-				BSYC.db.player.professions[parentSkillLineID].name = parentSkillLineName
-				
-				local parentIDSlot = BSYC.db.player.professions[parentSkillLineID]
-				parentIDSlot.categories = parentIDSlot.categories or {}
-
-				--now create the categories, Legion Engineering, Cateclysm Engineering, etc...
-				parentIDSlot.categories[catID] = parentIDSlot.categories[catID] or {}
-				parentIDSlot.categories[catID].name = categoryData.name
-				parentIDSlot.categories[catID].skillLineCurrentLevel = categoryData.skillLineCurrentLevel
-				parentIDSlot.categories[catID].skillLineMaxLevel = categoryData.skillLineMaxLevel
-			end
-		end
-	end
-
 	local recipeData = {}
+	local tmpRecipe = {}
+	local catCheck = {}
 	local recipeIDs = C_TradeSkillUI.GetAllRecipeIDs()
 	
 	for i = 1, #recipeIDs do
@@ -301,16 +274,15 @@ function Scanner:SaveProfessions()
 			local _, _, _, _, _, parentSkillLineID, parentSkillLineName = _G.C_TradeSkillUI.GetTradeSkillLine(catID)
 			
 			--grab the parent name, Engineering, Herbalism, Blacksmithing, etc...
-			if recipeData.learned and parentSkillLineID and parentSkillLineName then
-				BSYC:Debug("CAT: ", recipeData.name, catID, categoryData.name, categoryData.parentCategoryID, parentSkillLineID, parentSkillLineName)
-				
+			if recipeData.learned and categoryData and parentSkillLineID and parentSkillLineName then
+
 				--grab categories, Legion Engineering, Cateclysm Engineering, etc...
 				local subCatData = C_TradeSkillUI.GetCategoryInfo(categoryData.parentCategoryID)
 				
 				--make sure we have something to work with, we don't want to store stuff that doesn't have levels
-				if subCatData and subCatData.skillLineCurrentLevel or subCatData.skillLineMaxLevel then
+				if subCatData then
 				
-					--check if we have the root profession already stored or not
+					--check if we have the root profession already stored or not, Mining, Engineering, Herbalism, etc...
 					if not BSYC.db.player.professions[parentSkillLineID] then
 						BSYC.db.player.professions[parentSkillLineID] = BSYC.db.player.professions[parentSkillLineID] or {}
 						BSYC.db.player.professions[parentSkillLineID].name = parentSkillLineName
@@ -321,32 +293,30 @@ function Scanner:SaveProfessions()
 					
 					--store the sub category information, Legion Engineering, Cateclysm Engineering, etc...
 					parentIDSlot.categories[categoryData.parentCategoryID] = parentIDSlot.categories[categoryData.parentCategoryID] or {}
-					parentIDSlot.categories[categoryData.parentCategoryID].name = subCatData.name
-					parentIDSlot.categories[categoryData.parentCategoryID].skillLineCurrentLevel = subCatData.skillLineCurrentLevel
-					parentIDSlot.categories[categoryData.parentCategoryID].skillLineMaxLevel = subCatData.skillLineMaxLevel
-					
-					--now store the recipe information
-					
-					
---[[ 					parentIDSlot.categories[categoryData.categoryID] = parentIDSlot.categories[categoryData.categoryID] or {}
-					parentIDSlot.categories[catID].name = categoryData.name
-					parentIDSlot.categories[catID].skillLineCurrentLevel = categoryData.skillLineCurrentLevel
-					parentIDSlot.categories[catID].skillLineMaxLevel = categoryData.skillLineMaxLevel
-					
-					--now create the categories, Legion Engineering, Cateclysm Engineering, etc...
-					parentIDSlot.categories[catID] = parentIDSlot.categories[catID] or {}
-					parentIDSlot.categories[catID].name = categoryData.name
-					parentIDSlot.categories[catID].skillLineCurrentLevel = categoryData.skillLineCurrentLevel
-					parentIDSlot.categories[catID].skillLineMaxLevel = categoryData.skillLineMaxLevel ]]
+					local subCatSlot = parentIDSlot.categories[categoryData.parentCategoryID]
 
+					--always overwrite because we can have a different level or name then last time
+					subCatSlot.name = subCatData.name
+					subCatSlot.skillLineCurrentLevel = subCatData.skillLineCurrentLevel
+					subCatSlot.skillLineMaxLevel = subCatData.skillLineMaxLevel
+					
+					--cleanout the recipe list first time entering the category, otherwise it will constantly have repeats
+					if not catCheck[categoryData.parentCategoryID] then
+						catCheck[categoryData.parentCategoryID] = true
+						subCatSlot.recipes = nil
+					end
+					
+					--now store the recipe information, but make sure we don't already have the recipe stored
+					if not tmpRecipe[recipeData.recipeID] then
+						subCatSlot.recipes = (subCatSlot.recipes or "").."|"..recipeData.recipeID
+					end
 					
 				end
 			
 			end
 			
-
-
 		end
+		
 	end
 	
 end
