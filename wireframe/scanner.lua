@@ -255,3 +255,27 @@ function Scanner:SaveCurrency()
 	
 	BSYC.db.player.currency = slotItems
 end
+
+function Scanner:SaveProfessions()
+	--we don't want to do linked tradeskills, guild tradeskills, or a tradeskill from an NPC
+	if _G.C_TradeSkillUI.IsTradeSkillLinked() or _G.C_TradeSkillUI.IsTradeSkillGuild() or _G.C_TradeSkillUI.IsNPCCrafting() then return end
+	
+	local tmpCategories = {}
+	local categoryIDs = { C_TradeSkillUI.GetCategories() }
+	
+	for i = 1, #categoryIDs do
+		local catID = categoryIDs[i]
+		local categoryData = C_TradeSkillUI.GetCategoryInfo(catID)
+		
+		if categoryData and not tmpCategories[catID] then
+			tmpCategories[catID] = true
+			if categoryData.skillLineCurrentLevel or categoryData.skillLineMaxLevel then
+				BSYC.db.player.professions[catID] = BSYC.db.player.professions[catID] or {}
+				BSYC.db.player.professions[catID].name = categoryData.name
+				BSYC.db.player.professions[catID].skillLineCurrentLevel = categoryData.skillLineCurrentLevel
+				BSYC.db.player.professions[catID].skillLineMaxLevel = categoryData.skillLineMaxLevel
+			end
+		end
+	end
+				
+end
