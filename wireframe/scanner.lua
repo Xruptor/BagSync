@@ -27,6 +27,9 @@ function Scanner:StartupScans()
 	
 	--cleanup the auction DB
 	BSYC:GetModule("Data"):CheckExpiredAuctions()
+	
+	--cleanup any unlearned tradeskills
+	self:CleanupProfessions()
 end
 
 function Scanner:SaveBag(bagtype, bagid)
@@ -345,4 +348,31 @@ function Scanner:SaveProfessions()
 		BSYC.db.player.professions[skillLine].secondary = true --mark is as a secondary profession
 	end
 
+	--as a precaution lets do a tradeskill cleanup just in case
+	self:CleanupProfessions()
 end
+
+function Scanner:CleanupProfessions()
+	--lets remove unlearned tradeskills
+
+	local profList = {GetProfessions()}
+	local tmpList = {}
+	
+	for i=1, #profList do
+		if profList[i] then
+			local name, _, rank, maxRank, _, _, skillLine = GetProfessionInfo(profList[i])
+			if name and skillLine then
+				tmpList[skillLine] = name
+			end
+		end
+	end
+	
+	for k, v in pairs(BSYC.db.player.professions) do
+		if not tmpList[k] then
+			--it's an unlearned or unused tradeskill, lets remove it
+			BSYC.db.player.professions[k] = nil
+		end
+	end
+
+end
+
