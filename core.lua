@@ -16,7 +16,10 @@ end
 function BSYC:ParseItemLink(link, count)
 
 	if link then
-
+	
+		--there are times link comes in as a number and breaks string matching, convert to string to fix
+		if type(link) == "number" then link = tostring(link) end
+	
 		--sometimes the profession window has a bug for the items it parses, so lets fix it
 		-----------------------------
 		if tonumber(self:GetShortItemID(link)) == 0 and TradeSkillFrame then
@@ -84,6 +87,7 @@ end
 
 function BSYC:GetShortItemID(link)
 	if link then
+		if type(link) == "number" then link = tostring(link) end
 		return link:match("item:(%d+):") or link:match("^(%d+):") or link
 	end
 end

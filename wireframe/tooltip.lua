@@ -162,3 +162,134 @@ function Tooltip:MoneyTooltip()
 	tooltip:AddLine(" ")
 	tooltip:Show()
 end
+
+function Tooltip:ItemCount(data, itemID, allowList, source)
+	if table.getn(data) < 1 then return end
+	
+	for i=1, table.getn(data) do
+		local link, count = strsplit(";", data[i])
+		if link then
+			BSYC:Debug(source, itemID, link)
+		end
+	end
+end
+
+function Tooltip:TallyUnits(objTooltip, link, source)
+	if not BSYC.db.options.enableTooltips then return end
+	
+	--make sure we have something to work with
+	local link = BSYC:ParseItemLink(link)
+	if not link then
+		objTooltip:Show()
+		return
+	end
+	
+	local player = Unit:GetUnitInfo()
+	local shortID = BSYC:GetShortItemID(link)
+	
+	--short the shortID and ignore all BonusID's and stats
+	if BSYC.db.options.enableShowUniqueItemsTotals then link = shortID end
+	
+	--only show tooltips in search frame if the option is enabled
+	if BSYC.db.options.tooltipOnlySearch and objTooltip:GetOwner() and objTooltip:GetOwner():GetName() and not string.find(objTooltip:GetOwner():GetName(), "BagSyncSearchRow") then
+		objTooltip:Show()
+		return
+	end
+	
+	--store these in the addon itself not in the tooltip
+	self.__lastTooltipTally = {}
+	self.__lastTooltipLink = link
+	
+	--{realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm}
+	
+	for unitObj in Data:IterateUnits() do
+	
+		local allowList = {
+			["bag"] = 0,
+			["bank"] = 0,
+			["reagents"] = 0,
+			["equip"] = 0,
+			["mailbox"] = 0,
+			["void"] = 0,
+			["auction"] = 0,
+			["guild"] = 0,
+		}
+		
+		if not unitObj.isGuild then
+			for k, v in pairs(unitObj.data) do
+				if allowList[k] and type(v) == "table" then
+					--bags, bank, reagents are stored in individual bags
+					if k == "bag" or k == "bank" or k == "reagents" then
+						for bagID, bagData in pairs(v) do
+							self:ItemCount(bagData, link, allowList, k)
+						end
+					else
+						--with the exception of auction, everything else is stored in a numeric list
+						--auction is stored in a numeric list but within an individual bag
+						self:ItemCount(k == "auction" and v.bag or v, link, allowList, k)
+					end
+				end
+			end
+		else
+			--unitObj.data.bag
+			--unitObj.data.realmKey
+		end
+	end
+	
+	objTooltip.__tooltipUpdated = true
+	objTooltip:Show()
+end
+
+function Tooltip:HookTooltip(objTooltip)
+	
+	objTooltip:HookScript("OnHide", function(self)
+		self.__tooltipUpdated = false
+		--reset __lastTooltipLink in the addon itself not within the tooltip
+		Tooltip.__lastTooltipLink = nil
+	end)
+	objTooltip:HookScript("OnTooltipCleared", function(self)
+		--this gets called repeatedly on some occasions. Do not reset Tooltip.__lastTooltipLink here
+		self.__tooltipUpdated = false
+	end)
+	objTooltip:HookScript("OnTooltipSetItem", function(self)
+		if self.__tooltipUpdated then return end
+		local name, link = self:GetItem()
+		if name and string.len(name) > 0 and link then
+			Tooltip:TallyUnits(self, link, "OnTooltipSetItem")
+		end
+	end)
+	hooksecurefunc(objTooltip, "SetRecipeReagentItem", function(self, recipeID, reagentIndex)
+		if self.__tooltipUpdated then return end
+		local link = C_TradeSkillUI.GetRecipeReagentItemLink(recipeID, reagentIndex)
+		if link then
+			Tooltip:TallyUnits(self, link, "SetRecipeReagentItem")
+		end
+	end)
+	hooksecurefunc(objTooltip, "SetRecipeResultItem", function(self, recipeID)
+		if self.__tooltipUpdated then return end
+		local link = C_TradeSkillUI.GetRecipeItemLink(recipeID)
+		if link then
+			Tooltip:TallyUnits(self, link, "SetRecipeResultItem")
+		end
+	end)
+	hooksecurefunc(objTooltip, "SetQuestLogItem", function(self, itemType, index)
+		if self.__tooltipUpdated then return end
+		local link = GetQuestLogItemLink(itemType, index)
+		if link then
+			Tooltip:TallyUnits(self, link, "SetQuestLogItem")
+		end
+	end)
+	hooksecurefunc(objTooltip, "SetQuestItem", function(self, itemType, index)
+		if self.__tooltipUpdated then return end
+		local link = GetQuestItemLink(itemType, index)
+		if link then
+			Tooltip:TallyUnits(self, link, "SetQuestItem")
+		end
+	end)
+	
+end
+
+function Tooltip:OnEnable()
+	self:HookTooltip(GameTooltip)
+	self:HookTooltip(ItemRefTooltip)
+end

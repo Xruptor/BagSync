@@ -17,6 +17,7 @@ local FirstEquipped = INVSLOT_FIRST_EQUIPPED
 local LastEquipped = INVSLOT_LAST_EQUIPPED
 
 function Scanner:StartupScans()
+
 	self:SaveEquipment()
 
 	for i = BACKPACK_CONTAINER, BACKPACK_CONTAINER + NUM_BAG_SLOTS do
