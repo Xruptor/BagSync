@@ -132,7 +132,7 @@ function Tooltip:MoneyTooltip()
 	
 	for unitObj in Data:IterateUnits() do
 		if unitObj.data.money and unitObj.data.money > 0 then
-			table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=Tooltip:GetSortIndex(unitObj) } )
+			table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj) } )
 		end
 	end
 	
@@ -163,19 +163,72 @@ function Tooltip:MoneyTooltip()
 	tooltip:Show()
 end
 
-function Tooltip:ItemCount(data, itemID, allowList, source)
+function Tooltip:ItemCount(data, itemID, allowList, source, total)
 	if table.getn(data) < 1 then return end
 	
 	for i=1, table.getn(data) do
 		local link, count = strsplit(";", data[i])
 		if link then
-			BSYC:Debug(source, itemID, link)
+			if BSYC.db.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
+			if link == itemID then
+				allowList[source] = allowList[source] + (count or 1)
+				total = total + (count or 1)
+			end
 		end
 	end
 end
 
+function Tooltip:UnitTotals(unitObj, allowList, unitList)
+	local tallyString = ""
+	local total = 0
+	local grouped = 0
+	
+	--order in which we want stuff displayed
+	local list = {
+		[1] = { source="bag", 		desc=L.TooltipBag },
+		[2] = { source="bank", 		desc=L.TooltipBank },
+		[3] = { source="reagents", 	desc=L.TooltipReagent },
+		[4] = { source="equip", 	desc=L.TooltipEquip },
+		[5] = { source="guild", 	desc=L.TooltipGuild },
+		[6] = { source="mailbox", 	desc=L.TooltipMail },
+		[7] = { source="void", 		desc=L.TooltipVoid },
+		[8] = { source="auction", 	desc=L.TooltipAuction },
+	}
+		
+	for i = 1, #list do
+		local count, desc = allowList[list[i].source], list[i].desc
+		if count > 0 then
+			grouped = grouped + 1
+			total = total + count
+			
+			desc = self:HexColor(BSYC.db.options.colors.first, desc)
+			count = self:HexColor(BSYC.db.options.colors.second, count)
+			
+			tallyString = tallyString..L.TooltipDelimiter..desc.." "..count
+		end
+	end
+	
+	tallyString = strsub(tallyString, string.len(L.TooltipDelimiter) + 1) --remove first delimiter
+	if total < 1 or string.len(tallyString) < 1 then return end
+	
+	--if it's groupped up and has more then one item then use a different color and show total
+	if grouped > 1 then
+		tallyString = self:HexColor(BSYC.db.options.colors.second, total).." ("..tallyString..")"
+	end
+	
+	--add to list
+	table.insert(unitList, { colorized=self:ColorizeUnit(unitObj), tallyString=tallyString, sortIndex=self:GetSortIndex(unitObj) } )
+	
+end
+
 function Tooltip:TallyUnits(objTooltip, link, source)
 	if not BSYC.db.options.enableTooltips then return end
+	
+	--only show tooltips in search frame if the option is enabled
+	if BSYC.db.options.tooltipOnlySearch and objTooltip:GetOwner() and objTooltip:GetOwner():GetName() and not string.find(objTooltip:GetOwner():GetName(), "BagSyncSearchRow") then
+		objTooltip:Show()
+		return
+	end
 	
 	--make sure we have something to work with
 	local link = BSYC:ParseItemLink(link)
@@ -190,17 +243,13 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 	--short the shortID and ignore all BonusID's and stats
 	if BSYC.db.options.enableShowUniqueItemsTotals then link = shortID end
 	
-	--only show tooltips in search frame if the option is enabled
-	if BSYC.db.options.tooltipOnlySearch and objTooltip:GetOwner() and objTooltip:GetOwner():GetName() and not string.find(objTooltip:GetOwner():GetName(), "BagSyncSearchRow") then
-		objTooltip:Show()
-		return
-	end
-	
 	--store these in the addon itself not in the tooltip
 	self.__lastTooltipTally = {}
 	self.__lastTooltipLink = link
 	
-	--{realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm}
+	local grandTotal = 0
+	local previousGuilds = {}
+	local unitList = {}
 	
 	for unitObj in Data:IterateUnits() do
 	
@@ -221,20 +270,33 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 					--bags, bank, reagents are stored in individual bags
 					if k == "bag" or k == "bank" or k == "reagents" then
 						for bagID, bagData in pairs(v) do
-							self:ItemCount(bagData, link, allowList, k)
+							self:ItemCount(bagData, link, allowList, k, grandTotal)
 						end
 					else
 						--with the exception of auction, everything else is stored in a numeric list
 						--auction is stored in a numeric list but within an individual bag
-						self:ItemCount(k == "auction" and v.bag or v, link, allowList, k)
+						--auction, equip, void, mailbox
+						self:ItemCount(k == "auction" and v.bag or v, link, allowList, k, grandTotal)
 					end
 				end
 			end
 		else
-			--unitObj.data.bag
-			--unitObj.data.realmKey
+			--it's a guild, use the guild bag, we don't have to worry about repeats.  IterateUnits takes care of this
+			if unitObj.data.bag then
+				self:ItemCount(unitObj.data.bag, link, allowList, "guild", grandTotal)
+			end
 		end
+		
+		--only process the totals if we have something to work with
+		if grandTotal > 0 then
+			self:UnitTotals(unitObj, allowList, unitList)
+		end
+		
 	end
+	
+	
+	
+	
 	
 	objTooltip.__tooltipUpdated = true
 	objTooltip:Show()
