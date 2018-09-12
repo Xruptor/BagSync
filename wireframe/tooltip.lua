@@ -163,21 +163,6 @@ function Tooltip:MoneyTooltip()
 	tooltip:Show()
 end
 
-function Tooltip:ItemCount(data, itemID, allowList, source, total)
-	if table.getn(data) < 1 then return end
-	
-	for i=1, table.getn(data) do
-		local link, count = strsplit(";", data[i])
-		if link then
-			if BSYC.db.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
-			if link == itemID then
-				allowList[source] = allowList[source] + (count or 1)
-				total = total + (count or 1)
-			end
-		end
-	end
-end
-
 function Tooltip:UnitTotals(unitObj, allowList, unitList)
 	local tallyString = ""
 	local total = 0
@@ -209,7 +194,7 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList)
 	end
 	
 	tallyString = strsub(tallyString, string.len(L.TooltipDelimiter) + 1) --remove first delimiter
-	if total < 1 or string.len(tallyString) < 1 then return end
+	if total < 1 or string.len(tallyString) < 1 then return unitList end
 	
 	--if it's groupped up and has more then one item then use a different color and show total
 	if grouped > 1 then
@@ -217,8 +202,25 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList)
 	end
 	
 	--add to list
-	table.insert(unitList, { colorized=self:ColorizeUnit(unitObj), tallyString=tallyString, sortIndex=self:GetSortIndex(unitObj) } )
+	table.insert(unitList, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), tallyString=tallyString, sortIndex=self:GetSortIndex(unitObj) } )
 	
+	return unitList
+end
+
+function Tooltip:ItemCount(data, itemID, allowList, source, total)
+	if table.getn(data) < 1 then return allowList, total end
+	
+	for i=1, table.getn(data) do
+		local link, count = strsplit(";", data[i])
+		if link then
+			if BSYC.db.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
+			if link == itemID then
+				allowList[source] = allowList[source] + (count or 1)
+				total = total + (count or 1)
+			end
+		end
+	end
+	return allowList, total
 end
 
 function Tooltip:TallyUnits(objTooltip, link, source)
@@ -243,9 +245,25 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 	--short the shortID and ignore all BonusID's and stats
 	if BSYC.db.options.enableShowUniqueItemsTotals then link = shortID end
 	
+	--if we already did the item, then display the previous information
+	if self.__lastLink and self.__lastLink == link then
+		if self.__lastTally and table.getn(self.__lastTally) > 0 then
+			if BSYC.db.options.enableTooltipSeperator then
+				objTooltip:AddLine(" ")
+			end
+			for i=1, table.getn(self.__lastTally) do
+				local color = BSYC.db.options.colors.total --this is a cover all color we are going to use
+				objTooltip:AddDoubleLine(self.__lastTally[i].colorized, self.__lastTally[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
+			end
+		end
+		objTooltip.__tooltipUpdated = true
+		objTooltip:Show()
+		return
+	end
+
 	--store these in the addon itself not in the tooltip
-	self.__lastTooltipTally = {}
-	self.__lastTooltipLink = link
+	self.__lastTally = {}
+	self.__lastLink = link
 	
 	local grandTotal = 0
 	local previousGuilds = {}
@@ -270,33 +288,70 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 					--bags, bank, reagents are stored in individual bags
 					if k == "bag" or k == "bank" or k == "reagents" then
 						for bagID, bagData in pairs(v) do
-							self:ItemCount(bagData, link, allowList, k, grandTotal)
+							allowList, grandTotal = self:ItemCount(bagData, link, allowList, k, grandTotal)
 						end
 					else
 						--with the exception of auction, everything else is stored in a numeric list
 						--auction is stored in a numeric list but within an individual bag
 						--auction, equip, void, mailbox
-						self:ItemCount(k == "auction" and v.bag or v, link, allowList, k, grandTotal)
+						allowList, grandTotal = self:ItemCount(k == "auction" and v.bag or v, link, allowList, k, grandTotal)
 					end
 				end
 			end
 		else
 			--it's a guild, use the guild bag, we don't have to worry about repeats.  IterateUnits takes care of this
 			if unitObj.data.bag then
-				self:ItemCount(unitObj.data.bag, link, allowList, "guild", grandTotal)
+				allowList, grandTotal = self:ItemCount(unitObj.data.bag, link, allowList, "guild", grandTotal)
 			end
 		end
 		
 		--only process the totals if we have something to work with
 		if grandTotal > 0 then
-			self:UnitTotals(unitObj, allowList, unitList)
+			unitList = self:UnitTotals(unitObj, allowList, unitList)
 		end
 		
 	end
 	
+	--only display the Total if we have more than one unit to work with
+	if BSYC.db.options.showTotal and grandTotal > 0 and table.getn(unitList) > 1 then
+		local desc = self:HexColor(BSYC.db.options.colors.total, L.TooltipTotal)
+		local count = self:HexColor(BSYC.db.options.colors.second, grandTotal)
+		table.insert(unitList, { colorized=desc, tallyString=count, sortIndex=20 } )
+	end
 	
+	--add ItemID if it's enabled
+	if BSYC.db.options.enableTooltipItemID and shortID then
+		local desc = self:HexColor(BSYC.db.options.colors.itemid, L.TooltipItemID)
+		local count = self:HexColor(BSYC.db.options.colors.second, shortID)
+		table.insert(unitList, { colorized=desc, tallyString=count, sortIndex=21 } )
+	end
 	
+	if table.getn(unitList) > 0 then
+		--sort the list by our sortIndex then by realm and finally by name
+		table.sort(unitList, function(a, b)
+			if a.unitObj and b.unitObj and a.sortIndex  == b.sortIndex then
+				if a.unitObj.realm == b.unitObj.realm then
+					return a.unitObj.name < b.unitObj.name;
+				end
+				return a.unitObj.realm < b.unitObj.realm;
+			else
+				return a.sortIndex < b.sortIndex;
+			end
+		  
+		end)
+		
+		--now check for seperater and only add if we have something in the table already
+		if BSYC.db.options.enableTooltipSeperator and table.getn(unitList) > 0 then
+			objTooltip:AddLine(" ")
+		end
+		
+		for i=1, table.getn(unitList) do
+			local color = BSYC.db.options.colors.total --this is a cover all color we are going to use
+			objTooltip:AddDoubleLine(unitList[i].colorized, unitList[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
+		end
+	end
 	
+	self.__lastTally = unitList
 	
 	objTooltip.__tooltipUpdated = true
 	objTooltip:Show()
@@ -306,11 +361,11 @@ function Tooltip:HookTooltip(objTooltip)
 	
 	objTooltip:HookScript("OnHide", function(self)
 		self.__tooltipUpdated = false
-		--reset __lastTooltipLink in the addon itself not within the tooltip
-		Tooltip.__lastTooltipLink = nil
+		--reset __lastLink in the addon itself not within the tooltip
+		Tooltip.__lastLink = nil
 	end)
 	objTooltip:HookScript("OnTooltipCleared", function(self)
-		--this gets called repeatedly on some occasions. Do not reset Tooltip.__lastTooltipLink here
+		--this gets called repeatedly on some occasions. Do not reset Tooltip.__lastLink here
 		self.__tooltipUpdated = false
 	end)
 	objTooltip:HookScript("OnTooltipSetItem", function(self)
