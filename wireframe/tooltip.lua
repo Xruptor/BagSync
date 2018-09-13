@@ -312,24 +312,11 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 		
 	end
 	
-	--only display the Total if we have more than one unit to work with
-	if BSYC.db.options.showTotal and grandTotal > 0 and table.getn(unitList) > 1 then
-		local desc = self:HexColor(BSYC.db.options.colors.total, L.TooltipTotal)
-		local count = self:HexColor(BSYC.db.options.colors.second, grandTotal)
-		table.insert(unitList, { colorized=desc, tallyString=count, sortIndex=20 } )
-	end
-	
-	--add ItemID if it's enabled
-	if BSYC.db.options.enableTooltipItemID and shortID then
-		local desc = self:HexColor(BSYC.db.options.colors.itemid, L.TooltipItemID)
-		local count = self:HexColor(BSYC.db.options.colors.second, shortID)
-		table.insert(unitList, { colorized=desc, tallyString=count, sortIndex=21 } )
-	end
-	
+	--only sort items if we have something to work with
 	if table.getn(unitList) > 0 then
-		--sort the list by our sortIndex then by realm and finally by name
+
 		table.sort(unitList, function(a, b)
-			if a.unitObj and b.unitObj and a.sortIndex  == b.sortIndex then
+			if a.sortIndex  == b.sortIndex then
 				if a.unitObj.realm == b.unitObj.realm then
 					return a.unitObj.name < b.unitObj.name;
 				end
@@ -340,15 +327,31 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 		  
 		end)
 		
-		--now check for seperater and only add if we have something in the table already
-		if BSYC.db.options.enableTooltipSeperator and table.getn(unitList) > 0 then
-			objTooltip:AddLine(" ")
-		end
+	end
+	
+	--add [Total] if we have more than one unit to work with
+	if BSYC.db.options.showTotal and grandTotal > 0 and table.getn(unitList) > 1 then
+		local desc = self:HexColor(BSYC.db.options.colors.total, L.TooltipTotal)
+		local count = self:HexColor(BSYC.db.options.colors.second, grandTotal)
+		table.insert(unitList, { colorized=desc, tallyString=count} )
+	end
 		
-		for i=1, table.getn(unitList) do
-			local color = BSYC.db.options.colors.total --this is a cover all color we are going to use
-			objTooltip:AddDoubleLine(unitList[i].colorized, unitList[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
-		end
+	--add ItemID
+	if BSYC.db.options.enableTooltipItemID and shortID then
+		local desc = self:HexColor(BSYC.db.options.colors.itemid, L.TooltipItemID)
+		local itemid = self:HexColor(BSYC.db.options.colors.second, shortID)
+		table.insert(unitList, { colorized=desc, tallyString=itemid} )
+	end
+	
+	--add seperator if enabled and only if we have something to work with
+	if BSYC.db.options.enableTooltipSeperator and table.getn(unitList) > 0 then
+		objTooltip:AddLine(" ")
+	end
+	
+	--finally display it
+	for i=1, table.getn(unitList) do
+		local color = BSYC.db.options.colors.total --this is a cover all color we are going to use
+		objTooltip:AddDoubleLine(unitList[i].colorized, unitList[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
 	end
 	
 	self.__lastTally = unitList
