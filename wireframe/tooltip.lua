@@ -35,27 +35,27 @@ function Tooltip:ColorizeUnit(unitObj)
 	if not unitObj.data then return nil end
 	
 	if unitObj.isGuild then
-		return self:HexColor(BSYC.db.options.colors.first, select(2, Unit:GetUnitAddress(unitObj.name)) )
+		return self:HexColor(BSYC.options.colors.first, select(2, Unit:GetUnitAddress(unitObj.name)) )
 	end
 	
 	local player = Unit:GetUnitInfo()
 	local tmpTag = ""
 	
 	--first colorize by class color
-	if BSYC.db.options.enableUnitClass and RAID_CLASS_COLORS[unitObj.data.class] then
+	if BSYC.options.enableUnitClass and RAID_CLASS_COLORS[unitObj.data.class] then
 		tmpTag = self:HexColor(RAID_CLASS_COLORS[unitObj.data.class], unitObj.name)
 	else
-		tmpTag = self:HexColor(BSYC.db.options.colors.first, unitObj.name)
+		tmpTag = self:HexColor(BSYC.options.colors.first, unitObj.name)
 	end
 	
 	--add green checkmark
-	if unitObj.name == player.name and unitObj.realm == player.realm and BSYC.db.options.enableTooltipGreenCheck then
+	if unitObj.name == player.name and unitObj.realm == player.realm and BSYC.options.enableTooltipGreenCheck then
 		local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
 		tmpTag = ReadyCheck.." "..tmpTag
 	end
 	
 	--add faction icons
-	if BSYC.db.options.enableFactionIcons then
+	if BSYC.options.enableFactionIcons then
 		local FactionIcon = [[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]
 		
 		if unitObj.data.faction == "Alliance" then
@@ -72,23 +72,23 @@ function Tooltip:ColorizeUnit(unitObj)
 	local realmTag = ""
 	local delimiter = " "
 	
-	if BSYC.db.options.No_XR_BNET_RealmNames then
+	if BSYC.options.No_XR_BNET_RealmNames then
 		realm = ""
 		delimiter = ""
-	elseif BSYC.db.options.enableRealmAstrickName then
+	elseif BSYC.options.enableRealmAstrickName then
 		realm = "*"
-	elseif BSYC.db.options.enableRealmShortName then
+	elseif BSYC.options.enableRealmShortName then
 		realm = string.sub(realm, 1, 5)
 	end
 	
-	if BSYC.db.options.enableBNetAccountItems and not unitObj.isConnectedRealm then
-		realmTag = BSYC.db.options.enableRealmIDTags and L.TooltipBattleNetTag..delimiter or ""
-		tmpTag = self:HexColor(BSYC.db.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
+	if BSYC.options.enableBNetAccountItems and not unitObj.isConnectedRealm then
+		realmTag = BSYC.options.enableRealmIDTags and L.TooltipBattleNetTag..delimiter or ""
+		tmpTag = self:HexColor(BSYC.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
 	end
 	
-	if BSYC.db.options.enableCrossRealmsItems and unitObj.isConnectedRealm and unitObj.realm ~= player.realm then
-		realmTag = BSYC.db.options.enableRealmIDTags and L.TooltipCrossRealmTag..delimiter or ""
-		tmpTag = self:HexColor(BSYC.db.options.colors.cross, "["..realmTag..realm.."]").." "..tmpTag
+	if BSYC.options.enableCrossRealmsItems and unitObj.isConnectedRealm and unitObj.realm ~= player.realm then
+		realmTag = BSYC.options.enableRealmIDTags and L.TooltipCrossRealmTag..delimiter or ""
+		tmpTag = self:HexColor(BSYC.options.colors.cross, "["..realmTag..realm.."]").." "..tmpTag
 	end
 	
 	return tmpTag
@@ -158,9 +158,9 @@ function Tooltip:MoneyTooltip()
 		tooltip:AddDoubleLine(usrData[i].colorized, GetMoneyString(usrData[i].unitObj.data.money, true), 1, 1, 1, 1, 1, 1)
 		total = total + usrData[i].unitObj.data.money
 	end
-	if BSYC.db.options.showTotal and total > 0 then
+	if BSYC.options.showTotal and total > 0 then
 		tooltip:AddLine(" ")
-		tooltip:AddDoubleLine(self:HexColor(BSYC.db.options.colors.total, L.TooltipTotal), GetMoneyString(total, true), 1, 1, 1, 1, 1, 1)
+		tooltip:AddDoubleLine(self:HexColor(BSYC.options.colors.total, L.TooltipTotal), GetMoneyString(total, true), 1, 1, 1, 1, 1, 1)
 	end
 	
 	tooltip:AddLine(" ")
@@ -190,8 +190,8 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList)
 			grouped = grouped + 1
 			total = total + count
 			
-			desc = self:HexColor(BSYC.db.options.colors.first, desc)
-			count = self:HexColor(BSYC.db.options.colors.second, count)
+			desc = self:HexColor(BSYC.options.colors.first, desc)
+			count = self:HexColor(BSYC.options.colors.second, count)
 			
 			tallyString = tallyString..L.TooltipDelimiter..desc.." "..count
 		end
@@ -202,7 +202,7 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList)
 	
 	--if it's groupped up and has more then one item then use a different color and show total
 	if grouped > 1 then
-		tallyString = self:HexColor(BSYC.db.options.colors.second, total).." ("..tallyString..")"
+		tallyString = self:HexColor(BSYC.options.colors.second, total).." ("..tallyString..")"
 	end
 	
 	--add to list
@@ -216,7 +216,7 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total)
 	for i=1, table.getn(data) do
 		local link, count = strsplit(";", data[i])
 		if link then
-			if BSYC.db.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
+			if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
 			if link == itemID then
 				allowList[source] = allowList[source] + (count or 1)
 				total = total + (count or 1)
@@ -227,10 +227,10 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total)
 end
 
 function Tooltip:TallyUnits(objTooltip, link, source)
-	if not BSYC.db.options.enableTooltips then return end
+	if not BSYC.options.enableTooltips then return end
 	
 	--only show tooltips in search frame if the option is enabled
-	if BSYC.db.options.tooltipOnlySearch and objTooltip:GetOwner() and objTooltip:GetOwner():GetName() and not string.find(objTooltip:GetOwner():GetName(), "BagSyncSearchRow") then
+	if BSYC.options.tooltipOnlySearch and objTooltip:GetOwner() and objTooltip:GetOwner():GetName() and not string.find(objTooltip:GetOwner():GetName(), "BagSyncSearchRow") then
 		objTooltip:Show()
 		return
 	end
@@ -246,13 +246,13 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 	local shortID = BSYC:GetShortItemID(link)
 	
 	--short the shortID and ignore all BonusID's and stats
-	if BSYC.db.options.enableShowUniqueItemsTotals then link = shortID end
+	if BSYC.options.enableShowUniqueItemsTotals then link = shortID end
 	
 	--if we already did the item, then display the previous information
 	if self.__lastLink and self.__lastLink == link then
 		if self.__lastTally and table.getn(self.__lastTally) > 0 then
 			for i=1, table.getn(self.__lastTally) do
-				local color = BSYC.db.options.colors.total --this is a cover all color we are going to use
+				local color = BSYC.options.colors.total --this is a cover all color we are going to use
 				objTooltip:AddDoubleLine(self.__lastTally[i].colorized, self.__lastTally[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
 			end
 		end
@@ -294,7 +294,7 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 						--with the exception of auction, everything else is stored in a numeric list
 						--auction is stored in a numeric list but within an individual bag
 						--auction, equip, void, mailbox
-						if (k ~= "auction" or k ~= "mailbox") or (k == "auction" and BSYC.db.options.enableAuction) or (k == "mailbox" and BSYC.db.options.enableMailbox) then
+						if (k ~= "auction" or k ~= "mailbox") or (k == "auction" and BSYC.options.enableAuction) or (k == "mailbox" and BSYC.options.enableMailbox) then
 							grandTotal = self:ItemCount(k == "auction" and v.bag or v, link, allowList, k, grandTotal)
 						end
 					end
@@ -335,27 +335,27 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 	local desc, value = '', ''
 	
 	--add [Total] if we have more than one unit to work with
-	if BSYC.db.options.showTotal and grandTotal > 0 and table.getn(unitList) > 1 then
-		desc = self:HexColor(BSYC.db.options.colors.total, L.TooltipTotal)
-		value = self:HexColor(BSYC.db.options.colors.second, grandTotal)
+	if BSYC.options.showTotal and grandTotal > 0 and table.getn(unitList) > 1 then
+		desc = self:HexColor(BSYC.options.colors.total, L.TooltipTotal)
+		value = self:HexColor(BSYC.options.colors.second, grandTotal)
 		table.insert(unitList, { colorized=desc, tallyString=value} )
 	end
 		
 	--add ItemID
-	if BSYC.db.options.enableTooltipItemID and shortID then
-		desc = self:HexColor(BSYC.db.options.colors.itemid, L.TooltipItemID)
-		value = self:HexColor(BSYC.db.options.colors.second, shortID)
+	if BSYC.options.enableTooltipItemID and shortID then
+		desc = self:HexColor(BSYC.options.colors.itemid, L.TooltipItemID)
+		value = self:HexColor(BSYC.options.colors.second, shortID)
 		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
 	end
 	
 	--add seperator if enabled and only if we have something to work with
-	if BSYC.db.options.enableTooltipSeperator and table.getn(unitList) > 0 then
+	if BSYC.options.enableTooltipSeperator and table.getn(unitList) > 0 then
 		table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
 	end
 	
 	--finally display it
 	for i=1, table.getn(unitList) do
-		local color = BSYC.db.options.colors.total --this is a cover all color we are going to use
+		local color = BSYC.options.colors.total --this is a cover all color we are going to use
 		objTooltip:AddDoubleLine(unitList[i].colorized, unitList[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
 	end
 	

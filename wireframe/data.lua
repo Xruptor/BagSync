@@ -40,44 +40,44 @@ function Data:OnEnable()
 	BSYC.db.blacklist = BagSyncDB["blacklist§"]
 	
 	--options DB
-	BSYC.db.options = BagSyncDB["options§"]
-	if BSYC.db.options.showTotal == nil then BSYC.db.options.showTotal = true end
-	if BSYC.db.options.showGuildNames == nil then BSYC.db.options.showGuildNames = false end
-	if BSYC.db.options.enableGuild == nil then BSYC.db.options.enableGuild = true end
-	if BSYC.db.options.enableMailbox == nil then BSYC.db.options.enableMailbox = true end
-	if BSYC.db.options.enableUnitClass == nil then BSYC.db.options.enableUnitClass = true end
-	if BSYC.db.options.enableMinimap == nil then BSYC.db.options.enableMinimap = true end
-	if BSYC.db.options.enableFaction == nil then BSYC.db.options.enableFaction = true end
-	if BSYC.db.options.enableAuction == nil then BSYC.db.options.enableAuction = true end
-	if BSYC.db.options.tooltipOnlySearch == nil then BSYC.db.options.tooltipOnlySearch = false end
-	if BSYC.db.options.enableTooltips == nil then BSYC.db.options.enableTooltips = true end
-	if BSYC.db.options.enableTooltipSeperator == nil then BSYC.db.options.enableTooltipSeperator = true end
-	if BSYC.db.options.enableCrossRealmsItems == nil then BSYC.db.options.enableCrossRealmsItems = true end
-	if BSYC.db.options.enableBNetAccountItems == nil then BSYC.db.options.enableBNetAccountItems = false end
-	if BSYC.db.options.enableTooltipItemID == nil then BSYC.db.options.enableTooltipItemID = false end
-	if BSYC.db.options.enableTooltipGreenCheck == nil then BSYC.db.options.enableTooltipGreenCheck = true end
-	if BSYC.db.options.enableRealmIDTags == nil then BSYC.db.options.enableRealmIDTags = true end
-	if BSYC.db.options.enableRealmAstrickName == nil then BSYC.db.options.enableRealmAstrickName = false end
-	if BSYC.db.options.enableRealmShortName == nil then BSYC.db.options.enableRealmShortName = false end
-	if BSYC.db.options.enableLoginVersionInfo == nil then BSYC.db.options.enableLoginVersionInfo = true end
-	if BSYC.db.options.enableFactionIcons == nil then BSYC.db.options.enableFactionIcons = false end
-	if BSYC.db.options.enableShowUniqueItemsTotals == nil then BSYC.db.options.enableShowUniqueItemsTotals = true end
-	if BSYC.db.options.No_XR_BNET_RealmNames == nil then BSYC.db.options.No_XR_BNET_RealmNames = true end
+	BSYC.options = BagSyncDB["options§"]
+	if BSYC.options.showTotal == nil then BSYC.options.showTotal = true end
+	if BSYC.options.showGuildNames == nil then BSYC.options.showGuildNames = false end
+	if BSYC.options.enableGuild == nil then BSYC.options.enableGuild = true end
+	if BSYC.options.enableMailbox == nil then BSYC.options.enableMailbox = true end
+	if BSYC.options.enableUnitClass == nil then BSYC.options.enableUnitClass = true end
+	if BSYC.options.enableMinimap == nil then BSYC.options.enableMinimap = true end
+	if BSYC.options.enableFaction == nil then BSYC.options.enableFaction = true end
+	if BSYC.options.enableAuction == nil then BSYC.options.enableAuction = true end
+	if BSYC.options.tooltipOnlySearch == nil then BSYC.options.tooltipOnlySearch = false end
+	if BSYC.options.enableTooltips == nil then BSYC.options.enableTooltips = true end
+	if BSYC.options.enableTooltipSeperator == nil then BSYC.options.enableTooltipSeperator = true end
+	if BSYC.options.enableCrossRealmsItems == nil then BSYC.options.enableCrossRealmsItems = true end
+	if BSYC.options.enableBNetAccountItems == nil then BSYC.options.enableBNetAccountItems = false end
+	if BSYC.options.enableTooltipItemID == nil then BSYC.options.enableTooltipItemID = false end
+	if BSYC.options.enableTooltipGreenCheck == nil then BSYC.options.enableTooltipGreenCheck = true end
+	if BSYC.options.enableRealmIDTags == nil then BSYC.options.enableRealmIDTags = true end
+	if BSYC.options.enableRealmAstrickName == nil then BSYC.options.enableRealmAstrickName = false end
+	if BSYC.options.enableRealmShortName == nil then BSYC.options.enableRealmShortName = false end
+	if BSYC.options.enableLoginVersionInfo == nil then BSYC.options.enableLoginVersionInfo = true end
+	if BSYC.options.enableFactionIcons == nil then BSYC.options.enableFactionIcons = false end
+	if BSYC.options.enableShowUniqueItemsTotals == nil then BSYC.options.enableShowUniqueItemsTotals = true end
+	if BSYC.options.No_XR_BNET_RealmNames == nil then BSYC.options.No_XR_BNET_RealmNames = true end
 
 	--setup the default colors
-	if BSYC.db.options.colors == nil then BSYC.db.options.colors = {} end
-	if BSYC.db.options.colors.first == nil then BSYC.db.options.colors.first = { r = 128/255, g = 1, b = 0 }  end
-	if BSYC.db.options.colors.second == nil then BSYC.db.options.colors.second = { r = 1, g = 1, b = 1 }  end
-	if BSYC.db.options.colors.total == nil then BSYC.db.options.colors.total = { r = 244/255, g = 164/255, b = 96/255 }  end
-	if BSYC.db.options.colors.guild == nil then BSYC.db.options.colors.guild = { r = 101/255, g = 184/255, b = 192/255 }  end
-	if BSYC.db.options.colors.cross == nil then BSYC.db.options.colors.cross = { r = 1, g = 125/255, b = 10/255 }  end
-	if BSYC.db.options.colors.bnet == nil then BSYC.db.options.colors.bnet = { r = 53/255, g = 136/255, b = 1 }  end
-	if BSYC.db.options.colors.itemid == nil then BSYC.db.options.colors.itemid = { r = 82/255, g = 211/255, b = 134/255 }  end
+	if BSYC.options.colors == nil then BSYC.options.colors = {} end
+	if BSYC.options.colors.first == nil then BSYC.options.colors.first = { r = 128/255, g = 1, b = 0 }  end
+	if BSYC.options.colors.second == nil then BSYC.options.colors.second = { r = 1, g = 1, b = 1 }  end
+	if BSYC.options.colors.total == nil then BSYC.options.colors.total = { r = 244/255, g = 164/255, b = 96/255 }  end
+	if BSYC.options.colors.guild == nil then BSYC.options.colors.guild = { r = 101/255, g = 184/255, b = 192/255 }  end
+	if BSYC.options.colors.cross == nil then BSYC.options.colors.cross = { r = 1, g = 125/255, b = 10/255 }  end
+	if BSYC.options.colors.bnet == nil then BSYC.options.colors.bnet = { r = 53/255, g = 136/255, b = 1 }  end
+	if BSYC.options.colors.itemid == nil then BSYC.options.colors.itemid = { r = 82/255, g = 211/255, b = 134/255 }  end
 
 	--do DB cleanup check by version number
-	if not BSYC.db.options.dbversion or BSYC.db.options.dbversion ~= ver then	
+	if not BSYC.options.dbversion or BSYC.options.dbversion ~= ver then	
 		--self:FixDB()
-		BSYC.db.options.dbversion = ver
+		BSYC.options.dbversion = ver
 	end
 
 	--player info
@@ -94,7 +94,7 @@ function Data:OnEnable()
 	
 	local ver = GetAddOnMetadata("BagSync","Version") or 0
 	
-	if BSYC.db.options.enableLoginVersionInfo then
+	if BSYC.options.enableLoginVersionInfo then
 		BSYC:Print("[v|cFF20ff20"..ver.."|r] /bgs, /bagsync")
 	end
 
@@ -226,7 +226,7 @@ function Data:IterateUnits(dumpAll)
 				k, v = next(argValue, k)
 
 				if k then
-					if v.faction and (v.faction == BSYC.db.player.faction or BSYC.db.options.enableFaction) then
+					if v.faction and (v.faction == BSYC.db.player.faction or BSYC.options.enableFaction) then
 						local isGuild = (k:find('©*') and true) or false
 						local isConnectedRealm = (Unit:isConnectedRealm(argKey) and true) or false
 						
@@ -234,7 +234,7 @@ function Data:IterateUnits(dumpAll)
 						if dumpAll then
 							return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm}
 							
-						elseif (argKey == player.realm) or (isConnectedRealm and BSYC.db.options.enableCrossRealmsItems) or (BSYC.db.options.enableBNetAccountItems) then
+						elseif (argKey == player.realm) or (isConnectedRealm and BSYC.options.enableCrossRealmsItems) or (BSYC.options.enableBNetAccountItems) then
 							
 							local skipChk = false
 							

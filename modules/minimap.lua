@@ -123,9 +123,9 @@ bgMinimapButton:SetScript('OnLeave', function(self)
 end)
 
 function Module:OnEnable()
-	if BSYC.db.options.enableMinimap and not bgMinimapButton:IsVisible() then
+	if BSYC.options.enableMinimap and not bgMinimapButton:IsVisible() then
 		bgMinimapButton:Show()
-	elseif not BSYC.db.options.enableMinimap and bgMinimapButton:IsVisible() then
+	elseif not BSYC.options.enableMinimap and bgMinimapButton:IsVisible() then
 		bgMinimapButton:Hide()
 	end
 end

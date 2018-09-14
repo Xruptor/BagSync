@@ -170,7 +170,7 @@ function Scanner:SaveGuildBank()
 end
 
 function Scanner:SaveMailbox()
-	if not Unit.atMailbox or not BSYC.db.options.enableMailbox then return end
+	if not Unit.atMailbox or not BSYC.options.enableMailbox then return end
 	if not BSYC.db.player.mailbox then BSYC.db.player.mailbox = {} end
 	
 	if self.isCheckingMail then return end --prevent overflow from CheckInbox()
@@ -202,7 +202,7 @@ function Scanner:SaveMailbox()
 end
 
 function Scanner:SaveAuctionHouse()
-	if not Unit.atAuction or not BSYC.db.options.enableAuction then return end
+	if not Unit.atAuction or not BSYC.options.enableAuction then return end
 	if not BSYC.db.player.auction then BSYC.db.player.auction = {} end
 
 	local slotItems = {}

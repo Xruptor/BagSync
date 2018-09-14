@@ -25,12 +25,12 @@ local function get(info)
 	local p, c = string.split(".", info.arg)
 	
 	if p == "color" then
-		return BSYC.db.options.colors[c].r, BSYC.db.options.colors[c].g, BSYC.db.options.colors[c].b
+		return BSYC.options.colors[c].r, BSYC.options.colors[c].g, BSYC.options.colors[c].b
 	elseif p == "keybind" then
 		return GetBindingKey(c)
 	else
-		if BSYC.db.options[c] then --if this is nil then it will default to false
-			return BSYC.db.options[c]
+		if BSYC.options[c] then --if this is nil then it will default to false
+			return BSYC.options[c]
 		else
 			return false
 		end
@@ -43,9 +43,9 @@ local function set(info, arg1, arg2, arg3, arg4)
 	local p, c = string.split(".", info.arg)
 	
 	if p == "color" then
-		BSYC.db.options.colors[c].r = arg1
-		BSYC.db.options.colors[c].g = arg2
-		BSYC.db.options.colors[c].b = arg3
+		BSYC.options.colors[c].r = arg1
+		BSYC.options.colors[c].g = arg2
+		BSYC.options.colors[c].b = arg3
 	elseif p == "keybind" then
 	   local b1, b2 = GetBindingKey(c)
 	   if b1 then SetBinding(b1) end
@@ -53,7 +53,7 @@ local function set(info, arg1, arg2, arg3, arg4)
 	   SetBinding(arg1, c)
 	   SaveBindings(GetCurrentBindingSet())
 	else
-		BSYC.db.options[c] = arg1
+		BSYC.options[c] = arg1
 		if p == "minimap" then
 			if arg1 then BagSync_MinimapButton:Show() else BagSync_MinimapButton:Hide() end
 		else
