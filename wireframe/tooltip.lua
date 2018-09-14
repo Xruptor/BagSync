@@ -70,20 +70,24 @@ function Tooltip:ColorizeUnit(unitObj)
 	--add crossrealm and bnet tags
 	local realm = unitObj.realm
 	local realmTag = ""
+	local delimiter = " "
 	
-	if BSYC.db.options.enableRealmAstrickName then
+	if BSYC.db.options.No_XR_BNET_RealmNames then
+		realm = ""
+		delimiter = ""
+	elseif BSYC.db.options.enableRealmAstrickName then
 		realm = "*"
 	elseif BSYC.db.options.enableRealmShortName then
 		realm = string.sub(realm, 1, 5)
 	end
 	
 	if BSYC.db.options.enableBNetAccountItems and not unitObj.isConnectedRealm then
-		realmTag = BSYC.db.options.enableRealmIDTags and L.TooltipBattleNetTag.." "
+		realmTag = BSYC.db.options.enableRealmIDTags and L.TooltipBattleNetTag..delimiter or ""
 		tmpTag = self:HexColor(BSYC.db.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
 	end
 	
 	if BSYC.db.options.enableCrossRealmsItems and unitObj.isConnectedRealm and unitObj.realm ~= player.realm then
-		realmTag = BSYC.db.options.enableRealmIDTags and L.TooltipCrossRealmTag.." "
+		realmTag = BSYC.db.options.enableRealmIDTags and L.TooltipCrossRealmTag..delimiter or ""
 		tmpTag = self:HexColor(BSYC.db.options.colors.cross, "["..realmTag..realm.."]").." "..tmpTag
 	end
 	
@@ -194,7 +198,7 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList)
 	end
 	
 	tallyString = strsub(tallyString, string.len(L.TooltipDelimiter) + 1) --remove first delimiter
-	if total < 1 or string.len(tallyString) < 1 then return unitList end
+	if total < 1 or string.len(tallyString) < 1 then return end
 	
 	--if it's groupped up and has more then one item then use a different color and show total
 	if grouped > 1 then
@@ -203,12 +207,11 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList)
 	
 	--add to list
 	table.insert(unitList, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), tallyString=tallyString, sortIndex=self:GetSortIndex(unitObj) } )
-	
-	return unitList
+
 end
 
 function Tooltip:ItemCount(data, itemID, allowList, source, total)
-	if table.getn(data) < 1 then return allowList, total end
+	if table.getn(data) < 1 then return total end
 	
 	for i=1, table.getn(data) do
 		local link, count = strsplit(";", data[i])
@@ -220,7 +223,7 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total)
 			end
 		end
 	end
-	return allowList, total
+	return total
 end
 
 function Tooltip:TallyUnits(objTooltip, link, source)
@@ -248,9 +251,6 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 	--if we already did the item, then display the previous information
 	if self.__lastLink and self.__lastLink == link then
 		if self.__lastTally and table.getn(self.__lastTally) > 0 then
-			if BSYC.db.options.enableTooltipSeperator then
-				objTooltip:AddLine(" ")
-			end
 			for i=1, table.getn(self.__lastTally) do
 				local color = BSYC.db.options.colors.total --this is a cover all color we are going to use
 				objTooltip:AddDoubleLine(self.__lastTally[i].colorized, self.__lastTally[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
@@ -288,26 +288,29 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 					--bags, bank, reagents are stored in individual bags
 					if k == "bag" or k == "bank" or k == "reagents" then
 						for bagID, bagData in pairs(v) do
-							allowList, grandTotal = self:ItemCount(bagData, link, allowList, k, grandTotal)
+							grandTotal = self:ItemCount(bagData, link, allowList, k, grandTotal)
 						end
 					else
 						--with the exception of auction, everything else is stored in a numeric list
 						--auction is stored in a numeric list but within an individual bag
 						--auction, equip, void, mailbox
-						allowList, grandTotal = self:ItemCount(k == "auction" and v.bag or v, link, allowList, k, grandTotal)
+						if (k ~= "auction" or k ~= "mailbox") or (k == "auction" and BSYC.db.options.enableAuction) or (k == "mailbox" and BSYC.db.options.enableMailbox) then
+							grandTotal = self:ItemCount(k == "auction" and v.bag or v, link, allowList, k, grandTotal)
+						end
 					end
 				end
 			end
 		else
 			--it's a guild, use the guild bag, we don't have to worry about repeats.  IterateUnits takes care of this
 			if unitObj.data.bag then
-				allowList, grandTotal = self:ItemCount(unitObj.data.bag, link, allowList, "guild", grandTotal)
+				grandTotal = self:ItemCount(unitObj.data.bag, link, allowList, "guild", grandTotal)
 			end
 		end
 		
 		--only process the totals if we have something to work with
 		if grandTotal > 0 then
-			unitList = self:UnitTotals(unitObj, allowList, unitList)
+			--table variables gets passed as byRef
+			self:UnitTotals(unitObj, allowList, unitList)
 		end
 		
 	end
@@ -329,23 +332,25 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 		
 	end
 	
+	local desc, value = '', ''
+	
 	--add [Total] if we have more than one unit to work with
 	if BSYC.db.options.showTotal and grandTotal > 0 and table.getn(unitList) > 1 then
-		local desc = self:HexColor(BSYC.db.options.colors.total, L.TooltipTotal)
-		local count = self:HexColor(BSYC.db.options.colors.second, grandTotal)
-		table.insert(unitList, { colorized=desc, tallyString=count} )
+		desc = self:HexColor(BSYC.db.options.colors.total, L.TooltipTotal)
+		value = self:HexColor(BSYC.db.options.colors.second, grandTotal)
+		table.insert(unitList, { colorized=desc, tallyString=value} )
 	end
 		
 	--add ItemID
 	if BSYC.db.options.enableTooltipItemID and shortID then
-		local desc = self:HexColor(BSYC.db.options.colors.itemid, L.TooltipItemID)
-		local itemid = self:HexColor(BSYC.db.options.colors.second, shortID)
-		table.insert(unitList, { colorized=desc, tallyString=itemid} )
+		desc = self:HexColor(BSYC.db.options.colors.itemid, L.TooltipItemID)
+		value = self:HexColor(BSYC.db.options.colors.second, shortID)
+		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
 	end
 	
 	--add seperator if enabled and only if we have something to work with
 	if BSYC.db.options.enableTooltipSeperator and table.getn(unitList) > 0 then
-		objTooltip:AddLine(" ")
+		table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
 	end
 	
 	--finally display it

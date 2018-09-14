@@ -45,7 +45,7 @@ function Data:OnEnable()
 	if BSYC.db.options.showGuildNames == nil then BSYC.db.options.showGuildNames = false end
 	if BSYC.db.options.enableGuild == nil then BSYC.db.options.enableGuild = true end
 	if BSYC.db.options.enableMailbox == nil then BSYC.db.options.enableMailbox = true end
-	if BSYC.db.options.enableUnitClass == nil then BSYC.db.options.enableUnitClass = false end
+	if BSYC.db.options.enableUnitClass == nil then BSYC.db.options.enableUnitClass = true end
 	if BSYC.db.options.enableMinimap == nil then BSYC.db.options.enableMinimap = true end
 	if BSYC.db.options.enableFaction == nil then BSYC.db.options.enableFaction = true end
 	if BSYC.db.options.enableAuction == nil then BSYC.db.options.enableAuction = true end
@@ -60,9 +60,9 @@ function Data:OnEnable()
 	if BSYC.db.options.enableRealmAstrickName == nil then BSYC.db.options.enableRealmAstrickName = false end
 	if BSYC.db.options.enableRealmShortName == nil then BSYC.db.options.enableRealmShortName = false end
 	if BSYC.db.options.enableLoginVersionInfo == nil then BSYC.db.options.enableLoginVersionInfo = true end
-	if BSYC.db.options.enableFactionIcons == nil then BSYC.db.options.enableFactionIcons = true end
+	if BSYC.db.options.enableFactionIcons == nil then BSYC.db.options.enableFactionIcons = false end
 	if BSYC.db.options.enableShowUniqueItemsTotals == nil then BSYC.db.options.enableShowUniqueItemsTotals = true end
-	if BSYC.db.options.No_XR_BNET_RealmNames == nil then BSYC.db.options.No_XR_BNET_RealmNames = false end
+	if BSYC.db.options.No_XR_BNET_RealmNames == nil then BSYC.db.options.No_XR_BNET_RealmNames = true end
 
 	--setup the default colors
 	if BSYC.db.options.colors == nil then BSYC.db.options.colors = {} end
