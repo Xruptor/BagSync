@@ -270,19 +270,6 @@ function Scanner:SaveProfessions()
 	local orderIndex = 0
 	local recipeIDs = C_TradeSkillUI.GetAllRecipeIDs()
 	
-	-- local categories = { C_TradeSkillUI.GetCategories() };
-
-	-- for i, categoryID in ipairs(categories) do
-		-- local categoryData = C_TradeSkillUI.GetCategoryInfo(categoryID);
-		-- info.text = categoryData.name;
-		-- info.func = function() self:SetSlotFilter(nil, categoryID, nil); end
-		-- info.notCheckable = true;
-		-- info.hasArrow = select("#", C_TradeSkillUI.GetSubCategories(categoryID)) > 0;
-		-- info.keepShownOnClick = true;
-		-- info.value = categoryID;
-		-- UIDropDownMenu_AddButton(info, level);
-	-- end
-
 	local tradeSkillID, skillLineName, skillLineRank, skillLineMaxRank, skillLineModifier, parentSkillLineID, parentSkillLineName =  C_TradeSkillUI.GetTradeSkillLine()
 	
 	if parentSkillLineID and parentSkillLineName then
@@ -301,8 +288,8 @@ function Scanner:SaveProfessions()
 					local subCatData = C_TradeSkillUI.GetCategoryInfo(categoryData.parentCategoryID)
 					
 					--make sure we have something to work with, we don't want to store stuff that doesn't have levels
-					if subCatData then
-						BSYC:Debug(subCatData.name, subCatData.categoryID, catID, subCatData.parentCategoryID, categoryData.parentCategoryID, parentSkillLineID)
+					if subCatData and subCatData.categoryID == categoryData.parentCategoryID then
+
 						--check if we have the root profession already stored or not, Mining, Engineering, Herbalism, etc...
 						if not BSYC.db.player.professions[parentSkillLineID] then
 							BSYC.db.player.professions[parentSkillLineID] = BSYC.db.player.professions[parentSkillLineID] or {}
@@ -313,8 +300,8 @@ function Scanner:SaveProfessions()
 						parentIDSlot.categories = parentIDSlot.categories or {}
 						
 						--store the sub category information, Legion Engineering, Cateclysm Engineering, etc...
-						parentIDSlot.categories[categoryData.parentCategoryID] = parentIDSlot.categories[categoryData.parentCategoryID] or {}
-						local subCatSlot = parentIDSlot.categories[categoryData.parentCategoryID]
+						parentIDSlot.categories[subCatData.categoryID] = parentIDSlot.categories[subCatData.categoryID] or {}
+						local subCatSlot = parentIDSlot.categories[subCatData.categoryID]
 
 						--always overwrite because we can have a different level or name then last time
 						subCatSlot.name = subCatData.name
@@ -322,8 +309,8 @@ function Scanner:SaveProfessions()
 						subCatSlot.skillLineMaxLevel = subCatData.skillLineMaxLevel
 						
 						--cleanout the recipe list first time entering the category, otherwise it will constantly have repeats
-						if not catCheck[categoryData.parentCategoryID] then
-							catCheck[categoryData.parentCategoryID] = true
+						if not catCheck[subCatData.categoryID] then
+							catCheck[subCatData.categoryID] = true
 							subCatSlot.recipes = nil
 							--store the order in which the categories appear in the tradeskill window
 							orderIndex = orderIndex + 1
@@ -367,15 +354,6 @@ function Scanner:SaveProfessions()
 		BSYC.db.player.professions[skillLine].secondary = true --mark is as a secondary profession
 	end
 	
-	if prof1 then
-		local name, texture, rank, maxRank, numSpells, spelloffset, skillLine, rankModifier, specializationIndex, specializationOffset, skillLineName = GetProfessionInfo(prof1)
-	
-		--BSYC:Debug("prof1", name, texture, rank, maxRank, numSpells, spelloffset, skillLine, rankModifier, specializationIndex, specializationOffset, skillLineName)
-		
-	end
-	
-	
-
 	--as a precaution lets do a tradeskill cleanup just in case
 	self:CleanupProfessions()
 end
