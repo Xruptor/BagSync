@@ -120,8 +120,6 @@ function Tooltip:MoneyTooltip()
 			end)
 	end
 
-	local usrData = {}
-	
 	tooltip:ClearLines()
 	tooltip:ClearAllPoints()
 	tooltip:SetOwner(UIParent, "ANCHOR_NONE")
@@ -365,6 +363,39 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 	objTooltip:Show()
 end
 
+function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon)
+
+	--loop through our characters
+	local usrData = {}
+	local player = Unit:GetUnitInfo()
+	
+	for unitObj in Data:IterateUnits() do
+		if unitObj.data.currency and unitObj.data.currency[currencyIcon] then
+			table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj), count=unitObj.data.currency[currencyIcon].count} )
+		end
+	end
+	
+	--sort the list by our sortIndex then by realm and finally by name
+	table.sort(usrData, function(a, b)
+		if a.sortIndex  == b.sortIndex then
+			if a.unitObj.realm == b.unitObj.realm then
+				return a.unitObj.name < b.unitObj.name;
+			end
+			return a.unitObj.realm < b.unitObj.realm;
+		else
+			return a.sortIndex < b.sortIndex;
+		end
+	  
+	end)
+
+	for i=1, table.getn(usrData) do
+		objTooltip:AddDoubleLine(usrData[i].colorized, usrData[i].count, 1, 1, 1, 1, 1, 1)
+	end
+
+	objTooltip.__tooltipUpdated = true
+	objTooltip:Show()
+end
+
 function Tooltip:HookTooltip(objTooltip)
 	
 	objTooltip:HookScript("OnHide", function(self)
@@ -412,6 +443,36 @@ function Tooltip:HookTooltip(objTooltip)
 		end
 	end)
 	
+	--------------------------------------------------
+	hooksecurefunc(objTooltip, "SetCurrencyToken", function(self, index)
+		if self.__tooltipUpdated then return end
+		local name, isHeader, isExpanded, isUnused, isWatched, count, icon = GetCurrencyListInfo(index)
+		if name and icon then
+			Tooltip:CurrencyTooltip(self, name, icon)
+		end
+	end)
+	hooksecurefunc(objTooltip, "SetCurrencyTokenByID", function(self, index)
+		if self.__tooltipUpdated then return end
+		local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(index)
+		if name and icon then
+			Tooltip:CurrencyTooltip(self, name, icon)
+		end
+	end)
+	hooksecurefunc(objTooltip, "SetCurrencyByID", function(self, index)
+		if self.__tooltipUpdated then return end
+		local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(index)
+		if name and icon then
+			Tooltip:CurrencyTooltip(self, name, icon)
+		end
+	end)
+	hooksecurefunc(objTooltip, "SetBackpackToken", function(self, index)
+		if self.__tooltipUpdated then return end
+		local name, count, icon, currencyID = GetBackpackCurrencyInfo(index)
+		if name and icon then
+			Tooltip:CurrencyTooltip(self, name, icon)
+		end
+	end)
+
 end
 
 function Tooltip:OnEnable()
