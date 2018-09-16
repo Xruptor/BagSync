@@ -57,6 +57,7 @@ function Currency:AddEntry(entry, isHeader)
 		label:ApplyJustifyH("CENTER")
 		label.userdata.isHeader = true
 		label.userdata.text = entry.header
+		label.userdata.icon = entry.icon
 		label:ToggleHeaderHighlight(true)
 	else
 		label:SetText(entry.name)
@@ -67,15 +68,16 @@ function Currency:AddEntry(entry, isHeader)
 		label:ApplyJustifyH("LEFT")
 		label.userdata.isHeader = false
 		label.userdata.text = entry.name
+		label.userdata.icon = entry.icon
 	end
 
 	label:SetCallback(
 		"OnEnter",
 		function (widget, sometable)
 			label:SetColor(unpack(highlightColor))
-			GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
+			GameTooltip:SetOwner(label.frame, "ANCHOR_RIGHT")
 			if not label.userdata.isHeader then
-				BSYC:AddCurrencyTooltip(GameTooltip, label.userdata.text, true)
+				Tooltip:CurrencyTooltip(GameTooltip, label.userdata.text, label.userdata.icon)
 			end
 		end)
 	label:SetCallback(
@@ -90,66 +92,46 @@ end
 
 function Currency:DisplayList()
 
-	local tmp = {}
-	local tempList = {}
-	local count = 0
-
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
 	
-	
 	local usrData = {}
-	local total = 0
+	local tempList = {}
 	local player = Unit:GetUnitInfo()
 
 	for unitObj in Data:IterateUnits() do
 		if not unitObj.isGuild and unitObj.data.currency then
-			for k, v in pairs(unitObj.unitObj.data.currency) do
-
-				table.insert(usrData, { header=v.header, name=v.name, count=v.count, colorized=Tooltip:ColorizeUnit(unitObj), sortIndex=Tooltip:GetSortIndex(unitObj) } )
+			for k, v in pairs(unitObj.data.currency) do
+				--only do the entry once per heading and name
+				if not tempList[v.header..v.name] then
+					table.insert(usrData, { header=v.header, name=v.name, icon=k} )
+					tempList[v.header..v.name] = true
+				end
 			end
 		end
 	end
 	
-	--sort the list by our sortIndex then by realm and finally by name
+	--sort the list by header, name, sortindex, realm and unit
 	table.sort(usrData, function(a, b)
 		if a.header  == b.header then
-			if a.name == b.name then
-				if a.sortIndex  == b.sortIndex then
-					if a.unitObj.realm == b.unitObj.realm then
-						return a.unitObj.name < b.unitObj.name;
-					end
-					return a.unitObj.realm < b.unitObj.realm;
-				end
-				return a.sortIndex < b.sortIndex;
-			end
 			return a.name < b.name;
 		end
 		return a.header < b.header;
 	end)
 	
-	--show or hide the scrolling frame depending on count
-	-- if count > 0 then
-		-- table.sort(tmp, function(a,b)
-			-- if a.header < b.header then
-				-- return true;
-			-- elseif a.header == b.header then
-				-- return (a.name < b.name);
-			-- end
-		-- end)
-		
-		-- local lastHeader = ""
-		-- for i=1, #tmp do
-			-- if lastHeader ~= tmp[i].header then
-				-- self:AddEntry(tmp[i], true) --add header
-				-- self:AddEntry(tmp[i], false) --add entry
-				-- lastHeader = tmp[i].header
-			-- else
-				-- self:AddEntry(tmp[i], false) --add entry
-			-- end
-		-- end
-		-- self.scrollframe.frame:Show()
-	-- else
-		-- self.scrollframe.frame:Hide()
-	-- end
+	if table.getn(usrData) > 0 then
+		local lastHeader = ""
+		for i=1, #usrData do
+			if lastHeader ~= usrData[i].header then
+				self:AddEntry(usrData[i], true) --add header
+				self:AddEntry(usrData[i], false) --add entry
+				lastHeader = usrData[i].header
+			else
+				self:AddEntry(usrData[i], false) --add entry
+			end
+		end
+		self.scrollframe.frame:Show()
+	else
+		self.scrollframe.frame:Hide()
+	end
 	
 end

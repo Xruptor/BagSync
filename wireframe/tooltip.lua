@@ -383,6 +383,11 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon)
 		end
 		return a.sortIndex < b.sortIndex;
 	end)
+	
+	if currencyName then
+		objTooltip:AddLine(currencyName, 64/255, 224/255, 208/255)
+		objTooltip:AddLine(" ")
+	end
 
 	for i=1, table.getn(usrData) do
 		objTooltip:AddDoubleLine(usrData[i].colorized, usrData[i].count, 1, 1, 1, 1, 1, 1)
