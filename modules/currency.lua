@@ -5,6 +5,9 @@
 
 local BSYC = select(2, ...) --grab the addon namespace
 local Currency = BSYC:NewModule("Currency")
+local Unit = BSYC:GetModule("Unit")
+local Data = BSYC:GetModule("Data")
+local Tooltip = BSYC:GetModule("Tooltip")
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
 local AceGUI = LibStub("AceGUI-3.0")
@@ -93,45 +96,60 @@ function Currency:DisplayList()
 
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
 	
-	local xDB = BSYC:FilterDB(2) --dbSelect 2
 	
-	--loop through our database and collect the currenry headers
-	for k, v in pairs(xDB) do
-		--no need to split to get playername and realm as it's not important, we let AddCurrencyTooltip() handle that
-		--loop through each player table and grab only the headers and insert it into a temp table if it doesn't already exist
-		for q, r in pairs(v) do
-			if not tempList[q] then
-				--we only really want to list the currency once for display
-				table.insert(tmp, { header=r.header, icon=r.icon, name=q} )
-				tempList[q] = true
-				count = count + 1
+	local usrData = {}
+	local total = 0
+	local player = Unit:GetUnitInfo()
+
+	for unitObj in Data:IterateUnits() do
+		if not unitObj.isGuild and unitObj.data.currency then
+			for k, v in pairs(unitObj.unitObj.data.currency) do
+
+				table.insert(usrData, { header=v.header, name=v.name, count=v.count, colorized=Tooltip:ColorizeUnit(unitObj), sortIndex=Tooltip:GetSortIndex(unitObj) } )
 			end
 		end
 	end
-		
+	
+	--sort the list by our sortIndex then by realm and finally by name
+	table.sort(usrData, function(a, b)
+		if a.header  == b.header then
+			if a.name == b.name then
+				if a.sortIndex  == b.sortIndex then
+					if a.unitObj.realm == b.unitObj.realm then
+						return a.unitObj.name < b.unitObj.name;
+					end
+					return a.unitObj.realm < b.unitObj.realm;
+				end
+				return a.sortIndex < b.sortIndex;
+			end
+			return a.name < b.name;
+		end
+		return a.header < b.header;
+	end)
+	
 	--show or hide the scrolling frame depending on count
-	if count > 0 then
-		table.sort(tmp, function(a,b)
-			if a.header < b.header then
-				return true;
-			elseif a.header == b.header then
-				return (a.name < b.name);
-			end
-		end)
+	-- if count > 0 then
+		-- table.sort(tmp, function(a,b)
+			-- if a.header < b.header then
+				-- return true;
+			-- elseif a.header == b.header then
+				-- return (a.name < b.name);
+			-- end
+		-- end)
 		
-		local lastHeader = ""
-		for i=1, #tmp do
-			if lastHeader ~= tmp[i].header then
-				self:AddEntry(tmp[i], true) --add header
-				self:AddEntry(tmp[i], false) --add entry
-				lastHeader = tmp[i].header
-			else
-				self:AddEntry(tmp[i], false) --add entry
-			end
-		end
-		self.scrollframe.frame:Show()
-	else
-		self.scrollframe.frame:Hide()
-	end
+		-- local lastHeader = ""
+		-- for i=1, #tmp do
+			-- if lastHeader ~= tmp[i].header then
+				-- self:AddEntry(tmp[i], true) --add header
+				-- self:AddEntry(tmp[i], false) --add entry
+				-- lastHeader = tmp[i].header
+			-- else
+				-- self:AddEntry(tmp[i], false) --add entry
+			-- end
+		-- end
+		-- self.scrollframe.frame:Show()
+	-- else
+		-- self.scrollframe.frame:Hide()
+	-- end
 	
 end

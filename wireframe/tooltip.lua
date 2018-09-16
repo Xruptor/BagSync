@@ -134,7 +134,9 @@ function Tooltip:MoneyTooltip()
 	
 	for unitObj in Data:IterateUnits() do
 		if unitObj.data.money and unitObj.data.money > 0 then
-			table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj) } )
+			if not unitObj.isGuild or unitObj.isGuild and BSYC.options.enableGuild then
+				table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj) } )
+			end
 		end
 	end
 	
@@ -145,10 +147,8 @@ function Tooltip:MoneyTooltip()
 				return a.unitObj.name < b.unitObj.name;
 			end
 			return a.unitObj.realm < b.unitObj.realm;
-		else
-			return a.sortIndex < b.sortIndex;
 		end
-	  
+		return a.sortIndex < b.sortIndex;
 	end)
 
 	for i=1, table.getn(usrData) do
@@ -322,10 +322,8 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 					return a.unitObj.name < b.unitObj.name;
 				end
 				return a.unitObj.realm < b.unitObj.realm;
-			else
-				return a.sortIndex < b.sortIndex;
 			end
-		  
+			return a.sortIndex < b.sortIndex;
 		end)
 		
 	end
@@ -370,7 +368,7 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon)
 	local player = Unit:GetUnitInfo()
 	
 	for unitObj in Data:IterateUnits() do
-		if unitObj.data.currency and unitObj.data.currency[currencyIcon] then
+		if not unitObj.isGuild and unitObj.data.currency and unitObj.data.currency[currencyIcon] then
 			table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj), count=unitObj.data.currency[currencyIcon].count} )
 		end
 	end
@@ -382,10 +380,8 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon)
 				return a.unitObj.name < b.unitObj.name;
 			end
 			return a.unitObj.realm < b.unitObj.realm;
-		else
-			return a.sortIndex < b.sortIndex;
 		end
-	  
+		return a.sortIndex < b.sortIndex;
 	end)
 
 	for i=1, table.getn(usrData) do
