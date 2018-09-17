@@ -267,13 +267,15 @@ function Data:IterateUnits(dumpAll)
 							local skipChk = false
 							
 							--check for previous listed guilds just in case, because of connected realms (can have same guild on multiple connected realms)
-							if isGuild and v.realmKey then
+							if BSYC.options.enableGuild and isGuild and v.realmKey then
 								local XRName = k .. v.realmKey
 								if not previousGuilds[XRName] then
 									previousGuilds[XRName] = true
 								else
 									skipChk = true
 								end
+								--check for the guild blacklist
+								if BSYC.db.blacklist[XRName] then skipChk = true end
 							end
 							
 							if not skipChk then

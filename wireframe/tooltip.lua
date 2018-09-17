@@ -134,9 +134,7 @@ function Tooltip:MoneyTooltip()
 	
 	for unitObj in Data:IterateUnits() do
 		if unitObj.data.money and unitObj.data.money > 0 then
-			if not unitObj.isGuild or unitObj.isGuild and BSYC.options.enableGuild then
-				table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj) } )
-			end
+			table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj) } )
 		end
 	end
 	
@@ -243,6 +241,17 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 	local player = Unit:GetUnitInfo()
 	local shortID = BSYC:GetShortItemID(link)
 	
+	local permIgnore ={
+		[6948] = "Hearthstone",
+		[110560] = "Garrison Hearthstone",
+		[140192] = "Dalaran Hearthstone",
+		[128353] = "Admiral's Compass",
+	}
+	if permIgnore[tonumber(shortID)] or BSYC.db.blacklist[tonumber(shortID)] then
+		objTooltip:Show()
+		return
+	end
+	
 	--short the shortID and ignore all BonusID's and stats
 	if BSYC.options.enableShowUniqueItemsTotals then link = shortID end
 	
@@ -299,10 +308,7 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 				end
 			end
 		else
-			--it's a guild, use the guild bag, we don't have to worry about repeats.  IterateUnits takes care of this
-			if unitObj.data.bag then
-				grandTotal = self:ItemCount(unitObj.data.bag, link, allowList, "guild", grandTotal)
-			end
+			grandTotal = self:ItemCount(unitObj.data.bag, link, allowList, "guild", grandTotal)
 		end
 		
 		--only process the totals if we have something to work with

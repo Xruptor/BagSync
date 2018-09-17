@@ -139,6 +139,33 @@ function Blacklist:OnEnable()
 		guildFrame:Hide()
 	end)
 
+	StaticPopupDialogs["BAGSYNC_BLACKLIST_REMOVE"] = {
+		text = L.BlackListRemove,
+		button1 = "Yes",
+		button2 = "No",
+		hasEditBox = false,
+		timeout = 0,
+		exclusive = 1,
+		hideOnEscape = 1,
+		OnShow = function (self)
+			self.text:SetText(L.BlackListRemove:format(self.data.value));
+		end,
+		OnAccept = function (self)
+			if BSYC.db.blacklist[self.data.key] then
+				if type(self.data.key) == "number" then
+					BSYC:Print(L.ItemIDRemoved:format(self.data.value))
+				else
+					BSYC:Print(L.GuildRemoved:format(self.data.value))
+				end
+				BSYC.db.blacklist[self.data.key] = nil
+				Blacklist:DisplayList()
+			else
+				BSYC:Print(L.BlackErrorRemove)
+			end
+		end,
+		whileDead = 1,
+	}
+
 	BlacklistFrame:Hide()
 end
 
@@ -175,27 +202,6 @@ function Blacklist:AddItemID()
 	self:DisplayList()
 end
 
-function Blacklist:RemoveItemID()
-	local itemid = self.editbox:GetText()
-	
-	-- if string.len(self.editbox:GetText()) < 1 or not tonumber(itemid) then
-		-- BSYC:Print(L.EnterItemID)
-		-- return
-	-- end
-
-	-- if not BSYC.db.blacklist[BSYC.currentRealm][tonumber(itemid)] then
-		-- BSYC:Print(L.ItemIDNotFound:format(tonumber(itemid)))
-		-- return
-	-- end
-	
-	-- BSYC.db.blacklist[BSYC.currentRealm][tonumber(itemid)] = nil
-	-- BSYC:Print(L.ItemIDRemoved:format(tonumber(itemid)))
-	
-	-- self.editbox:SetText()
-	
-	self:DisplayList()
-end
-
 function Blacklist:AddEntry(entry)
 
 	local highlightColor = {1, 0, 0}
@@ -208,14 +214,12 @@ function Blacklist:AddEntry(entry)
 	label:SetCallback(
 		"OnClick", 
 		function (widget, sometable, button)
-			self.editbox:SetText(entry.value)
-			self.editbox.dbValue = entry
+			StaticPopup_Show("BAGSYNC_BLACKLIST_REMOVE", '', '', entry) --cannot pass nil as it's expected for SetFormattedText (Interface/FrameXML/StaticPopup.lua)
 		end)
 	label:SetCallback(
 		"OnEnter",
 		function (widget, sometable)
 			label:SetColor(unpack(highlightColor))
-			self.editbox.dbValue = entry
 			GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
 			if type(entry.key) == "number" then
 				GameTooltip:SetHyperlink("item:"..entry.key)
