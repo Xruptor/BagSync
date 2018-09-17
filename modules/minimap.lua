@@ -69,7 +69,7 @@ bgsMinimapDD.initialize = function(self, level)
 			BSYC:GetModule("Tooltip"):MoneyTooltip()
 		end)
 		addButton(level, L.FixDB, nil, 1, nil, 'fixdb', function(frame, ...)
-			BSYC:FixDB()
+			BSYC:GetModule("Data"):CleanDB()
 		end)
 		addButton(level, L.Config, nil, 1, nil, 'config', function(frame, ...)
 			InterfaceOptionsFrame:Show() --has to be here to load the about frame onLoad

@@ -24,7 +24,6 @@ function Events:OnEnable()
 	self:RegisterEvent("TRADE_SKILL_SHOW")
 	self:RegisterEvent("TRADE_SKILL_LIST_UPDATE")
 	self:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
-	self:RegisterEvent("SKILL_LINES_CHANGED", function() Scanner:CleanupProfessions() end)
 
 	self:RegisterEvent("VOID_STORAGE_OPEN", function() Scanner:SaveVoidBank() end)
 	self:RegisterEvent("VOID_STORAGE_UPDATE", function() Scanner:SaveVoidBank() end)

@@ -17,6 +17,9 @@ function Data:OnEnable()
 	--get player information from Unit
 	local player = Unit:GetUnitInfo()
 
+	--before we do ANYTHING with the databse, lets do a cleanup or upgrade if necessary
+	self:CleanDB()
+	
 	--initiate global db variable
 	BagSyncDB = BagSyncDB or {}
 	BagSyncDB["options§"] = BagSyncDB["options§"] or {}
@@ -100,8 +103,33 @@ function Data:OnEnable()
 
 end
 
-function Data:FixDB(onlyChkGuild)
-	BSYC:Print("|cFFFF9900"..L.FixDBComplete.."|r")
+function Data:CleanDB()
+
+	--BagSyncDB = BagSyncDB or {}
+	--BagSyncDB["options§"] = BagSyncDB["options§"] or {}
+	--BagSyncDB["blacklist§"] = BagSyncDB["blacklist§"] or 
+	
+	--delete old DB variables
+	if BagSyncOpt then
+		BagSyncOpt = nil
+	end
+	if BagSyncGUILD_DB then
+		BagSyncGUILD_DB = nil
+	end
+	if BagSyncCURRENCY_DB then
+		BagSyncCURRENCY_DB = nil
+	end
+	if BagSyncPROFESSION_DB then
+		BagSyncPROFESSION_DB = nil
+	end
+	if BagSyncBLACKLIST_DB then
+		BagSyncBLACKLIST_DB = nil
+	end
+	if BagSync_REALMKEY then
+		BagSync_REALMKEY = nil
+	end
+
+	--BSYC:Print("|cFFFF9900"..L.FixDBComplete.."|r")
 end
 
 function Data:LoadSlashCommand()
