@@ -21,7 +21,7 @@ function Blacklist:OnEnable()
 	BlacklistFrame:SetHeight(500)
 	BlacklistFrame:SetWidth(380)
 	BlacklistFrame:EnableResize(false)
-	
+
 	local editbox = AceGUI:Create("EditBox")
 	editbox:SetText()
 	editbox:SetWidth(357)
@@ -34,7 +34,7 @@ function Blacklist:OnEnable()
 	BlacklistFrame:AddChild(editbox)
 	
 	local w = AceGUI:Create("SimpleGroup")
-	w:SetLayout("Flow")
+	w:SetLayout("List")
 	w:SetFullWidth(true)
 	BlacklistFrame:AddChild(w)
 	
@@ -48,12 +48,27 @@ function Blacklist:OnEnable()
 	end)
 	w:AddChild(addbutton)
 	
+	local spacer = AceGUI:Create("Label")
+    spacer:SetFullWidth(true)
+	spacer:SetText(" ")
+	BlacklistFrame:AddChild(spacer)
+	
+	------------------------------------------
+	--Scrollframe has to be in its own group with Fill set
+	--otherwise it will always be a fixed height based on how many child elements
+	local q = AceGUI:Create("SimpleGroup")
+	q:SetLayout("Fill")
+	q:SetFullWidth(true)
+	q:SetHeight(390)
+	BlacklistFrame:AddChild(q)
+	
 	local scrollframe = AceGUI:Create("ScrollFrame");
 	scrollframe:SetFullWidth(true)
 	scrollframe:SetLayout("Flow")
 
 	Blacklist.scrollframe = scrollframe
-	BlacklistFrame:AddChild(scrollframe)
+	q:AddChild(scrollframe)
+	------------------------------------------
 
 	--do the guild dropdown box on right
 	-----------------------------------------------------
@@ -85,6 +100,23 @@ function Blacklist:OnEnable()
 	guildDDlist:SetWidth(300)
 	guildAddButton:SetWidth(100)
 	guildAddButton:SetText(L.AddGuild)
+	
+	guildAddButton:SetCallback("OnClick", function()
+		if not guildDDlist:GetValue() then return end
+		
+		if BSYC.db.blacklist[guildDDlist:GetValue()] then
+			BSYC:Print(L.GuildExist:format(guildDDlist.text:GetText()))
+			guildDDlist:SetValue(nil) --reset
+			return
+		end
+		
+		BSYC.db.blacklist[guildDDlist:GetValue()] = guildDDlist.text:GetText()
+		BSYC:Print(L.GuildAdded:format(guildDDlist.text:GetText()))
+		guildDDlist:SetValue(nil) --reset
+		
+		self:DisplayList()
+	end)
+	
 	-----------------------------------------------------
 	
 	hooksecurefunc(BlacklistFrame, "Show" ,function()
@@ -115,25 +147,30 @@ function Blacklist:AddItemID()
 	
 	if string.len(self.editbox:GetText()) < 1 or not tonumber(itemid) then
 		BSYC:Print(L.EnterItemID)
+		self.editbox:SetText()
 		return
 	end
 	
-	--if BSYC.db.blacklist[BSYC.currentRealm][tonumber(itemid)] then
-	--	BSYC:Print(L.ItemIDExist:format(tonumber(itemid)))
-	--	return
-	--end
+	itemid = tonumber(itemid)
 	
-	--if not GetItemInfo(tonumber(self.editbox:GetText())) then
-	--	BSYC:Print(L.ItemIDNotValid:format(tonumber(itemid)))
-	--	return
-	--end
+	if BSYC.db.blacklist[itemid] then
+		BSYC:Print(L.ItemIDExist:format(itemid))
+		self.editbox:SetText()
+		return
+	end
 	
-	--local dName, dItemLink = GetItemInfo(tonumber(itemid))
+	if not GetItemInfo(itemid) then
+		BSYC:Print(L.ItemIDNotValid:format(itemid))
+		self.editbox:SetText()
+		return
+	end
 	
-	--BSYC.db.blacklist[BSYC.currentRealm][tonumber(itemid)] = true
-	--BSYC:Print(L.ItemIDAdded:format(tonumber(itemid)), dItemLink)
+	local dName, dItemLink = GetItemInfo(itemid)
 	
-	--self.editbox:SetText()
+	BSYC.db.blacklist[itemid] = dName
+	BSYC:Print(L.ItemIDAdded:format(itemid), dItemLink)
+	
+	self.editbox:SetText()
 	
 	self:DisplayList()
 end
