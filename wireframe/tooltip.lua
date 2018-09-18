@@ -246,6 +246,7 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 		[110560] = "Garrison Hearthstone",
 		[140192] = "Dalaran Hearthstone",
 		[128353] = "Admiral's Compass",
+		[141605] = "Flight Master's Whistle",
 	}
 	if permIgnore[tonumber(shortID)] or BSYC.db.blacklist[tonumber(shortID)] then
 		objTooltip:Show()
@@ -301,7 +302,11 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 						--with the exception of auction, everything else is stored in a numeric list
 						--auction is stored in a numeric list but within an individual bag
 						--auction, equip, void, mailbox
-						if (k ~= "auction" or k ~= "mailbox") or (k == "auction" and BSYC.options.enableAuction) or (k == "mailbox" and BSYC.options.enableMailbox) then
+						local passChk = true
+						if k == "auction" and not BSYC.options.enableAuction then passChk = false end
+						if k == "mailbox" and not BSYC.options.enableMailbox then passChk = false end
+						
+						if passChk then
 							grandTotal = self:ItemCount(k == "auction" and v.bag or v, link, allowList, k, grandTotal)
 						end
 					end
