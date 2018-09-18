@@ -5,7 +5,6 @@
 
 local BSYC = select(2, ...) --grab the addon namespace
 local Currency = BSYC:NewModule("Currency")
-local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
 
@@ -96,7 +95,6 @@ function Currency:DisplayList()
 	
 	local usrData = {}
 	local tempList = {}
-	local player = Unit:GetUnitInfo()
 
 	for unitObj in Data:IterateUnits() do
 		if not unitObj.isGuild and unitObj.data.currency then
@@ -110,7 +108,7 @@ function Currency:DisplayList()
 		end
 	end
 	
-	--sort the list by header, name, sortindex, realm and unit
+	--sort the list by header, name
 	table.sort(usrData, function(a, b)
 		if a.header  == b.header then
 			return a.name < b.name;

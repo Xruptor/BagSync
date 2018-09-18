@@ -243,18 +243,18 @@ function Blacklist:DisplayList()
 	
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
 	
-	local searchTable = {}
+	local blacklistTable = {}
 
 	--loop through our blacklist
 	for k, v in pairs(BSYC.db.blacklist) do
-		table.insert(searchTable, {key=k, value=v})
+		table.insert(blacklistTable, {key=k, value=v})
 	end
 
 	--show or hide the scrolling frame depending on count
-	if table.getn(searchTable) > 0 then
-		table.sort(searchTable, function(a,b) return (a.value < b.value) end)
-		for i=1, #searchTable do
-			self:AddEntry(searchTable[i])
+	if table.getn(blacklistTable) > 0 then
+		table.sort(blacklistTable, function(a,b) return (a.value < b.value) end)
+		for i=1, #blacklistTable do
+			self:AddEntry(blacklistTable[i])
 		end
 		self.scrollframe.frame:Show()
 	else
