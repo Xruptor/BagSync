@@ -82,7 +82,7 @@ function Professions:AddEntry(entry, isHeader)
 		"OnClick", 
 		function (widget, sometable, button)
 			if "LeftButton" == button and label.userdata.hasRecipes then
-				--BSYC:GetModule("Recipes"):ViewRecipes(entry.name, entry.level, entry.recipes)
+				BSYC:GetModule("Recipes"):ViewRecipes(label.entry)
 			end
 		end)
 	label:SetCallback(

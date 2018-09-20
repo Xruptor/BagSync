@@ -52,89 +52,127 @@ function Recipes:OnEnable()
 	RecipesFrame:Hide()
 end
 
-function Recipes:AddEntry(entry)
+function Recipes:AddEntry(entry, isHeader)
 
-	local name, recipeID, icon = entry.name, entry.recipeID, entry.icon
-	
-	local highlightColor = {1, 0, 0}
-	local color = {1, 1, 1}
-	local label = AceGUI:Create("InteractiveLabel")
+	local label = AceGUI:Create("BagSyncInteractiveLabel")
 
-	label:SetText(name)
-	label:SetFont(L.GetFontType, 14, THICKOUTLINE)
-	label:SetFullWidth(true)
-	label:SetColor(unpack(color))
-	label:SetImage(icon)
+	label:SetHeaderHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+	label:ToggleHeaderHighlight(false)
+
+	if isHeader then
+		label:SetText(entry.tierData.name)
+		label:SetFont(L.GetFontType, 14, THICKOUTLINE)
+		label:SetFullWidth(true)
+		label:SetColor(1, 1, 1)
+		label:ApplyJustifyH("CENTER")
+		label.userdata.isHeader = true
+		label:ToggleHeaderHighlight(true)
+		label.entry = entry
+	else
+		label:SetText(entry.recipeName)
+		label:SetFont(L.GetFontType, 14, THICKOUTLINE)
+		label:SetFullWidth(true)
+		label:SetColor(1, 1, 1)
+		label:SetImage(entry.iconTexture)
+		label.entry = entry
+		label.userdata.isHeader = false
+	end
+
 	label:SetCallback(
 		"OnClick", 
 		function (widget, sometable, button)
-			ChatEdit_InsertLink(GetSpellLink(recipeID))
+			if not label.userdata.isHeader then
+				ChatEdit_InsertLink(GetSpellLink(label.entry.recipeID))
+			end
 		end)
 	label:SetCallback(
 		"OnEnter",
 		function (widget, sometable)
-			label:SetColor(unpack(highlightColor))
-			GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
-			GameTooltip:SetSpellByID(recipeID)
-			GameTooltip:Show()
+			if not label.userdata.isHeader then
+				label:SetColor(1, 0, 0)
+				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
+				GameTooltip:SetSpellByID(label.entry.recipeID)
+				GameTooltip:Show()
+			end
 		end)
 	label:SetCallback(
 		"OnLeave",
 		function (widget, sometable)
-			label:SetColor(unpack(color))
+			label:SetColor(1, 1, 1)
 			GameTooltip:Hide()
 		end)
 
 	self.scrollframe:AddChild(label)
 end
 
-function Recipes:ViewRecipes(tradeName, tradeLevel, tradeRecipes)
-	self.information:SetText(tradeName..format(" |cFFFFFFFF(%s)|r", tradeLevel))
-	self:DisplayList(tradeRecipes)
+function Recipes:ViewRecipes(data)
+	self.information:SetText(data.colorized.." | "..data.skillData.name)
+	self:DisplayList(data)
 	self.frame:Show()
 end
 
-function Recipes:DisplayList(tradeRecipes)
+function Recipes:DisplayList(data)
+	if not data then return end
+	if not data.skillData.categories then return end
 	
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
 	
-	local searchTable = {}
-	local count = 0
+	local tierTable = {}
 	
-	--loop through our Recipes
-	local valuesList = {strsplit("|", tradeRecipes)}
-	
-	for idx = 1, #valuesList do
-	
-		local recipe_info = _G.C_TradeSkillUI.GetRecipeInfo(valuesList[idx])
-		local craftName = valuesList[idx]
-		local iconTexture = "Interface\\Icons\\INV_Misc_QuestionMark"
-	
-		local gName, gRank, gIcon = GetSpellInfo(valuesList[idx])
+	for k, v in pairs(data.skillData.categories) do
+		local recipeList = {strsplit("|", v.recipes)}
 		
-		if recipe_info and recipe_info.name then
-			craftName = recipe_info.name
-			iconTexture = recipe_info.icon
-		elseif gName then
-			craftName = gName
-			iconTexture = gIcon
-		else
-			craftName = L.ProfessionsFailedRequest:format(valuesList[idx])
+		if table.getn(recipeList) > 0 then
+		
+			for idx = 1, #recipeList do
+				if recipeList[idx] and string.len(recipeList[idx]) > 0 then
+					local recipe_info = _G.C_TradeSkillUI.GetRecipeInfo(recipeList[idx])
+					local recipeName = recipeList[idx]
+					local iconTexture = "Interface\\Icons\\INV_Misc_QuestionMark"
+				
+					local gName, gRank, gIcon = GetSpellInfo(recipeList[idx])
+					
+					if recipe_info and recipe_info.name then
+						recipeName = recipe_info.name
+						iconTexture = recipe_info.icon
+					elseif gName then
+						recipeName = gName
+						iconTexture = gIcon
+					else
+						recipeName = L.ProfessionsFailedRequest:format(recipeList[idx])
+					end
+					
+					table.insert(tierTable, { tierID=k, tierData=v, tierIndex=v.orderIndex, recipeName=recipeName, recipeID=recipeList[idx], recipeIcon=iconTexture } )
+				end
+			end
+		
 		end
-		
-		count = count + 1
-		table.insert(searchTable, {name=craftName, recipeID=valuesList[idx], icon=iconTexture})
 	end
 
-	--show or hide the scrolling frame depending on count
-	if count > 0 then
-		table.sort(searchTable, function(a,b) return (a.name < b.name) end)
-		for i=1, #searchTable do
-			self:AddEntry(searchTable[i])
+	--sort the tiers
+	table.sort(tierTable, function(a, b)
+		if a.tierIndex  == b.tierIndex then
+			return a.recipeName < b.recipeName;
 		end
+		return a.tierIndex < b.tierIndex;
+	end)
+	
+	--now do the recipes per tier
+	if table.getn(tierTable) > 0 then
+		local lastHeader = ""
+		for i = 1, #tierTable do
+			if lastHeader ~= professionsTable[i].skillData.name then
+				self:AddEntry(professionsTable[i], true) --add header
+				self:AddEntry(professionsTable[i], false) --add entry
+				lastHeader = professionsTable[i].skillData.name
+			else
+				self:AddEntry(professionsTable[i], false) --add entry
+			end
+		end
+	
 		self.scrollframe.frame:Show()
 	else
 		self.scrollframe.frame:Hide()
 	end
-	
+
 end
