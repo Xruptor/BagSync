@@ -73,10 +73,12 @@ function Currency:AddEntry(entry, isHeader)
 	label:SetCallback(
 		"OnEnter",
 		function (widget, sometable)
-			label:SetColor(unpack(highlightColor))
-			GameTooltip:SetOwner(label.frame, "ANCHOR_RIGHT")
 			if not label.userdata.isHeader then
-				Tooltip:CurrencyTooltip(GameTooltip, label.userdata.text, label.userdata.icon)
+				label:SetColor(unpack(highlightColor))
+				GameTooltip:SetOwner(label.frame, "ANCHOR_RIGHT")
+				if not label.userdata.isHeader then
+					Tooltip:CurrencyTooltip(GameTooltip, label.userdata.text, label.userdata.icon)
+				end
 			end
 		end)
 	label:SetCallback(

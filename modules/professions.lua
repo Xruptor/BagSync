@@ -88,15 +88,17 @@ function Professions:AddEntry(entry, isHeader)
 	label:SetCallback(
 		"OnEnter",
 		function (widget, sometable)
-			label:SetColor(1, 0, 0)
-			GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
 			if not label.userdata.isHeader then
-				if label.userdata.hasRecipes then
-					GameTooltip:AddLine(label.entry.colorized..": "..L.ProfessionHasRecipes)
-				else
-					GameTooltip:AddLine(label.entry.colorized..": "..L.ProfessionHasNoRecipes)
+				label:SetColor(1, 0, 0)
+				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
+				if not label.userdata.isHeader then
+					if label.userdata.hasRecipes then
+						GameTooltip:AddLine(label.entry.colorized..": "..L.ProfessionHasRecipes)
+					else
+						GameTooltip:AddLine(label.entry.colorized..": "..L.ProfessionHasNoRecipes)
+					end
+					GameTooltip:Show()
 				end
-				GameTooltip:Show()
 			end
 		end)
 	label:SetCallback(

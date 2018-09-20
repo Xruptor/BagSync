@@ -29,14 +29,6 @@ function Recipes:OnEnable()
 	
 	Recipes.information = information
 	
-	local label = AceGUI:Create("BagSyncInteractiveLabel")
-	label:SetFont(L.GetFontType, 14, THICKOUTLINE)
-	label:SetFullWidth(true)
-	label:SetText(" ") --add an empty space just to show the label
-	label:SetHeaderHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-	label:ToggleHeaderHighlight(true)
-	RecipesFrame:AddChild(label)
-	
 	local scrollframe = AceGUI:Create("ScrollFrame");
 	scrollframe:SetFullWidth(true)
 	scrollframe:SetLayout("Flow")
@@ -60,7 +52,7 @@ function Recipes:AddEntry(entry, isHeader)
 	label:ToggleHeaderHighlight(false)
 
 	if isHeader then
-		label:SetText(entry.tierData.name)
+		label:SetText(entry.tierData.name..format("   |cFF20ff20[%s/%s]|r", entry.tierData.skillLineCurrentLevel, entry.tierData.skillLineMaxLevel))
 		label:SetFont(L.GetFontType, 14, THICKOUTLINE)
 		label:SetFullWidth(true)
 		label:SetColor(1, 1, 1)
@@ -73,7 +65,7 @@ function Recipes:AddEntry(entry, isHeader)
 		label:SetFont(L.GetFontType, 14, THICKOUTLINE)
 		label:SetFullWidth(true)
 		label:SetColor(1, 1, 1)
-		label:SetImage(entry.iconTexture)
+		label:SetImage(entry.recipeIcon)
 		label.entry = entry
 		label.userdata.isHeader = false
 	end
@@ -161,15 +153,14 @@ function Recipes:DisplayList(data)
 	if table.getn(tierTable) > 0 then
 		local lastHeader = ""
 		for i = 1, #tierTable do
-			if lastHeader ~= professionsTable[i].skillData.name then
-				self:AddEntry(professionsTable[i], true) --add header
-				self:AddEntry(professionsTable[i], false) --add entry
-				lastHeader = professionsTable[i].skillData.name
+			if lastHeader ~= tierTable[i].tierData.name then
+				self:AddEntry(tierTable[i], true) --add header
+				self:AddEntry(tierTable[i], false) --add entry
+				lastHeader = tierTable[i].tierData.name
 			else
-				self:AddEntry(professionsTable[i], false) --add entry
+				self:AddEntry(tierTable[i], false) --add entry
 			end
 		end
-	
 		self.scrollframe.frame:Show()
 	else
 		self.scrollframe.frame:Hide()
