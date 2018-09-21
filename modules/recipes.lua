@@ -112,48 +112,58 @@ function Recipes:DisplayList(data)
 	local tierTable = {}
 	
 	for k, v in pairs(data.skillData.categories) do
-		local recipeList = {strsplit("|", v.recipes)}
-		
-		if table.getn(recipeList) > 0 then
-		
-			for idx = 1, #recipeList do
-				if recipeList[idx] and string.len(recipeList[idx]) > 0 then
-					local recipe_info = _G.C_TradeSkillUI.GetRecipeInfo(recipeList[idx])
-					local recipeName = recipeList[idx]
-					local iconTexture = "Interface\\Icons\\INV_Misc_QuestionMark"
-				
-					local gName, gRank, gIcon = GetSpellInfo(recipeList[idx])
+		if v.recipes then
+			local recipeList = {strsplit("|", v.recipes)}
+			
+			if table.getn(recipeList) > 0 then
+			
+				for idx = 1, #recipeList do
+					if recipeList[idx] and string.len(recipeList[idx]) > 0 then
+						local recipe_info = _G.C_TradeSkillUI.GetRecipeInfo(recipeList[idx])
+						local recipeName = recipeList[idx]
+						local iconTexture = "Interface\\Icons\\INV_Misc_QuestionMark"
 					
-					if recipe_info and recipe_info.name then
-						recipeName = recipe_info.name
-						iconTexture = recipe_info.icon
-					elseif gName then
-						recipeName = gName
-						iconTexture = gIcon
-					else
-						recipeName = L.ProfessionsFailedRequest:format(recipeList[idx])
+						local gName, gRank, gIcon = GetSpellInfo(recipeList[idx])
+						
+						if recipe_info and recipe_info.name then
+							recipeName = recipe_info.name
+							iconTexture = recipe_info.icon
+						elseif gName then
+							recipeName = gName
+							iconTexture = gIcon
+						else
+							recipeName = L.ProfessionsFailedRequest:format(recipeList[idx])
+						end
+						
+						table.insert(tierTable, { tierID=k, tierData=v, tierIndex=v.orderIndex, recipeName=recipeName, recipeID=recipeList[idx], recipeIcon=iconTexture, isEmpty=false } )
 					end
-					
-					table.insert(tierTable, { tierID=k, tierData=v, tierIndex=v.orderIndex, recipeName=recipeName, recipeID=recipeList[idx], recipeIcon=iconTexture } )
 				end
+				
 			end
-		
+		else
+			--we have no recipes but the tier is learned and is leveled.  So display it as a header
+			table.insert(tierTable, { tierID=k, tierData=v, tierIndex=v.orderIndex, recipeName=v.name, isEmpty=true } )
 		end
 	end
 
-	--sort the tiers
-	table.sort(tierTable, function(a, b)
-		if a.tierIndex  == b.tierIndex then
-			return a.recipeName < b.recipeName;
-		end
-		return a.tierIndex < b.tierIndex;
-	end)
-	
 	--now do the recipes per tier
 	if table.getn(tierTable) > 0 then
+		
+		--sort the tiers
+		table.sort(tierTable, function(a, b)
+			if a.tierIndex  == b.tierIndex then
+				return a.recipeName < b.recipeName;
+			end
+			return a.tierIndex < b.tierIndex;
+		end)
+		
 		local lastHeader = ""
 		for i = 1, #tierTable do
-			if lastHeader ~= tierTable[i].tierData.name then
+			if tierTable[i].isEmpty then
+				--no recipes just display it as a header
+				self:AddEntry(tierTable[i], true) --add header
+				lastHeader = tierTable[i].tierData.name
+			elseif lastHeader ~= tierTable[i].tierData.name then
 				self:AddEntry(tierTable[i], true) --add header
 				self:AddEntry(tierTable[i], false) --add entry
 				lastHeader = tierTable[i].tierData.name

@@ -128,20 +128,21 @@ function Professions:DisplayList()
 		end
 	end
 
-	table.sort(professionsTable, function(a, b)
-		if a.skillData.name == b.skillData.name then
-			if a.sortIndex  == b.sortIndex then
-				if a.unitObj.realm == b.unitObj.realm then
-					return a.unitObj.name < b.unitObj.name;
-				end
-				return a.unitObj.realm < b.unitObj.realm;
-			end
-			return a.sortIndex < b.sortIndex;
-		end
-		return a.skillData.name < b.skillData.name;
-	end)
-	
 	if table.getn(professionsTable) > 0 then
+	
+		table.sort(professionsTable, function(a, b)
+			if a.skillData.name == b.skillData.name then
+				if a.sortIndex  == b.sortIndex then
+					if a.unitObj.realm == b.unitObj.realm then
+						return a.unitObj.name < b.unitObj.name;
+					end
+					return a.unitObj.realm < b.unitObj.realm;
+				end
+				return a.sortIndex < b.sortIndex;
+			end
+			return a.skillData.name < b.skillData.name;
+		end)
+	
 		local lastHeader = ""
 		for i=1, #professionsTable do
 			if lastHeader ~= professionsTable[i].skillData.name then

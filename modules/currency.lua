@@ -110,15 +110,16 @@ function Currency:DisplayList()
 		end
 	end
 	
-	--sort the list by header, name
-	table.sort(usrData, function(a, b)
-		if a.header  == b.header then
-			return a.name < b.name;
-		end
-		return a.header < b.header;
-	end)
-	
 	if table.getn(usrData) > 0 then
+	
+		--sort the list by header, name
+		table.sort(usrData, function(a, b)
+			if a.header  == b.header then
+				return a.name < b.name;
+			end
+			return a.header < b.header;
+		end)
+	
 		local lastHeader = ""
 		for i=1, #usrData do
 			if lastHeader ~= usrData[i].header then
