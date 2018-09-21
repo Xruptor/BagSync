@@ -62,7 +62,7 @@ function Currency:AddEntry(entry, isHeader)
 		label:SetText(entry.name)
 		label:SetFont(L.GetFontType, 14, THICKOUTLINE)
 		label:SetFullWidth(true)
-		label.userdata.color = {64/255, 224/255, 208/255}
+		label.userdata.color = {64/255, 224/255, 208/255} --hex: 40e0d0
 		label:SetColor(unpack(label.userdata.color))
 		label:ApplyJustifyH("LEFT")
 		label.userdata.isHeader = false

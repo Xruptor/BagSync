@@ -12,10 +12,8 @@ local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
 function Tooltip:HexColor(color, str)
 	if type(color) == "table" then
 		return string.format("|cff%02x%02x%02x%s|r", (color.r or 1) * 255, (color.g or 1) * 255, (color.b or 1) * 255, tostring(str))
-	elseif type(color) == "string" then
-		string.format("|cff%s%s|r", tostring(color), tostring(str))
 	end
-	return str
+	return string.format("|cff%s%s|r", tostring(color), tostring(str))
 end
 
 function Tooltip:GetSortIndex(unitObj)
@@ -31,7 +29,7 @@ function Tooltip:GetSortIndex(unitObj)
 	return 4
 end
 
-function Tooltip:ColorizeUnit(unitObj)
+function Tooltip:ColorizeUnit(unitObj, bypass)
 	if not unitObj.data then return nil end
 	
 	if unitObj.isGuild then
@@ -40,18 +38,28 @@ function Tooltip:ColorizeUnit(unitObj)
 	
 	local player = Unit:GetUnitInfo()
 	local tmpTag = ""
+	local realm = unitObj.realm
+	local realmTag = ""
+	local delimiter = " "
 	
 	--first colorize by class color
-	if BSYC.options.enableUnitClass and RAID_CLASS_COLORS[unitObj.data.class] then
+	if bypass or BSYC.options.enableUnitClass and RAID_CLASS_COLORS[unitObj.data.class] then
 		tmpTag = self:HexColor(RAID_CLASS_COLORS[unitObj.data.class], unitObj.name)
 	else
 		tmpTag = self:HexColor(BSYC.options.colors.first, unitObj.name)
 	end
 	
 	--add green checkmark
-	if unitObj.name == player.name and unitObj.realm == player.realm and BSYC.options.enableTooltipGreenCheck then
+	if bypass or unitObj.name == player.name and unitObj.realm == player.realm and BSYC.options.enableTooltipGreenCheck then
 		local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
 		tmpTag = ReadyCheck.." "..tmpTag
+	end
+	
+	--return the bypass to display all server tags
+	if bypass then
+		realmTag = L.TooltipBattleNetTag..delimiter
+		tmpTag = self:HexColor(BSYC.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
+		return tmpTag
 	end
 	
 	--add faction icons
@@ -66,11 +74,6 @@ function Tooltip:ColorizeUnit(unitObj)
 		
 		tmpTag = FactionIcon.." "..tmpTag
 	end
-	
-	--add crossrealm and bnet tags
-	local realm = unitObj.realm
-	local realmTag = ""
-	local delimiter = " "
 	
 	if BSYC.options.No_XR_BNET_RealmNames then
 		realm = ""
