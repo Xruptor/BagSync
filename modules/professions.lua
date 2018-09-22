@@ -52,22 +52,21 @@ function Professions:AddEntry(entry, isHeader)
 
 	label:SetHeaderHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
 	label:ToggleHeaderHighlight(false)
-
+	label.entry = entry
+	
 	if isHeader then
 		label:SetText(entry.skillData.name)
 		label:SetFont(L.GetFontType, 14, THICKOUTLINE)
 		label:SetFullWidth(true)
 		label:SetColor(1, 1, 1)
 		label:ApplyJustifyH("CENTER")
-		label.userdata.isHeader = true
 		label.userdata.hasRecipes = false
 		label:ToggleHeaderHighlight(true)
-		label.entry = entry
+		label.userdata.isHeader = true
 	else
 		label:SetText(entry.colorized)
 		label:SetFont(L.GetFontType, 14, THICKOUTLINE)
 		label:SetFullWidth(true)
-		label.entry = entry
 		if not entry.skillData.secondary then
 			label.userdata.hasRecipes = true
 		else

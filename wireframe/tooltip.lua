@@ -29,7 +29,7 @@ function Tooltip:GetSortIndex(unitObj)
 	return 4
 end
 
-function Tooltip:ColorizeUnit(unitObj, bypass)
+function Tooltip:ColorizeUnit(unitObj, bypass, showRealm)
 	if not unitObj.data then return nil end
 	
 	if unitObj.isGuild then
@@ -50,20 +50,15 @@ function Tooltip:ColorizeUnit(unitObj, bypass)
 	end
 	
 	--add green checkmark
-	if bypass or unitObj.name == player.name and unitObj.realm == player.realm and BSYC.options.enableTooltipGreenCheck then
-		local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
-		tmpTag = ReadyCheck.." "..tmpTag
-	end
-	
-	--return the bypass to display all server tags
-	if bypass then
-		realmTag = L.TooltipBattleNetTag..delimiter
-		tmpTag = self:HexColor(BSYC.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
-		return tmpTag
+	if unitObj.name == player.name and unitObj.realm == player.realm then
+		if bypass or BSYC.options.enableTooltipGreenCheck then
+			local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
+			tmpTag = ReadyCheck.." "..tmpTag
+		end
 	end
 	
 	--add faction icons
-	if BSYC.options.enableFactionIcons then
+	if bypass or BSYC.options.enableFactionIcons then
 		local FactionIcon = [[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]
 		
 		if unitObj.data.faction == "Alliance" then
@@ -73,6 +68,15 @@ function Tooltip:ColorizeUnit(unitObj, bypass)
 		end
 		
 		tmpTag = FactionIcon.." "..tmpTag
+	end
+	
+	--return the bypass to display all server tags
+	if bypass then
+		if showRealm then
+			realmTag = L.TooltipBattleNetTag..delimiter
+			tmpTag = self:HexColor(BSYC.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
+		end
+		return tmpTag
 	end
 	
 	if BSYC.options.No_XR_BNET_RealmNames then

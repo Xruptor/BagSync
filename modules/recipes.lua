@@ -52,21 +52,20 @@ function Recipes:AddEntry(entry, isHeader)
 	label:SetHeaderHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
 	label:ToggleHeaderHighlight(false)
 	label:SetColor(1, 1, 1)
-
+	label.entry = entry
+	
 	if isHeader then
 		label:SetText(entry.tierData.name..format("   |cFF00FF00[ %s / %s ]|r", entry.tierData.skillLineCurrentLevel, entry.tierData.skillLineMaxLevel))
 		label:SetFont(L.GetFontType, 14, THICKOUTLINE)
 		label:SetFullWidth(true)
 		label:ApplyJustifyH("CENTER")
-		label.userdata.isHeader = true
 		label:ToggleHeaderHighlight(true)
-		label.entry = entry
+		label.userdata.isHeader = true
 	else
 		label:SetText(entry.recipeName)
 		label:SetFont(L.GetFontType, 14, THICKOUTLINE)
 		label:SetFullWidth(true)
 		label:SetImage(entry.recipeIcon)
-		label.entry = entry
 		label.userdata.isHeader = false
 	end
 
