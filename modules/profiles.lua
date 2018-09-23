@@ -42,6 +42,22 @@ function Profiles:OnEnable()
 		self:DisplayList()
 	end)
 	
+	StaticPopupDialogs["BAGSYNC_PROFILES_REMOVE"] = {
+		text = L.ProfilesRemove,
+		button1 = "Yes",
+		button2 = "No",
+		hasEditBox = false,
+		timeout = 0,
+		exclusive = 1,
+		hideOnEscape = 1,
+		OnShow = function (self)
+			self.text:SetText(L.ProfilesRemove:format(self.data.colorized));
+		end,
+		OnAccept = function (self)
+		end,
+		whileDead = 1,
+	}
+	
 	ProfilesFrame:Hide()
 	
 end
@@ -53,17 +69,21 @@ function Profiles:AddEntry(entry, isHeader)
 	label:SetHeaderHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
 	label:ToggleHeaderHighlight(false)
 	label.entry = entry
+	label:SetColor(1, 1, 1)
 	
 	if isHeader then
 		label:SetText(entry.unitObj.realm)
 		label:SetFont(L.GetFontType, 14, THICKOUTLINE)
 		label:SetFullWidth(true)
-		label:SetColor(1, 1, 1)
 		label:ApplyJustifyH("CENTER")
 		label:ToggleHeaderHighlight(true)
 		label.userdata.isHeader = true
 	else
-		label:SetText(entry.colorized)
+		if entry.unitObj.isGuild then
+			label:SetText(GUILD..":  "..entry.colorized)
+		else
+			label:SetText(entry.colorized)
+		end
 		label:SetFont(L.GetFontType, 14, THICKOUTLINE)
 		label:SetFullWidth(true)
 		label:ApplyJustifyH("LEFT")
@@ -73,22 +93,31 @@ function Profiles:AddEntry(entry, isHeader)
 	label:SetCallback(
 		"OnClick", 
 		function (widget, sometable, button)
-			if "LeftButton" == button and label.userdata.hasRecipes then
-				--do something
+			if "LeftButton" == button and not label.userdata.isHeader then
+				StaticPopup_Show("BAGSYNC_PROFILES_REMOVE", '', '', entry) --cannot pass nil as it's expected for SetFormattedText (Interface/FrameXML/StaticPopup.lua)
 			end
 		end)
 	label:SetCallback(
 		"OnEnter",
 		function (widget, sometable)
 			if not label.userdata.isHeader then
-				--label:SetColor(1, 0, 0)
+				label:SetColor(1, 0, 0)
+				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
+				
+				if not label.entry.unitObj.isGuild then
+					GameTooltip:AddLine(PLAYER..":  "..entry.colorized)
+				else
+					GameTooltip:AddLine(GUILD..":  "..entry.colorized)
+					GameTooltip:AddLine(L.TooltipRealmKey.." "..entry.unitObj.data.realmKey)
+				end
+				GameTooltip:Show()
 			end
 		end)
 	label:SetCallback(
 		"OnLeave",
 		function (widget, sometable)
-			--label:SetColor(1, 1, 1)
-			--GameTooltip:Hide()
+			label:SetColor(1, 1, 1)
+			GameTooltip:Hide()
 		end)
 
 	self.scrollframe:AddChild(label)
@@ -102,9 +131,7 @@ function Profiles:DisplayList()
 	local tempList = {}
 	
 	for unitObj in Data:IterateUnits(true) do
-		if not unitObj.isGuild then
-			table.insert(profilesTable, { unitObj=unitObj, colorized=Tooltip:ColorizeUnit(unitObj, true) } )
-		end
+		table.insert(profilesTable, { unitObj=unitObj, colorized=Tooltip:ColorizeUnit(unitObj, true) } )
 	end
 
 	if table.getn(profilesTable) > 0 then

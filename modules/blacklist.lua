@@ -160,7 +160,7 @@ function Blacklist:OnEnable()
 				BSYC.db.blacklist[self.data.key] = nil
 				Blacklist:DisplayList()
 			else
-				BSYC:Print(L.BlackErrorRemove)
+				BSYC:Print(L.BlackListErrorRemove)
 			end
 		end,
 		whileDead = 1,
@@ -204,13 +204,12 @@ end
 
 function Blacklist:AddEntry(entry)
 
-	local highlightColor = {1, 0, 0}
 	local label = AceGUI:Create("InteractiveLabel")
 
 	label:SetText(entry.value)
 	label:SetFont(L.GetFontType, 14, THICKOUTLINE)
 	label:SetFullWidth(true)
-	label:SetColor( r, g, b)
+	label:SetColor(1, 1, 1)
 	label:SetCallback(
 		"OnClick", 
 		function (widget, sometable, button)
@@ -219,7 +218,7 @@ function Blacklist:AddEntry(entry)
 	label:SetCallback(
 		"OnEnter",
 		function (widget, sometable)
-			label:SetColor(unpack(highlightColor))
+			label:SetColor(1, 0, 0)
 			GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
 			if type(entry.key) == "number" then
 				GameTooltip:SetHyperlink("item:"..entry.key)
@@ -232,7 +231,7 @@ function Blacklist:AddEntry(entry)
 	label:SetCallback(
 		"OnLeave",
 		function (widget, sometable)
-			label:SetColor(r, g, b)
+			label:SetColor(1, 1, 1)
 			GameTooltip:Hide()
 		end)
 
