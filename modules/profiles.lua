@@ -54,12 +54,40 @@ function Profiles:OnEnable()
 			self.text:SetText(L.ProfilesRemove:format(self.data.colorized));
 		end,
 		OnAccept = function (self)
+			Profiles:DeleteUnit(self.data)
 		end,
 		whileDead = 1,
 	}
 	
 	ProfilesFrame:Hide()
 	
+end
+
+function Profiles:DeleteUnit(entry)
+	if not entry then BSYC:Print(L.ErrorUserNotFound) return end
+	
+	local player = Unit:GetUnitInfo()
+	
+	if not entry.unitObj.isGuild then
+		if entry.unitObj.name == player.name and entry.unitObj.realm == player.realm then
+			--it's the current player so we have to do a reloadui
+			BagSyncDB[entry.unitObj.realm][entry.unitObj.name] = nil
+			ReloadUI()
+			return
+		else
+			BSYC:Print(L.ProfileBeenRemoved:format(entry.colorized))
+			BagSyncDB[entry.unitObj.realm][entry.unitObj.name] = nil
+			self:DisplayList()
+			return
+		end
+	else
+		BSYC:Print(L.GuildRemoved:format(entry.colorized))
+		BagSyncDB[entry.unitObj.realm][entry.unitObj.name] = nil
+		self:DisplayList()
+		return
+	end
+	
+	BSYC:Print(L.ErrorUserNotFound)
 end
 
 function Profiles:AddEntry(entry, isHeader)
@@ -159,9 +187,3 @@ function Profiles:DisplayList()
 	end
 
 end
-
--- L.Profiles
--- L.DeleteWarning
--- L.Delete
--- L.ErrorUserNotFound
--- L.Confirm

@@ -6,7 +6,6 @@
 local BSYC = select(2, ...) --grab the addon namespace
 local Professions = BSYC:NewModule("Professions")
 local Data = BSYC:GetModule("Data")
-local Unit = BSYC:GetModule("Unit")
 local Tooltip = BSYC:GetModule("Tooltip")
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)

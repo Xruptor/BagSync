@@ -77,7 +77,7 @@ L.SlashBlacklist = "blacklist"
 ------------------------
 L.HelpSearchItemName = "/bgs [아이템 이름] - 빠른 아이템 찾기"
 L.HelpSearchWindow = "/bgs search - 검색창 열기"
-L.HelpGoldTooltip = "/bgs gold - 툴팁에 각 케릭터의 골드량을 표시합니다."
+L.HelpGoldTooltip = "/bgs gold (or /bgs money) - 툴팁에 각 케릭터의 골드량을 표시합니다."
 L.HelpCurrencyWindow = "/bgs currency - 화폐 창을 엽니다."
 L.HelpProfilesWindow = "/bgs profiles - 프로필 창을 엽니다."
 L.HelpFixDB = "/bgs fixdb - BagSync에 데이터베이스 개선 (FixDB) 실행"

@@ -152,7 +152,7 @@ function Data:LoadSlashCommand()
 			if cmd == L.SlashSearch then
 				BSYC:GetModule("Search"):StartSearch()
 				return true
-			elseif cmd == L.SlashGold then
+			elseif cmd == L.SlashGold or cmd == L.SlashMoney then
 				BSYC:GetModule("Tooltip"):MoneyTooltip()
 				return true
 			elseif cmd == L.SlashCurrency then
