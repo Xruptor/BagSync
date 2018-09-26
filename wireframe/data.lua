@@ -27,7 +27,6 @@ function Data:OnEnable()
 	
 	--main DB call
 	BSYC.db = BSYC.db or {}
-	BSYC.db.global = BagSyncDB
 	
 	--realm DB
 	BagSyncDB[player.realm] = BagSyncDB[player.realm] or {}
@@ -236,19 +235,15 @@ end
 
 function Data:IterateUnits(dumpAll)
 
-	local count = BSYC:TableLength(BagSyncDB)
-	if not count or count <= 0 then return end
-
 	local player = Unit:GetUnitInfo()
 	local previousGuilds = {}
 	local argKey, argValue = next(BagSyncDB)
-	local i, k, v = 1
+	local k, v
 
 	return function()
-		while argKey or i <= count do
+		while argKey do
 
 			if argKey and string.match(argKey, '§*') then
-				i = i + 1
 				argKey, argValue = next(BagSyncDB, argKey)
 			elseif argKey then
 				k, v = next(argValue, k)
@@ -284,14 +279,11 @@ function Data:IterateUnits(dumpAll)
 						end
 					end
 				else
-					i = i + 1
 					argKey, argValue = next(BagSyncDB, argKey)
 				end
-			else
-				--escape clause JUST IN CASE, we don't want an infinite loop
-				i = count
+				
+			--else if no next key then exit while
 			end
-			
 		end
 	end
 

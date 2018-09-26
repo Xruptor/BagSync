@@ -91,12 +91,3 @@ function BSYC:GetShortItemID(link)
 		return link:match("item:(%d+):") or link:match("^(%d+):") or link
 	end
 end
-
-function BSYC:TableLength(tbl)
-	local n = 0
-	for k in pairs(tbl) do
-		n = n + 1
-	end
-	return n
-end
-	
