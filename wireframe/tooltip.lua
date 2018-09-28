@@ -137,7 +137,6 @@ function Tooltip:MoneyTooltip()
 	--loop through our characters
 	local usrData = {}
 	local total = 0
-	local player = Unit:GetUnitInfo()
 	
 	for unitObj in Data:IterateUnits() do
 		if unitObj.data.money and unitObj.data.money > 0 then
@@ -247,7 +246,6 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 		return
 	end
 	
-	local player = Unit:GetUnitInfo()
 	local shortID = BSYC:GetShortItemID(link)
 	
 	local permIgnore ={
@@ -385,7 +383,6 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon)
 
 	--loop through our characters
 	local usrData = {}
-	local player = Unit:GetUnitInfo()
 	
 	for unitObj in Data:IterateUnits() do
 		if not unitObj.isGuild and unitObj.data.currency and unitObj.data.currency[currencyIcon] then

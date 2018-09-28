@@ -169,7 +169,8 @@ function Search:DoSearch(searchStr)
 	local tempList = {}
 	local countWarning = 0
 	local playerSearch
-	
+	local player = Unit:GetUnitInfo()
+
 	local allowList = {
 		["bag"] = 0,
 		["bank"] = 0,
@@ -191,7 +192,7 @@ function Search:DoSearch(searchStr)
 					--bags, bank, reagents are stored in individual bags
 					if k == "bag" or k == "bank" or k == "reagents" then
 						for bagID, bagData in pairs(v) do
-							if not playerSearch or playerSearch == k then
+							if not playerSearch or playerSearch == k and unitObj.name == player.name and unitObj.realm == player.realm then
 								countWarning = checkData(bagData, searchStr, searchTable, tempList, countWarning, playerSearch)
 							end
 						end
@@ -201,7 +202,7 @@ function Search:DoSearch(searchStr)
 						if k == "mailbox" and not BSYC.options.enableMailbox then passChk = false end
 						
 						if passChk then
-							if not playerSearch or playerSearch == k then
+							if not playerSearch or playerSearch == k and unitObj.name == player.name and unitObj.realm == player.realm then
 								countWarning = checkData(k == "auction" and v.bag or v, searchStr, searchTable, tempList, countWarning, playerSearch)
 							end
 						end
@@ -209,7 +210,7 @@ function Search:DoSearch(searchStr)
 				end
 			end
 		else
-			if not playerSearch or playerSearch == "guild" then
+			if not playerSearch or playerSearch == "guild" and unitObj.name == player.guild and unitObj.data.realmKey == player.realmKey then
 				countWarning = checkData(unitObj.data.bag, searchStr, searchTable, tempList, countWarning, playerSearch)
 			end
 		end
