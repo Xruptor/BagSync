@@ -145,9 +145,11 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, p
 			if link then
 				local dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo("item:"..link)
 				if dName then
-					if playerSearch or not tempList[link] and itemScanner:Matches(dItemLink, searchStr)
-						tempList[link] = dName
-						table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
+					if playerSearch or itemScanner:Matches(dItemLink, searchStr) then
+						if not tempList[link] then
+							tempList[link] = dName
+							table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
+						end
 					end					
 				else
 					countWarning = countWarning + 1
