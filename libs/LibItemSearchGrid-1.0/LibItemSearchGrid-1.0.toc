@@ -1,7 +1,0 @@
-## Interface: 80000
-## Title: LibItemSearchGrid-1.0
-## Notes: An updated item search library based on LibItemSearch-1.0
-## OptionalDeps: LibStub, ItemRack, Wardrobe
-## Author: Xruptor, Jaliborc (João Libório), Tuller, Yewbacca (Equipment Set Searching)
-## LoadOnDemand: 1
-LibItemSearchGrid-1.0.lua

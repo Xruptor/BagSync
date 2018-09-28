@@ -4,7 +4,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
-local Tooltip = BSYC:NewModule("Tooltip", 'AceEvent-3.0')
+local Tooltip = BSYC:NewModule("Tooltip")
 local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
@@ -217,12 +217,14 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total)
 	if table.getn(data) < 1 then return total end
 	
 	for i=1, table.getn(data) do
-		local link, count = strsplit(";", data[i])
-		if link then
-			if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
-			if link == itemID then
-				allowList[source] = allowList[source] + (count or 1)
-				total = total + (count or 1)
+		if data[i] then
+			local link, count = strsplit(";", data[i])
+			if link then
+				if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
+				if link == itemID then
+					allowList[source] = allowList[source] + (count or 1)
+					total = total + (count or 1)
+				end
 			end
 		end
 	end
