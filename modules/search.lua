@@ -164,6 +164,7 @@ function Search:DoSearch(searchStr)
 	if not searchStr then return end
 	local searchStr = searchStr or self.searchbar:GetText()
 	searchStr = searchStr:lower() --always make sure everything is lowercase when doing searches
+	if string.len(searchStr) < 1 then return end
 	
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
 	
