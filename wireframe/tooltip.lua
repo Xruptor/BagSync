@@ -7,7 +7,7 @@ local BSYC = select(2, ...) --grab the addon namespace
 local Tooltip = BSYC:NewModule("Tooltip")
 local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
+local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
 function Tooltip:HexColor(color, str)
 	if type(color) == "table" then
@@ -232,6 +232,7 @@ end
 
 function Tooltip:TallyUnits(objTooltip, link, source)
 	if not BSYC.options.enableTooltips then return end
+	if not CanAccessObject(objTooltip) then return end
 	
 	--only show tooltips in search frame if the option is enabled
 	if BSYC.options.tooltipOnlySearch and objTooltip:GetOwner() and objTooltip:GetOwner():GetName() and not string.find(objTooltip:GetOwner():GetName(), "BagSyncSearchRow") then

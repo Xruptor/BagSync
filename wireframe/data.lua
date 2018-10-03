@@ -6,7 +6,7 @@
 local BSYC = select(2, ...) --grab the addon namespace
 local Data = BSYC:NewModule("Data")
 local Unit = BSYC:GetModule("Unit")
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
+local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
 ----------------------
 --   DB Functions   --

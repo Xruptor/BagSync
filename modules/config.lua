@@ -4,7 +4,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
+local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local config = LibStub("AceConfig-3.0")
 local configDialog = LibStub("AceConfigDialog-3.0")
 

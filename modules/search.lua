@@ -8,7 +8,7 @@ local Search = BSYC:NewModule("Search")
 local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
 
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
+local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local AceGUI = LibStub("AceGUI-3.0")
 local itemScanner = LibStub('LibItemSearch-1.2')
 
@@ -144,12 +144,10 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, p
 			local link, count = strsplit(";", data[i])
 			if link then
 				local dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo("item:"..link)
-				if dName then
+				if dName and not tempList[link] then
 					if playerSearch or itemScanner:Matches(dItemLink, searchStr) then
-						if not tempList[link] then
-							tempList[link] = dName
-							table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
-						end
+						tempList[link] = dName
+						table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
 					end					
 				else
 					countWarning = countWarning + 1
@@ -165,6 +163,8 @@ function Search:DoSearch(searchStr)
 	local searchStr = searchStr or self.searchbar:GetText()
 	searchStr = searchStr:lower() --always make sure everything is lowercase when doing searches
 	if string.len(searchStr) < 1 then return end
+	
+	self.searchbar:SetText(nil) --reset to make searching faster
 	
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
 	
@@ -223,6 +223,7 @@ function Search:DoSearch(searchStr)
 	--show warning window if the server hasn't queried all the items yet
 	if countWarning > 0 then
 		self.warninglabel:SetText(L.WarningItemSearch:format(countWarning))
+		self.searchbar:SetText(searchStr) --set for the refresh button
 		self.warningframe:Show()
 	else
 		self.warningframe:Hide()

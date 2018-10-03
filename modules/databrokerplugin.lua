@@ -5,7 +5,7 @@
 
 local BSYC = select(2, ...) --grab the addon namespace
 local LDB = LibStub:GetLibrary('LibDataBroker-1.1', true)
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
+local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
 local Plugin = LDB:NewDataObject("BagSyncLDB", {
 	type = "data source",

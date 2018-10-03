@@ -9,7 +9,7 @@ local Data = BSYC:GetModule("Data")
 local Unit = BSYC:GetModule("Unit")
 local Tooltip = BSYC:GetModule("Tooltip")
 
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
+local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local AceGUI = LibStub("AceGUI-3.0")
 
 function Profiles:OnEnable()
