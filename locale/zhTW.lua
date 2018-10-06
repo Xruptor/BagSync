@@ -2,14 +2,6 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhTW")
 if not L then return end
 
---PLEASE LOOK AT enUS.lua for a complete localization list
-
---special thanks to ytzyt at Curse for the zhCN and zhTW translations!
-
---Get the best possible font for the localization langugage.
---Some fonts are better than others to display special character sets.
-L.GetFontType = "Fonts\\blei00d.TTF"
-
 L.TooltipBag = "背包:"
 L.TooltipBank = "銀行:"
 L.TooltipEquip = "已裝備:"

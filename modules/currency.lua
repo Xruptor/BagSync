@@ -50,7 +50,7 @@ function Currency:AddEntry(entry, isHeader)
 
 	if isHeader then
 		label:SetText(entry.header)
-		label:SetFont(L.GetFontType, 14, THICKOUTLINE)
+		label:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
 		label:SetFullWidth(true)
 		label:SetColor(unpack(label.userdata.color))
 		label:ApplyJustifyH("CENTER")
@@ -60,7 +60,7 @@ function Currency:AddEntry(entry, isHeader)
 		label:ToggleHeaderHighlight(true)
 	else
 		label:SetText(entry.name)
-		label:SetFont(L.GetFontType, 14, THICKOUTLINE)
+		label:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
 		label:SetFullWidth(true)
 		label.userdata.color = {64/255, 224/255, 208/255} --hex: 40e0d0
 		label:SetColor(unpack(label.userdata.color))
