@@ -415,6 +415,10 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon)
 	objTooltip:Show()
 end
 
+
+
+local skipNextRecipeCall = true
+
 function Tooltip:HookTooltip(objTooltip)
 	
 	objTooltip:HookScript("OnHide", function(self)
@@ -427,8 +431,21 @@ function Tooltip:HookTooltip(objTooltip)
 		self.__tooltipUpdated = false
 	end)
 	objTooltip:HookScript("OnTooltipSetItem", function(self)
-		if self.__tooltipUpdated then return end
+  
 		local name, link = self:GetItem()
+    
+		local _, _, _, _, _, _, _, _, _, _, _, itemTypeId = GetItemInfo(link)
+		if (itemTypeId == LE_ITEM_CLASS_RECIPE) then
+			if skipNextRecipeCall then
+				skipNextRecipeCall = false
+				return
+			else
+				skipNextRecipeCall = true
+			end
+		end
+    
+		if self.__tooltipUpdated then return end
+		
 		if name and string.len(name) > 0 and link then
 			Tooltip:TallyUnits(self, link, "OnTooltipSetItem")
 		end
