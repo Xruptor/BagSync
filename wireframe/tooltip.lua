@@ -424,18 +424,18 @@ end
 -- Just scanning for "Use:" is not enough, as consumable recipe products have a "Use:" too.
 -- Thus, we would have to store these strings for all locales:
 local teachesYouString = {
-  ["deDE"] = "Lehrt Euch", 
-  ["enUS"] = "Teaches you", 
-  ["enGB"] = "Teaches you", 
-  ["esES"] = "Te enseña", 
-  ["esMX"] = "Te enseña", 
-  ["frFR"] = "Vous apprend", 
-  ["itIT"] = "Ti insegna", 
-  ["koKR"] = "배웁니다",  -- (Right to Left)
-  ["ptBR"] = "Ensina",
-  ["ruRU"] = "Обучает",
-  ["zhCN"] = "教你",
-  ["zhTW"] = "教你"
+	["deDE"] = "Lehrt Euch", 
+	["enUS"] = "Teaches you", 
+	["enGB"] = "Teaches you", 
+	["esES"] = "Te enseña", 
+	["esMX"] = "Te enseña", 
+	["frFR"] = "Vous apprend", 
+	["itIT"] = "Ti insegna", 
+	["koKR"] = "배웁니다",   -- (Right to Left)
+	["ptBR"] = "Ensina",
+	["ruRU"] = "Обучает",
+	["zhCN"] = "教你",
+	["zhTW"] = "教你"
 }
 
 
@@ -451,15 +451,15 @@ function Tooltip:HookTooltip(objTooltip)
 		self.__tooltipUpdated = false
 	end)
 	objTooltip:HookScript("OnTooltipSetItem", function(self)
-  
+		
 		local name, link = self:GetItem()
-    
-    
-    -- OnTooltipSetItem gets called twice for recipes which contain embedded items. We only want the second one!
+		
+		
+		-- OnTooltipSetItem gets called twice for recipes which contain embedded items. We only want the second one!
 		local _, _, _, _, _, _, _, _, _, _, itemSellPrice, itemTypeId = GetItemInfo(link)
 		if (itemTypeId == LE_ITEM_CLASS_RECIPE) then
 		
-      -- The easiest way of knowing when it is the first of two calls is
+			-- The easiest way of knowing when it is the first of two calls is
 			-- when the moneyFrame is not yet visible. But this only works
 			-- for recipes with an itemSellPrice.
 			if itemSellPrice > 0 then
@@ -515,7 +515,6 @@ function Tooltip:HookTooltip(objTooltip)
 
 
 		if self.__tooltipUpdated then return end
-		
 		if name and string.len(name) > 0 and link then
 			Tooltip:TallyUnits(self, link, "OnTooltipSetItem")
 		end
