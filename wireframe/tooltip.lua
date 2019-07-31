@@ -417,7 +417,27 @@ end
 
 
 
-local skipNextRecipeCall = true
+-- To know if we are in the first or second call of OnTooltipSetItem()
+-- for recipes without a sell price, we to scan the tooltip for "Use: Teaches you...".
+-- There is the global string ITEM_SPELL_TRIGGER_ONUSE for "Use:"
+-- but there is none for "Teaches you...".
+-- Just scanning for "Use:" is not enough, as consumable recipe products have a "Use:" too.
+-- Thus, we would have to store these strings for all locales:
+local teachesYouString = {
+  ["deDE"] = "Lehrt Euch", 
+  ["enUS"] = "Teaches you", 
+  ["enGB"] = "Teaches you", 
+  ["esES"] = "Te enseña", 
+  ["esMX"] = "Te enseña", 
+  ["frFR"] = "Vous apprend", 
+  ["itIT"] = "Ti insegna", 
+  ["koKR"] = "배웁니다",  -- (Right to Left)
+  ["ptBR"] = "Ensina",
+  ["ruRU"] = "Обучает",
+  ["zhCN"] = "教你",
+  ["zhTW"] = "教你"
+}
+
 
 function Tooltip:HookTooltip(objTooltip)
 	
@@ -434,16 +454,66 @@ function Tooltip:HookTooltip(objTooltip)
   
 		local name, link = self:GetItem()
     
-		local _, _, _, _, _, _, _, _, _, _, _, itemTypeId = GetItemInfo(link)
+    
+    -- OnTooltipSetItem gets called twice for recipes which contain embedded items. We only want the second one!
+		local _, _, _, _, _, _, _, _, _, _, itemSellPrice, itemTypeId = GetItemInfo(link)
 		if (itemTypeId == LE_ITEM_CLASS_RECIPE) then
-			if skipNextRecipeCall then
-				skipNextRecipeCall = false
-				return
+		
+      -- The easiest way of knowing when it is the first of two calls is
+			-- when the moneyFrame is not yet visible. But this only works
+			-- for recipes with an itemSellPrice.
+			if itemSellPrice > 0 then
+			
+				-- If there are no money frames at all, we are done.
+				if not self.shownMoneyFrames then return end
+				
+				-- If there are money frames, we check if "SELL_PRICE: ..." is among them,
+				-- assuming that no other addon has put it there before the Blizzard UI.
+				local moneyFrameVisible = false
+				
+				for i = 1, self.shownMoneyFrames, 1 do
+					if _G[self:GetName().."MoneyFrame"..i.."PrefixText"]:GetText() == string.format("%s:", SELL_PRICE) then
+						moneyFrameVisible = true
+						break
+					end
+				end
+				
+				if not moneyFrameVisible then return end
+
+			-- For recipes without itemSellPrice (e.g. soulbound) we have to
+			-- scan the tooltip for "Use: Teaches you". (See above)
 			else
-				skipNextRecipeCall = true
+			
+				local locale = GetLocale()
+				if (teachesYouString[locale]) then
+				
+					local foundUseTeachesYou = false
+					
+					local searchPattern
+					if locale == "koKR" then
+						searchPattern = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. " .+" .. teachesYouString[locale]   -- right to left
+					else
+						searchPattern = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. " " .. teachesYouString[locale]
+					end
+					
+					-- Search from bottom to top, because the searched line is most likely down.
+					-- Only search up to line 2, because the searched line is definitely not topmost.
+					for i = self:NumLines(), 2, -1 do
+						local line = _G[self:GetName().."TextLeft"..i]:GetText()
+						if string.find(line, searchPattern) then
+							foundUseTeachesYou = true
+							break
+						end
+					end
+					
+					if not foundUseTeachesYou then return end
+					
+				end
 			end
 		end
-    
+
+
+
 		if self.__tooltipUpdated then return end
 		
 		if name and string.len(name) > 0 and link then
