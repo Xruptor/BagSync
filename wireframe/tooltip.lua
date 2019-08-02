@@ -456,61 +456,62 @@ function Tooltip:HookTooltip(objTooltip)
 		
 		
 		-- OnTooltipSetItem gets called twice for recipes which contain embedded items. We only want the second one!
-		local _, _, _, _, _, _, _, _, _, _, itemSellPrice, itemTypeId = GetItemInfo(link)
-		if (itemTypeId == LE_ITEM_CLASS_RECIPE) then
-		
-			-- The easiest way of knowing when it is the first of two calls is
-			-- when the moneyFrame is not yet visible. But this only works
-			-- for recipes with an itemSellPrice.
-			if itemSellPrice > 0 then
+		if link then
+			local _, _, _, _, _, _, _, _, _, _, itemSellPrice, itemTypeId = GetItemInfo(link)
+			if (itemTypeId == LE_ITEM_CLASS_RECIPE) then
 			
-				-- If there are no money frames at all, we are done.
-				if not self.shownMoneyFrames then return end
+				-- The easiest way of knowing when it is the first of two calls is
+				-- when the moneyFrame is not yet visible. But this only works
+				-- for recipes with an itemSellPrice.
+				if itemSellPrice > 0 then
 				
-				-- If there are money frames, we check if "SELL_PRICE: ..." is among them,
-				-- assuming that no other addon has put it there before the Blizzard UI.
-				local moneyFrameVisible = false
-				
-				for i = 1, self.shownMoneyFrames, 1 do
-					if _G[self:GetName().."MoneyFrame"..i.."PrefixText"]:GetText() == string.format("%s:", SELL_PRICE) then
-						moneyFrameVisible = true
-						break
-					end
-				end
-				
-				if not moneyFrameVisible then return end
-
-			-- For recipes without itemSellPrice (e.g. soulbound) we have to
-			-- scan the tooltip for "Use: Teaches you". (See above)
-			else
-			
-				local locale = GetLocale()
-				if (teachesYouString[locale]) then
-				
-					local foundUseTeachesYou = false
+					-- If there are no money frames at all, we are done.
+					if not self.shownMoneyFrames then return end
 					
-					local searchPattern
-					if locale == "koKR" then
-						searchPattern = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. " .+" .. teachesYouString[locale]   -- right to left
-					else
-						searchPattern = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. " " .. teachesYouString[locale]
-					end
+					-- If there are money frames, we check if "SELL_PRICE: ..." is among them,
+					-- assuming that no other addon has put it there before the Blizzard UI.
+					local moneyFrameVisible = false
 					
-					
-					for i = 1, self:NumLines(), 1 do
-						local line = _G[self:GetName().."TextLeft"..i]:GetText()
-						if string.find(line, searchPattern) then
-							foundUseTeachesYou = true
+					for i = 1, self.shownMoneyFrames, 1 do
+						if _G[self:GetName().."MoneyFrame"..i.."PrefixText"]:GetText() == string.format("%s:", SELL_PRICE) then
+							moneyFrameVisible = true
 							break
 						end
 					end
 					
-					if not foundUseTeachesYou then return end
+					if not moneyFrameVisible then return end
+
+				-- For recipes without itemSellPrice (e.g. soulbound) we have to
+				-- scan the tooltip for "Use: Teaches you". (See above)
+				else
+				
+					local locale = GetLocale()
+					if (teachesYouString[locale]) then
 					
+						local foundUseTeachesYou = false
+						
+						local searchPattern
+						if locale == "koKR" then
+							searchPattern = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. " .+" .. teachesYouString[locale]	 -- right to left
+						else
+							searchPattern = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. " " .. teachesYouString[locale]
+						end
+						
+						
+						for i = 1, self:NumLines(), 1 do
+							local line = _G[self:GetName().."TextLeft"..i]:GetText()
+							if string.find(line, searchPattern) then
+								foundUseTeachesYou = true
+								break
+							end
+						end
+						
+						if not foundUseTeachesYou then return end
+						
+					end
 				end
 			end
 		end
-
 
 
 		if self.__tooltipUpdated then return end
