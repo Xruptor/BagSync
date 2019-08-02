@@ -497,7 +497,7 @@ function Tooltip:HookTooltip(objTooltip)
 					end
 					
 					
-					for i = 1, self:NumLines(), -1 do
+					for i = 1, self:NumLines(), 1 do
 						local line = _G[self:GetName().."TextLeft"..i]:GetText()
 						if string.find(line, searchPattern) then
 							foundUseTeachesYou = true
