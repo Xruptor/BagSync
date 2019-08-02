@@ -496,9 +496,8 @@ function Tooltip:HookTooltip(objTooltip)
 						searchPattern = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. " " .. teachesYouString[locale]
 					end
 					
-					-- Search from bottom to top, because the searched line is most likely down.
-					-- Only search up to line 2, because the searched line is definitely not topmost.
-					for i = self:NumLines(), 2, -1 do
+					
+					for i = 1, self:NumLines(), -1 do
 						local line = _G[self:GetName().."TextLeft"..i]:GetText()
 						if string.find(line, searchPattern) then
 							foundUseTeachesYou = true
