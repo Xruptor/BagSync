@@ -146,7 +146,7 @@ function Tooltip:MoneyTooltip()
 	
 	--sort the list by our sortIndex then by realm and finally by name
 	table.sort(usrData, function(a, b)
-		if a.sortIndex  == b.sortIndex then
+		if a.sortIndex == b.sortIndex then
 			if a.unitObj.realm == b.unitObj.realm then
 				return a.unitObj.name < b.unitObj.name;
 			end
@@ -336,7 +336,7 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 	if table.getn(unitList) > 0 then
 
 		table.sort(unitList, function(a, b)
-			if a.sortIndex  == b.sortIndex then
+			if a.sortIndex == b.sortIndex then
 				if a.unitObj.realm == b.unitObj.realm then
 					return a.unitObj.name < b.unitObj.name;
 				end
@@ -393,7 +393,7 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon)
 	
 	--sort the list by our sortIndex then by realm and finally by name
 	table.sort(usrData, function(a, b)
-		if a.sortIndex  == b.sortIndex then
+		if a.sortIndex == b.sortIndex then
 			if a.unitObj.realm == b.unitObj.realm then
 				return a.unitObj.name < b.unitObj.name;
 			end
@@ -431,7 +431,7 @@ local teachesYouString = {
 	["esMX"] = "Te enseña", 
 	["frFR"] = "Vous apprend", 
 	["itIT"] = "Ti insegna", 
-	["koKR"] = "배웁니다",   -- (Right to Left)
+	["koKR"] = "배웁니다", -- (Right to Left)
 	["ptBR"] = "Ensina",
 	["ruRU"] = "Обучает",
 	["zhCN"] = "教你",
@@ -452,69 +452,103 @@ function Tooltip:HookTooltip(objTooltip)
 	end)
 	objTooltip:HookScript("OnTooltipSetItem", function(self)
 		
-		local name, link = self:GetItem()
-		
-		
-		-- OnTooltipSetItem gets called twice for recipes which contain embedded items. We only want the second one!
-		if link then
-			local _, _, _, _, _, _, _, _, _, _, itemSellPrice, itemTypeId = GetItemInfo(link)
-			if (itemTypeId == LE_ITEM_CLASS_RECIPE) then
-			
-				-- The easiest way of knowing when it is the first of two calls is
-				-- when the moneyFrame is not yet visible. But this only works
-				-- for recipes with an itemSellPrice.
-				if itemSellPrice > 0 then
-				
-					-- If there are no money frames at all, we are done.
-					if not self.shownMoneyFrames then return end
-					
-					-- If there are money frames, we check if "SELL_PRICE: ..." is among them,
-					-- assuming that no other addon has put it there before the Blizzard UI.
-					local moneyFrameVisible = false
-					
-					for i = 1, self.shownMoneyFrames, 1 do
-						if _G[self:GetName().."MoneyFrame"..i.."PrefixText"]:GetText() == string.format("%s:", SELL_PRICE) then
-							moneyFrameVisible = true
-							break
-						end
-					end
-					
-					if not moneyFrameVisible then return end
-
-				-- For recipes without itemSellPrice (e.g. soulbound) we have to
-				-- scan the tooltip for "Use: Teaches you". (See above)
-				else
-				
-					local locale = GetLocale()
-					if (teachesYouString[locale]) then
-					
-						local foundUseTeachesYou = false
-						
-						local searchPattern
-						if locale == "koKR" then
-							searchPattern = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. " .+" .. teachesYouString[locale]	 -- right to left
-						else
-							searchPattern = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. " " .. teachesYouString[locale]
-						end
-						
-						
-						for i = 1, self:NumLines(), 1 do
-							local line = _G[self:GetName().."TextLeft"..i]:GetText()
-							if string.find(line, searchPattern) then
-								foundUseTeachesYou = true
-								break
-							end
-						end
-						
-						if not foundUseTeachesYou then return end
-						
-					end
-				end
-			end
-		end
-
-
 		if self.__tooltipUpdated then return end
+		
+		local name, link = self:GetItem()
+
+
+		-- -- OnTooltipSetItem gets called twice for recipes which contain embedded items. We only want the second one!
+		-- if name and link then
+		
+			-- local _, _, _, _, _, _, _, _, _, _, _, itemTypeId, itemSubTypeId = GetItemInfo(link)
+			-- if itemTypeId == LE_ITEM_CLASS_RECIPE and itemSubTypeId ~= LE_ITEM_RECIPE_BOOK then
+			
+				-- local locale = GetLocale()
+				-- if teachesYouString[locale] then
+				
+					-- local foundUseTeachesYou = false
+				
+					-- -- We first search for the "Use: Teaches you" line.
+					-- local searchPattern1 = nil
+					-- -- koKR is right to left.
+					-- if locale == "koKR" then
+						-- searchPattern1 = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. ".-" .. teachesYouString[locale]
+					-- else
+						-- searchPattern1 = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. ".-" .. teachesYouString[locale]
+					-- end
+					
+					
+					-- -- Some recipes may even have two "Use: Teaches you" lines
+					-- -- (e.g. https://www.wowhead.com/item=67538/recipe-vial-of-the-sands)
+					-- -- which is why we have to check if the recipe's product name
+					-- -- occurs in it.
+					-- local productName = nil
+					-- -- zhCN and zhTW have a special colon.
+					-- if locale == "zhCN" or locale == "zhTW" then
+						-- productName = string.match(name, ".-：(.+)")
+					-- else
+						-- productName = string.match(name, ".-: (.+)")
+					-- end
+					
+					-- if productName then 
+
+						-- -- The complete product name is sometimes not included in the
+						-- -- "Use: Teaches you" line. E.g.:
+						-- -- https://www.wowhead.com/item=2698
+						-- -- https://de.wowhead.com/item=2889
+						-- -- https://ru.wowhead.com/item=2701
+						-- -- We therefore search for each word separately.
+						-- -- This can go wrong as well, if e.g. for vial-of-the-sands
+						-- -- "of" or "the" also occurs in the recipe product's "Use: Teaches you" line.
+						-- -- But it seems like the best option right now
+						-- -- until another counter-ecample is found.
+						-- local productNameWords = {}
+						-- for word in string.gmatch(productName, "%S+") do
+							-- -- Insert word into the table and espace characters - + % . ( ) [ ].
+							-- local escapedWord = string.gsub(word, "[%-+%%.()%[%]]", "%%%0")
+							-- table.insert(productNameWords, escapedWord)
+						-- end
+						
+						
+						-- -- Search from bottom to top, because the searched line is most likely down.
+						-- -- Only search up to line 2, because the searched line is definitely not topmost.
+						-- for i = self:NumLines(), 2, -1 do
+							-- local line = _G[self:GetName().."TextLeft"..i]:GetText()
+							-- if string.find(line, searchPattern1) then
+								
+								-- -- Search from back to front as the last word is more likely to hit!
+								-- for j = #productNameWords, 1, -1 do
+
+									-- local searchPattern2 = nil
+									-- -- koKR is right to left.
+									-- if locale == "koKR" then
+										-- searchPattern2 = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. ".-" .. productNameWords[j] .. ".-" .. teachesYouString[locale]
+									-- else
+										-- searchPattern2 = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. ".-" .. teachesYouString[locale] .. ".-" .. productNameWords[j]
+									-- end
+										
+									-- if string.find(string.lower(line), string.lower(searchPattern2)) then
+										-- foundUseTeachesYou = true
+										-- break
+									-- end
+									
+								-- end
+								
+								-- if foundUseTeachesYou then
+									-- break
+								-- end
+							-- end
+						-- end
+					-- end
+					
+					-- if not foundUseTeachesYou then return end
+					
+				-- end
+			-- end
+		-- end
+
+		
+		
 		if name and string.len(name) > 0 and link then
 			Tooltip:TallyUnits(self, link, "OnTooltipSetItem")
 		end
