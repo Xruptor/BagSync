@@ -439,6 +439,20 @@ local teachesYouString = {
 }
 
 
+-- Some recipes have two "Use: Teaches you" lines; one for the recipe
+-- and one for the recipe's product.
+-- E.g.: https://www.wowhead.com/item=67538/recipe-vial-of-the-sands
+-- To recognise the line of the recipe, we check if the recipe's product
+-- name occurs in it. This does not necessarily work, because sometimes
+-- some recipes are called differently in the "Use: Teaches you" line.
+-- E.g.: https://de.wowhead.com/item=21371/muster-kernteufelsstofftasche
+-- But as long as it works for all the recipes with two "Use: Teaches you"
+-- lines, we are fine!
+local recipeIdsWithTwoTeachesYouLines = {
+	[67538] = true, -- Recipe: Vial of the Sands
+}
+
+
 function Tooltip:HookTooltip(objTooltip)
 	
 	objTooltip:HookScript("OnHide", function(self)
@@ -478,66 +492,70 @@ function Tooltip:HookTooltip(objTooltip)
 					-- end
 					
 					
-					-- -- Some recipes may even have two "Use: Teaches you" lines
-					-- -- (e.g. https://www.wowhead.com/item=67538/recipe-vial-of-the-sands)
-					-- -- which is why we have to check if the recipe's product name
-					-- -- occurs in it.
-					-- local productName = nil
-					-- -- zhCN and zhTW have a special colon.
-					-- if locale == "zhCN" or locale == "zhTW" then
-						-- productName = string.match(name, ".-：(.+)")
-					-- else
-						-- productName = string.match(name, ".-: (.+)")
-					-- end
-					
-					-- if productName then 
-
-						-- -- The complete product name is sometimes not included in the
-						-- -- "Use: Teaches you" line. E.g.:
-						-- -- https://www.wowhead.com/item=2698
-						-- -- https://de.wowhead.com/item=2889
-						-- -- https://ru.wowhead.com/item=2701
-						-- -- We therefore search for each word separately.
-						-- -- This can go wrong as well, if e.g. for vial-of-the-sands
-						-- -- "of" or "the" also occurs in the recipe product's "Use: Teaches you" line.
-						-- -- But it seems like the best option right now
-						-- -- until another counter-ecample is found.
-						-- local productNameWords = {}
-						-- for word in string.gmatch(productName, "%S+") do
-							-- -- Insert word into the table and espace characters - + % . ( ) [ ].
-							-- local escapedWord = string.gsub(word, "[%-+%%.()%[%]]", "%%%0")
-							-- table.insert(productNameWords, escapedWord)
-						-- end
-						
-						
-						-- -- Search from bottom to top, because the searched line is most likely down.
-						-- -- Only search up to line 2, because the searched line is definitely not topmost.
-						-- for i = self:NumLines(), 2, -1 do
-							-- local line = _G[self:GetName().."TextLeft"..i]:GetText()
-							-- if string.find(line, searchPattern1) then
+					-- -- Search from bottom to top, because the searched line is most likely down.
+					-- -- Only search up to line 2, because the searched line is definitely not topmost.
+					-- for i = self:NumLines(), 2, -1 do
+						-- local line = _G[self:GetName().."TextLeft"..i]:GetText()
+						-- if string.find(line, searchPattern1) then
+							
+							-- if not recipeIdsWithTwoTeachesYouLines[itemId] then
+								-- foundUseTeachesYou = true
+								-- break
 								
-								-- -- Search from back to front as the last word is more likely to hit!
-								-- for j = #productNameWords, 1, -1 do
+							-- else
+								-- -- For recipes with two "Use: Teaches you" lines we check
+								-- -- if the recipe's product name occurs in it.
+								-- local productName = nil
+								-- -- zhCN and zhTW have a special colon.
+								-- if locale == "zhCN" or locale == "zhTW" then
+									-- productName = string.match(name, ".-：(.+)")
+								-- else
+									-- productName = string.match(name, ".-: (.+)")
+								-- end
+								
+								-- if productName then 
 
-									-- local searchPattern2 = nil
-									-- -- koKR is right to left.
-									-- if locale == "koKR" then
-										-- searchPattern2 = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. ".-" .. productNameWords[j] .. ".-" .. teachesYouString[locale]
-									-- else
-										-- searchPattern2 = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. ".-" .. teachesYouString[locale] .. ".-" .. productNameWords[j]
-									-- end
-										
-									-- if string.find(string.lower(line), string.lower(searchPattern2)) then
-										-- foundUseTeachesYou = true
-										-- break
-									-- end
+									-- -- The complete product name is sometimes not included in the
+									-- -- "Use: Teaches you" line. E.g.:
+									-- -- https://ru.wowhead.com/item=67538
+
+									-- -- We therefore search for each word separately.
+									-- -- This can go wrong, if e.g. for "Vial of the sands"
+									-- -- "of" or "the" would also occur in the recipe product's 
+									-- -- "Use: Teaches you" line. We have to make sure it works
+									-- -- for every item of recipeIdsWithTwoTeachesYouLines.
 									
-								-- end
+									-- local productNameWords = {}
+									-- for word in string.gmatch(productName, "%S+") do
+										-- -- Insert word into the table and espace characters - + % . ( ) [ ].
+										-- local escapedWord = string.gsub(word, "[%-+%%.()%[%]]", "%%%0")
+										-- table.insert(productNameWords, escapedWord)
+									-- end
 								
-								-- if foundUseTeachesYou then
-									-- break
-								-- end
+									-- -- Search from back to front as the last word is more likely to hit!
+									-- for j = #productNameWords, 1, -1 do
+
+										-- local searchPattern2 = nil
+										-- -- koKR is right to left.
+										-- if locale == "koKR" then
+											-- searchPattern2 = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. ".-" .. productNameWords[j] .. ".-" .. teachesYouString[locale]
+										-- else
+											-- searchPattern2 = "^" .. ITEM_SPELL_TRIGGER_ONUSE .. ".-" .. teachesYouString[locale] .. ".-" .. productNameWords[j]
+										-- end
+											
+										-- if string.find(string.lower(line), string.lower(searchPattern2)) then
+											-- foundUseTeachesYou = true
+											-- break
+										-- end
+										
+									-- end
+								-- end -- if productName
+							-- end -- if recipeIdsWithTwoTeachesYouLines[itemId]
+							
+							-- if foundUseTeachesYou then
+								-- break
 							-- end
+							
 						-- end
 					-- end
 					
