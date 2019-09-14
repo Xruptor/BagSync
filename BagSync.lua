@@ -2,7 +2,7 @@
 	BagSync.lua
 		A item tracking addon that works with practically any bag addon available.
 		This addon has been heavily rewritten several times since it's creation back in 2007.
-		
+
 		This addon was inspired by Tuller and his Bagnon addon.  (Thanks Tuller!)
 
 	Author: Xruptor
@@ -12,6 +12,7 @@
 local BSYC = select(2, ...) --grab the addon namespace
 BSYC = LibStub("AceAddon-3.0"):NewAddon(BSYC, "BagSync", "AceEvent-3.0", "AceConsole-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
+local RETAIL = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
 
 local debugf = tekDebug and tekDebug:GetFrame("BagSync")
 
@@ -42,29 +43,29 @@ local function ParseItemLink(link)
 	if not link then return nil end
 	if tonumber(link) then return link end
 	local result = link:match("item:([%d:]+)") --strip the item: portion of the string
-	
+
 	if result then
 		result = gsub(result, ":0:", "::") --supposedly blizzard removed all the zero's in patch 7.0. Lets do it just in case!
 		--split everything into a table so we can count up to the bonusID portion
 		local countSplit = {strsplit(":", result)}
-		
+
 		--make sure we have a bonusID count
 		if countSplit and #countSplit > 13 then
 			local count = countSplit[13] or 0 -- do we have a bonusID number count?
 			count = count == "" and 0 or count --make sure we have a count if not default to zero
 			count = tonumber(count)
-			
+
 			--check if we have even anything to work with for the amount of bonusID's
 			--btw any numbers after the bonus ID are either upgradeValue which we don't care about or unknown use right now
 			--http://wow.gamepedia.com/ItemString
 			if count > 0 and countSplit[1] then
 				--return the string with just the bonusID's in it
 				local newItemStr = ""
-				
+
 				--11th place because 13 is bonus ID, one less from 13 (12) would be technically correct, but we have to compensate for ItemID we added in front so substract another one (11).
 				--string.rep repeats a pattern.
 				newItemStr = countSplit[1]..string.rep(":", 11)
-				
+
 				--lets add the bonusID's, ignore the end past bonusID's
 				for i=13, (13 + count) do
 					--check for certain bonus ID's
@@ -74,18 +75,18 @@ local function ParseItemLink(link)
 					end
 					newItemStr = newItemStr..":"..countSplit[i]
 				end
-				
+
 				--add the unknowns at the end, upgradeValue doesn't always have to be supplied.
 				newItemStr = newItemStr..":::"
 
 				return newItemStr
 			end
 		end
-		
+
 		--we don't have any bonusID's that we care about, so return just the ItemID which is the first number
 		return result:match("^(%d+):")
 	end
-	
+
 	--nothing to return so return nil
 	return nil
 end
@@ -135,7 +136,7 @@ function BSYC:StartupDB()
 
 	BagSyncOpt = BagSyncOpt or {}
 	self.options = BagSyncOpt
-	
+
 	if self.options.showTotal == nil then self.options.showTotal = true end
 	if self.options.showGuildNames == nil then self.options.showGuildNames = false end
 	if self.options.enableGuild == nil then self.options.enableGuild = true end
@@ -169,16 +170,16 @@ function BSYC:StartupDB()
 	if self.options.colors.itemid == nil then self.options.colors.itemid = { r = 82/255, g = 211/255, b = 134/255 }  end
 
 	self.db = {}
-	
+
 	--initiate global db variable
 	BagSyncDB = BagSyncDB or {}
 	self.db.global = BagSyncDB
-	
+
 	--the player DB defaults to the current realm, if you want more then you need to use db.global
 	BagSyncDB[self.currentRealm] = BagSyncDB[self.currentRealm] or {}
 	BagSyncDB[self.currentRealm][self.currentPlayer] = BagSyncDB[self.currentRealm][self.currentPlayer] or {}
 	self.db.player = BagSyncDB[self.currentRealm][self.currentPlayer]
-	
+
 	BagSyncGUILD_DB = BagSyncGUILD_DB or {}
 	BagSyncGUILD_DB[self.currentRealm] = BagSyncGUILD_DB[self.currentRealm] or {}
 	self.db.guild = BagSyncGUILD_DB
@@ -186,21 +187,21 @@ function BSYC:StartupDB()
 	BagSyncCURRENCY_DB = BagSyncCURRENCY_DB or {}
 	BagSyncCURRENCY_DB[self.currentRealm] = BagSyncCURRENCY_DB[self.currentRealm] or {}
 	self.db.currency = BagSyncCURRENCY_DB
-	
+
 	BagSyncPROFESSION_DB = BagSyncPROFESSION_DB or {}
 	BagSyncPROFESSION_DB[self.currentRealm] = BagSyncPROFESSION_DB[self.currentRealm] or {}
 	BagSyncPROFESSION_DB[self.currentRealm][self.currentPlayer] = BagSyncPROFESSION_DB[self.currentRealm][self.currentPlayer] or {}
 	self.db.profession = BagSyncPROFESSION_DB
-	
+
 	BagSyncBLACKLIST_DB = BagSyncBLACKLIST_DB or {}
 	BagSyncBLACKLIST_DB[self.currentRealm] = BagSyncBLACKLIST_DB[self.currentRealm] or {}
 	self.db.blacklist = BagSyncBLACKLIST_DB
-	
+
 	BagSync_REALMKEY = BagSync_REALMKEY or {}
 	BagSync_REALMKEY[self.currentRealm] = GetRealmName()
 	BagSync_REALMKEY[0] = BagSync_REALMKEY[0] or {} --this will maintain a list of connected realms
 	self.db.realmkey = BagSync_REALMKEY
-	
+
 end
 
 function BSYC:FixDB(onlyChkGuild)
@@ -214,7 +215,7 @@ function BSYC:FixDB(onlyChkGuild)
 
 	local storeUsers = {}
 	local storeGuilds = {}
-	
+
 	for realm, rd in pairs(BagSyncDB) do
 		if string.find(realm, " ") then
 			--get rid of old realm names with whitespaces, we aren't going to use it anymore
@@ -252,11 +253,11 @@ function BSYC:FixDB(onlyChkGuild)
 			end
 		end
 	end
-	
+
 	--currency data and profession data, only do if were not doing a guild check
 	--also display fixdb message only if were not doing a guild check
 	if not onlyChkGuild then
-	
+
 		--fix currency
 		for realm, rd in pairs(BagSyncCURRENCY_DB) do
 			if string.find(realm, " ") then
@@ -298,7 +299,7 @@ function BSYC:FixDB(onlyChkGuild)
 				end
 			end
 		end
-		
+
 		--fix blacklist
 		for realm, rd in pairs(BagSyncBLACKLIST_DB) do
 			if string.find(realm, " ") then
@@ -312,10 +313,10 @@ function BSYC:FixDB(onlyChkGuild)
 				end
 			end
 		end
-		
+
 		if BagSyncCRAFT_DB then BagSyncCRAFT_DB = nil end --remove old crafting DB
 		if BagSyncTOKEN_DB then BagSyncTOKEN_DB = nil end --remove old tokens db
-		
+
 		self:Print("|cFFFF9900"..L.FixDBComplete.."|r")
 	end
 end
@@ -323,7 +324,7 @@ end
 function BSYC:CleanAuctionsDB()
 	--this function will remove expired auctions for all characters in every realm
 	local timestampChk = { 30*60, 2*60*60, 12*60*60, 48*60*60 }
-				
+
 	for realm, rd in pairs(BagSyncDB) do
 		--realm
 		for k, v in pairs(rd) do
@@ -340,12 +341,12 @@ function BSYC:CleanAuctionsDB()
 							--it's okay if the auction count is showing more then actually stored, it's just used as a means
 							--to scan through all our items.  Even if we have only 3 and the count is 6 it will just skip the last 3.
 							local dblink, dbcount, dbtimeleft = strsplit(",", BagSyncDB[realm][k]["auction"][0][x])
-							
+
 							--only proceed if we have everything to work with, otherwise this auction data is corrupt
 							if dblink and dbcount and dbtimeleft then
 								if tonumber(dbtimeleft) < 1 or tonumber(dbtimeleft) > 4 then dbtimeleft = 4 end --just in case
 								--now do the time checks
-								local diff = time() - BagSyncDB[realm][k].AH_LastScan 
+								local diff = time() - BagSyncDB[realm][k].AH_LastScan
 								if diff > timestampChk[tonumber(dbtimeleft)] then
 									--technically this isn't very realiable.  but I suppose it's better the  nothing
 									BagSyncDB[realm][k]["auction"][0][x] = nil
@@ -360,14 +361,14 @@ function BSYC:CleanAuctionsDB()
 			end
 		end
 	end
-	
+
 end
 
 function BSYC:FilterDB(dbSelect)
 
 	local xIndex = {}
 	local dbObj = self.db.global
-	
+
 	if dbSelect and dbSelect == 1 then
 		--use BagSyncPROFESSION_DB
 		dbObj = self.db.profession
@@ -404,17 +405,17 @@ function BSYC:FilterDB(dbSelect)
 			end
 		end
 	end
-	
+
 	return xIndex
 end
 
 function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
-	
+
 	local tagName = srcName
 	local fullRealmName = srcRealm --default to shortened realm first
-	
+
 	if self.db.realmkey[srcRealm] then fullRealmName = self.db.realmkey[srcRealm] end --second, if we have a realmkey with a true realm name then use it
-	
+
 	if not isGuild then
 		local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
 		--local NotReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-NotReady:0|t]]
@@ -436,35 +437,35 @@ function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 			end
 		end
 	end
-	
+
 	--make sure we work with player data not guild data
 	if self.options.enableFactionIcons and self.db.global[srcRealm] and self.db.global[srcRealm][srcName] then
 		local FactionIcon = [[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]
-		
+
 		if self.db.global[srcRealm][srcName].faction == "Alliance" then
 			FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]]
 		elseif self.db.global[srcRealm][srcName].faction == "Horde" then
 			FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
 		end
-		
+
 		tagName = FactionIcon.." "..tagName
 	end
-	
+
 	--add Cross-Realm and BNet identifiers to Characters not on same realm
 	local crossString = ""
 	local bnetString = ""
-	
+
 	if self.options.enableRealmIDTags then
 		crossString = "XR-"
 		bnetString = "BNet-"
 	end
-	
+
 	if self.options.enableRealmAstrickName then
 		fullRealmName = "*"
 	elseif self.options.enableRealmShortName then
 		fullRealmName = string.sub(fullRealmName, 1, 5) --only use 5 characters of the server name
 	end
-	
+
 	if self.options.enableBNetAccountItems then
 		if srcRealm and srcRealm ~= self.currentRealm then
 			if not self.crossRealmNames[srcRealm] then
@@ -478,7 +479,7 @@ function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 			tagName = tagName.." "..rgbhex(self.options.colors.cross).."["..crossString..fullRealmName.."]|r"
 		end
 	end
-		
+
 	return tagName
 end
 
@@ -489,7 +490,7 @@ end
 function BSYC:SaveBag(bagname, bagid)
 	if not bagname or not bagid then return end
 	self.db.player[bagname] = self.db.player[bagname] or {}
-	
+
 	--reset our tooltip data since we scanned new items (we want current data not old)
 	self.PreviousItemLink = nil
 	self.PreviousItemTotals = {}
@@ -515,14 +516,14 @@ end
 
 function BSYC:SaveEquipment()
 	self.db.player["equip"] = self.db.player["equip"] or {}
-	
+
 	--reset our tooltip data since we scanned new items (we want current data not old)
 	self.PreviousItemLink = nil
 	self.PreviousItemTotals = {}
-	
+
 	local slotItems = {}
 	local NUM_EQUIPMENT_SLOTS = 19
-	
+
 	--start at 1, 0 used to be the old range slot (not needed anymore)
 	for slot = 1, NUM_EQUIPMENT_SLOTS do
 		local link = GetInventoryItemLink("player", slot)
@@ -545,14 +546,17 @@ function BSYC:ScanEntireBank()
 	for i = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
 		self:SaveBag("bank", i)
 	end
-	if IsReagentBankUnlocked() then 
-		self:SaveBag("reagentbank", REAGENTBANK_CONTAINER)
+
+	if RETAIL then
+		if IsReagentBankUnlocked() then
+			self:SaveBag("reagentbank", REAGENTBANK_CONTAINER)
+		end
 	end
 end
 
 function BSYC:ScanVoidBank()
 	if not self.atVoidBank then return end
-	
+
 	self.db.player["void"] = self.db.player["void"] or {}
 
 	--reset our tooltip data since we scanned new items (we want current data not old)
@@ -562,7 +566,7 @@ function BSYC:ScanVoidBank()
 	local numTabs = 2
 	local index = 0
 	local slotItems = {}
-	
+
 	for tab = 1, numTabs do
 		for i = 1, 80 do
 			local itemID, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(tab, i)
@@ -572,36 +576,36 @@ function BSYC:ScanVoidBank()
 			end
 		end
 	end
-	
+
 	self.db.player["void"][0] = slotItems
 end
 
 function BSYC:ScanGuildBank()
 	if not IsInGuild() then return end
-	
+
 	local MAX_GUILDBANK_SLOTS_PER_TAB = 98
-	
+
 	--reset our tooltip data since we scanned new items (we want current data not old)
 	self.PreviousItemLink = nil
 	self.PreviousItemTotals = {}
-	
+
 	local numTabs = GetNumGuildBankTabs()
 	local index = 0
 	local slotItems = {}
-	
+
 	for tab = 1, numTabs do
 		local name, icon, isViewable, canDeposit, numWithdrawals, remainingWithdrawals = GetGuildBankTabInfo(tab)
 		--if we don't check for isViewable we get a weirdo permissions error for the player when they attempt it
 		if isViewable then
 			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
-			
+
 				local link = GetGuildBankItemLink(tab, slot)
 
 				if link and ParseItemLink(link) then
 					index = index + 1
 					local _, count = GetGuildBankItemInfo(tab, slot)
 					count = (count > 1 and count) or nil
-					
+
 					if count then
 						slotItems[index] = format("%s,%d", ParseItemLink(link), count)
 					else
@@ -611,9 +615,9 @@ function BSYC:ScanGuildBank()
 			end
 		end
 	end
-	
+
 	self.db.guild[self.currentRealm][self.db.player.guild] = slotItems
-	
+
 end
 
 function BSYC:ScanMailbox()
@@ -626,7 +630,7 @@ function BSYC:ScanMailbox()
 	CheckInbox()
 
 	self.db.player["mailbox"] = self.db.player["mailbox"] or {}
-	
+
 	local slotItems = {}
 	local mailCount = 0
 	local numInbox = GetInboxNumItems()
@@ -634,14 +638,14 @@ function BSYC:ScanMailbox()
 	--reset our tooltip data since we scanned new items (we want current data not old)
 	self.PreviousItemLink = nil
 	self.PreviousItemTotals = {}
-	
+
 	--scan the inbox
 	if (numInbox > 0) then
 		for mailIndex = 1, numInbox do
 			for i=1, ATTACHMENTS_MAX_RECEIVE do
 				local name, itemID, itemTexture, count, quality, canUse = GetInboxItem(mailIndex, i)
 				local link = GetInboxItemLink(mailIndex, i)
-				
+
 				if name and link and ParseItemLink(link) then
 					mailCount = mailCount + 1
 					count = (count > 1 and count) or nil
@@ -654,22 +658,22 @@ function BSYC:ScanMailbox()
 			end
 		end
 	end
-	
+
 	self.db.player["mailbox"][0] = slotItems
 	self.isCheckingMail = false
 end
 
 function BSYC:ScanAuctionHouse()
 	self.db.player["auction"] = self.db.player["auction"] or {}
-	
+
 	local slotItems = {}
 	local ahCount = 0
 	local numActiveAuctions = GetNumAuctionItems("owner")
-	
+
 	--reset our tooltip data since we scanned new items (we want current data not old)
 	self.PreviousItemLink = nil
 	self.PreviousItemTotals = {}
-	
+
 	--scan the auction house
 	if (numActiveAuctions > 0) then
 		for ahIndex = 1, numActiveAuctions do
@@ -685,7 +689,7 @@ function BSYC:ScanAuctionHouse()
 			end
 		end
 	end
-	
+
 	self.db.player["auction"][0] = slotItems
 	self.db.player.AH_Count = ahCount
 end
@@ -696,18 +700,18 @@ end
 
 function BSYC:ShowMoneyTooltip(objTooltip)
 	local tooltip = _G["BagSyncMoneyTooltip"] or nil
-	
+
 	if (not tooltip) then
 			tooltip = CreateFrame("GameTooltip", "BagSyncMoneyTooltip", UIParent, "GameTooltipTemplate")
-			
+
 			local closeButton = CreateFrame("Button", nil, tooltip, "UIPanelCloseButton")
 			closeButton:SetPoint("TOPRIGHT", tooltip, 1, 0)
-			
+
 			tooltip:SetToplevel(true)
 			tooltip:EnableMouse(true)
 			tooltip:SetMovable(true)
 			tooltip:SetClampedToScreen(true)
-			
+
 			tooltip:SetScript("OnMouseDown",function(self)
 					self.isMoving = true
 					self:StartMoving();
@@ -721,10 +725,10 @@ function BSYC:ShowMoneyTooltip(objTooltip)
 	end
 
 	local usrData = {}
-	
+
 	tooltip:ClearLines()
 	tooltip:ClearAllPoints()
-	
+
 	if objTooltip then
 		tooltip:SetOwner(objTooltip, "ANCHOR_NONE")
 		tooltip:SetPoint("CENTER",objTooltip,"CENTER",0,0)
@@ -735,23 +739,23 @@ function BSYC:ShowMoneyTooltip(objTooltip)
 
 	tooltip:AddLine("BagSync")
 	tooltip:AddLine(" ")
-	
+
 	--loop through our characters
 	local xDB = self:FilterDB()
 
 	for k, v in pairs(xDB) do
 		local yName, yRealm  = strsplit("^", k)
 		local playerName = BSYC:GetRealmTags(yName, yRealm)
-		
+
 		if v.gold then
 			playerName = self:GetClassColor(playerName or "Unknown", v.class)
 			table.insert(usrData, { name=playerName, gold=v.gold } )
 		end
 	end
 	table.sort(usrData, function(a,b) return (a.name < b.name) end)
-	
+
 	local gldTotal = 0
-	
+
 	for i=1, table.getn(usrData) do
 		tooltip:AddDoubleLine(usrData[i].name, GetCoinTextureString(usrData[i].gold), 1, 1, 1, 1, 1, 1)
 		gldTotal = gldTotal + usrData[i].gold
@@ -760,7 +764,7 @@ function BSYC:ShowMoneyTooltip(objTooltip)
 		tooltip:AddLine(" ")
 		tooltip:AddDoubleLine(tooltipColor(self.options.colors.total, L.TooltipTotal), GetCoinTextureString(gldTotal), 1, 1, 1, 1, 1, 1)
 	end
-	
+
 	tooltip:AddLine(" ")
 	tooltip:Show()
 end
@@ -790,7 +794,7 @@ function BSYC:ScanCurrency()
 	local limit = GetCurrencyListSize()
 
 	for i=1, limit do
-	
+
 		local name, isHeader, isExpanded, _, _, count, icon = GetCurrencyListInfo(i)
 		--extraCurrencyType = 1 for arena points, 2 for honor points; 0 otherwise (an item-based currency).
 
@@ -811,7 +815,7 @@ function BSYC:ScanCurrency()
 			end
 		end
 	end
-	--we don't want to overwrite currency, because some characters may have currency that the others dont have	
+	--we don't want to overwrite currency, because some characters may have currency that the others dont have
 end
 
 ------------------------
@@ -827,7 +831,7 @@ function BSYC:CreateItemTotals(countTable)
 	local info = ""
 	local total = 0
 	local grouped = 0
-	
+
 	--order in which we want stuff displayed
 	local list = {
 		[1] = { "bag", 			L.TooltipBag },
@@ -839,7 +843,7 @@ function BSYC:CreateItemTotals(countTable)
 		[7] = { "void", 		L.TooltipVoid },
 		[8] = { "auction", 		L.TooltipAuction },
 	}
-		
+
 	for i = 1, #list do
 		local count = countTable[list[i][1]]
 		if count > 0 then
@@ -852,12 +856,12 @@ function BSYC:CreateItemTotals(countTable)
 	--remove the first delimiter since it's added to the front automatically
 	info = strsub(info, string.len(L.TooltipDelimiter) + 1)
 	if string.len(info) < 1 then return nil end --return nil for empty strings
-	
+
 	--if it's groupped up and has more then one item then use a different color and show total
 	if grouped > 1 then
 		info = tooltipColor(self.options.colors.second, total).." ("..info..")"
 	end
-	
+
 	return info
 end
 
@@ -874,12 +878,12 @@ end
 
 function BSYC:AddCurrencyTooltip(frame, currencyName, addHeader)
 	if not BagSyncOpt.enableTooltips then return end
-	
+
 	local tmp = {}
 	local count = 0
-	
+
 	local xDB = BSYC:FilterDB(2) --dbSelect 2
-		
+
 	for k, v in pairs(xDB) do
 		local yName, yRealm  = strsplit("^", k)
 		local playerName = BSYC:GetRealmTags(yName, yRealm)
@@ -894,7 +898,7 @@ function BSYC:AddCurrencyTooltip(frame, currencyName, addHeader)
 			end
 		end
 	end
-	
+
 	if count > 0 then
 		table.sort(tmp, function(a,b) return (a.name < b.name) end)
 		if self.options.enableTooltipSeperator and not addHeader then
@@ -908,39 +912,39 @@ function BSYC:AddCurrencyTooltip(frame, currencyName, addHeader)
 			frame:AddDoubleLine(tooltipColor(BagSyncOpt.colors.first, tmp[i].name), tooltipColor(BagSyncOpt.colors.second, tmp[i].count))
 		end
 	end
-	
+
 	frame:Show()
 end
 
 function BSYC:AddItemToTooltip(frame, link) --workaround
 	if not BagSyncOpt.enableTooltips then return end
-	
-	--if we can't convert the item link then lets just ignore it altogether	
+
+	--if we can't convert the item link then lets just ignore it altogether
 	local itemLink = ParseItemLink(link)
 	if not itemLink then
 		frame:Show()
 		return
 	end
-	
+
 	--use our stripped itemlink, not the full link
 	local shortItemID = ToShortItemID(itemLink)
 
 	--short the shortID and ignore all BonusID's and stats
 	if self.options.enableShowUniqueItemsTotals then itemLink = shortItemID end
-	
+
 	--only show tooltips in search frame if the option is enabled
 	if self.options.tooltipOnlySearch and frame:GetOwner() and frame:GetOwner():GetName() and string.sub(frame:GetOwner():GetName(), 1, 16) ~= "BagSyncSearchRow" then
 		frame:Show()
 		return
 	end
-	
+
 	local permIgnore ={
 		[6948] = "Hearthstone",
 		[110560] = "Garrison Hearthstone",
 		[140192] = "Dalaran Hearthstone",
 		[128353] = "Admiral's Compass",
 	}
-	
+
 	--ignore the hearthstone and blacklisted items
 	if shortItemID and tonumber(shortItemID) then
 		if permIgnore[tonumber(shortItemID)] or self.db.blacklist[self.currentRealm][tonumber(shortItemID)] then
@@ -948,7 +952,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 			return
 		end
 	end
-	
+
 	--lag check (check for previously displayed data) if so then display it
 	if self.PreviousItemLink and itemLink and itemLink == self.PreviousItemLink then
 		if table.getn(self.PreviousItemTotals) > 0 then
@@ -959,7 +963,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 					frame:AddDoubleLine(ename, ecount, color.r, color.g, color.b, color.r, color.g, color.b)
 				else
 					local color = self.options.colors.second
-					frame:AddLine(self.PreviousItemTotals[i], color.r, color.g, color.b)				
+					frame:AddLine(self.PreviousItemTotals[i], color.r, color.g, color.b)
 				end
 			end
 		end
@@ -970,15 +974,15 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 	--reset our last displayed
 	self.PreviousItemTotals = {}
 	self.PreviousItemLink = itemLink
-	
+
 	--this is so we don't scan the same guild multiple times
 	local previousGuilds = {}
 	local previousGuildsXRList = {}
 	local grandTotal = 0
 	local first = true
-	
+
 	local xDB = self:FilterDB()
-	
+
 	--loop through our characters
 	--k = player, v = stored data for player
 	for k, v in pairs(xDB) do
@@ -993,13 +997,13 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 			["auction"] = 0,
 			["guild"] = 0,
 		}
-	
+
 		local infoString
 		local pFaction = v.faction or self.playerFaction --just in case ;) if we dont know the faction yet display it anyways
-		
+
 		--check if we should show both factions or not
 		if self.options.enableFaction or pFaction == self.playerFaction then
-		
+
 			--now count the stuff for the user
 			--q = bag name, r = stored data for bag name
 			for q, r in pairs(v) do
@@ -1021,16 +1025,16 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 					end
 				end
 			end
-		
+
 			if self.options.enableGuild then
 				local guildN = v.guild or nil
-			
+
 				--check the guild bank if the character is in a guild
 				if guildN and self.db.guild[v.realm][guildN] then
 					--check to see if this guild has already been done through this run (so we don't do it multiple times)
 					--check for XR/B.Net support, you can have multiple guilds with same names on different servers
 					local gName = self:GetRealmTags(guildN, v.realm, true)
-					
+
 					--check to make sure we didn't already add a guild from a connected-realm
 					local trueRealmList = self.db.realmkey[0][v.realm] --get the connected realms
 					if trueRealmList then
@@ -1061,7 +1065,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 					end
 				end
 			end
-			
+
 			--get class for the unit if there is one
 			infoString = self:CreateItemTotals(allowList)
 
@@ -1070,14 +1074,14 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 				local playerName = self:GetRealmTags(yName, yRealm)
 				table.insert(self.PreviousItemTotals, self:GetClassColor(playerName or "Unknown", v.class).."@"..(infoString or "unknown"))
 			end
-			
+
 		end
-		
+
 	end
-	
+
 	--sort it
 	table.sort(self.PreviousItemTotals, function(a,b) return (a < b) end)
-	
+
 	--show guildnames last
 	if self.options.enableGuild and self.options.showGuildNames then
 		for k, v in pairsByKeys(previousGuilds) do
@@ -1087,23 +1091,23 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 			end
 		end
 	end
-	
+
 	--show grand total if we have something
 	--don't show total if there is only one item
 	if self.options.showTotal and grandTotal > 0 and getn(self.PreviousItemTotals) > 1 then
 		table.insert(self.PreviousItemTotals, tooltipColor(self.options.colors.total, L.TooltipTotal).."@"..tooltipColor(self.options.colors.second, grandTotal))
 	end
-	
+
 	--add ItemID if it's enabled
 	if table.getn(self.PreviousItemTotals) > 0 and self.options.enableTooltipItemID and shortItemID and tonumber(shortItemID) then
 		table.insert(self.PreviousItemTotals, 1 , tooltipColor(self.options.colors.itemid, L.TooltipItemID).." "..tooltipColor(self.options.colors.second, shortItemID))
 	end
-	
+
 	--now check for seperater and only add if we have something in the table already
 	if table.getn(self.PreviousItemTotals) > 0 and self.options.enableTooltipSeperator then
 		table.insert(self.PreviousItemTotals, 1 , " ")
 	end
-	
+
 	--add it all together now
 	if table.getn(self.PreviousItemTotals) > 0 then
 		for i = 1, #self.PreviousItemTotals do
@@ -1113,7 +1117,7 @@ function BSYC:AddItemToTooltip(frame, link) --workaround
 				frame:AddDoubleLine(ename, ecount, color.r, color.g, color.b, color.r, color.g, color.b)
 			else
 				local color = self.options.colors.second
-				frame:AddLine(self.PreviousItemTotals[i], color.r, color.g, color.b)				
+				frame:AddLine(self.PreviousItemTotals[i], color.r, color.g, color.b)
 			end
 		end
 	end
@@ -1124,11 +1128,11 @@ end
 function BSYC:HookTooltip(tooltip)
 
 	tooltip.isModified = false
-	
+
 	tooltip:HookScript("OnHide", function(self)
 		self.isModified = false
 		self.lastHyperLink = nil
-	end)	
+	end)
 	tooltip:HookScript("OnTooltipCleared", function(self)
 		self.isModified = false
 	end)
@@ -1154,7 +1158,7 @@ function BSYC:HookTooltip(tooltip)
 			if xLink and ParseItemLink(xLink) then  --only show info if the tooltip text matches the link
 				self.isModified = true
 				BSYC:AddItemToTooltip(self, xLink)
-			end		
+			end
 		end
 	end)
 
@@ -1172,12 +1176,14 @@ function BSYC:HookTooltip(tooltip)
 			self.lastHyperLink = link
 		end
 	end)
-	hooksecurefunc(tooltip, "SetGuildBankItem", function(self, tab, slot)
-		local link = GetGuildBankItemLink(tab, slot)
-		if link and ParseItemLink(link) then
-			self.lastHyperLink = link
-		end
-	end)
+	if RETAIL then
+		hooksecurefunc(tooltip, "SetGuildBankItem", function(self, tab, slot)
+			local link = GetGuildBankItemLink(tab, slot)
+			if link and ParseItemLink(link) then
+				self.lastHyperLink = link
+			end
+		end)
+	end
 	hooksecurefunc(tooltip, "SetHyperlink", function(self, link)
 		if self.isModified then return end
 		if link and ParseItemLink(link) then
@@ -1191,46 +1197,48 @@ function BSYC:HookTooltip(tooltip)
 	---------------------------------
 
 	--lets hook other frames so we can show tooltips there as well, sometimes GetItem() doesn't work right and returns nil
-	hooksecurefunc(tooltip, "SetVoidItem", function(self, tab, slot)
-		if self.isModified then return end
-		local link = GetVoidItemInfo(tab, slot)
-		if link and ParseItemLink(link) then
-			self.isModified = true
-			BSYC:AddItemToTooltip(self, link)
-		end
-	end)
-	hooksecurefunc(tooltip, "SetVoidDepositItem", function(self, slot)
-		if self.isModified then return end
-		local link = GetVoidTransferDepositInfo(slot)
-		if link and ParseItemLink(link) then
-			self.isModified = true
-			BSYC:AddItemToTooltip(self, link)
-		end
-	end)
-	hooksecurefunc(tooltip, "SetVoidWithdrawalItem", function(self, slot)
-		if self.isModified then return end
-		local link = GetVoidTransferWithdrawalInfo(slot)
-		if link and ParseItemLink(link) then
-			self.isModified = true
-			BSYC:AddItemToTooltip(self, link)
-		end
-	end)
-	hooksecurefunc(tooltip, "SetRecipeReagentItem", function(self, recipeID, reagentIndex)
-		if self.isModified then return end
-		local link = C_TradeSkillUI.GetRecipeReagentItemLink(recipeID, reagentIndex)
-		if link and ParseItemLink(link) then
-			self.isModified = true
-			BSYC:AddItemToTooltip(self, link)
-		end
-	end)
-	hooksecurefunc(tooltip, "SetRecipeResultItem", function(self, recipeID)
-		if self.isModified then return end
-		local link = C_TradeSkillUI.GetRecipeItemLink(recipeID)
-		if link and ParseItemLink(link) then
-			self.isModified = true
-			BSYC:AddItemToTooltip(self, link)
-		end
-	end)	
+	if RETAIL then
+		hooksecurefunc(tooltip, "SetVoidItem", function(self, tab, slot)
+			if self.isModified then return end
+			local link = GetVoidItemInfo(tab, slot)
+			if link and ParseItemLink(link) then
+				self.isModified = true
+				BSYC:AddItemToTooltip(self, link)
+			end
+		end)
+		hooksecurefunc(tooltip, "SetVoidDepositItem", function(self, slot)
+			if self.isModified then return end
+			local link = GetVoidTransferDepositInfo(slot)
+			if link and ParseItemLink(link) then
+				self.isModified = true
+				BSYC:AddItemToTooltip(self, link)
+			end
+		end)
+		hooksecurefunc(tooltip, "SetVoidWithdrawalItem", function(self, slot)
+			if self.isModified then return end
+			local link = GetVoidTransferWithdrawalInfo(slot)
+			if link and ParseItemLink(link) then
+				self.isModified = true
+				BSYC:AddItemToTooltip(self, link)
+			end
+		end)
+		hooksecurefunc(tooltip, "SetRecipeReagentItem", function(self, recipeID, reagentIndex)
+			if self.isModified then return end
+			local link = C_TradeSkillUI.GetRecipeReagentItemLink(recipeID, reagentIndex)
+			if link and ParseItemLink(link) then
+				self.isModified = true
+				BSYC:AddItemToTooltip(self, link)
+			end
+		end)
+		hooksecurefunc(tooltip, "SetRecipeResultItem", function(self, recipeID)
+			if self.isModified then return end
+			local link = C_TradeSkillUI.GetRecipeItemLink(recipeID)
+			if link and ParseItemLink(link) then
+				self.isModified = true
+				BSYC:AddItemToTooltip(self, link)
+			end
+		end)
+	end
 	hooksecurefunc(tooltip, "SetQuestLogItem", function(self, itemType, index)
 		if self.isModified then return end
 		local link = GetQuestLogItemLink(itemType, index)
@@ -1246,7 +1254,7 @@ function BSYC:HookTooltip(tooltip)
 			self.isModified = true
 			BSYC:AddItemToTooltip(self, link)
 		end
-	end)	
+	end)
 	-- hooksecurefunc(tooltip, 'SetItemByID', function(self, link)
 		-- if self.isModified or not BagSyncOpt.enableTooltips then return end
 		-- if link and ParseItemLink(link) then
@@ -1254,26 +1262,28 @@ function BSYC:HookTooltip(tooltip)
 			-- BSYC:AddItemToTooltip(self, link)
 		-- end
 	-- end)
-	
+
 	--------------------------------------------------
-	hooksecurefunc(tooltip, "SetCurrencyToken", function(self, index)
-		if self.isModified then return end
-		self.isModified = true
-		local currencyName = GetCurrencyListInfo(index)
-		BSYC:AddCurrencyTooltip(self, currencyName)
-	end)
-	hooksecurefunc(tooltip, "SetCurrencyByID", function(self, id)
-		if self.isModified then return end
-		self.isModified = true
-		local currencyName = GetCurrencyInfo(id)
-		BSYC:AddCurrencyTooltip(self, currencyName)
-	end)
-	hooksecurefunc(tooltip, "SetBackpackToken", function(self, index)
-		if self.isModified then return end
-		self.isModified = true
-		local currencyName = GetBackpackCurrencyInfo(index)
-		BSYC:AddCurrencyTooltip(self, currencyName)
-	end)
+	if RETAIL then
+		hooksecurefunc(tooltip, "SetCurrencyToken", function(self, index)
+			if self.isModified then return end
+			self.isModified = true
+			local currencyName = GetCurrencyListInfo(index)
+			BSYC:AddCurrencyTooltip(self, currencyName)
+		end)
+		hooksecurefunc(tooltip, "SetCurrencyByID", function(self, id)
+			if self.isModified then return end
+			self.isModified = true
+			local currencyName = GetCurrencyInfo(id)
+			BSYC:AddCurrencyTooltip(self, currencyName)
+		end)
+		hooksecurefunc(tooltip, "SetBackpackToken", function(self, index)
+			if self.isModified then return end
+			self.isModified = true
+			local currencyName = GetBackpackCurrencyInfo(index)
+			BSYC:AddCurrencyTooltip(self, currencyName)
+		end)
+	end
 
 end
 
@@ -1364,7 +1374,7 @@ function BSYC:OnEnable()
 	BINDING_NAME_BAGSYNCSEARCH = L.KeybindSearch
 
 	local ver = GetAddOnMetadata("BagSync","Version") or 0
-	
+
 	--load our player info after login
 	self.currentPlayer = UnitName("player")
 	self.currentRealm = select(2, UnitFullName("player")) --get shortend realm name with no spaces and dashes
@@ -1373,12 +1383,12 @@ function BSYC:OnEnable()
 
 	--strip realm of whitespace and special characters, alternative to UnitFullName, since UnitFullName does not work on OnInitialize()
 	--BSYC:Debug(gsub(GetRealmName(),"[%s%-]",""))
-	
+
 	local realmList = {} --we are going to use this to store a list of connected realms, including the current realm
 	local autoCompleteRealms = GetAutoCompleteRealms() or { self.currentRealm }
-	
+
 	table.insert(realmList, self.currentRealm)
-	
+
 	self.crossRealmNames = {}
 	for k, v in pairs(autoCompleteRealms) do
 		if v ~= self.currentRealm then
@@ -1386,12 +1396,12 @@ function BSYC:OnEnable()
 			table.insert(realmList, v)
 		end
 	end
-	
+
 	--initiate the db
 	self:StartupDB()
-	
+
 	--do DB cleanup check by version number
-	if not self.options.dbversion or self.options.dbversion ~= ver then	
+	if not self.options.dbversion or self.options.dbversion ~= ver then
 		self:FixDB()
 		self.options.dbversion = ver
 	end
@@ -1408,10 +1418,10 @@ function BSYC:OnEnable()
 	--save the faction information
 	--"Alliance", "Horde" or nil (Neutral)
 	self.db.player.faction = self.playerFaction
-	
+
 	--save player Realm for quick access later
 	self.db.player.realm = self.currentRealm
-	
+
 	--check for player not in guild
 	if IsInGuild() or GetNumGuildMembers(true) > 0 then
 		GuildRoster()
@@ -1419,7 +1429,7 @@ function BSYC:OnEnable()
 		self.db.player.guild = nil
 		self:FixDB(true)
 	end
-	
+
 	--save all inventory data, including backpack(0)
 	for i = BACKPACK_CONTAINER, BACKPACK_CONTAINER + NUM_BAG_SLOTS do
 		self:SaveBag("bag", i)
@@ -1427,28 +1437,32 @@ function BSYC:OnEnable()
 
 	--force an equipment scan
 	self:SaveEquipment()
-	
+
 	--force token scan
-	hooksecurefunc("BackpackTokenFrame_Update", function(self) BSYC:ScanCurrency() end)
-	self:ScanCurrency()
-	
+	if RETAIL then
+		hooksecurefunc("BackpackTokenFrame_Update", function(self) BSYC:ScanCurrency() end)
+		self:ScanCurrency()
+	end
+
 	--clean up old auctions
 	self:CleanAuctionsDB()
-	
+
 	--check for minimap toggle
 	if self.options.enableMinimap and BagSync_MinimapButton and not BagSync_MinimapButton:IsVisible() then
 		BagSync_MinimapButton:Show()
 	elseif not self.options.enableMinimap and BagSync_MinimapButton and BagSync_MinimapButton:IsVisible() then
 		BagSync_MinimapButton:Hide()
 	end
-				
+
 	self:RegisterEvent("PLAYER_MONEY")
 	self:RegisterEvent("BANKFRAME_OPENED")
 	self:RegisterEvent("BANKFRAME_CLOSED")
-	self:RegisterEvent("GUILDBANKFRAME_OPENED")
-	self:RegisterEvent("GUILDBANKFRAME_CLOSED")
-	self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
-	self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED")
+	if RETAIL then
+		self:RegisterEvent("GUILDBANKFRAME_OPENED")
+		self:RegisterEvent("GUILDBANKFRAME_CLOSED")
+		self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
+		self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED")
+	end
 	self:RegisterEvent("BAG_UPDATE")
 	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED")
 	self:RegisterEvent("UNIT_INVENTORY_CHANGED")
@@ -1457,29 +1471,35 @@ function BSYC:OnEnable()
 	self:RegisterEvent("MAIL_INBOX_UPDATE")
 	self:RegisterEvent("AUCTION_HOUSE_SHOW")
 	self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE")
-	
+
 	--currency
-	self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
+	if RETAIL then
+		self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
+	end
 
 	--void storage
-	self:RegisterEvent("VOID_STORAGE_OPEN")
-	self:RegisterEvent("VOID_STORAGE_CLOSE")
-	self:RegisterEvent("VOID_STORAGE_UPDATE")
-	self:RegisterEvent("VOID_STORAGE_CONTENTS_UPDATE")
-	self:RegisterEvent("VOID_TRANSFER_DONE")
-	
+	if RETAIL then
+		self:RegisterEvent("VOID_STORAGE_OPEN")
+		self:RegisterEvent("VOID_STORAGE_CLOSE")
+		self:RegisterEvent("VOID_STORAGE_UPDATE")
+		self:RegisterEvent("VOID_STORAGE_CONTENTS_UPDATE")
+		self:RegisterEvent("VOID_TRANSFER_DONE")
+	end
+
 	--this will be used for getting the tradeskill link
-	self:RegisterEvent("TRADE_SKILL_SHOW")
-	self:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
+	if RETAIL then
+		self:RegisterEvent("TRADE_SKILL_SHOW")
+		self:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
+	end
 
 	--hook the tooltips
 	self:HookTooltip(GameTooltip)
 	self:HookTooltip(ItemRefTooltip)
-	
+
 	--register the slash command
 	self:RegisterChatCommand("bgs", "ChatCommand")
 	self:RegisterChatCommand("bagsync", "ChatCommand")
-	
+
 	if self.options.enableLoginVersionInfo then
 		self:Print("[v|cFF20ff20"..ver.."|r] /bgs, /bagsync")
 	end
@@ -1529,7 +1549,7 @@ end
 function BSYC:BAG_UPDATE(event, bagid)
 	-- -1 happens to be the primary bank slot ;)
 	if (bagid > BANK_CONTAINER) then
-	
+
 		--this will update the bank/bag slots
 		local bagname
 
@@ -1542,11 +1562,11 @@ function BSYC:BAG_UPDATE(event, bagid)
 		else
 			return
 		end
-		
+
 		if bagname == "bank" and not self.atBank then return; end
 		--now save the item information in the bag from bagupdate, this could be bag or bank
 		self:SaveBag(bagname, bagid)
-		
+
 	end
 end
 
@@ -1617,7 +1637,7 @@ function BSYC:GUILDBANKFRAME_OPENED()
 	self.atGuildBank = true
 	if not self.options.enableGuild then return end
 	if not self.GuildTabQueryQueue then self.GuildTabQueryQueue = {} end
-	
+
 	local numTabs = GetNumGuildBankTabs()
 	for tab = 1, numTabs do
 		-- add this tab to the queue to refresh; if we do them all at once the server bugs and sends massive amounts of events
@@ -1695,11 +1715,11 @@ end
 function BSYC:TRADE_SKILL_SHOW()
 	--IsTradeSkillLinked() returns true only if trade window was opened from chat link (meaning another player)
 	if (not _G.C_TradeSkillUI.IsTradeSkillLinked()) then
-		
+
 		local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions()
-		
+
 		local dbPlayer = self.db.profession[self.currentRealm][self.currentPlayer]
-		
+
 		--prof1
 		if prof1 then
 			self:doRegularTradeSkill(prof1, dbPlayer, 1)
@@ -1715,7 +1735,7 @@ function BSYC:TRADE_SKILL_SHOW()
 			--they removed a profession
 			dbPlayer[2] = nil
 		end
-		
+
 		--archaeology
 		if archaeology then
 			self:doRegularTradeSkill(archaeology, dbPlayer, 3)
@@ -1723,7 +1743,7 @@ function BSYC:TRADE_SKILL_SHOW()
 			--they removed a profession
 			dbPlayer[3] = nil
 		end
-		
+
 		--fishing
 		if fishing then
 			self:doRegularTradeSkill(fishing, dbPlayer, 4)
@@ -1731,7 +1751,7 @@ function BSYC:TRADE_SKILL_SHOW()
 			--they removed a profession
 			dbPlayer[4] = nil
 		end
-		
+
 		--cooking
 		if cooking then
 			self:doRegularTradeSkill(cooking, dbPlayer, 5)
@@ -1739,7 +1759,7 @@ function BSYC:TRADE_SKILL_SHOW()
 			--they removed a profession
 			dbPlayer[5] = nil
 		end
-		
+
 		--firstAid
 		if firstAid then
 			self:doRegularTradeSkill(firstAid, dbPlayer, 6)
@@ -1748,7 +1768,7 @@ function BSYC:TRADE_SKILL_SHOW()
 			dbPlayer[6] = nil
 		end
 	end
-	
+
 	--grab the player recipes but only scan once, TRADE_SKILL_LIST_UPDATE is triggered multiple times for some reason
 	self:RegisterEvent("TRADE_SKILL_LIST_UPDATE")
 end
@@ -1763,11 +1783,11 @@ function BSYC:TRADE_SKILL_LIST_UPDATE()
 		local getProfIndex = 0
 		local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions()
 		local tradeid, tradename = _G.C_TradeSkillUI.GetTradeSkillLine()
-		
+
 		if not tradename then return end --don't do anything if no tradeskill name
-		
+
 		local dbPlayer = self.db.profession[self.currentRealm][self.currentPlayer]
-		
+
 		--prof1
 		if prof1 and GetProfessionInfo(prof1) == tradename then
 			getIndex = 1
@@ -1788,7 +1808,7 @@ function BSYC:TRADE_SKILL_LIST_UPDATE()
 			getIndex = 6
 			getProfIndex = firstAid
 		end
-		
+
 		--don't do anything if we have nothing to work with
 		if getIndex < 1 then return end
 
@@ -1800,21 +1820,21 @@ function BSYC:TRADE_SKILL_LIST_UPDATE()
 
 		for idx = 1, #recipeIDs do
 			recipeInfo = _G.C_TradeSkillUI.GetRecipeInfo(recipeIDs[idx])
-			
+
 			if recipeInfo and recipeInfo.learned then
 				recipeString = recipeString.."|"..recipeInfo.recipeID
 			end
 		end
-		
+
 		--only record if we have something to work with
 		if name and skillLevel and string.len(recipeString) > 0 then
 			recipeString = strsub(recipeString, string.len("|") + 1) --remove the delimiter in front of recipeID list
 			dbPlayer[getIndex] = dbPlayer[getIndex] or {}
 			dbPlayer[getIndex].recipes = recipeString
 		end
-		
+
 	end
-	
+
 	--unregister for next time the tradeskill window is opened
 	self:UnregisterEvent("TRADE_SKILL_LIST_UPDATE")
 end
