@@ -5,7 +5,7 @@
 
 	ItemSearch
 		An item text search engine of some sort
-		
+
 	Grammar:
 		<search> 			:=	<intersect search>
 		<intersect search> 	:=	<union search> & <union search> ; <union search>
@@ -317,7 +317,7 @@ local function link_FindSearchInTooltip(itemLink, search)
 	if not itemID then
 		return
 	end
-	
+
 	local cachedResult = tooltipCache[search][itemID]
 	if cachedResult ~= nil then
 		return cachedResult
@@ -404,11 +404,11 @@ Lib:RegisterTypedSearch{
 Lib:RegisterTypedSearch{
 	id = 'classRestriction',
 	tags = {'c', 'class'},
-	
+
 	canSearch = function(self, _, search)
 		return search
 	end,
-	
+
 	findItem = function(self, link, _, search)
 		if link:find("battlepet") then return false end
 
@@ -416,19 +416,19 @@ Lib:RegisterTypedSearch{
 		if not itemID then
 			return
 		end
-		
+
 		local cachedResult = tooltipCache[search][itemID]
 		if cachedResult ~= nil then
 			return cachedResult
 		end
-	
+
 		tooltipScanner:SetOwner(UIParent, 'ANCHOR_NONE')
 		tooltipScanner:SetHyperlink(link)
 
 		local result = false
-		
+
 		local pattern = string.gsub(ITEM_CLASSES_ALLOWED:lower(), "%%s", "(.+)")
-		
+
 		for i = 1, tooltipScanner:NumLines() do
 			local text =  _G[tooltipScanner:GetName() .. 'TextLeft' .. i]:GetText():lower()
 			local textChk = string.find(text, pattern)
@@ -437,7 +437,7 @@ Lib:RegisterTypedSearch{
 				result = true
 			end
 		end
-		
+
 		tooltipCache[search][itemID] = result
 		return result
 	end,
@@ -518,10 +518,12 @@ elseif IsAddOnLoaded('Wardrobe') then
 --Last Resort: Blizzard Equipment Manager
 else
 	function ES_FindSets(setList, search, exactMatch)
-		for i = 1, C_EquipmentSet.GetNumEquipmentSets() do
-			local setName = C_EquipmentSet.GetEquipmentSetInfo(i)
-			if setName and ES_TrySetName(setName, search, exactMatch) then
-				table.insert(setList, setName)
+		if WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then
+			for i = 1, C_EquipmentSet.GetNumEquipmentSets() do
+				local setName = C_EquipmentSet.GetEquipmentSetInfo(i)
+				if setName and ES_TrySetName(setName, search, exactMatch) then
+					table.insert(setList, setName)
+				end
 			end
 		end
 		if (search ~= '*') and exactMatch and #setList == 0 then --if we just finished an exact, non-global (not "*"), name match search and still have no results, try one more time with partial ("starts with") set name matching instead
@@ -556,10 +558,10 @@ Lib:RegisterTypedSearch{
 	findItem = function(self, itemLink, _, search)
 		--this is an item-set search and we know that the only items that can possibly match will be *equippable* items, so we'll short-circuit the response for non-equippable items to speed up searches.
 		if not IsEquippableItem(itemLink) then return false end
-		
+
 		--default to matching *all* equipment sets if no set name has been provided yet
 		if search == '' then search = '*' end
-		
+
 		--generate a list of all equipment sets whose names begin with the search term (or a single set if an exact set name match is found), then look for our item in those equipment sets
 		local setList = {}
 		ES_FindSets(setList, search, true)
