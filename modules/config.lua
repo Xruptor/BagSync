@@ -11,9 +11,21 @@ local configDialog = LibStub("AceConfigDialog-3.0")
 local options = {}
 local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
 
-local 	factionString = " ( "..[[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
-		factionString = factionString.." "..[[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]]
-		factionString = factionString.." "..[[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]..")"
+local factionIcons = {
+	[WOW_PROJECT_MAINLINE] = {
+		[[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]],
+		[[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]],
+		[[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]
+	},
+	[WOW_PROJECT_CLASSIC] = {
+		[[|TInterface\Icons\inv_bannerpvp_01:18|t]],
+		[[|TInterface\Icons\inv_bannerpvp_02:18|t]],
+		[[|TInterface\Icons\inv_misc_questionmark:18|t]]
+	}
+}
+local	factionString = " ( "..factionIcons[WOW_PROJECT_ID][1]
+		factionString = factionString.." "..factionIcons[WOW_PROJECT_ID][2]
+		factionString = factionString.." "..factionIcons[WOW_PROJECT_ID][3]..")"
 
 options.type = "group"
 options.name = "BagSync"
@@ -23,7 +35,7 @@ options.args = {} --initiate the arguements for the options to display
 local function get(info)
 
 	local p, c = string.split(".", info.arg)
-	
+
 	if p == "color" then
 		return BSYC.options.colors[c].r, BSYC.options.colors[c].g, BSYC.options.colors[c].b
 	elseif p == "keybind" then
@@ -35,13 +47,13 @@ local function get(info)
 			return false
 		end
 	end
-	
+
 end
 
 local function set(info, arg1, arg2, arg3, arg4)
 
 	local p, c = string.split(".", info.arg)
-	
+
 	if p == "color" then
 		BSYC.options.colors[c].r = arg1
 		BSYC.options.colors[c].g = arg2
@@ -60,7 +72,7 @@ local function set(info, arg1, arg2, arg3, arg4)
 			BSYC:ResetTooltip()
 		end
 	end
-	
+
 end
 
 options.args.heading = {
@@ -374,10 +386,10 @@ options.args.display = {
 				}
 			}
 		}
-	
+
 	},
 }
-	
+
 options.args.color = {
 	type = "group",
 	order = 4,

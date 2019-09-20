@@ -439,12 +439,25 @@ function BSYC:GetRealmTags(srcName, srcRealm, isGuild)
 
 	--make sure we work with player data not guild data
 	if self.options.enableFactionIcons and self.db.global[srcRealm] and self.db.global[srcRealm][srcName] then
-		local FactionIcon = [[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]
+		local factionIcons = {
+			[WOW_PROJECT_MAINLINE] = {
+				[[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]],
+				[[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]],
+				[[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
+			},
+			[WOW_PROJECT_CLASSIC] = {
+				[[|TInterface\Icons\inv_misc_questionmark:18|t]],
+				[[|TInterface\Icons\inv_bannerpvp_02:18|t]],
+				[[|TInterface\Icons\inv_bannerpvp_01:18|t]]
+			}
+		}
+
+		local FactionIcon = factionIcons[WOW_PROJECT_ID][1]
 
 		if self.db.global[srcRealm][srcName].faction == "Alliance" then
-			FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]]
+			FactionIcon = factionIcons[WOW_PROJECT_ID][2]
 		elseif self.db.global[srcRealm][srcName].faction == "Horde" then
-			FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
+			FactionIcon = factionIcons[WOW_PROJECT_ID][3]
 		end
 
 		tagName = FactionIcon.." "..tagName
