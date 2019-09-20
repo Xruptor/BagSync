@@ -12,7 +12,6 @@
 local BSYC = select(2, ...) --grab the addon namespace
 BSYC = LibStub("AceAddon-3.0"):NewAddon(BSYC, "BagSync", "AceEvent-3.0", "AceConsole-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync", true)
-local RETAIL = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
 
 local debugf = tekDebug and tekDebug:GetFrame("BagSync")
 
@@ -547,7 +546,7 @@ function BSYC:ScanEntireBank()
 		self:SaveBag("bank", i)
 	end
 
-	if RETAIL then
+	if WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then
 		if IsReagentBankUnlocked() then
 			self:SaveBag("reagentbank", REAGENTBANK_CONTAINER)
 		end
@@ -1176,7 +1175,7 @@ function BSYC:HookTooltip(tooltip)
 			self.lastHyperLink = link
 		end
 	end)
-	if RETAIL then
+	if WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then
 		hooksecurefunc(tooltip, "SetGuildBankItem", function(self, tab, slot)
 			local link = GetGuildBankItemLink(tab, slot)
 			if link and ParseItemLink(link) then
@@ -1197,7 +1196,7 @@ function BSYC:HookTooltip(tooltip)
 	---------------------------------
 
 	--lets hook other frames so we can show tooltips there as well, sometimes GetItem() doesn't work right and returns nil
-	if RETAIL then
+	if WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then
 		hooksecurefunc(tooltip, "SetVoidItem", function(self, tab, slot)
 			if self.isModified then return end
 			local link = GetVoidItemInfo(tab, slot)
@@ -1264,7 +1263,7 @@ function BSYC:HookTooltip(tooltip)
 	-- end)
 
 	--------------------------------------------------
-	if RETAIL then
+	if WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then
 		hooksecurefunc(tooltip, "SetCurrencyToken", function(self, index)
 			if self.isModified then return end
 			self.isModified = true
@@ -1439,7 +1438,7 @@ function BSYC:OnEnable()
 	self:SaveEquipment()
 
 	--force token scan
-	if RETAIL then
+	if WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then
 		hooksecurefunc("BackpackTokenFrame_Update", function(self) BSYC:ScanCurrency() end)
 		self:ScanCurrency()
 	end
@@ -1457,7 +1456,7 @@ function BSYC:OnEnable()
 	self:RegisterEvent("PLAYER_MONEY")
 	self:RegisterEvent("BANKFRAME_OPENED")
 	self:RegisterEvent("BANKFRAME_CLOSED")
-	if RETAIL then
+	if WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then
 		self:RegisterEvent("GUILDBANKFRAME_OPENED")
 		self:RegisterEvent("GUILDBANKFRAME_CLOSED")
 		self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
@@ -1473,12 +1472,12 @@ function BSYC:OnEnable()
 	self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE")
 
 	--currency
-	if RETAIL then
+	if WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then
 		self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
 	end
 
 	--void storage
-	if RETAIL then
+	if WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then
 		self:RegisterEvent("VOID_STORAGE_OPEN")
 		self:RegisterEvent("VOID_STORAGE_CLOSE")
 		self:RegisterEvent("VOID_STORAGE_UPDATE")
@@ -1487,7 +1486,7 @@ function BSYC:OnEnable()
 	end
 
 	--this will be used for getting the tradeskill link
-	if RETAIL then
+	if WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then
 		self:RegisterEvent("TRADE_SKILL_SHOW")
 		self:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
 	end
