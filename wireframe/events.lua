@@ -122,7 +122,7 @@ function Events:CURRENCY_DISPLAY_UPDATE()
 end
 
 function Events:PLAYER_REGEN_ENABLED()
-	if Unit:InCombatLockdown() then return end
+	if Unit:InCombatLockdown() or (not BSYC.IsRetail) then return end
 	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
 	self.doCurrencyUpdate = nil
 	Scanner:SaveCurrency()
