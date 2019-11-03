@@ -433,20 +433,23 @@ function Tooltip:HookTooltip(objTooltip)
 			Tooltip:TallyUnits(self, link, "OnTooltipSetItem")
 		end
 	end)
-	hooksecurefunc(objTooltip, "SetRecipeReagentItem", function(self, recipeID, reagentIndex)
-		if self.__tooltipUpdated then return end
-		local link = C_TradeSkillUI.GetRecipeReagentItemLink(recipeID, reagentIndex)
-		if link then
-			Tooltip:TallyUnits(self, link, "SetRecipeReagentItem")
-		end
-	end)
-	hooksecurefunc(objTooltip, "SetRecipeResultItem", function(self, recipeID)
-		if self.__tooltipUpdated then return end
-		local link = C_TradeSkillUI.GetRecipeItemLink(recipeID)
-		if link then
-			Tooltip:TallyUnits(self, link, "SetRecipeResultItem")
-		end
-	end)
+	if BSYC.IsRetail then
+		hooksecurefunc(objTooltip, "SetRecipeReagentItem", function(self, recipeID, reagentIndex)
+			if self.__tooltipUpdated then return end
+			local link = C_TradeSkillUI.GetRecipeReagentItemLink(recipeID, reagentIndex)
+			if link then
+				Tooltip:TallyUnits(self, link, "SetRecipeReagentItem")
+			end
+		end)
+	
+		hooksecurefunc(objTooltip, "SetRecipeResultItem", function(self, recipeID)
+			if self.__tooltipUpdated then return end
+			local link = C_TradeSkillUI.GetRecipeItemLink(recipeID)
+			if link then
+				Tooltip:TallyUnits(self, link, "SetRecipeResultItem")
+			end
+		end)
+	end
 	hooksecurefunc(objTooltip, "SetQuestLogItem", function(self, itemType, index)
 		if self.__tooltipUpdated then return end
 		local link = GetQuestLogItemLink(itemType, index)
@@ -463,35 +466,36 @@ function Tooltip:HookTooltip(objTooltip)
 	end)
 	
 	--------------------------------------------------
-	hooksecurefunc(objTooltip, "SetCurrencyToken", function(self, index)
-		if self.__tooltipUpdated then return end
-		local name, isHeader, isExpanded, isUnused, isWatched, count, icon = GetCurrencyListInfo(index)
-		if name and icon then
-			Tooltip:CurrencyTooltip(self, name, icon)
-		end
-	end)
-	hooksecurefunc(objTooltip, "SetCurrencyTokenByID", function(self, index)
-		if self.__tooltipUpdated then return end
-		local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(index)
-		if name and icon then
-			Tooltip:CurrencyTooltip(self, name, icon)
-		end
-	end)
-	hooksecurefunc(objTooltip, "SetCurrencyByID", function(self, index)
-		if self.__tooltipUpdated then return end
-		local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(index)
-		if name and icon then
-			Tooltip:CurrencyTooltip(self, name, icon)
-		end
-	end)
-	hooksecurefunc(objTooltip, "SetBackpackToken", function(self, index)
-		if self.__tooltipUpdated then return end
-		local name, count, icon, currencyID = GetBackpackCurrencyInfo(index)
-		if name and icon then
-			Tooltip:CurrencyTooltip(self, name, icon)
-		end
-	end)
-
+	if BSYC.IsRetail then
+		hooksecurefunc(objTooltip, "SetCurrencyToken", function(self, index)
+			if self.__tooltipUpdated then return end
+			local name, isHeader, isExpanded, isUnused, isWatched, count, icon = GetCurrencyListInfo(index)
+			if name and icon then
+				Tooltip:CurrencyTooltip(self, name, icon)
+			end
+		end)
+		hooksecurefunc(objTooltip, "SetCurrencyTokenByID", function(self, index)
+			if self.__tooltipUpdated then return end
+			local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(index)
+			if name and icon then
+				Tooltip:CurrencyTooltip(self, name, icon)
+			end
+		end)
+		hooksecurefunc(objTooltip, "SetCurrencyByID", function(self, index)
+			if self.__tooltipUpdated then return end
+			local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(index)
+			if name and icon then
+				Tooltip:CurrencyTooltip(self, name, icon)
+			end
+		end)
+		hooksecurefunc(objTooltip, "SetBackpackToken", function(self, index)
+			if self.__tooltipUpdated then return end
+			local name, count, icon, currencyID = GetBackpackCurrencyInfo(index)
+			if name and icon then
+				Tooltip:CurrencyTooltip(self, name, icon)
+			end
+		end)
+	end
 end
 
 function Tooltip:OnEnable()

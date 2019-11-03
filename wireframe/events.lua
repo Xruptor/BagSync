@@ -19,29 +19,33 @@ function Events:OnEnable()
 
 	self:RegisterEvent("UNIT_INVENTORY_CHANGED")
 	self:RegisterEvent("BAG_UPDATE")
-	self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
 	
 	self:RegisterEvent("TRADE_SKILL_SHOW")
 	self:RegisterEvent("TRADE_SKILL_LIST_UPDATE")
 	self:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
 
-	self:RegisterEvent("VOID_STORAGE_OPEN", function() Scanner:SaveVoidBank() end)
-	self:RegisterEvent("VOID_STORAGE_UPDATE", function() Scanner:SaveVoidBank() end)
-	self:RegisterEvent("VOID_STORAGE_CONTENTS_UPDATE", function() Scanner:SaveVoidBank() end)
-	self:RegisterEvent("VOID_TRANSFER_DONE", function() Scanner:SaveVoidBank() end)
-	
 	self:RegisterEvent("MAIL_SHOW", function() Scanner:SaveMailbox() end)
 	self:RegisterEvent("MAIL_INBOX_UPDATE", function() Scanner:SaveMailbox() end)
 	
 	self:RegisterEvent("BANKFRAME_OPENED", function() Scanner:SaveBank() end)
 	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", function() Scanner:SaveBank(true) end)
-	self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED", function() Scanner:SaveReagents() end)
-	self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:SaveReagents() end)
-	
-	self:RegisterEvent("GUILDBANKFRAME_OPENED")
-	self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
 	
 	self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE", function() Scanner:SaveAuctionHouse() end)
+
+	if BSYC.IsRetail then
+		self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
+
+		self:RegisterEvent("VOID_STORAGE_OPEN", function() Scanner:SaveVoidBank() end)
+		self:RegisterEvent("VOID_STORAGE_UPDATE", function() Scanner:SaveVoidBank() end)
+		self:RegisterEvent("VOID_STORAGE_CONTENTS_UPDATE", function() Scanner:SaveVoidBank() end)
+		self:RegisterEvent("VOID_TRANSFER_DONE", function() Scanner:SaveVoidBank() end)
+
+		self:RegisterEvent("GUILDBANKFRAME_OPENED")
+		self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
+
+		self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED", function() Scanner:SaveReagents() end)
+		self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:SaveReagents() end)
+	end
 
 	Scanner:StartupScans() --do the login player scans
 end

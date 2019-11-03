@@ -23,8 +23,10 @@ function Scanner:StartupScans()
 	for i = BACKPACK_CONTAINER, BACKPACK_CONTAINER + NUM_BAG_SLOTS do
 		self:SaveBag("bag", i)
 	end
-	
-	self:SaveCurrency()
+
+	if BSYC.IsRetail then
+		self:SaveCurrency()
+	end
 	
 	--cleanup the auction DB
 	BSYC:GetModule("Data"):CheckExpiredAuctions()
@@ -262,7 +264,7 @@ end
 	
 function Scanner:SaveProfessions()
 	--we don't want to do linked tradeskills, guild tradeskills, or a tradeskill from an NPC
-	if _G.C_TradeSkillUI.IsTradeSkillLinked() or _G.C_TradeSkillUI.IsTradeSkillGuild() or _G.C_TradeSkillUI.IsNPCCrafting() then return end
+	if (not BSYC.IsRetail) or _G.C_TradeSkillUI.IsTradeSkillLinked() or _G.C_TradeSkillUI.IsTradeSkillGuild() or _G.C_TradeSkillUI.IsNPCCrafting() then return end
 	
 	local recipeData = {}
 	local tmpRecipe = {}
@@ -394,6 +396,8 @@ function Scanner:SaveProfessions()
 end
 
 function Scanner:CleanupProfessions()
+	if (not BSYC.IsRetail) then return end
+
 	--lets remove unlearned tradeskills
 	local tmpList = {}
 
