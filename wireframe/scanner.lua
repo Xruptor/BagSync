@@ -98,7 +98,7 @@ function Scanner:SaveBank(rootOnly)
 end
 
 function Scanner:SaveReagents()
-	if not Unit.atBank then return end
+	if not Unit.atBank or not BSYC.IsRetail then return end
 	
 	if IsReagentBankUnlocked() then 
 		self:SaveBag("reagents", REAGENTBANK_CONTAINER)
