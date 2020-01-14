@@ -224,7 +224,7 @@ function Scanner:SaveAuctionHouse()
 	end
 	
 	BSYC.db.player.auction.bag = slotItems
-	BSYC.db.player.auction.count = #slotItems
+	BSYC.db.player.auction.count = #slotItems or 0
 	BSYC.db.player.auction.lastscan = time()
 end
 

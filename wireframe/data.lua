@@ -202,10 +202,10 @@ function Data:CheckExpiredAuctions()
 	local timestampChk = { 30*60, 2*60*60, 12*60*60, 48*60*60 }
 	
 	local slotItems = {}
-
+	
 	for unitObj in self:IterateUnits(true) do
-		if not unitObj.isGuild and unitObj.data.auction then
-		
+		if not unitObj.isGuild and unitObj.data.auction and unitObj.data.auction.count then
+
 			for x = 1, unitObj.data.auction.count do
 				if unitObj.data.auction.bag[x] then
 					--check for expired and remove if necessary
@@ -226,7 +226,7 @@ function Data:CheckExpiredAuctions()
 			end
 			
 			unitObj.data.auction.bag = slotItems
-			unitObj.data.auction.count = #slotItems
+			unitObj.data.auction.count = #slotItems or 0
 			
 		end
 	end
