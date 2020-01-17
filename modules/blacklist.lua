@@ -8,6 +8,16 @@ local Blacklist = BSYC:NewModule("Blacklist")
 local Data = BSYC:GetModule("Data")
 local Unit = BSYC:GetModule("Unit")
 
+local debugf = tekDebug and tekDebug:GetFrame("BagSync")
+local function Debug(...)
+    if debugf then
+		local debugStr = string.join(", ", tostringall(...))
+		local moduleName = string.format("|cFFffff00[%s]|r: ", "BLACKLIST")
+		debugStr = moduleName..debugStr
+		debugf:AddMessage(debugStr)
+	end
+end
+
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local AceGUI = LibStub("AceGUI-3.0")
 

@@ -8,6 +8,16 @@ local Data = BSYC:NewModule("Data")
 local Unit = BSYC:GetModule("Unit")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
+local debugf = tekDebug and tekDebug:GetFrame("BagSync")
+local function Debug(...)
+    if debugf then
+		local debugStr = string.join(", ", tostringall(...))
+		local moduleName = string.format("|cFFffff00[%s]|r: ", "Data")
+		debugStr = moduleName..debugStr
+		debugf:AddMessage(debugStr)
+	end
+end
+
 ----------------------
 --   DB Functions   --
 ----------------------
@@ -64,7 +74,7 @@ function Data:OnEnable()
 	if BSYC.options.enableLoginVersionInfo == nil then BSYC.options.enableLoginVersionInfo = true end
 	if BSYC.options.enableFactionIcons == nil then BSYC.options.enableFactionIcons = false end
 	if BSYC.options.enableShowUniqueItemsTotals == nil then BSYC.options.enableShowUniqueItemsTotals = true end
-	if BSYC.options.No_XR_BNET_RealmNames == nil then BSYC.options.No_XR_BNET_RealmNames = true end
+	if BSYC.options.disableXR_BNETRealmNames == nil then BSYC.options.disableXR_BNETRealmNames = true end
 
 	--setup the default colors
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end
@@ -198,9 +208,7 @@ function Data:LoadSlashCommand()
 end
 
 function Data:CheckExpiredAuctions()
-	--this function will remove expired auctions for all characters in every realm
-	local timestampChk = { 30*60, 2*60*60, 12*60*60, 48*60*60 }
-	
+
 	local slotItems = {}
 	
 	for unitObj in self:IterateUnits(true) do
@@ -208,20 +216,16 @@ function Data:CheckExpiredAuctions()
 
 			for x = 1, unitObj.data.auction.count do
 				if unitObj.data.auction.bag[x] then
-					--check for expired and remove if necessary
-					--it's okay if the auction count is showing more then actually stored, it's just used as a means
-					--to scan through all our items.  Even if we have only 3 and the count is 6 it will just skip the last 3.
+
 					local link, count, timeleft = strsplit(";", unitObj.data.auction.bag[x])
 					
-					--only proceed if we have everything to work with, otherwise this auction data is corrupt
+					--if the timeleft is less than current time than it's expired
 					if link and timeleft then
-						if tonumber(timeleft) < 1 or tonumber(timeleft) > 4 then timeleft = 4 end --just in case
-						--now do the time checks
-						local diff = time() - unitObj.data.auction.lastscan
-						if diff < timestampChk[tonumber(timeleft)] then
+						if tonumber(timeleft) < time() then
 							table.insert(slotItems, unitObj.data.auction.bag[x])
 						end
 					end
+					
 				end
 			end
 			

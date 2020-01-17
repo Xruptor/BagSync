@@ -7,6 +7,16 @@
 local BSYC = select(2, ...) --grab the addon namespace
 local Unit = BSYC:NewModule("Unit", 'AceEvent-3.0')
 
+local debugf = tekDebug and tekDebug:GetFrame("BagSync")
+local function Debug(...)
+    if debugf then
+		local debugStr = string.join(", ", tostringall(...))
+		local moduleName = string.format("|cFFffff00[%s]|r: ", "Unit")
+		debugStr = moduleName..debugStr
+		debugf:AddMessage(debugStr)
+	end
+end
+
 local REALM = GetRealmName()
 local PLAYER = UnitName('player')
 local FACTION = UnitFactionGroup('player')

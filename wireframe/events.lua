@@ -8,6 +8,25 @@ local Events = BSYC:NewModule("Events", 'AceEvent-3.0')
 local Unit = BSYC:GetModule("Unit")
 local Scanner = BSYC:GetModule("Scanner")
 
+local debugf = tekDebug and tekDebug:GetFrame("BagSync")
+local function Debug(...)
+    if debugf then
+		local debugStr = string.join(", ", tostringall(...))
+		local moduleName = string.format("|cFFffff00[%s]|r: ", "Events")
+		debugStr = moduleName..debugStr
+		debugf:AddMessage(debugStr)
+	end
+end
+
+local function updateAuctionData()
+	local function GetSortTypes(searchContext)
+		return g_auctionHouseSortsBySearchContext[searchContext] or {};
+	end
+
+	local sorts = GetSortTypes(AuctionHouseSearchContext.AllAuctions)
+	C_AuctionHouse.QueryOwnedAuctions(sorts)
+end
+	
 function Events:OnEnable()
 	--Force guild roster update, so we can grab guild name.  Note this is nil on login
 	--https://wow.gamepedia.com/API_GetGuildInfo
@@ -41,7 +60,21 @@ function Events:OnEnable()
 	self:RegisterEvent("GUILDBANKFRAME_OPENED")
 	self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
 	
-	self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE", function() Scanner:SaveAuctionHouse() end)
+	self:RegisterEvent("AUCTION_HOUSE_SHOW", function()
+		--query and update items being sold
+		updateAuctionData()
+	end)
+	
+	--this is for the Sell Frame
+	self:RegisterEvent("COMMODITY_SEARCH_RESULTS_UPDATED", function()
+		if AuctionHouseFrame and AuctionHouseFrame:GetDisplayMode() == AuctionHouseFrameDisplayMode.CommoditiesSell then
+			updateAuctionData()
+		end
+		
+	end)
+	
+	--this is for the Auctions Frame
+	self:RegisterEvent("OWNED_AUCTIONS_UPDATED", function() Scanner:SaveAuctionHouse() end)
 
 	Scanner:StartupScans() --do the login player scans
 end

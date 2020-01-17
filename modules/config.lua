@@ -8,6 +8,16 @@ local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local config = LibStub("AceConfig-3.0")
 local configDialog = LibStub("AceConfigDialog-3.0")
 
+local debugf = tekDebug and tekDebug:GetFrame("BagSync")
+local function Debug(...)
+    if debugf then
+		local debugStr = string.join(", ", tostringall(...))
+		local moduleName = string.format("|cFFffff00[%s]|r: ", "CONFIG")
+		debugStr = moduleName..debugStr
+		debugf:AddMessage(debugStr)
+	end
+end
+
 local options = {}
 local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
 

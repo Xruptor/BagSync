@@ -9,6 +9,16 @@ local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
+local debugf = tekDebug and tekDebug:GetFrame("BagSync")
+local function Debug(...)
+    if debugf then
+		local debugStr = string.join(", ", tostringall(...))
+		local moduleName = string.format("|cFFffff00[%s]|r: ", "Tooltip")
+		debugStr = moduleName..debugStr
+		debugf:AddMessage(debugStr)
+	end
+end
+
 function Tooltip:HexColor(color, str)
 	if type(color) == "table" then
 		return string.format("|cff%02x%02x%02x%s|r", (color.r or 1) * 255, (color.g or 1) * 255, (color.b or 1) * 255, tostring(str))
@@ -79,7 +89,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm)
 		return tmpTag
 	end
 	
-	if BSYC.options.No_XR_BNET_RealmNames then
+	if BSYC.options.disableXR_BNETRealmNames then
 		realm = ""
 		delimiter = ""
 	elseif BSYC.options.enableRealmAstrickName then

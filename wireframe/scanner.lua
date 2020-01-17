@@ -7,6 +7,16 @@ local BSYC = select(2, ...) --grab the addon namespace
 local Scanner = BSYC:NewModule("Scanner")
 local Unit = BSYC:GetModule("Unit")
 
+local debugf = tekDebug and tekDebug:GetFrame("BagSync")
+local function Debug(...)
+    if debugf then
+		local debugStr = string.join(", ", tostringall(...))
+		local moduleName = string.format("|cFFffff00[%s]|r: ", "Scanner")
+		debugStr = moduleName..debugStr
+		debugf:AddMessage(debugStr)
+	end
+end
+
 --https://github.com/tomrus88/BlizzardInterfaceCode/blob/master/Interface/AddOns/Blizzard_VoidStorageUI/Blizzard_VoidStorageUI.lua
 local VOID_DEPOSIT_MAX = 9
 local VOID_WITHDRAW_MAX = 9
@@ -202,23 +212,44 @@ function Scanner:SaveMailbox()
 end
 
 function Scanner:SaveAuctionHouse()
+
 	if not Unit.atAuction or not BSYC.options.enableAuction then return end
 	if not BSYC.db.player.auction then BSYC.db.player.auction = {} end
 
 	local slotItems = {}
-	local numActiveAuctions = GetNumAuctionItems("owner")
+	local numActiveAuctions = C_AuctionHouse.GetNumOwnedAuctions()
 
 	--scan the auction house
 	if (numActiveAuctions > 0) then
 		for ahIndex = 1, numActiveAuctions do
-			local name, texture, count, quality, canUse, level, minBid, minIncrement, buyoutPrice, bidAmount, highBidder, owner, saleStatus  = GetAuctionItemInfo("owner", ahIndex)
-			if name then
-				local link = GetAuctionItemLink("owner", ahIndex)
-				local timeLeft = GetAuctionItemTimeLeft("owner", ahIndex)
-				if link and timeLeft then
-					count = (count or 1)
-					table.insert(slotItems, BSYC:ParseItemLink(link, count)..";"..timeLeft)
+		
+			--https://wow.gamepedia.com/API_C_AuctionHouse.GetOwnedAuctionInfo
+			local itemObj = C_AuctionHouse.GetOwnedAuctionInfo(ahIndex)
+			
+			--we only want active auctions not sold one.  So check itemObj.status
+			if itemObj and itemObj.timeLeftSeconds and itemObj.status == 0 then
+
+				local expTime = time() + itemObj.timeLeftSeconds -- current Time + advance time in seconds to get expiration time and date
+				local itemCount = itemObj.quantity or 1
+				local parseLink = ""
+				
+				if itemObj.itemLink then
+					parseLink = BSYC:ParseItemLink(itemObj.itemLink, itemCount)
+
+				elseif itemObj.itemKey and itemObj.itemKey.itemID then
+					parseLink = BSYC:ParseItemLink(itemObj.itemKey.itemID, itemCount)
+
 				end
+				
+				--we need to add the itemcount even if it's 1 beacuse we are adding another seperator for auction time
+				if itemCount <= 1 then
+					parseLink = parseLink..";1;"..expTime
+				else
+					parseLink = parseLink..";"..expTime
+				end
+				
+				table.insert(slotItems, parseLink)
+					
 			end
 		end
 	end

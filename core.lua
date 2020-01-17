@@ -8,9 +8,13 @@ LibStub("AceAddon-3.0"):NewAddon(BSYC, "BagSync", "AceEvent-3.0", "AceConsole-3.
 _G[BAGSYNC] = BSYC --add it to the global frame space, otherwise you won't be able to call it
 
 local debugf = tekDebug and tekDebug:GetFrame("BagSync")
-
-function BSYC:Debug(...)
-    if debugf then debugf:AddMessage(string.join(", ", tostringall(...))) end
+local function Debug(...)
+    if debugf then
+		local debugStr = string.join(", ", tostringall(...))
+		local moduleName = string.format("|cFFffff00[%s]|r: ", "CORE")
+		debugStr = moduleName..debugStr
+		debugf:AddMessage(debugStr)
+	end
 end
 
 function BSYC:ParseItemLink(link, count)

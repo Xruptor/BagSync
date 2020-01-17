@@ -8,6 +8,16 @@ local Search = BSYC:NewModule("Search")
 local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
 
+local debugf = tekDebug and tekDebug:GetFrame("BagSync")
+local function Debug(...)
+    if debugf then
+		local debugStr = string.join(", ", tostringall(...))
+		local moduleName = string.format("|cFFffff00[%s]|r: ", "Search")
+		debugStr = moduleName..debugStr
+		debugf:AddMessage(debugStr)
+	end
+end
+
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local AceGUI = LibStub("AceGUI-3.0")
 local itemScanner = LibStub('LibItemSearch-1.2')
