@@ -1,8 +1,8 @@
-## Interface: 80000
+## Interface: 80300
 ## Title: BagSync
 ## Notes: BagSync tracks your characters items and displays it within tooltips.
 ## Author: Xruptor
-## Version: 11.2
+## Version: 12.0
 ## OptionalDeps: tekDebug
 ## SavedVariables: BagSyncDB
 
