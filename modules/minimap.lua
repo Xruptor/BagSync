@@ -100,29 +100,47 @@ bgMinimapButton:SetScript('OnMouseUp', function(self, button)
 	end
 end)
 
-bgMinimapButton:SetScript('OnDragStart', function(self, button)
-	if IsShiftKeyDown() then
-		bgMinimapButton:SetScript('OnUpdate', function(self, elapsed)
-			local x, y = Minimap:GetCenter()
-			local cx, cy = GetCursorPosition()
-			x, y = cx / self:GetEffectiveScale() - x, cy / self:GetEffectiveScale() - y
-			if x > Minimap:GetWidth()/2+bgMinimapButton:GetWidth()/2 then x = Minimap:GetWidth()/2+bgMinimapButton:GetWidth()/2 end
-			if x < Minimap:GetWidth()/2*-1-bgMinimapButton:GetWidth()/2 then x = Minimap:GetWidth()/2*-1-bgMinimapButton:GetWidth()/2 end
-			if y > Minimap:GetHeight()/2+bgMinimapButton:GetHeight()/2 then y = Minimap:GetHeight()/2+bgMinimapButton:GetHeight()/2 end
-			if y < Minimap:GetHeight()/2*-1-bgMinimapButton:GetHeight()/2 then y = Minimap:GetHeight()/2*-1-bgMinimapButton:GetHeight()/2 end
-			bgMinimapButton:ClearAllPoints()
-			bgMinimapButton:SetPoint('CENTER', x, y)
-		end)
-	end
-end)
+bgMinimapButton:SetScript('OnUpdate', function(self, elapsed)
+	if self:IsDragging() then
 
-bgMinimapButton:SetScript('OnDragStop', function(self, button)
-	bgMinimapButton:SetScript('OnUpdate', nil)
+		local minimap = self:GetParent()
+		local radius = (minimap:GetWidth() + self:GetWidth()) / 2
+		local width = self:GetWidth()
+		local x,y = minimap:GetCenter()
+		local sc = minimap:GetEffectiveScale()
+		local mx, my = GetCursorPosition() --self:GetCenter()
+		
+		mx = mx / sc
+		my = my / sc
+		
+		local dx, dy = mx - x , my - y
+		local dist = (dx * dx + dy * dy) ^ 0.5
+
+		local radmin = radius
+		local radsnap = radius + width * 0.2
+		local radpull = radius + width * 0.7
+		local radfre = radius + width
+
+		local radclamp
+		if dist <= radsnap then self.snapped = true radclamp = radmin
+		elseif dist < radpull and self.snapped then radclamp = radmin
+		elseif dist < radfre and self.snapped then radclamp = radmin + (dist - radpull) / 2
+		else self.snapped = false -- dobby is freeee
+		end
+
+		if radclamp then
+			dx = dx / (dist / radclamp)
+			dy = dy / (dist / radclamp)
+		end
+
+		self:ClearAllPoints()
+		self:SetPoint("CENTER", self:GetParent(), "CENTER", dx, dy)
+	end
 end)
 
 bgMinimapButton:SetScript('OnEnter', function(self)
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-	GameTooltip:AddLine("BagSync")
+	GameTooltip:AddLine("|cffff6600BagSync|r")
 	GameTooltip:AddLine(L.LeftClickSearch)
 	GameTooltip:AddLine(L.RightClickBagSyncMenu)
 	GameTooltip:Show()
