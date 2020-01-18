@@ -75,7 +75,8 @@ function Data:OnEnable()
 	if BSYC.options.enableFactionIcons == nil then BSYC.options.enableFactionIcons = false end
 	if BSYC.options.enableShowUniqueItemsTotals == nil then BSYC.options.enableShowUniqueItemsTotals = true end
 	if BSYC.options.disableXR_BNETRealmNames == nil then BSYC.options.disableXR_BNETRealmNames = true end
-
+	if BSYC.options.showGuildInGoldTooltip == nil then BSYC.options.showGuildInGoldTooltip = true end
+	
 	--setup the default colors
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end
 	if BSYC.options.colors.first == nil then BSYC.options.colors.first = { r = 128/255, g = 1, b = 0 }  end

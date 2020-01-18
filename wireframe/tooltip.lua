@@ -150,7 +150,9 @@ function Tooltip:MoneyTooltip()
 	
 	for unitObj in Data:IterateUnits() do
 		if unitObj.data.money and unitObj.data.money > 0 then
-			table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj) } )
+			if not unitObj.isGuild or (unitObj.isGuild and BSYC.options.showGuildInGoldTooltip) then
+				table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj) } )
+			end
 		end
 	end
 	

@@ -236,8 +236,18 @@ options.args.display = {
 			set = set,
 			arg = "display.showGuildNames",
 		},
-		faction = {
+		guildgoldtooltip = {
 			order = 5,
+			type = "toggle",
+			name = L.DisplayGuildGoldInGoldTooltip,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "display.showGuildInGoldTooltip",
+		},
+		faction = {
+			order = 6,
 			type = "toggle",
 			name = L.DisplayFaction,
 			width = "full",
@@ -247,7 +257,7 @@ options.args.display = {
 			arg = "display.enableFaction",
 		},
 		class = {
-			order = 6,
+			order = 7,
 			type = "toggle",
 			name = L.DisplayClassColor,
 			width = "full",
@@ -257,7 +267,7 @@ options.args.display = {
 			arg = "display.enableUnitClass",
 		},
 		mailbox = {
-			order = 7,
+			order = 8,
 			type = "toggle",
 			name = L.DisplayMailbox,
 			width = "full",
@@ -267,7 +277,7 @@ options.args.display = {
 			arg = "display.enableMailbox",
 		},
 		auction = {
-			order = 8,
+			order = 9,
 			type = "toggle",
 			name = L.DisplayAuctionHouse,
 			width = "full",
@@ -277,7 +287,7 @@ options.args.display = {
 			arg = "display.enableAuction",
 		},
 		crossrealm = {
-			order = 9,
+			order = 10,
 			type = "toggle",
 			name = L.DisplayCrossRealm,
 			width = "full",
@@ -287,7 +297,7 @@ options.args.display = {
 			arg = "display.enableCrossRealmsItems",
 		},
 		battlenet = {
-			order = 10,
+			order = 11,
 			type = "toggle",
 			name = L.DisplayBNET,
 			width = "full",
@@ -297,7 +307,7 @@ options.args.display = {
 			arg = "display.enableBNetAccountItems",
 		},
 		itemid = {
-			order = 11,
+			order = 12,
 			type = "toggle",
 			name = L.DisplayItemID,
 			width = "full",
@@ -307,7 +317,7 @@ options.args.display = {
 			arg = "display.enableTooltipItemID",
 		},
 		greencheck = {
-			order = 12,
+			order = 13,
 			type = "toggle",
 			name = string.format(L.DisplayGreenCheck, ReadyCheck),
 			width = "full",
@@ -317,7 +327,7 @@ options.args.display = {
 			arg = "display.enableTooltipGreenCheck",
 		},
 		realmidtags = {
-			order = 13,
+			order = 14,
 			type = "toggle",
 			name = L.DisplayRealmIDTags,
 			width = "full",
@@ -327,7 +337,7 @@ options.args.display = {
 			arg = "display.enableRealmIDTags",
 		},
 		realmastrick = {
-			order = 14,
+			order = 15,
 			type = "toggle",
 			name = L.DisplayRealmAstrick,
 			width = "full",
@@ -337,7 +347,7 @@ options.args.display = {
 			arg = "display.enableRealmAstrickName",
 		},
 		realmshortname = {
-			order = 15,
+			order = 16,
 			type = "toggle",
 			name = L.DisplayShortRealmName,
 			width = "full",
@@ -347,7 +357,7 @@ options.args.display = {
 			arg = "display.enableRealmShortName",
 		},
 		factionicon = {
-			order = 16,
+			order = 17,
 			type = "toggle",
 			name = L.DisplayFactionIcons..factionString,
 			width = "full",
@@ -357,7 +367,7 @@ options.args.display = {
 			arg = "display.enableFactionIcons",
 		},
 		showuniqueitemsgroup = {
-			order = 17,
+			order = 18,
 			name = L.DisplayShowUniqueItemsTotalsTitle,
 			type = 'group',
 			guiInline = true,
