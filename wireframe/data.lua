@@ -18,6 +18,19 @@ local function Debug(...)
 	end
 end
 
+StaticPopupDialogs["BAGSYNC_RESETDATABASE"] = {
+	text = L.ResetDBInfo,
+	button1 = L.Yes,
+	button2 = L.No,
+	OnAccept = function()
+		BagSyncDB = {}
+		ReloadUI()
+	end,
+	timeout = 0,
+	whileDead = true,
+	hideOnEscape = true,
+}
+
 ----------------------
 --   DB Functions   --
 ----------------------
@@ -180,6 +193,9 @@ function Data:LoadSlashCommand()
 			elseif cmd == L.SlashFixDB then
 				self:FixDB()
 				return true
+			elseif cmd == L.SlashResetDB then
+				StaticPopup_Show("BAGSYNC_RESETDATABASE")
+				return true
 			elseif cmd == L.SlashConfig then
 				InterfaceOptionsFrame:Show() --has to be here to load the about frame onLoad
 				InterfaceOptionsFrame_OpenToCategory(BSYC.aboutPanel) --force the panel to show
@@ -200,6 +216,7 @@ function Data:LoadSlashCommand()
 		BSYC:Print(L.HelpProfessionsWindow)
 		BSYC:Print(L.HelpBlacklistWindow)
 		BSYC:Print(L.HelpFixDB)
+		BSYC:Print(L.HelpResetDB)
 		BSYC:Print(L.HelpConfigWindow)
 	end
 	

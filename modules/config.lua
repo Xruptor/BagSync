@@ -484,6 +484,67 @@ options.args.color = {
 	},
 }
 
+options.args.faq = {
+	type = "group",
+	order = 5,
+	name = L.ConfigFAQ,
+	desc = L.ConfigFAQHeader,
+	args = {
+		question_1 = {
+			order = 1,
+			name = L.FAQ_Question_1,
+			type = 'group',
+			guiInline = true,
+			args = {
+				title = {
+				  order = 0,
+				  type = "description",
+				  name = L.FAQ_Question_1_p1,
+				},
+			}
+		},
+		question_2 = {
+			order = 2,
+			name = L.FAQ_Question_2,
+			type = 'group',
+			guiInline = true,
+			args = {
+				title = {
+				  order = 0,
+				  type = "description",
+				  name = L.FAQ_Question_2_p1,
+				},
+			}
+		},
+		question_3 = {
+			order = 3,
+			name = L.FAQ_Question_3,
+			type = 'group',
+			guiInline = true,
+			args = {
+				title = {
+				  order = 0,
+				  type = "description",
+				  name = L.FAQ_Question_3_p1,
+				},
+			}
+		},
+		question_4 = {
+			order = 4,
+			name = L.FAQ_Question_4,
+			type = 'group',
+			guiInline = true,
+			args = {
+				title = {
+				  order = 0,
+				  type = "description",
+				  name = L.FAQ_Question_4_p1,
+				},
+			}
+		},
+	},
+}
+
 local function LoadAboutFrame()
 
 	--Code inspired from tekKonfigAboutPanel
@@ -547,4 +608,8 @@ configDialog:AddToBlizOptions("BagSync-Display", options.args.display.name, "Bag
 -- Color Options
 config:RegisterOptionsTable("BagSync-Color", options.args.color)
 configDialog:AddToBlizOptions("BagSync-Color", options.args.color.name, "BagSync")
+
+-- FAQ / Help Options
+config:RegisterOptionsTable("BagSync-FAQ", options.args.faq)
+configDialog:AddToBlizOptions("BagSync-FAQ", options.args.faq.name, "BagSync")
 
