@@ -19,6 +19,11 @@ local function Debug(...)
 	end
 end
 
+function comma_value(n)
+	local left,num,right = string.match(n,'^([^%d]*%d)(%d*)(.-)$')
+	return left..(num:reverse():gsub('(%d%d%d)','%1,'):reverse())..right
+end
+
 function Tooltip:HexColor(color, str)
 	if type(color) == "table" then
 		return string.format("|cff%02x%02x%02x%s|r", (color.r or 1) * 255, (color.g or 1) * 255, (color.b or 1) * 255, tostring(str))
@@ -207,7 +212,7 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList)
 			desc = self:HexColor(BSYC.options.colors.first, desc)
 			count = self:HexColor(BSYC.options.colors.second, count)
 			
-			tallyString = tallyString..L.TooltipDelimiter..desc.." "..count
+			tallyString = tallyString..L.TooltipDelimiter..desc.." "..comma_value(count)
 		end
 	end
 	
@@ -216,7 +221,7 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList)
 	
 	--if it's groupped up and has more then one item then use a different color and show total
 	if grouped > 1 then
-		tallyString = self:HexColor(BSYC.options.colors.second, total).." ("..tallyString..")"
+		tallyString = self:HexColor(BSYC.options.colors.second, comma_value(total)).." ("..tallyString..")"
 	end
 	
 	--add to list
@@ -364,7 +369,7 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 	--add [Total] if we have more than one unit to work with
 	if BSYC.options.showTotal and grandTotal > 0 and table.getn(unitList) > 1 then
 		desc = self:HexColor(BSYC.options.colors.total, L.TooltipTotal)
-		value = self:HexColor(BSYC.options.colors.second, grandTotal)
+		value = self:HexColor(BSYC.options.colors.second, comma_value(grandTotal))
 		table.insert(unitList, { colorized=desc, tallyString=value} )
 	end
 		
@@ -392,14 +397,15 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 	objTooltip:Show()
 end
 
-function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon)
-
+function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID)
+	if not currencyID then return end
+	
 	--loop through our characters
 	local usrData = {}
 	
 	for unitObj in Data:IterateUnits() do
-		if not unitObj.isGuild and unitObj.data.currency and unitObj.data.currency[currencyIcon] then
-			table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj), count=unitObj.data.currency[currencyIcon].count} )
+		if not unitObj.isGuild and unitObj.data.currency and unitObj.data.currency[currencyID] then
+			table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj), count=unitObj.data.currency[currencyID].count} )
 		end
 	end
 	
@@ -420,7 +426,7 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon)
 	end
 
 	for i=1, table.getn(usrData) do
-		objTooltip:AddDoubleLine(usrData[i].colorized, usrData[i].count, 1, 1, 1, 1, 1, 1)
+		objTooltip:AddDoubleLine(usrData[i].colorized, comma_value(usrData[i].count), 1, 1, 1, 1, 1, 1)
 	end
 
 	objTooltip.__tooltipUpdated = true
@@ -478,29 +484,31 @@ function Tooltip:HookTooltip(objTooltip)
 	hooksecurefunc(objTooltip, "SetCurrencyToken", function(self, index)
 		if self.__tooltipUpdated then return end
 		local name, isHeader, isExpanded, isUnused, isWatched, count, icon = GetCurrencyListInfo(index)
-		if name and icon then
-			Tooltip:CurrencyTooltip(self, name, icon)
+		local link = GetCurrencyListLink(index)
+		if name and icon and link then
+			local currencyID = BSYC:GetCurrencyID(link)
+			Tooltip:CurrencyTooltip(self, name, icon, currencyID)
 		end
 	end)
-	hooksecurefunc(objTooltip, "SetCurrencyTokenByID", function(self, index)
+	hooksecurefunc(objTooltip, "SetCurrencyTokenByID", function(self, currencyID)
 		if self.__tooltipUpdated then return end
-		local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(index)
+		local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(currencyID)
 		if name and icon then
-			Tooltip:CurrencyTooltip(self, name, icon)
+			Tooltip:CurrencyTooltip(self, name, icon, currencyID)
 		end
 	end)
-	hooksecurefunc(objTooltip, "SetCurrencyByID", function(self, index)
+	hooksecurefunc(objTooltip, "SetCurrencyByID", function(self, currencyID)
 		if self.__tooltipUpdated then return end
-		local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(index)
+		local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(currencyID)
 		if name and icon then
-			Tooltip:CurrencyTooltip(self, name, icon)
+			Tooltip:CurrencyTooltip(self, name, icon, currencyID)
 		end
 	end)
 	hooksecurefunc(objTooltip, "SetBackpackToken", function(self, index)
 		if self.__tooltipUpdated then return end
 		local name, count, icon, currencyID = GetBackpackCurrencyInfo(index)
-		if name and icon then
-			Tooltip:CurrencyTooltip(self, name, icon)
+		if name and icon and currencyID then
+			Tooltip:CurrencyTooltip(self, name, icon, currencyID)
 		end
 	end)
 

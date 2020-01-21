@@ -67,6 +67,8 @@ function Currency:AddEntry(entry, isHeader)
 		label.userdata.isHeader = true
 		label.userdata.text = entry.header
 		label.userdata.icon = entry.icon
+		label.userdata.currencyID = entry.currencyID
+		
 		label:ToggleHeaderHighlight(true)
 	else
 		label:SetText(entry.name)
@@ -78,6 +80,7 @@ function Currency:AddEntry(entry, isHeader)
 		label.userdata.isHeader = false
 		label.userdata.text = entry.name
 		label.userdata.icon = entry.icon
+		label.userdata.currencyID = entry.currencyID
 	end
 
 	label:SetCallback(
@@ -87,7 +90,7 @@ function Currency:AddEntry(entry, isHeader)
 				label:SetColor(unpack(highlightColor))
 				GameTooltip:SetOwner(label.frame, "ANCHOR_RIGHT")
 				if not label.userdata.isHeader then
-					Tooltip:CurrencyTooltip(GameTooltip, label.userdata.text, label.userdata.icon)
+					Tooltip:CurrencyTooltip(GameTooltip, label.userdata.text, label.userdata.icon, label.userdata.currencyID)
 				end
 			end
 		end)
@@ -113,7 +116,7 @@ function Currency:DisplayList()
 			for k, v in pairs(unitObj.data.currency) do
 				--only do the entry once per heading and name
 				if not tempList[v.header..v.name] then
-					table.insert(usrData, { header=v.header, name=v.name, icon=k} )
+					table.insert(usrData, { header=v.header, name=v.name, icon=v.icon, currencyID=k} )
 					tempList[v.header..v.name] = true
 				end
 			end

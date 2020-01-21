@@ -265,12 +265,14 @@ function Scanner:SaveCurrency()
 	local lastHeader
 	local limit = GetCurrencyListSize()
 	local slotItems = {}
-	
-	for i=1, limit do
-	
-		local name, isHeader, isExpanded, _, _, count, icon = GetCurrencyListInfo(i)
-		--extraCurrencyType = 1 for arena points, 2 for honor points; 0 otherwise (an item-based currency).
 
+	for i=1, limit do
+
+		local name, isHeader, isExpanded, _, _, count, icon = GetCurrencyListInfo(i)
+		local link = GetCurrencyListLink(i)
+		
+		local currencyID = BSYC:GetCurrencyID(link)
+		
 		if name then
 			if(isHeader and not isExpanded) then
 				ExpandCurrencyList(i,1)
@@ -280,10 +282,11 @@ function Scanner:SaveCurrency()
 				lastHeader = name
 			end
 			if (not isHeader) then
-				slotItems[icon] = slotItems[icon] or {}
-				slotItems[icon].name = name
-				slotItems[icon].header = lastHeader
-				slotItems[icon].count = count
+				slotItems[currencyID] = slotItems[currencyID] or {}
+				slotItems[currencyID].name = name
+				slotItems[currencyID].header = lastHeader
+				slotItems[currencyID].count = count
+				slotItems[currencyID].icon = icon
 			end
 		end
 	end

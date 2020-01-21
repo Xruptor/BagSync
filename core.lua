@@ -95,3 +95,27 @@ function BSYC:GetShortItemID(link)
 		return link:match("item:(%d+):") or link:match("^(%d+):") or link
 	end
 end
+
+function BSYC:GetShortCurrencyID(link)
+	if link then
+		if type(link) == "number" then link = tostring(link) end
+		local link = link:match("currency:(%d+):") or link:match("^(%d+):") or link
+		return tonumber(link)
+	end
+end
+
+function BSYC:GetCurrencyID(link)
+	if link then
+		local result = link:match("currency:([%d:]+)")
+		local currencyID = self:GetShortCurrencyID(link)
+				
+		if result then
+			result = currencyID --set this to default currencyID, if we have something we will replace it below
+		end
+		
+		link = result or currencyID
+		
+		return link
+	end
+end
+			
