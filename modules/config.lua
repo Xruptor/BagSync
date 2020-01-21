@@ -374,11 +374,13 @@ options.args.display = {
 			args = {
 				title = {
 				  order = 0,
+				  fontSize = "medium",
 				  type = "description",
 				  name = L.DisplayShowUniqueItemsTotals,
 				},
 				title_2 = {
 				  order = 1,
+				  fontSize = "medium",
 				  type = "description",
 				  name = L.DisplayShowUniqueItemsTotals_2,
 				},
@@ -498,6 +500,7 @@ options.args.faq = {
 			args = {
 				title = {
 				  order = 0,
+				  fontSize = "medium",
 				  type = "description",
 				  name = L.FAQ_Question_1_p1,
 				},
@@ -511,6 +514,7 @@ options.args.faq = {
 			args = {
 				title = {
 				  order = 0,
+				  fontSize = "medium",
 				  type = "description",
 				  name = L.FAQ_Question_2_p1,
 				},
@@ -524,6 +528,7 @@ options.args.faq = {
 			args = {
 				title = {
 				  order = 0,
+				  fontSize = "medium",
 				  type = "description",
 				  name = L.FAQ_Question_3_p1,
 				},
@@ -537,6 +542,7 @@ options.args.faq = {
 			args = {
 				title = {
 				  order = 0,
+				  fontSize = "medium",
 				  type = "description",
 				  name = L.FAQ_Question_4_p1,
 				},
