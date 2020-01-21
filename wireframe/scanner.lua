@@ -57,15 +57,6 @@ function Scanner:SaveBag(bagtype, bagid)
 				table.insert(slotItems,  BSYC:ParseItemLink(link, count))
 			end
 		end
-		
-		--lets also store the bags themselves
-		if bagid ~= BACKPACK_CONTAINER and bagid ~= BANK_CONTAINER and bagid ~= REAGENTBANK_CONTAINER then
-			local slot = ContainerIDToInventoryID(bagid)
-			local link = GetInventoryItemLink('player', slot)
-			if link then
-				table.insert(slotItems,  BSYC:ParseItemLink(link))
-			end
-		end
 			
 		BSYC.db.player[bagtype][bagid] = slotItems
 	else
