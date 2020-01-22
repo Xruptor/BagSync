@@ -18,8 +18,22 @@ local function Debug(...)
 end
 
 function BSYC:ParseItemLink(link, count)
-
 	if link then
+	
+		--if we are parsing a database entry just return it, chances are it's a battlepet anyways
+		local qLink, qCount, qIdentifier = strsplit(";", link)
+		if qLink and qCount and qIdentifier then
+			return link
+		end
+		
+		--local linkType, linkOptions, name = LinkUtil.ExtractLink(battlePetLink);
+		--if linkType ~= "battlepet" then
+		--	return false;
+		--end
+		local isBattlepet = string.match(link, ".*(battlepet):.*") == "battlepet"
+		if isBattlepet then
+			return BSYC:CreateFakeBattlePetID(link, count)
+		end
 	
 		--there are times link comes in as a number and breaks string matching, convert to string to fix
 		if type(link) == "number" then link = tostring(link) end
@@ -86,13 +100,55 @@ function BSYC:ParseItemLink(link, count)
 		
 		return link
 	end
+end
 
+function BSYC:CreateFakeBattlePetID(link, count, speciesID)
+	--either pass the link or speciesID
+	if link or speciesID then
+	
+		local isBattlepet = speciesID or string.match(link, ".*(battlepet):.*") == "battlepet"
+		
+		if isBattlepet then
+		
+			if not speciesID and link then
+				local _, _ , _ , petID, petLevel, petRarity, petHP, petAtk, petSpeed, _ , petName = string.find(link,"(.*)battlepet:(%d+):(%d+):(%d+):(%d+):(%d+):(%d+):(.*)%[(.*)%]")
+				speciesID = petID
+			end
+		
+			--lets generate our own fake PetID
+			if speciesID then 
+				local speciesName, _, petType, companionID, _, _, _, _, _, _, _, creatureDisplayID = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
+				
+				if petType and companionID and creatureDisplayID then
+					local fakePetID = 10000000000
+					fakePetID = fakePetID +(speciesID * 100000)
+					fakePetID = fakePetID +(petType * 1000)
+					fakePetID = fakePetID +(companionID * 100)
+					fakePetID = fakePetID +(creatureDisplayID)
+					
+					if fakePetID then
+						if not count then count = 1 end
+						--put a 2 at the end as an identifier to mark it as a battlepet
+						return fakePetID..';'..count..';2'
+					end
+				end
+			end
+		end
+	end
 end
 
 function BSYC:GetShortItemID(link)
 	if link then
 		if type(link) == "number" then link = tostring(link) end
-		return link:match("item:(%d+):") or link:match("^(%d+):") or link
+		
+		--first check if we are being sent a battlepet link
+		local isBattlepet = string.match(link, ".*(battlepet):.*") == "battlepet"
+		if isBattlepet then
+			--create a FakeID
+			link = BSYC:CreateFakeBattlePetID(link)
+		end
+		
+		return link:match("item:(%d+):") or link:match("^(%d+):") or strsplit(";", link) or link
 	end
 end
 
@@ -108,14 +164,10 @@ function BSYC:GetCurrencyID(link)
 	if link then
 		local result = link:match("currency:([%d:]+)")
 		local currencyID = self:GetShortCurrencyID(link)
-				
 		if result then
 			result = currencyID --set this to default currencyID, if we have something we will replace it below
 		end
-		
 		link = result or currencyID
-		
 		return link
 	end
 end
-			

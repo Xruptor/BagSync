@@ -151,7 +151,7 @@ end
 local function checkData(data, searchStr, searchTable, tempList, countWarning, playerSearch)
 	for i=1, table.getn(data) do
 		if data[i] then
-			local link, count = strsplit(";", data[i])
+			local link, count, identifier = strsplit(";", data[i])
 			if link then
 				local dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo("item:"..link)
 				if dName and not tempList[link] then

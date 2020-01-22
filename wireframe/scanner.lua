@@ -226,17 +226,16 @@ function Scanner:SaveAuctionHouse()
 				
 				if itemObj.itemLink then
 					parseLink = BSYC:ParseItemLink(itemObj.itemLink, itemCount)
-
 				elseif itemObj.itemKey and itemObj.itemKey.itemID then
 					parseLink = BSYC:ParseItemLink(itemObj.itemKey.itemID, itemCount)
-
 				end
 				
-				--we need to add the itemcount even if it's 1 beacuse we are adding another seperator for auction time
+				--we are going to make the third field an identifier field, so we can know what it is for future reference
+				--for now auction house will be 1, with 4th field being expTime
 				if itemCount <= 1 then
-					parseLink = parseLink..";1;"..expTime
+					parseLink = parseLink..";1;1;"..expTime
 				else
-					parseLink = parseLink..";"..expTime
+					parseLink = parseLink..";1;"..expTime
 				end
 				
 				table.insert(slotItems, parseLink)

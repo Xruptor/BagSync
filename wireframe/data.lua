@@ -235,11 +235,12 @@ function Data:CheckExpiredAuctions()
 			for x = 1, unitObj.data.auction.count do
 				if unitObj.data.auction.bag[x] then
 
-					local link, count, timeleft = strsplit(";", unitObj.data.auction.bag[x])
+					local link, count, identifier, timeleft = strsplit(";", unitObj.data.auction.bag[x])
+					--we are using the auction data, no need to check identifier for 1
 					
-					--if the timeleft is less than current time than it's expired
+					--if the timeleft is greater than current time than keep it, it's not expired
 					if link and timeleft then
-						if tonumber(timeleft) < time() then
+						if tonumber(timeleft) > time() then
 							table.insert(slotItems, unitObj.data.auction.bag[x])
 						end
 					end

@@ -8,6 +8,7 @@ local Tooltip = BSYC:NewModule("Tooltip")
 local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
+local LibQTip = LibStub('LibQTip-1.0')
 
 local debugf = tekDebug and tekDebug:GetFrame("BagSync")
 local function Debug(...)
@@ -234,7 +235,7 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total)
 	
 	for i=1, table.getn(data) do
 		if data[i] then
-			local link, count = strsplit(";", data[i])
+			local link, count, identifier = strsplit(";", data[i])
 			if link then
 				if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
 				if link == itemID then
@@ -247,7 +248,7 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total)
 	return total
 end
 
-function Tooltip:TallyUnits(objTooltip, link, source)
+function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if not BSYC.options.enableTooltips then return end
 	if not CanAccessObject(objTooltip) then return end
 	
@@ -258,14 +259,15 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 	end
 	
 	--make sure we have something to work with
+	--since we aren't using a count, it will return only the itemid
 	local link = BSYC:ParseItemLink(link)
 	if not link then
 		objTooltip:Show()
 		return
 	end
-	
+
 	local shortID = BSYC:GetShortItemID(link)
-	
+
 	local permIgnore ={
 		[6948] = "Hearthstone",
 		[110560] = "Garrison Hearthstone",
@@ -278,22 +280,43 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 		return
 	end
 	
+	--if we are parsing a database entry, fix it, it's probably a battlepet
+	local qLink, qCount, qIdentifier = strsplit(";", link)
+	if qLink and qCount and qIdentifier then
+		--just use the itemid or fakeid
+		link = qLink
+	end
+	
 	--short the shortID and ignore all BonusID's and stats
 	if BSYC.options.enableShowUniqueItemsTotals then link = shortID end
+	
+	if isBattlePet and not objTooltip.qTip then
+		objTooltip.qTip = LibQTip:Acquire(objTooltip:GetName(), 3, "LEFT", "CENTER", "RIGHT")
+		objTooltip.qTip:Clear()
+		--tooltip:SmartAnchorTo(objTooltip)
+		objTooltip.qTip:SetPoint("TOPLEFT", objTooltip, "BOTTOMLEFT")
+		objTooltip.qTip.OnRelease = function() objTooltip.qTip = nil end
+	end
 	
 	--if we already did the item, then display the previous information
 	if self.__lastLink and self.__lastLink == link then
 		if self.__lastTally and table.getn(self.__lastTally) > 0 then
 			for i=1, table.getn(self.__lastTally) do
 				local color = BSYC.options.colors.total --this is a cover all color we are going to use
-				objTooltip:AddDoubleLine(self.__lastTally[i].colorized, self.__lastTally[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
+				if not isBattlePet then
+					objTooltip:AddDoubleLine(self.__lastTally[i].colorized, self.__lastTally[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
+				else
+					local lineNum = objTooltip.qTip:AddLine(self.__lastTally[i].colorized, "   ", self.__lastTally[i].tallyString)
+					objTooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
+				end
 			end
 		end
 		objTooltip.__tooltipUpdated = true
 		objTooltip:Show()
+		if objTooltip.qTip then objTooltip.qTip:Show() end
 		return
 	end
-
+	
 	--store these in the addon itself not in the tooltip
 	self.__lastTally = {}
 	self.__lastLink = link
@@ -388,13 +411,20 @@ function Tooltip:TallyUnits(objTooltip, link, source)
 	--finally display it
 	for i=1, table.getn(unitList) do
 		local color = BSYC.options.colors.total --this is a cover all color we are going to use
-		objTooltip:AddDoubleLine(unitList[i].colorized, unitList[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
+		if not isBattlePet then
+			objTooltip:AddDoubleLine(unitList[i].colorized, unitList[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
+		else
+			-- Add an new line, using all columns
+			local lineNum = objTooltip.qTip:AddLine(unitList[i].colorized, "   ", unitList[i].tallyString)
+			objTooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
+		end
 	end
 	
 	self.__lastTally = unitList
 	
 	objTooltip.__tooltipUpdated = true
 	objTooltip:Show()
+	if objTooltip.qTip then objTooltip.qTip:Show() end
 end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID)
@@ -434,7 +464,7 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 end
 
 function Tooltip:HookTooltip(objTooltip)
-	
+
 	objTooltip:HookScript("OnHide", function(self)
 		self.__tooltipUpdated = false
 		--reset __lastLink in the addon itself not within the tooltip
@@ -514,7 +544,51 @@ function Tooltip:HookTooltip(objTooltip)
 
 end
 
+function Tooltip:HookBattlePetTooltip(objTooltip)
+
+	--BattlePetToolTip_Show
+	if objTooltip == BattlePetTooltip then
+		hooksecurefunc("BattlePetToolTip_Show", function(speciesID)
+			if objTooltip.__tooltipUpdated then return end
+			if speciesID then
+				local fakeID = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
+				if fakeID then
+					Tooltip:TallyUnits(objTooltip, fakeID, "BattlePetToolTip_Show", true)
+				end
+			end
+		end)
+	end
+	--FloatingBattlePet_Show
+	if objTooltip == FloatingBattlePetTooltip then
+		hooksecurefunc("FloatingBattlePet_Show", function(speciesID)
+			if objTooltip.__tooltipUpdated then return end
+			if speciesID then
+				local fakeID = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
+				if fakeID then
+					Tooltip:TallyUnits(objTooltip, fakeID, "FloatingBattlePet_Show", true)
+				end
+			end
+		end)
+	end
+	objTooltip:HookScript("OnHide", function(self)
+		self.__tooltipUpdated = false
+		--reset __lastLink in the addon itself not within the tooltip
+		Tooltip.__lastLink = nil
+		
+		if self.qTip then
+			LibQTip:Release(self.qTip)
+			self.qTip = nil
+		end
+	end)
+	objTooltip:HookScript("OnShow", function(self)
+		if self.__tooltipUpdated then return end
+	end)
+
+end
+
 function Tooltip:OnEnable()
 	self:HookTooltip(GameTooltip)
 	self:HookTooltip(ItemRefTooltip)
+	self:HookBattlePetTooltip(BattlePetTooltip)
+	self:HookBattlePetTooltip(FloatingBattlePetTooltip)
 end

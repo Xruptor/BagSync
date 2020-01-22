@@ -20,6 +20,7 @@ libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 libs\Unfit-1.0\Unfit-1.0.lua
 libs\CustomSearch-1.0\CustomSearch-1.0.lua
 libs\LibItemSearch-1.2\LibItemSearch-1.2.lua
+libs\LibQTip-1.0\LibQTip-1.0.lua
 
 locale\enUS.lua
 locale\deDE.lua
