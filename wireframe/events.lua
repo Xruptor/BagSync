@@ -4,7 +4,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
-local Events = BSYC:NewModule("Events", 'AceEvent-3.0')
+local Events = BSYC:NewModule("Events", 'AceEvent-3.0', 'AceBucket-3.0')
 local Unit = BSYC:GetModule("Unit")
 local Scanner = BSYC:GetModule("Scanner")
 
@@ -63,6 +63,11 @@ function Events:OnEnable()
 	self:RegisterEvent("AUCTION_HOUSE_SHOW", function()
 		--query and update items being sold
 		updateAuctionData()
+		self:RegisterBucketEvent("OWNED_AUCTIONS_UPDATED", 1.5, function() Scanner:SaveAuctionHouse() end)
+	end)
+	
+	self:RegisterEvent("AUCTION_HOUSE_CLOSED", function()
+		self:UnregisterBucket("OWNED_AUCTIONS_UPDATED")
 	end)
 	
 	--this is for the Sell Frame
@@ -73,9 +78,6 @@ function Events:OnEnable()
 		
 	end)
 	
-	--this is for the Auctions Frame
-	self:RegisterEvent("OWNED_AUCTIONS_UPDATED", function() Scanner:SaveAuctionHouse() end)
-
 	Scanner:StartupScans() --do the login player scans
 end
 

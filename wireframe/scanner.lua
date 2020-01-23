@@ -153,9 +153,16 @@ function Scanner:SaveGuildBank()
 		if isViewable then
 			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
 				local link = GetGuildBankItemLink(tab, slot)
+				local speciesID, level, breedQuality, maxHealth, power, speed, name = GameTooltip:SetGuildBankItem(tab, slot)
 				if link then
+					if speciesID then
+						link = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
+					else
+						link = BSYC:ParseItemLink(link, count)
+					end
+					
 					local _, count = GetGuildBankItemInfo(tab, slot)
-					table.insert(slotItems, BSYC:ParseItemLink(link, count))
+					table.insert(slotItems, link)
 				end
 			end
 		end
@@ -187,11 +194,17 @@ function Scanner:SaveMailbox()
 	--scan the inbox
 	if (numInbox > 0) then
 		for mailIndex = 1, numInbox do
+			local hasCooldown, speciesID, level, breedQuality, maxHealth, power, speed, name = GameTooltip:SetInboxItem(mailIndex)
 			for i = 1, ATTACHMENTS_MAX_RECEIVE do
 				local name, itemID, itemTexture, count, quality, canUse = GetInboxItem(mailIndex, i)
 				local link = GetInboxItemLink(mailIndex, i)
 				if name and link then
-					table.insert(slotItems, BSYC:ParseItemLink(link, count))
+					if speciesID then
+						link = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
+					else
+						link = BSYC:ParseItemLink(link, count)
+					end
+					table.insert(slotItems, link)
 				end
 			end
 		end
@@ -203,7 +216,6 @@ function Scanner:SaveMailbox()
 end
 
 function Scanner:SaveAuctionHouse()
-
 	if not Unit.atAuction or not BSYC.options.enableAuction then return end
 	if not BSYC.db.player.auction then BSYC.db.player.auction = {} end
 
@@ -237,9 +249,8 @@ function Scanner:SaveAuctionHouse()
 				else
 					parseLink = parseLink..";1;"..expTime
 				end
-				
+
 				table.insert(slotItems, parseLink)
-					
 			end
 		end
 	end
