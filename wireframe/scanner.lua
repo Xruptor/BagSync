@@ -143,9 +143,11 @@ end
 
 function Scanner:SaveGuildBank()
 	if not IsInGuild() then return end
+	if Scanner.isScanningGuild then return end
 
 	local numTabs = GetNumGuildBankTabs()
 	local slotItems = {}
+	Scanner.isScanningGuild = true
 	
 	for tab = 1, numTabs do
 		local name, icon, isViewable, canDeposit, numWithdrawals, remainingWithdrawals = GetGuildBankTabInfo(tab)
@@ -182,6 +184,8 @@ function Scanner:SaveGuildBank()
 		guildDB.faction = Unit:GetUnitInfo().faction
 		guildDB.realmKey = Unit:GetRealmKey()
 	end
+	
+	Scanner.isScanningGuild = false
 end
 
 function Scanner:SaveMailbox()

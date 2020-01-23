@@ -548,6 +548,20 @@ options.args.faq = {
 				},
 			}
 		},
+		question_5 = {
+			order = 5,
+			name = L.FAQ_Question_5,
+			type = 'group',
+			guiInline = true,
+			args = {
+				title = {
+				  order = 0,
+				  fontSize = "medium",
+				  type = "description",
+				  name = L.FAQ_Question_5_p1,
+				},
+			}
+		},
 	},
 }
 

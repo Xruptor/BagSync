@@ -7,6 +7,7 @@ local BSYC = select(2, ...) --grab the addon namespace
 local Events = BSYC:NewModule("Events", 'AceEvent-3.0', 'AceBucket-3.0')
 local Unit = BSYC:GetModule("Unit")
 local Scanner = BSYC:GetModule("Scanner")
+local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
 local debugf = tekDebug and tekDebug:GetFrame("BagSync")
 local function Debug(...)
@@ -58,7 +59,8 @@ function Events:OnEnable()
 	self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:SaveReagents() end)
 	
 	self:RegisterEvent("GUILDBANKFRAME_OPENED")
-	self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
+	self:RegisterEvent("GUILDBANKFRAME_CLOSED")
+	self:RegisterBucketEvent("GUILDBANKBAGSLOTS_CHANGED", 0.3)
 	
 	self:RegisterEvent("AUCTION_HOUSE_SHOW", function()
 		--query and update items being sold
@@ -123,7 +125,17 @@ function Events:GUILDBANKFRAME_OPENED()
 		local name, icon, isViewable, canDeposit, numWithdrawals, remainingWithdrawals = GetGuildBankTabInfo(tab)
 		if isViewable then
 			self.GuildTabQueryQueue[tab] = true
+			if not self.queryGuild then
+				self.queryGuild  = true
+			end
 		end
+	end
+end
+
+function Events:GUILDBANKFRAME_CLOSED()
+	if self.queryGuild then
+		BSYC:Print(L.ScanGuildBankError)
+		self.queryGuild = false
 	end
 end
 
@@ -136,6 +148,10 @@ function Events:GUILDBANKBAGSLOTS_CHANGED()
 		QueryGuildBankTab(tab)
 		self.GuildTabQueryQueue[tab] = nil
 	else
+		if self.queryGuild then
+			self.queryGuild = false
+			BSYC:Print(L.ScanGuildBankDone)
+		end
 		-- the bank is ready for reading
 		Scanner:SaveGuildBank()
 	end

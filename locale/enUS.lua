@@ -70,6 +70,9 @@ L.KeybindProfiles = "Show Profiles window."
 L.KeybindSearch = "Show Search window."
 L.ObsoleteWarning = "\n\nNote: Obsolete items will continue to show as missing.  To repair this issue, scan your characters again in order to remove obsolete items.\n(Bags, Bank, Reagent, Void, etc...)"
 L.DatabaseReset = "Due to changes in the database.  Your BagSync database has been reset."
+L.ScanGuildBankStart = "Querying server for Guild Bank info, please wait....."
+L.ScanGuildBankDone = "Guild Bank scan complete!"
+L.ScanGuildBankError = "Warning: Guild Bank scanning incomplete."
 -- ----THESE ARE FOR SLASH COMMANDS
 L.SlashItemName = "[itemname]"
 L.SlashSearch = "search"
@@ -158,4 +161,8 @@ L.FAQ_Question_3 = "Can you view item data from |cFFDF2B2Bmultiple|r |cff3587ffB
 L.FAQ_Question_3_p1 = "No, it's not possible.  I will not provide assistance in this.  So don't ask!"
 L.FAQ_Question_4 = "Can I view item data from multiple WOW accounts |cFFDF2B2Bcurrently logged in|r?"
 L.FAQ_Question_4_p1 = "Currently BagSync does not support transmitting data between multiple logged in WOW accounts.  This may change in the future."
+L.FAQ_Question_5 = "Why do I get a message that guild bank scanning is incomplete?"
+L.FAQ_Question_5_p1 = [[
+BagSync has to query the server for |cFF99CC33ALL|r your guild bank information.  It takes time for the server to transmit all the data.  In order for BagSync to properly store all your items, you must wait until the server query is complete.  When the scanning process is complete, BagSync will notify you with a notification in chat.  Leaving the Guild Bank window before the scanning process is done, will result in incorrect data being stored for your Guild Bank.
+]]
 

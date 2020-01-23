@@ -306,7 +306,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				if not isBattlePet then
 					objTooltip:AddDoubleLine(self.__lastTally[i].colorized, self.__lastTally[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
 				else
-					local lineNum = objTooltip.qTip:AddLine(self.__lastTally[i].colorized, "   ", self.__lastTally[i].tallyString)
+					local lineNum = objTooltip.qTip:AddLine(self.__lastTally[i].colorized, 	string.rep(" ", 3), self.__lastTally[i].tallyString)
 					objTooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
 				end
 			end
@@ -417,7 +417,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			objTooltip:AddDoubleLine(unitList[i].colorized, unitList[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
 		else
 			-- Add an new line, using all columns
-			local lineNum = objTooltip.qTip:AddLine(unitList[i].colorized, "   ", unitList[i].tallyString)
+			local lineNum = objTooltip.qTip:AddLine(unitList[i].colorized, string.rep(" ", 3), unitList[i].tallyString)
 			objTooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
 		end
 	end
