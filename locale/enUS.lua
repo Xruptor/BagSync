@@ -69,6 +69,7 @@ L.KeybindProfessions = "Show Professions window."
 L.KeybindProfiles = "Show Profiles window."
 L.KeybindSearch = "Show Search window."
 L.ObsoleteWarning = "\n\nNote: Obsolete items will continue to show as missing.  To repair this issue, scan your characters again in order to remove obsolete items.\n(Bags, Bank, Reagent, Void, etc...)"
+L.DatabaseReset = "Due to changes in the database.  Your BagSync database has been reset."
 -- ----THESE ARE FOR SLASH COMMANDS
 L.SlashItemName = "[itemname]"
 L.SlashSearch = "search"

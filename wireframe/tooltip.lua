@@ -406,7 +406,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	end
 	
 	--add seperator if enabled and only if we have something to work with
-	if BSYC.options.enableTooltipSeperator and table.getn(unitList) > 0 then
+	if not objTooltip.qTip and BSYC.options.enableTooltipSeperator and table.getn(unitList) > 0 then
 		table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
 	end
 	
@@ -471,6 +471,8 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	objTooltip.__tooltipUpdated = true
 	objTooltip:Show()
 end
+
+--LibExtraTip has a few more hook methods for tooltip, we don't really need them all
 
 function Tooltip:HookTooltip(objTooltip)
 

@@ -18,12 +18,16 @@ local function Debug(...)
 	end
 end
 
+--increment forceDBReset to reset the db forcefully
+local forceDBReset = 1
+	
 StaticPopupDialogs["BAGSYNC_RESETDATABASE"] = {
 	text = L.ResetDBInfo,
 	button1 = L.Yes,
 	button2 = L.No,
 	OnAccept = function()
 		BagSyncDB = {}
+		BagSyncDB["forceDBReset§"] = forceDBReset
 		ReloadUI()
 	end,
 	timeout = 0,
@@ -36,7 +40,9 @@ StaticPopupDialogs["BAGSYNC_RESETDATABASE"] = {
 ----------------------
 
 function Data:OnEnable()
-
+	
+	local ver = GetAddOnMetadata("BagSync","Version") or 0
+	
 	--get player information from Unit
 	local player = Unit:GetUnitInfo()
 
@@ -102,7 +108,7 @@ function Data:OnEnable()
 
 	--do DB cleanup check by version number
 	if not BSYC.options.dbversion or BSYC.options.dbversion ~= ver then	
-		--self:FixDB()
+		self:FixDB()
 		BSYC.options.dbversion = ver
 	end
 
@@ -118,8 +124,6 @@ function Data:OnEnable()
 	--load the slash commands
 	self:LoadSlashCommand()
 	
-	local ver = GetAddOnMetadata("BagSync","Version") or 0
-	
 	if BSYC.options.enableLoginVersionInfo then
 		BSYC:Print("[v|cFF20ff20"..ver.."|r] /bgs, /bagsync")
 	end
@@ -128,10 +132,6 @@ end
 
 function Data:CleanDB()
 
-	--BagSyncDB = BagSyncDB or {}
-	--BagSyncDB["options§"] = BagSyncDB["options§"] or {}
-	--BagSyncDB["blacklist§"] = BagSyncDB["blacklist§"] or 
-	
 	--delete old DB variables
 	if BagSyncOpt then
 		BagSyncOpt = nil
@@ -151,8 +151,49 @@ function Data:CleanDB()
 	if BagSync_REALMKEY then
 		BagSync_REALMKEY = nil
 	end
+	
+	if not BagSyncDB["forceDBReset§"] or BagSyncDB["forceDBReset§"] < forceDBReset then
+		--reset the db
+		BagSyncDB = {}
+		BagSyncDB["forceDBReset§"] = forceDBReset
+		BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r")
+	end
 
-	--BSYC:Print("|cFFFF9900"..L.FixDBComplete.."|r")
+end
+
+function Data:FixDB()
+
+    local storeUsers = {}
+    local storeGuilds = {}
+	
+	for unitObj in self:IterateUnits(true) do
+		--store only user guild names
+		if not unitObj.isGuild then
+			storeUsers[unitObj.name] = true
+			if unitObj.data.guild then
+				storeGuilds[unitObj.data.guild] = true
+			end
+		end
+	end
+	
+	--cleanup guilds
+	for realm, rd in pairs(BagSyncDB) do
+		--ignore options
+		if not string.match(realm, '§*') then
+			--iterate through realm data
+			for k, v in pairs(rd) do
+				local isGuild = (k:find('©*') and true) or false
+				if isGuild then
+					if not storeGuilds[k] then
+						--remove obsolete guild
+						BagSyncDB[realm][k] = nil
+					end
+				end
+			end
+		end
+	end
+	
+	BSYC:Print("|cFFFF9900"..L.FixDBComplete.."|r")
 end
 
 function Data:LoadSlashCommand()
