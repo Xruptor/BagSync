@@ -153,17 +153,24 @@ function Scanner:SaveGuildBank()
 		if isViewable then
 			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
 				local link = GetGuildBankItemLink(tab, slot)
-				local speciesID, level, breedQuality, maxHealth, power, speed, name = GameTooltip:SetGuildBankItem(tab, slot)
 				if link then
+				
+					local speciesID
+					local itemName, itemLink, _, _, _, itemType, itemSubType = GetItemInfo(link)
+					local _, count = GetGuildBankItemInfo(tab, slot)
+					
+					if itemType and itemSubType and itemType == "Battle Pets" or itemSubType == "BattlePet" then
+						speciesID = GameTooltip:SetGuildBankItem(tab, slot)
+					end
 					if speciesID then
 						link = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
 					else
 						link = BSYC:ParseItemLink(link, count)
 					end
 					
-					local _, count = GetGuildBankItemInfo(tab, slot)
 					table.insert(slotItems, link)
 				end
+				
 			end
 		end
 	end

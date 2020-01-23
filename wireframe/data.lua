@@ -19,7 +19,7 @@ local function Debug(...)
 end
 
 --increment forceDBReset to reset the db forcefully
-local forceDBReset = 1
+local forceDBReset = 2
 	
 StaticPopupDialogs["BAGSYNC_RESETDATABASE"] = {
 	text = L.ResetDBInfo,
