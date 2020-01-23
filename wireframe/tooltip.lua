@@ -310,10 +310,12 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 					objTooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
 				end
 			end
+			objTooltip:Show()
+			if objTooltip.qTip then objTooltip.qTip:Show() end
+		else
+			if objTooltip.qTip then LibQTip:Release(objTooltip.qTip) end
 		end
 		objTooltip.__tooltipUpdated = true
-		objTooltip:Show()
-		if objTooltip.qTip then objTooltip.qTip:Show() end
 		return
 	end
 	
@@ -424,7 +426,14 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	
 	objTooltip.__tooltipUpdated = true
 	objTooltip:Show()
-	if objTooltip.qTip then objTooltip.qTip:Show() end
+	
+	if objTooltip.qTip then
+		if grandTotal > 0 then
+			objTooltip.qTip:Show()
+		else
+			LibQTip:Release(objTooltip.qTip)
+		end
+	end
 end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID)

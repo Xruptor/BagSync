@@ -119,6 +119,12 @@ function Search:AddEntry(entry)
 
 	local name, link, rarity, texture = entry.name, entry.link, entry.rarity, entry.texture
 	local r, g, b, hex = GetItemQualityColor(rarity)
+	local isBattlePet = false
+	
+	local _, _, identifier, optOne = strsplit(";", link)
+	if identifier and tonumber(identifier) == 2 and optOne then
+		isBattlePet = true
+	end
 	
 	label:SetText(name)
 	label:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
@@ -128,21 +134,35 @@ function Search:AddEntry(entry)
 	label:SetCallback(
 		"OnClick", 
 		function (widget, sometable, button)
-			ChatEdit_InsertLink(link)
+			if not isBattlePet then
+				ChatEdit_InsertLink(link)
+			else
+				FloatingBattlePet_Toggle(tonumber(optOne), 0, 0, 0, 0, 0, nil, nil)
+			end
 		end)
 	label:SetCallback(
 		"OnEnter",
 		function (widget, sometable)
 			label:SetColor(unpack(highlightColor))
-			GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
-			GameTooltip:SetHyperlink(link)
-			GameTooltip:Show()
+			if not isBattlePet then
+				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
+				GameTooltip:SetHyperlink(link)
+				GameTooltip:Show()
+			else
+				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
+				BattlePetToolTip_Show(tonumber(optOne), 0, 0, 0, 0, 0, nil)
+			end
 		end)
 	label:SetCallback(
 		"OnLeave",
 		function (widget, sometable)
 			label:SetColor(r, g, b)
 			GameTooltip:Hide()
+			if not isBattlePet then
+				GameTooltip:Hide()
+			else
+				BattlePetTooltip:Hide()
+			end
 		end)
 
 	self.scrollframe:AddChild(label)
@@ -151,11 +171,25 @@ end
 local function checkData(data, searchStr, searchTable, tempList, countWarning, playerSearch)
 	for i=1, table.getn(data) do
 		if data[i] then
-			local link, count, identifier = strsplit(";", data[i])
+			local link, count, identifier, optOne = strsplit(";", data[i])
+			
 			if link then
-				local dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo("item:"..link)
+				local dName, dItemLink, dRarity, dTexture
+				local testMatch = false
+				
+				--if identifier is 2 then it's a battlepet, optOne would be speciesID
+				if identifier and tonumber(identifier) == 2 and optOne then
+					dName, dTexture = C_PetJournal.GetPetInfoBySpeciesID(optOne)
+					dRarity = 1
+					dItemLink = data[i]
+					testMatch = LibStub('CustomSearch-1.0'):Find(searchStr, dName)
+				else
+					dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo("item:"..link)
+					testMatch = itemScanner:Matches(dItemLink, searchStr)
+				end
+				
 				if dName and not tempList[link] then
-					if playerSearch or itemScanner:Matches(dItemLink, searchStr) then
+					if playerSearch or testMatch then
 						tempList[link] = dName
 						table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
 					end					

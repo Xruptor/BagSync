@@ -121,15 +121,15 @@ function BSYC:CreateFakeBattlePetID(link, count, speciesID)
 				
 				if petType and companionID and creatureDisplayID then
 					local fakePetID = 10000000000
-					fakePetID = fakePetID +(speciesID * 100000)
-					fakePetID = fakePetID +(petType * 1000)
-					fakePetID = fakePetID +(companionID * 100)
-					fakePetID = fakePetID +(creatureDisplayID)
+					fakePetID = fakePetID + (speciesID * 100000)
+					fakePetID = fakePetID + (petType * 1000)
+					fakePetID = fakePetID + (companionID * 100)
+					fakePetID = fakePetID + (creatureDisplayID)
 					
 					if fakePetID then
 						if not count then count = 1 end
 						--put a 2 at the end as an identifier to mark it as a battlepet
-						return fakePetID..';'..count..';2'
+						return fakePetID..';'..count..';2;'..speciesID
 					end
 				end
 			end
