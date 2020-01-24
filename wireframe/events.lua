@@ -65,7 +65,7 @@ function Events:OnEnable()
 	self:RegisterEvent("AUCTION_HOUSE_SHOW", function()
 		--query and update items being sold
 		updateAuctionData()
-		self:RegisterBucketEvent("OWNED_AUCTIONS_UPDATED", 1.5, function() Scanner:SaveAuctionHouse() end)
+		self:RegisterBucketEvent("OWNED_AUCTIONS_UPDATED", 0.7, function() Scanner:SaveAuctionHouse() end)
 	end)
 	
 	self:RegisterEvent("AUCTION_HOUSE_CLOSED", function()

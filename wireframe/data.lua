@@ -18,9 +18,13 @@ local function Debug(...)
 	end
 end
 
---increment forceDBReset to reset the db forcefully
+--increment forceDBReset to reset the ENTIRE db forcefully
 local forceDBReset = 2
-	
+--these just reset individual items in the DB
+local unitDBVersion = {
+	auction = 1,
+}
+
 StaticPopupDialogs["BAGSYNC_RESETDATABASE"] = {
 	text = L.ResetDBInfo,
 	button1 = L.Yes,
@@ -109,11 +113,11 @@ function Data:OnEnable()
 	if BSYC.options.colors.itemid == nil then BSYC.options.colors.itemid = { r = 82/255, g = 211/255, b = 134/255 }  end
 
 	--do DB cleanup check by version number
-	if not BSYC.options.dbversion or BSYC.options.dbversion ~= ver then	
+	if not BSYC.options.addonversion or BSYC.options.addonversion ~= ver then	
 		self:FixDB()
-		BSYC.options.dbversion = ver
+		BSYC.options.addonversion = ver
 	end
-
+	
 	--player info
 	BSYC.db.player.money = player.money
 	BSYC.db.player.class = player.class
@@ -158,10 +162,12 @@ function Data:CleanDB()
 	if next(BagSyncDB) == nil then
 		BagSyncDB["forceDBReset§"] = forceDBReset
 		BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r")
+		return
 	elseif not BagSyncDB["forceDBReset§"] or BagSyncDB["forceDBReset§"] < forceDBReset then
 		BagSyncDB = {}
 		BagSyncDB["forceDBReset§"] = forceDBReset
 		BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r")
+		return
 	end
 end
 
@@ -169,6 +175,8 @@ function Data:FixDB()
 
     local storeUsers = {}
     local storeGuilds = {}
+	
+	if not BSYC.options.unitDBVersion then BSYC.options.unitDBVersion = {} end
 	
 	for unitObj in self:IterateUnits(true) do
 		--store only user guild names
@@ -179,7 +187,7 @@ function Data:FixDB()
 			end
 		end
 	end
-	
+
 	--cleanup guilds
 	for realm, rd in pairs(BagSyncDB) do
 		--ignore options
@@ -192,10 +200,22 @@ function Data:FixDB()
 						--remove obsolete guild
 						BagSyncDB[realm][k] = nil
 					end
+				else
+					--users lets do a individual db cleanup if necessary
+					if BSYC.options.unitDBVersion.auction ~= unitDBVersion.auction and v.auction then
+						v.auction = nil
+					end
 				end
 			end
 		end
 	end
+	
+	if BSYC.options.unitDBVersion.auction ~= unitDBVersion.auction then
+		BSYC:Print("|cFFffff00"..L.UnitDBAuctionReset.."|r")
+	end
+	
+	--update db unit version information
+	BSYC.options.unitDBVersion = unitDBVersion
 	
 	BSYC:Print("|cFFFF9900"..L.FixDBComplete.."|r")
 end
@@ -272,10 +292,10 @@ end
 
 function Data:CheckExpiredAuctions()
 
-	local slotItems = {}
-	
 	for unitObj in self:IterateUnits(true) do
 		if not unitObj.isGuild and unitObj.data.auction and unitObj.data.auction.count then
+			
+			local slotItems = {}
 
 			for x = 1, unitObj.data.auction.count do
 				if unitObj.data.auction.bag[x] then
