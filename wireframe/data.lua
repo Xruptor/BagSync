@@ -45,12 +45,14 @@ function Data:OnEnable()
 	
 	--get player information from Unit
 	local player = Unit:GetUnitInfo()
-
+	
+	--initiate database
+	BagSyncDB = BagSyncDB or {}
+	
 	--before we do ANYTHING with the databse, lets do a cleanup or upgrade if necessary
 	self:CleanDB()
 	
-	--initiate global db variable
-	BagSyncDB = BagSyncDB or {}
+	--load the options and blacklist
 	BagSyncDB["options§"] = BagSyncDB["options§"] or {}
 	BagSyncDB["blacklist§"] = BagSyncDB["blacklist§"] or {}
 	
@@ -151,14 +153,16 @@ function Data:CleanDB()
 	if BagSync_REALMKEY then
 		BagSync_REALMKEY = nil
 	end
-	
-	if not BagSyncDB["forceDBReset§"] or BagSyncDB["forceDBReset§"] < forceDBReset then
-		--reset the db
+
+	--check for empty table table to prevent loops
+	if next(BagSyncDB) == nil then
+		BagSyncDB["forceDBReset§"] = forceDBReset
+		BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r")
+	elseif not BagSyncDB["forceDBReset§"] or BagSyncDB["forceDBReset§"] < forceDBReset then
 		BagSyncDB = {}
 		BagSyncDB["forceDBReset§"] = forceDBReset
 		BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r")
 	end
-
 end
 
 function Data:FixDB()

@@ -402,6 +402,9 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if BSYC.options.enableTooltipItemID and shortID then
 		desc = self:HexColor(BSYC.options.colors.itemid, L.TooltipItemID)
 		value = self:HexColor(BSYC.options.colors.second, shortID)
+		if isBattlePet then
+			desc = string.format("|cFFCA9BF7%s|r ", L.TooltipFakeID)
+		end
 		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
 	end
 	

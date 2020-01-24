@@ -16,6 +16,7 @@ L.TooltipReagent = "Reagent:"
 L.TooltipAuction = "AH:"
 L.TooltipTotal = "Total:"
 L.TooltipItemID = "[ItemID]:"
+L.TooltipFakeID = "[FakeID]:"
 L.TooltipDelimiter = ", "
 L.TooltipRealmKey = "RealmKey:"
 L.Search = "Search"
@@ -164,5 +165,9 @@ L.FAQ_Question_4_p1 = "Currently BagSync does not support transmitting data betw
 L.FAQ_Question_5 = "Why do I get a message that guild bank scanning is incomplete?"
 L.FAQ_Question_5_p1 = [[
 BagSync has to query the server for |cFF99CC33ALL|r your guild bank information.  It takes time for the server to transmit all the data.  In order for BagSync to properly store all your items, you must wait until the server query is complete.  When the scanning process is complete, BagSync will notify you with a notification in chat.  Leaving the Guild Bank window before the scanning process is done, will result in incorrect data being stored for your Guild Bank.
+]]
+L.FAQ_Question_6 = "Why do I see [FakeID] instead of [ItemID] for Battle Pets?"
+L.FAQ_Question_6_p1 = [[
+Blizzard does not assign ItemID's to Battle Pets for WOW.  Instead, Battle Pets in WOW are assigned a temporary PetID from the server.  This PetID is not unique and will be changed when the server resets.  In order to keep track of Battle Pets, BagSync generates a FakeID.  A FakeID is generated from numbers that are static to the Battle Pet.  Using a FakeID allows BagSync to track Battle Pets even across server resets.
 ]]
 

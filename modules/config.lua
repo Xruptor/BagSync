@@ -562,6 +562,20 @@ options.args.faq = {
 				},
 			}
 		},
+		question_6 = {
+			order = 6,
+			name = L.FAQ_Question_6,
+			type = 'group',
+			guiInline = true,
+			args = {
+				title = {
+				  order = 0,
+				  fontSize = "medium",
+				  type = "description",
+				  name = L.FAQ_Question_6_p1,
+				},
+			}
+		},
 	},
 }
 
