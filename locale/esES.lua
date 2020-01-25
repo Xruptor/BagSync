@@ -53,7 +53,6 @@ L.HelpConfigWindow = "/bgs config - Abre la ventana de configuración de BagSync
 L.HelpProfessionsWindow = "/bgs profesiones - Abre la ventana de profesiones."
 L.HelpBlacklistWindow = "/bgs listanegra - Abre la ventana con la lista negra."
 L.DisplayTotal = "Mostrar la cantidad [Total]."
-L.DisplayGuildName = "Mostrar [nombre de hermandad] para objetos del banco de hermandad."
 L.DisplayGuildBank = "Mostrar objetos del banco de hermandad."
 L.DisplayMailbox = "Mostrar objetos del correo."
 L.DisplayAuctionHouse = "Mostrar objetos de la casa de subastas."

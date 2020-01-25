@@ -79,7 +79,6 @@ function Data:OnEnable()
 	--options DB
 	BSYC.options = BagSyncDB["options§"]
 	if BSYC.options.showTotal == nil then BSYC.options.showTotal = true end
-	if BSYC.options.showGuildNames == nil then BSYC.options.showGuildNames = false end
 	if BSYC.options.enableGuild == nil then BSYC.options.enableGuild = true end
 	if BSYC.options.enableMailbox == nil then BSYC.options.enableMailbox = true end
 	if BSYC.options.enableUnitClass == nil then BSYC.options.enableUnitClass = true end
@@ -359,6 +358,8 @@ function Data:IterateUnits(dumpAll)
 								end
 								--check for the guild blacklist
 								if BSYC.db.blacklist[XRName] then skipChk = true end
+							elseif not BSYC.options.enableGuild and isGuild then
+								skipChk = true
 							end
 							
 							if not skipChk then

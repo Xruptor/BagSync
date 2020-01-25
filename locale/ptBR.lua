@@ -53,7 +53,6 @@ L.HelpConfigWindow = "/bgs configuracao - Abre uma janela de configuração do B
 L.HelpProfessionsWindow = "/bgs profissoes - Abre a janela de profissões."
 L.HelpBlacklistWindow = "/bgs listanegra - Abre a janela de lista negra."
 L.DisplayTotal = "Exibe [Total] nas dicas o indicador de ouro."
-L.DisplayGuildName = "Exbie [Nome da Guilda] nas dicas."
 L.DisplayGuildBank = "Ativar itens do banco da guilda."
 L.DisplayMailbox = "Ativar itens da caixa de correio."
 L.DisplayAuctionHouse = "Ativar itens da casa de leilão."
