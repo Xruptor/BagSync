@@ -97,8 +97,18 @@ options.args.main = {
 			set = set,
 			arg = "main.enableTooltips",
 		},
-		enabletooltipsearchonly = {
+		enableexternaltooltip = {
 			order = 2,
+			type = "toggle",
+			name = L.EnableExtTooltip,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "main.enableExtTooltip",
+		},
+		enabletooltipsearchonly = {
+			order = 3,
 			type = "toggle",
 			name = L.DisplayTooltipOnlySearch,
 			width = "full",
@@ -108,7 +118,7 @@ options.args.main = {
 			arg = "main.tooltipOnlySearch",
 		},
 		enableminimap = {
-			order = 3,
+			order = 4,
 			type = "toggle",
 			name = L.DisplayMinimap,
 			width = "full",
@@ -118,7 +128,7 @@ options.args.main = {
 			arg = "minimap.enableMinimap",
 		},
 		enableversiontext = {
-			order = 4,
+			order = 5,
 			type = "toggle",
 			name = L.EnableLoginVersionInfo,
 			width = "full",
@@ -128,7 +138,7 @@ options.args.main = {
 			arg = "main.enableLoginVersionInfo",
 		},
 		keybindblacklist = {
-			order = 5,
+			order = 6,
 			type = "keybinding",
 			name = L.KeybindBlacklist,
 			width = "full",
@@ -138,7 +148,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCBLACKLIST",
 		},
 		keybindcurrency = {
-			order = 6,
+			order = 7,
 			type = "keybinding",
 			name = L.KeybindCurrency,
 			width = "full",
@@ -148,7 +158,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCCURRENCY",
 		},
 		keybindgold = {
-			order = 7,
+			order = 8,
 			type = "keybinding",
 			name = L.KeybindGold,
 			width = "full",
@@ -158,7 +168,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCGOLD",
 		},
 		keybindprofessions = {
-			order = 8,
+			order = 9,
 			type = "keybinding",
 			name = L.KeybindProfessions,
 			width = "full",
@@ -168,7 +178,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCPROFESSIONS",
 		},
 		keybindprofiles = {
-			order = 9,
+			order = 10,
 			type = "keybinding",
 			name = L.KeybindProfiles,
 			width = "full",
@@ -178,7 +188,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCPROFILES",
 		},
 		keybindsearch = {
-			order = 10,
+			order = 11,
 			type = "keybinding",
 			name = L.KeybindSearch,
 			width = "full",

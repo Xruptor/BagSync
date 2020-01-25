@@ -30,8 +30,7 @@ StaticPopupDialogs["BAGSYNC_RESETDATABASE"] = {
 	button1 = L.Yes,
 	button2 = L.No,
 	OnAccept = function()
-		BagSyncDB = {}
-		BagSyncDB["forceDBReset§"] = forceDBReset
+		BagSyncDB = { ["forceDBReset§"] = forceDBReset }
 		ReloadUI()
 	end,
 	timeout = 0,
@@ -87,6 +86,7 @@ function Data:OnEnable()
 	if BSYC.options.enableAuction == nil then BSYC.options.enableAuction = true end
 	if BSYC.options.tooltipOnlySearch == nil then BSYC.options.tooltipOnlySearch = false end
 	if BSYC.options.enableTooltips == nil then BSYC.options.enableTooltips = true end
+	if BSYC.options.enableExtTooltip == nil then BSYC.options.enableExtTooltip = false end
 	if BSYC.options.enableTooltipSeperator == nil then BSYC.options.enableTooltipSeperator = true end
 	if BSYC.options.enableCrossRealmsItems == nil then BSYC.options.enableCrossRealmsItems = true end
 	if BSYC.options.enableBNetAccountItems == nil then BSYC.options.enableBNetAccountItems = false end
@@ -163,8 +163,7 @@ function Data:CleanDB()
 		BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r")
 		return
 	elseif not BagSyncDB["forceDBReset§"] or BagSyncDB["forceDBReset§"] < forceDBReset then
-		BagSyncDB = {}
-		BagSyncDB["forceDBReset§"] = forceDBReset
+		BagSyncDB = { ["forceDBReset§"] = forceDBReset }
 		BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r")
 		return
 	end

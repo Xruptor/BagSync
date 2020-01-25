@@ -290,12 +290,15 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	--short the shortID and ignore all BonusID's and stats
 	if BSYC.options.enableShowUniqueItemsTotals then link = shortID end
 	
-	if isBattlePet and not objTooltip.qTip then
+	if (BSYC.options.enableExtTooltip or isBattlePet) and not objTooltip.qTip then
 		objTooltip.qTip = LibQTip:Acquire(objTooltip:GetName(), 3, "LEFT", "CENTER", "RIGHT")
 		objTooltip.qTip:Clear()
-		--tooltip:SmartAnchorTo(objTooltip)
+		--objTooltip.qTip:SmartAnchorTo(objTooltip)
 		objTooltip.qTip:SetPoint("TOPLEFT", objTooltip, "BOTTOMLEFT")
 		objTooltip.qTip.OnRelease = function() objTooltip.qTip = nil end
+	elseif objTooltip.qTip then
+		--clear any item data already in the tooltip
+		objTooltip.qTip:Clear()
 	end
 	
 	--if we already did the item, then display the previous information
@@ -303,11 +306,11 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		if self.__lastTally and table.getn(self.__lastTally) > 0 then
 			for i=1, table.getn(self.__lastTally) do
 				local color = BSYC.options.colors.total --this is a cover all color we are going to use
-				if not isBattlePet then
-					objTooltip:AddDoubleLine(self.__lastTally[i].colorized, self.__lastTally[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
-				else
-					local lineNum = objTooltip.qTip:AddLine(self.__lastTally[i].colorized, 	string.rep(" ", 3), self.__lastTally[i].tallyString)
+				if BSYC.options.enableExtTooltip or isBattlePet then
+					local lineNum = objTooltip.qTip:AddLine(self.__lastTally[i].colorized, 	string.rep(" ", 4), self.__lastTally[i].tallyString)
 					objTooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
+				else
+					objTooltip:AddDoubleLine(self.__lastTally[i].colorized, self.__lastTally[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
 				end
 			end
 			objTooltip:Show()
@@ -416,12 +419,12 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	--finally display it
 	for i=1, table.getn(unitList) do
 		local color = BSYC.options.colors.total --this is a cover all color we are going to use
-		if not isBattlePet then
-			objTooltip:AddDoubleLine(unitList[i].colorized, unitList[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
-		else
+		if BSYC.options.enableExtTooltip or isBattlePet then
 			-- Add an new line, using all columns
-			local lineNum = objTooltip.qTip:AddLine(unitList[i].colorized, string.rep(" ", 3), unitList[i].tallyString)
+			local lineNum = objTooltip.qTip:AddLine(unitList[i].colorized, string.rep(" ", 4), unitList[i].tallyString)
 			objTooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
+		else
+			objTooltip:AddDoubleLine(unitList[i].colorized, unitList[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
 		end
 	end
 	
@@ -483,6 +486,11 @@ function Tooltip:HookTooltip(objTooltip)
 		self.__tooltipUpdated = false
 		--reset __lastLink in the addon itself not within the tooltip
 		Tooltip.__lastLink = nil
+		
+		if self.qTip then
+			LibQTip:Release(self.qTip)
+			self.qTip = nil
+		end
 	end)
 	objTooltip:HookScript("OnTooltipCleared", function(self)
 		--this gets called repeatedly on some occasions. Do not reset Tooltip.__lastLink here
