@@ -69,23 +69,6 @@ function Events:OnEnable()
 
 	self:RegisterBucketEvent("OWNED_AUCTIONS_UPDATED", 0.3, function() Scanner:SaveAuctionHouse() end)
 	
-	--this is for the Sell Frame
-	self:RegisterBucketEvent("COMMODITY_SEARCH_RESULTS_UPDATED", 0.3, function()
-		if AuctionHouseFrame.CommoditiesSellList then
-			local numEntries = AuctionHouseFrame.CommoditiesSellList.getNumEntries()
-			--print('getNumEntries', numEntries)
-			for i = 1, numEntries do
-				local rowData = AuctionHouseFrame.CommoditiesSellList.getEntry(i)
-				if rowData and rowData.containsOwnerItem then
-					print(rowData.numOwnerItems, rowData.itemID)
-					--containsOwnerItem
-				end
-			end
-		end
-		--print('test2')
-		Scanner:SaveAuctionHouse()
-	end)
-	
 	Scanner:StartupScans() --do the login player scans
 end
 
