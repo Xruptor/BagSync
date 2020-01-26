@@ -65,19 +65,25 @@ function Events:OnEnable()
 	self:RegisterEvent("AUCTION_HOUSE_SHOW", function()
 		--query and update items being sold
 		updateAuctionData()
-		self:RegisterBucketEvent("OWNED_AUCTIONS_UPDATED", 0.7, function() Scanner:SaveAuctionHouse() end)
 	end)
-	
-	self:RegisterEvent("AUCTION_HOUSE_CLOSED", function()
-		self:UnregisterBucket("OWNED_AUCTIONS_UPDATED")
-	end)
+
+	self:RegisterBucketEvent("OWNED_AUCTIONS_UPDATED", 0.3, function() Scanner:SaveAuctionHouse() end)
 	
 	--this is for the Sell Frame
-	self:RegisterEvent("COMMODITY_SEARCH_RESULTS_UPDATED", function()
-		if AuctionHouseFrame and AuctionHouseFrame:GetDisplayMode() == AuctionHouseFrameDisplayMode.CommoditiesSell then
-			updateAuctionData()
+	self:RegisterBucketEvent("COMMODITY_SEARCH_RESULTS_UPDATED", 0.3, function()
+		if AuctionHouseFrame.CommoditiesSellList then
+			local numEntries = AuctionHouseFrame.CommoditiesSellList.getNumEntries()
+			--print('getNumEntries', numEntries)
+			for i = 1, numEntries do
+				local rowData = AuctionHouseFrame.CommoditiesSellList.getEntry(i)
+				if rowData and rowData.containsOwnerItem then
+					print(rowData.numOwnerItems, rowData.itemID)
+					--containsOwnerItem
+				end
+			end
 		end
-		
+		--print('test2')
+		Scanner:SaveAuctionHouse()
 	end)
 	
 	Scanner:StartupScans() --do the login player scans

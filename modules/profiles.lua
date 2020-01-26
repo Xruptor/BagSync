@@ -61,7 +61,9 @@ function Profiles:OnEnable()
 		exclusive = 1,
 		hideOnEscape = 1,
 		OnShow = function (self)
-			self.text:SetText(L.ProfilesRemove:format(self.data.colorized));
+			--entry.unitObj.realm
+			POOPCRAP = self
+			self.text:SetText(L.ProfilesRemove:format(self.data.colorized, self.data.unitObj.realm));
 		end,
 		OnAccept = function (self)
 			Profiles:DeleteUnit(self.data)
@@ -85,7 +87,7 @@ function Profiles:DeleteUnit(entry)
 			ReloadUI()
 			return
 		else
-			BSYC:Print(L.ProfileBeenRemoved:format(entry.colorized))
+			BSYC:Print(L.ProfileBeenRemoved:format(entry.colorized, entry.unitObj.realm))
 			BagSyncDB[entry.unitObj.realm][entry.unitObj.name] = nil
 			self:DisplayList()
 			return
