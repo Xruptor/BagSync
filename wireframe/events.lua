@@ -19,11 +19,26 @@ local function Debug(...)
 	end
 end
 
-function Events:DoTimer(sName, sFunc, sDelay)
+function Events:DoTimer(sName, sFunc, sDelay, sRepeat)
 	if not self.timers then self.timers = {} end
-	self:CancelTimer(self.timers[sName])
-	self.timers[sName] = self:ScheduleTimer(sFunc, sDelay)
+	if not sRepeat then
+		--stop and delete current timer to recreate
+		self:StopTimer(sName)
+		self.timers[sName] = self:ScheduleTimer(sFunc, sDelay)
+	else
+		--don't recreate a repeatingtimer if it already exists.
+		if not self.timers[sName] then
+			self.timers[sName] = self:ScheduleRepeatingTimer(sFunc, sDelay)
+		end
+	end
 	return self.timers[sName]
+end
+
+function Events:StopTimer(sName)
+	if not self.timers then return end
+	if not sName then return end
+	self:CancelTimer(self.timers[sName])
+	self.timers[sName] = nil
 end
 
 function Events:OnEnable()
@@ -68,20 +83,53 @@ function Events:OnEnable()
 			AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions)
 		end
 	end)
-	self:RegisterEvent("COMMODITY_SEARCH_RESULTS_UPDATED", function()
-		if AuctionHouseFrame and AuctionHouseFrame:GetDisplayMode() == AuctionHouseFrameDisplayMode.CommoditiesSell or AuctionHouseFrameDisplayMode.ItemSell then
-			self:DoTimer("QueryAuction", function()
-				if not Unit.atAuction then return end
+	
+	local function doAuctionUpdate(sellFrame)
+		local timerName = "QueryAuction"
+		
+		self:DoTimer(timerName, function()
+			if not Unit.atAuction then self:StopTimer(timerName) return end
+			
+			local dispMode = AuctionHouseFrame:GetDisplayMode()
+			local state, spinner
+
+			if dispMode == AuctionHouseFrameDisplayMode.CommoditiesSell then
+				state = AuctionHouseFrame:GetCommoditiesSellListFrames().state
+				spinner = AuctionHouseFrame:GetCommoditiesSellListFrames().LoadingSpinner
+				
+			elseif dispMode == AuctionHouseFrameDisplayMode.ItemSell then
+				state = AuctionHouseFrame:GetItemSellList().state
+				spinner = AuctionHouseFrame:GetItemSellList().LoadingSpinner
+			end
+			if not state or not spinner then self:StopTimer(timerName) return end
+			
+			--state 4 = ShowResults, and we don't have the LoadingSpinner Visible
+			if state == 4 and not spinner:IsVisible() then
 				AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions)
-			end, 1)
+				print('passed')
+				self:StopTimer(timerName)
+			end
+			
+		end, 4, true)
+		
+	end
+	
+	self:RegisterEvent("COMMODITY_SEARCH_RESULTS_UPDATED", function()
+		--uses CommoditiesSellList
+		if AuctionHouseFrame then
+			local dispMode = AuctionHouseFrame:GetDisplayMode()
+			if dispMode == AuctionHouseFrameDisplayMode.CommoditiesSell or dispMode == AuctionHouseFrameDisplayMode.ItemSell then
+				doAuctionUpdate(AuctionHouseFrame:GetCommoditiesSellListFrames())
+			end
 		end
 	end)
 	self:RegisterEvent("ITEM_SEARCH_RESULTS_UPDATED", function()
-		if AuctionHouseFrame and AuctionHouseFrame:GetDisplayMode() == AuctionHouseFrameDisplayMode.CommoditiesSell or AuctionHouseFrameDisplayMode.ItemSell then
-			self:DoTimer("QueryAuction", function()
-				if not Unit.atAuction then return end
-				AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions)
-			end, 1)
+		--uses ItemSellList  (like battlepets and such in AuctionHouse Sell Frame)
+		if AuctionHouseFrame then
+			local dispMode = AuctionHouseFrame:GetDisplayMode()
+			if dispMode == AuctionHouseFrameDisplayMode.CommoditiesSell or dispMode == AuctionHouseFrameDisplayMode.ItemSell then
+				doAuctionUpdate(AuctionHouseFrame:GetItemSellList())
+			end
 		end
 	end)
 	self:RegisterEvent("OWNED_AUCTIONS_UPDATED", function()
