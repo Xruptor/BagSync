@@ -4,7 +4,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
-local Events = BSYC:NewModule("Events", 'AceEvent-3.0', 'AceBucket-3.0')
+local Events = BSYC:NewModule("Events", 'AceEvent-3.0', 'AceTimer-3.0')
 local Unit = BSYC:GetModule("Unit")
 local Scanner = BSYC:GetModule("Scanner")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
@@ -17,6 +17,13 @@ local function Debug(...)
 		debugStr = moduleName..debugStr
 		debugf:AddMessage(debugStr)
 	end
+end
+
+function Events:DoTimer(sName, sFunc, sDelay)
+	if not self.timers then self.timers = {} end
+	self:CancelTimer(self.timers[sName])
+	self.timers[sName] = self:ScheduleTimer(sFunc, sDelay)
+	return self.timers[sName]
 end
 
 function Events:OnEnable()
@@ -51,21 +58,27 @@ function Events:OnEnable()
 	
 	self:RegisterEvent("GUILDBANKFRAME_OPENED")
 	self:RegisterEvent("GUILDBANKFRAME_CLOSED")
-	self:RegisterBucketEvent("GUILDBANKBAGSLOTS_CHANGED", 0.3)
+	self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED", function()
+		self:DoTimer("GuildBankScan", function() self:GUILDBANKBAGSLOTS_CHANGED() end, 0.3)
+	end)
 	
 	self:RegisterEvent("AUCTION_HOUSE_SHOW", function()
 		--query and update items being sold
 		if AuctionHouseFrame then AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions) end
 	end)
-	
-    self:RegisterBucketEvent({"COMMODITY_SEARCH_RESULTS_UPDATED", "ITEM_SEARCH_RESULTS_UPDATED"}, 0.3, function()
-		--query and update items being sold, only if we are viewing the sell screen
+	self:RegisterEvent("COMMODITY_SEARCH_RESULTS_UPDATED", function()
 		if AuctionHouseFrame and AuctionHouseFrame:GetDisplayMode() == AuctionHouseFrameDisplayMode.CommoditiesSell or AuctionHouseFrameDisplayMode.ItemSell then
-			AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions)
+			self:DoTimer("QueryAuction", function() AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions) end, 1)
 		end
-    end)
-	
-	self:RegisterBucketEvent("OWNED_AUCTIONS_UPDATED", 0.3, function() Scanner:SaveAuctionHouse() end)
+	end)
+	self:RegisterEvent("ITEM_SEARCH_RESULTS_UPDATED", function()
+		if AuctionHouseFrame and AuctionHouseFrame:GetDisplayMode() == AuctionHouseFrameDisplayMode.CommoditiesSell or AuctionHouseFrameDisplayMode.ItemSell then
+			self:DoTimer("QueryAuction", function() AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions) end, 1)
+		end
+	end)
+	self:RegisterEvent("OWNED_AUCTIONS_UPDATED", function()
+		self:DoTimer("ScanAuction", function() Scanner:SaveAuctionHouse() end, 1)
+	end)
 	
 	Scanner:StartupScans() --do the login player scans
 end

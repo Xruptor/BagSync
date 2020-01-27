@@ -17,7 +17,6 @@ libs\AceLocale-3.0\AceLocale-3.0.xml
 libs\AceConsole-3.0\AceConsole-3.0.xml
 libs\AceEvent-3.0\AceEvent-3.0.xml
 libs\AceTimer-3.0\AceTimer-3.0.xml
-libs\AceBucket-3.0\AceBucket-3.0.xml
 libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 libs\Unfit-1.0\Unfit-1.0.lua
 libs\CustomSearch-1.0\CustomSearch-1.0.lua
