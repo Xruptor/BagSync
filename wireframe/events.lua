@@ -77,16 +77,10 @@ function Events:OnEnable()
 		self:DoTimer("GuildBankScan", function() self:GUILDBANKBAGSLOTS_CHANGED() end, 0.3)
 	end)
 	
-	self:RegisterEvent("AUCTION_HOUSE_SHOW", function()
-		--query and update items being sold
-		if AuctionHouseFrame then
-			AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions)
-		end
-	end)
-	
-	local function doAuctionUpdate(sellFrame)
-		local timerName = "QueryAuction"
-		
+	local function doAuctionUpdate(timerName)
+		--stop the timer first
+		self:StopTimer(timerName)
+		--recreate the repeating timer
 		self:DoTimer(timerName, function()
 			if not Unit.atAuction then self:StopTimer(timerName) return end
 			
@@ -106,20 +100,36 @@ function Events:OnEnable()
 			--state 4 = ShowResults, and we don't have the LoadingSpinner Visible
 			if state == 4 and not spinner:IsVisible() then
 				AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions)
-				print('passed')
 				self:StopTimer(timerName)
 			end
 			
-		end, 4, true)
-		
+		end, 2.5, true)
 	end
 	
+	local timerName = "QueryAuction"
+	
+	self:RegisterEvent("AUCTION_HOUSE_SHOW", function()
+		--query and update items being sold
+		if AuctionHouseFrame then
+			AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions)
+			
+			if not self.auctionPostClick then
+				self.auctionPostClick = true
+				AuctionHouseFrame.CommoditiesSellFrame.PostButton:HookScript("OnClick", function()
+					doAuctionUpdate(timerName)
+				end)
+				AuctionHouseFrame.ItemSellFrame.PostButton:HookScript("OnClick", function()
+					doAuctionUpdate(timerName)
+				end)
+			end
+		end
+	end)
 	self:RegisterEvent("COMMODITY_SEARCH_RESULTS_UPDATED", function()
 		--uses CommoditiesSellList
 		if AuctionHouseFrame then
 			local dispMode = AuctionHouseFrame:GetDisplayMode()
 			if dispMode == AuctionHouseFrameDisplayMode.CommoditiesSell or dispMode == AuctionHouseFrameDisplayMode.ItemSell then
-				doAuctionUpdate(AuctionHouseFrame:GetCommoditiesSellListFrames())
+				doAuctionUpdate(timerName)
 			end
 		end
 	end)
@@ -128,7 +138,7 @@ function Events:OnEnable()
 		if AuctionHouseFrame then
 			local dispMode = AuctionHouseFrame:GetDisplayMode()
 			if dispMode == AuctionHouseFrameDisplayMode.CommoditiesSell or dispMode == AuctionHouseFrameDisplayMode.ItemSell then
-				doAuctionUpdate(AuctionHouseFrame:GetItemSellList())
+				doAuctionUpdate(timerName)
 			end
 		end
 	end)
