@@ -19,15 +19,6 @@ local function Debug(...)
 	end
 end
 
-local function updateAuctionData()
-	local function GetSortTypes(searchContext)
-		return g_auctionHouseSortsBySearchContext[searchContext] or {};
-	end
-
-	local sorts = GetSortTypes(AuctionHouseSearchContext.AllAuctions)
-	C_AuctionHouse.QueryOwnedAuctions(sorts)
-end
-	
 function Events:OnEnable()
 	--Force guild roster update, so we can grab guild name.  Note this is nil on login
 	--https://wow.gamepedia.com/API_GetGuildInfo
@@ -64,9 +55,16 @@ function Events:OnEnable()
 	
 	self:RegisterEvent("AUCTION_HOUSE_SHOW", function()
 		--query and update items being sold
-		updateAuctionData()
+		if AuctionHouseFrame then AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions) end
 	end)
-
+	
+    self:RegisterBucketEvent({"COMMODITY_SEARCH_RESULTS_UPDATED", "ITEM_SEARCH_RESULTS_UPDATED"}, 0.3, function()
+		--query and update items being sold, only if we are viewing the sell screen
+		if AuctionHouseFrame and AuctionHouseFrame:GetDisplayMode() == AuctionHouseFrameDisplayMode.CommoditiesSell or AuctionHouseFrameDisplayMode.ItemSell then
+			AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions)
+		end
+    end)
+	
 	self:RegisterBucketEvent("OWNED_AUCTIONS_UPDATED", 0.3, function() Scanner:SaveAuctionHouse() end)
 	
 	Scanner:StartupScans() --do the login player scans

@@ -156,7 +156,7 @@ function Scanner:SaveGuildBank()
 			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
 				local link = GetGuildBankItemLink(tab, slot)
 				if link then
-				
+
 					local speciesID
 					local itemName, itemLink, _, _, _, itemType, itemSubType = GetItemInfo(link)
 					local _, count = GetGuildBankItemInfo(tab, slot)
@@ -232,7 +232,7 @@ function Scanner:SaveAuctionHouse()
 
 	local slotItems = {}
 	local numActiveAuctions = C_AuctionHouse.GetNumOwnedAuctions()
-
+		
 	--scan the auction house
 	if (numActiveAuctions > 0) then
 		for ahIndex = 1, numActiveAuctions do
