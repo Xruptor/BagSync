@@ -64,16 +64,24 @@ function Events:OnEnable()
 	
 	self:RegisterEvent("AUCTION_HOUSE_SHOW", function()
 		--query and update items being sold
-		if AuctionHouseFrame then AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions) end
+		if AuctionHouseFrame then
+			AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions)
+		end
 	end)
 	self:RegisterEvent("COMMODITY_SEARCH_RESULTS_UPDATED", function()
 		if AuctionHouseFrame and AuctionHouseFrame:GetDisplayMode() == AuctionHouseFrameDisplayMode.CommoditiesSell or AuctionHouseFrameDisplayMode.ItemSell then
-			self:DoTimer("QueryAuction", function() AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions) end, 1)
+			self:DoTimer("QueryAuction", function()
+				if not Unit.atAuction then return end
+				AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions)
+			end, 1)
 		end
 	end)
 	self:RegisterEvent("ITEM_SEARCH_RESULTS_UPDATED", function()
 		if AuctionHouseFrame and AuctionHouseFrame:GetDisplayMode() == AuctionHouseFrameDisplayMode.CommoditiesSell or AuctionHouseFrameDisplayMode.ItemSell then
-			self:DoTimer("QueryAuction", function() AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions) end, 1)
+			self:DoTimer("QueryAuction", function()
+				if not Unit.atAuction then return end
+				AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions)
+			end, 1)
 		end
 	end)
 	self:RegisterEvent("OWNED_AUCTIONS_UPDATED", function()
