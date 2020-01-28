@@ -94,11 +94,21 @@ function Events:OnEnable()
 			elseif dispMode == AuctionHouseFrameDisplayMode.ItemSell then
 				state = AuctionHouseFrame:GetItemSellList().state
 				spinner = AuctionHouseFrame:GetItemSellList().LoadingSpinner
+				
+			elseif dispMode == AuctionHouseFrameDisplayMode.Buy then 
+				state = AuctionHouseFrame:GetBrowseResultsFrame().ItemList.state
+				spinner = AuctionHouseFrame:GetBrowseResultsFrame().ItemList.LoadingSpinner
+
+			elseif dispMode == AuctionHouseFrameDisplayMode.Auctions then
+				--don't run this while on auctions list frame
+				self:StopTimer(timerName)
+				return
 			end
+			
 			if not state or not spinner then self:StopTimer(timerName) return end
 			
-			--state 4 = ShowResults, and we don't have the LoadingSpinner Visible
-			if state == 4 and not spinner:IsVisible() then
+			--state 3 = ResultsPending, and we don't have the LoadingSpinner Visible
+			if state ~= 3 and not spinner:IsVisible() then
 				AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions)
 				self:StopTimer(timerName)
 			end
@@ -112,7 +122,7 @@ function Events:OnEnable()
 		--query and update items being sold
 		if AuctionHouseFrame then
 			AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions)
-			
+			--hook the post buttons
 			if not self.auctionPostClick then
 				self.auctionPostClick = true
 				AuctionHouseFrame.CommoditiesSellFrame.PostButton:HookScript("OnClick", function()
