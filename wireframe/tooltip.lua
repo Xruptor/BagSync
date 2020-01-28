@@ -86,8 +86,9 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm)
 		tmpTag = FactionIcon.." "..tmpTag
 	end
 	
-	--return the bypass to display all server tags
+	--return the bypass
 	if bypass then
+		--check for showRealm tag before returning
 		if showRealm then
 			realmTag = L.TooltipBattleNetTag..delimiter
 			tmpTag = self:HexColor(BSYC.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
@@ -95,23 +96,35 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm)
 		return tmpTag
 	end
 	
-	if BSYC.options.disableXR_BNETRealmNames then
-		realm = ""
-		delimiter = ""
+	if BSYC.options.enableXR_BNETRealmNames then
+		BSYC.options.enableRealmAstrickName = false
+		BSYC.options.enableRealmShortName = false
+		realm = unitObj.realm
 	elseif BSYC.options.enableRealmAstrickName then
+		BSYC.options.enableXR_BNETRealmNames = false
+		BSYC.options.enableRealmShortName = false
 		realm = "*"
 	elseif BSYC.options.enableRealmShortName then
-		realm = string.sub(realm, 1, 5)
+		BSYC.options.enableXR_BNETRealmNames = false
+		BSYC.options.enableRealmAstrickName = false
+		realm = string.sub(unitObj.realm, 1, 5)
+	else
+		realm = ""
+		delimiter = ""
 	end
 	
 	if BSYC.options.enableBNetAccountItems and not unitObj.isConnectedRealm then
 		realmTag = BSYC.options.enableRealmIDTags and L.TooltipBattleNetTag..delimiter or ""
-		tmpTag = self:HexColor(BSYC.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
+		if string.len(realm) > 0 or string.len(realmTag) > 0 then
+			tmpTag = self:HexColor(BSYC.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
+		end
 	end
 	
 	if BSYC.options.enableCrossRealmsItems and unitObj.isConnectedRealm and unitObj.realm ~= player.realm then
 		realmTag = BSYC.options.enableRealmIDTags and L.TooltipCrossRealmTag..delimiter or ""
-		tmpTag = self:HexColor(BSYC.options.colors.cross, "["..realmTag..realm.."]").." "..tmpTag
+		if string.len(realm) > 0 or string.len(realmTag) > 0 then
+			tmpTag = self:HexColor(BSYC.options.colors.cross, "["..realmTag..realm.."]").." "..tmpTag
+		end
 	end
 	
 	return tmpTag

@@ -99,7 +99,7 @@ L.HelpConfigWindow = "/bgs config - Opens the BagSync Config Window"
 L.HelpProfessionsWindow = "/bgs professions - Opens the professions window."
 L.HelpBlacklistWindow = "/bgs blacklist - Opens the blacklist window."
 L.EnableBagSyncTooltip = "Enable BagSync Tooltips"
-L.EnableExtTooltip = "Display item count data in an external toolip. |cFFDF2B2B(Requires BagSync Tooltips)|r"
+L.EnableExtTooltip = "Display item count data in an external toolip."
 L.EnableLoginVersionInfo = "Display BagSync version text at login."
 L.DisplayTotal = "Display [Total] amount."
 L.DisplayGuildGoldInGoldTooltip = "Display [Guild] gold totals in Gold Tooltip."
@@ -114,9 +114,12 @@ L.DisplayLineSeperator = "Display empty line seperator."
 L.DisplayCrossRealm = "Display Cross-Realms characters. |cffff7d0a[XR]|r"
 L.DisplayBNET = "Display Battle.Net Account characters. |cff3587ff[BNet]|r |cFFDF2B2B(Not Recommended)|r."
 L.DisplayItemID = "Display ItemID in tooltip."
+L.DisplayTooltipTags = "Tags"
+L.DisplayTooltipRealmNames = "Realm Names"
 L.DisplayGreenCheck = "Display %s next to current character name."
 L.DisplayRealmIDTags = "Display |cffff7d0a[XR]|r and |cff3587ff[BNet]|r realm identifiers."
-L.DisplayRealmAstrick = "Display [*] instead of server names for |cffff7d0a[XR]|r and |cff3587ff[BNet]|r."
+L.DisplayRealmNames = "Display realm names."
+L.DisplayRealmAstrick = "Display [*] instead of realm names for |cffff7d0a[XR]|r and |cff3587ff[BNet]|r."
 L.DisplayShortRealmName = "Display short realm names for |cffff7d0a[XR]|r and |cff3587ff[BNet]|r."
 L.DisplayFactionIcons = "Display faction icons in tooltip."
 L.DisplayShowUniqueItemsTotals = "Enabling this option will allow unique items to be added towards the total item count, regardless of item stats. |cFF99CC33(Recommended)|r."
@@ -165,10 +168,10 @@ L.FAQ_Question_4 = "Can I view item data from multiple WOW accounts |cFFDF2B2Bcu
 L.FAQ_Question_4_p1 = "Currently BagSync does not support transmitting data between multiple logged in WOW accounts.  This may change in the future."
 L.FAQ_Question_5 = "Why do I get a message that guild bank scanning is incomplete?"
 L.FAQ_Question_5_p1 = [[
-BagSync has to query the server for |cFF99CC33ALL|r your guild bank information.  It takes time for the server to transmit all the data.  In order for BagSync to properly store all your items, you must wait until the server query is complete.  When the scanning process is complete, BagSync will notify you with a notification in chat.  Leaving the Guild Bank window before the scanning process is done, will result in incorrect data being stored for your Guild Bank.
+BagSync has to query the server for |cFF99CC33ALL|r your guild bank information.  It takes time for the server to transmit all the data.  In order for BagSync to properly store all your items, you must wait until the server query is complete.  When the scanning process is complete, BagSync will notify you in chat.  Leaving the Guild Bank window before the scanning process is done, will result in incorrect data being stored for your Guild Bank.
 ]]
 L.FAQ_Question_6 = "Why do I see [FakeID] instead of [ItemID] for Battle Pets?"
 L.FAQ_Question_6_p1 = [[
-Blizzard does not assign ItemID's to Battle Pets for WOW.  Instead, Battle Pets in WOW are assigned a temporary PetID from the server.  This PetID is not unique and will be changed when the server resets.  In order to keep track of Battle Pets, BagSync generates a FakeID.  A FakeID is generated from numbers that are static to the Battle Pet.  Using a FakeID allows BagSync to track Battle Pets even across server resets.
+Blizzard does not assign ItemID's to Battle Pets for WOW.  Instead, Battle Pets in WOW are assigned a temporary PetID from the server.  This PetID is not unique and will be changed when the server resets.  In order to keep track of Battle Pets, BagSync generates a FakeID.  A FakeID is generated from static numbers associated with the Battle Pet.  Using a FakeID allows BagSync to track Battle Pets even across server resets.
 ]]
 

@@ -45,7 +45,6 @@ local function get(info)
 			return false
 		end
 	end
-	
 end
 
 local function set(info, arg1, arg2, arg3, arg4)
@@ -64,13 +63,11 @@ local function set(info, arg1, arg2, arg3, arg4)
 	   SaveBindings(GetCurrentBindingSet())
 	else
 		BSYC.options[c] = arg1
+
 		if p == "minimap" then
 			if arg1 then BagSync_MinimapButton:Show() else BagSync_MinimapButton:Hide() end
-		else
-			--BSYC:ResetTooltip()
 		end
 	end
-	
 end
 
 options.args.heading = {
@@ -106,6 +103,7 @@ options.args.main = {
 			get = get,
 			set = set,
 			arg = "main.enableExtTooltip",
+			disabled = function() return not BSYC.options["enableTooltips"] end,
 		},
 		enabletooltipsearchonly = {
 			order = 3,
@@ -245,6 +243,7 @@ options.args.display = {
 			get = get,
 			set = set,
 			arg = "display.showGuildInGoldTooltip",
+			disabled = function() return not BSYC.options["enableGuild"] end,
 		},
 		faction = {
 			order = 5,
@@ -316,58 +315,87 @@ options.args.display = {
 			set = set,
 			arg = "display.enableTooltipItemID",
 		},
-		greencheck = {
+		grouptags = {
 			order = 12,
-			type = "toggle",
-			name = string.format(L.DisplayGreenCheck, ReadyCheck),
-			width = "full",
-			descStyle = "hide",
-			get = get,
-			set = set,
-			arg = "display.enableTooltipGreenCheck",
+			type = 'group',
+			name = L.DisplayTooltipTags,
+			guiInline = true,
+			args = {
+				greencheck = {
+					order = 0,
+					type = "toggle",
+					name = string.format(L.DisplayGreenCheck, ReadyCheck),
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.enableTooltipGreenCheck",
+				},
+				factionicon = {
+					order = 1,
+					type = "toggle",
+					name = L.DisplayFactionIcons..factionString,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.enableFactionIcons",
+				},
+				realmidtags = {
+					order = 2,
+					type = "toggle",
+					name = L.DisplayRealmIDTags,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.enableRealmIDTags",
+				},
+			}
 		},
-		realmidtags = {
+		grouprealmnames = {
 			order = 13,
-			type = "toggle",
-			name = L.DisplayRealmIDTags,
-			width = "full",
-			descStyle = "hide",
-			get = get,
-			set = set,
-			arg = "display.enableRealmIDTags",
-		},
-		realmastrick = {
-			order = 14,
-			type = "toggle",
-			name = L.DisplayRealmAstrick,
-			width = "full",
-			descStyle = "hide",
-			get = get,
-			set = set,
-			arg = "display.enableRealmAstrickName",
-		},
-		realmshortname = {
-			order = 15,
-			type = "toggle",
-			name = L.DisplayShortRealmName,
-			width = "full",
-			descStyle = "hide",
-			get = get,
-			set = set,
-			arg = "display.enableRealmShortName",
-		},
-		factionicon = {
-			order = 16,
-			type = "toggle",
-			name = L.DisplayFactionIcons..factionString,
-			width = "full",
-			descStyle = "hide",
-			get = get,
-			set = set,
-			arg = "display.enableFactionIcons",
+			type = 'group',
+			name = L.DisplayTooltipRealmNames,
+			guiInline = true,
+			args = {
+				realmnames = {
+					order = 0,
+					type = "toggle",
+					name = L.DisplayRealmNames,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.enableXR_BNETRealmNames",
+					disabled = function() return BSYC.options["enableRealmAstrickName"] or BSYC.options["enableRealmShortName"] end,
+				},
+				realmastrick = {
+					order = 1,
+					type = "toggle",
+					name = L.DisplayRealmAstrick,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.enableRealmAstrickName",
+					disabled = function() return BSYC.options["enableXR_BNETRealmNames"] or BSYC.options["enableRealmShortName"] end,
+				},
+				realmshortname = {
+					order = 2,
+					type = "toggle",
+					name = L.DisplayShortRealmName,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.enableRealmShortName",
+					disabled = function() return BSYC.options["enableXR_BNETRealmNames"] or BSYC.options["enableRealmAstrickName"] end,
+				},
+			}
 		},
 		showuniqueitemsgroup = {
-			order = 17,
+			order = 14,
 			name = L.DisplayShowUniqueItemsTotalsTitle,
 			type = 'group',
 			guiInline = true,

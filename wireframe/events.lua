@@ -113,7 +113,7 @@ function Events:OnEnable()
 				self:StopTimer(timerName)
 			end
 			
-		end, 2.5, true)
+		end, 4, true)
 	end
 	
 	local timerName = "QueryAuction"
@@ -134,24 +134,7 @@ function Events:OnEnable()
 			end
 		end
 	end)
-	self:RegisterEvent("COMMODITY_SEARCH_RESULTS_UPDATED", function()
-		--uses CommoditiesSellList
-		if AuctionHouseFrame then
-			local dispMode = AuctionHouseFrame:GetDisplayMode()
-			if dispMode == AuctionHouseFrameDisplayMode.CommoditiesSell or dispMode == AuctionHouseFrameDisplayMode.ItemSell then
-				doAuctionUpdate(timerName)
-			end
-		end
-	end)
-	self:RegisterEvent("ITEM_SEARCH_RESULTS_UPDATED", function()
-		--uses ItemSellList  (like battlepets and such in AuctionHouse Sell Frame)
-		if AuctionHouseFrame then
-			local dispMode = AuctionHouseFrame:GetDisplayMode()
-			if dispMode == AuctionHouseFrameDisplayMode.CommoditiesSell or dispMode == AuctionHouseFrameDisplayMode.ItemSell then
-				doAuctionUpdate(timerName)
-			end
-		end
-	end)
+
 	self:RegisterEvent("OWNED_AUCTIONS_UPDATED", function()
 		self:DoTimer("ScanAuction", function() Scanner:SaveAuctionHouse() end, 1)
 	end)
