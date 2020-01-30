@@ -279,7 +279,8 @@ end
 
 function Scanner:SaveCurrency()
 	if Unit:InCombatLockdown() then return end
-
+	if not BSYC.IsRetail then return end
+	
 	local lastHeader
 	local limit = GetCurrencyListSize()
 	local slotItems = {}
@@ -313,6 +314,8 @@ function Scanner:SaveCurrency()
 end
 	
 function Scanner:SaveProfessions()
+	if not BSYC.IsRetail then return end
+	
 	--we don't want to do linked tradeskills, guild tradeskills, or a tradeskill from an NPC
 	if _G.C_TradeSkillUI.IsTradeSkillLinked() or _G.C_TradeSkillUI.IsTradeSkillGuild() or _G.C_TradeSkillUI.IsNPCCrafting() then return end
 	
@@ -446,6 +449,8 @@ function Scanner:SaveProfessions()
 end
 
 function Scanner:CleanupProfessions()
+	if not BSYC.IsRetail then return end
+	
 	--lets remove unlearned tradeskills
 	local tmpList = {}
 

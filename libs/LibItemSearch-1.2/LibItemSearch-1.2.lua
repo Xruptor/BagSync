@@ -5,7 +5,7 @@
 
 local Search = LibStub('CustomSearch-1.0')
 local Unfit = LibStub('Unfit-1.0')
-local Lib = LibStub:NewLibrary('LibItemSearch-1.2', 15)
+local Lib = LibStub:NewLibrary('LibItemSearch-1.2', 19)
 if Lib then
 	Lib.Scanner = LibItemSearchTooltipScanner or CreateFrame('GameTooltip', 'LibItemSearchTooltipScanner', UIParent, 'GameTooltipTemplate')
 	Lib.Filters = {}
@@ -26,6 +26,14 @@ end
 
 function Lib:TooltipPhrase(link, search)
 	return link and self.Filters.tipPhrases:match(link, nil, search)
+end
+
+function Lib:ForQuest(link)
+	return self:Tooltip(link, GetItemClassInfo(LE_ITEM_CLASS_QUESTITEM):lower())
+end
+
+function Lib:IsReagent(link)
+	return self:TooltipPhrase(link, PROFESSIONS_USED_IN_COOKING)
 end
 
 function Lib:InSet(link, search)
@@ -74,7 +82,7 @@ elseif IsAddOnLoaded('Wardrobe') then
 		end
 	end
 
-else
+elseif C_EquipmentSet then
 	function Lib:BelongsToSet(id, search)
 		for i, setID in pairs(C_EquipmentSet.GetEquipmentSetIDs()) do
 			local name = C_EquipmentSet.GetEquipmentSetInfo(setID)
@@ -88,10 +96,13 @@ else
 			end
 		end
 	end
+
+else
+	function Lib:BelongsToSet() end
 end
 
 
---[[ General ]]--
+--[[ General Filters ]]--
 
 Lib.Filters.name = {
   tags = {'n', 'name'},
@@ -183,7 +194,7 @@ for i = 0, #ITEM_QUALITY_COLORS do
 end
 
 
---[[ Keywords ]]--
+--[[ Classic Keywords ]]--
 
 Lib.Filters.items = {
 	keyword = ITEMS:lower(),
@@ -212,31 +223,38 @@ Lib.Filters.usable = {
 	end
 }
 
-Lib.Filters.artifact = {
-	keyword1 = ITEM_QUALITY6_DESC:lower(),
-	keyword2 = RELICSLOT:lower(),
 
-	canSearch = function(self, operator, search)
-		return not operator and self.keyword1:find(search) or self.keyword2:find(search)
-	end,
+--[[ Retail Keywords ]]--
 
-	match = function(self, link)
-		local id = link:match('item:(%d+)')
-		return id and C_ArtifactUI.GetRelicInfoByItemID(id)
-	end
-}
+if C_ArtifactUI then
+	Lib.Filters.artifact = {
+		keyword1 = ITEM_QUALITY6_DESC:lower(),
+		keyword2 = RELICSLOT:lower(),
 
-Lib.Filters.azerite = {
-	keyword = C_CurrencyInfo.GetBasicCurrencyInfo(C_CurrencyInfo.GetAzeriteCurrencyID()).name:lower(),
+		canSearch = function(self, operator, search)
+			return not operator and self.keyword1:find(search) or self.keyword2:find(search)
+		end,
 
-	canSearch = function(self, operator, search)
-		return not operator and self.keyword:find(search)
-	end,
+		match = function(self, link)
+			local id = link:match('item:(%d+)')
+			return id and C_ArtifactUI.GetRelicInfoByItemID(id)
+		end
+	}
+end
 
-	match = function(self, link)
-		return C_AzeriteItem.IsAzeriteItemByID(link) or C_AzeriteEmpoweredItem.IsAzeriteEmpoweredItemByID(link)
-	end
-}
+if C_AzeriteItem then
+	Lib.Filters.azerite = {
+		keyword = C_CurrencyInfo.GetBasicCurrencyInfo(C_CurrencyInfo.GetAzeriteCurrencyID()).name:lower(),
+
+		canSearch = function(self, operator, search)
+			return not operator and self.keyword:find(search)
+		end,
+
+		match = function(self, link)
+			return C_AzeriteItem.IsAzeriteItemByID(link) or C_AzeriteEmpoweredItem.IsAzeriteEmpoweredItemByID(link)
+		end
+	}
+end
 
 
 --[[ Tooltips ]]--

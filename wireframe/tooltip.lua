@@ -516,20 +516,6 @@ function Tooltip:HookTooltip(objTooltip)
 			Tooltip:TallyUnits(self, link, "OnTooltipSetItem")
 		end
 	end)
-	hooksecurefunc(objTooltip, "SetRecipeReagentItem", function(self, recipeID, reagentIndex)
-		if self.__tooltipUpdated then return end
-		local link = C_TradeSkillUI.GetRecipeReagentItemLink(recipeID, reagentIndex)
-		if link then
-			Tooltip:TallyUnits(self, link, "SetRecipeReagentItem")
-		end
-	end)
-	hooksecurefunc(objTooltip, "SetRecipeResultItem", function(self, recipeID)
-		if self.__tooltipUpdated then return end
-		local link = C_TradeSkillUI.GetRecipeItemLink(recipeID)
-		if link then
-			Tooltip:TallyUnits(self, link, "SetRecipeResultItem")
-		end
-	end)
 	hooksecurefunc(objTooltip, "SetQuestLogItem", function(self, itemType, index)
 		if self.__tooltipUpdated then return end
 		local link = GetQuestLogItemLink(itemType, index)
@@ -546,41 +532,58 @@ function Tooltip:HookTooltip(objTooltip)
 	end)
 	
 	--------------------------------------------------
-	hooksecurefunc(objTooltip, "SetCurrencyToken", function(self, index)
-		if self.__tooltipUpdated then return end
-		local name, isHeader, isExpanded, isUnused, isWatched, count, icon = GetCurrencyListInfo(index)
-		local link = GetCurrencyListLink(index)
-		if name and icon and link then
-			local currencyID = BSYC:GetCurrencyID(link)
-			Tooltip:CurrencyTooltip(self, name, icon, currencyID)
-		end
-	end)
-	hooksecurefunc(objTooltip, "SetCurrencyTokenByID", function(self, currencyID)
-		if self.__tooltipUpdated then return end
-		local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(currencyID)
-		if name and icon then
-			Tooltip:CurrencyTooltip(self, name, icon, currencyID)
-		end
-	end)
-	hooksecurefunc(objTooltip, "SetCurrencyByID", function(self, currencyID)
-		if self.__tooltipUpdated then return end
-		local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(currencyID)
-		if name and icon then
-			Tooltip:CurrencyTooltip(self, name, icon, currencyID)
-		end
-	end)
-	hooksecurefunc(objTooltip, "SetBackpackToken", function(self, index)
-		if self.__tooltipUpdated then return end
-		local name, count, icon, currencyID = GetBackpackCurrencyInfo(index)
-		if name and icon and currencyID then
-			Tooltip:CurrencyTooltip(self, name, icon, currencyID)
-		end
-	end)
+	if BSYC.IsRetail then
+		hooksecurefunc(objTooltip, "SetRecipeReagentItem", function(self, recipeID, reagentIndex)
+			if self.__tooltipUpdated then return end
+			local link = C_TradeSkillUI.GetRecipeReagentItemLink(recipeID, reagentIndex)
+			if link then
+				Tooltip:TallyUnits(self, link, "SetRecipeReagentItem")
+			end
+		end)
+		hooksecurefunc(objTooltip, "SetRecipeResultItem", function(self, recipeID)
+			if self.__tooltipUpdated then return end
+			local link = C_TradeSkillUI.GetRecipeItemLink(recipeID)
+			if link then
+				Tooltip:TallyUnits(self, link, "SetRecipeResultItem")
+			end
+		end)
+		hooksecurefunc(objTooltip, "SetCurrencyToken", function(self, index)
+			if self.__tooltipUpdated then return end
+			local name, isHeader, isExpanded, isUnused, isWatched, count, icon = GetCurrencyListInfo(index)
+			local link = GetCurrencyListLink(index)
+			if name and icon and link then
+				local currencyID = BSYC:GetCurrencyID(link)
+				Tooltip:CurrencyTooltip(self, name, icon, currencyID)
+			end
+		end)
+		hooksecurefunc(objTooltip, "SetCurrencyTokenByID", function(self, currencyID)
+			if self.__tooltipUpdated then return end
+			local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(currencyID)
+			if name and icon then
+				Tooltip:CurrencyTooltip(self, name, icon, currencyID)
+			end
+		end)
+		hooksecurefunc(objTooltip, "SetCurrencyByID", function(self, currencyID)
+			if self.__tooltipUpdated then return end
+			local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(currencyID)
+			if name and icon then
+				Tooltip:CurrencyTooltip(self, name, icon, currencyID)
+			end
+		end)
+		hooksecurefunc(objTooltip, "SetBackpackToken", function(self, index)
+			if self.__tooltipUpdated then return end
+			local name, count, icon, currencyID = GetBackpackCurrencyInfo(index)
+			if name and icon and currencyID then
+				Tooltip:CurrencyTooltip(self, name, icon, currencyID)
+			end
+		end)
+	end
 
 end
 
 function Tooltip:HookBattlePetTooltip(objTooltip)
-
+	if not BSYC.IsRetail then end
+	
 	--BattlePetToolTip_Show
 	if objTooltip == BattlePetTooltip then
 		hooksecurefunc("BattlePetToolTip_Show", function(speciesID)
@@ -624,6 +627,8 @@ end
 function Tooltip:OnEnable()
 	self:HookTooltip(GameTooltip)
 	self:HookTooltip(ItemRefTooltip)
-	self:HookBattlePetTooltip(BattlePetTooltip)
-	self:HookBattlePetTooltip(FloatingBattlePetTooltip)
+	if BSYC.IsRetail then
+		self:HookBattlePetTooltip(BattlePetTooltip)
+		self:HookBattlePetTooltip(FloatingBattlePetTooltip)
+	end
 end

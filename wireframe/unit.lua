@@ -50,11 +50,15 @@ local realmKey = table.concat(Realms, ";") --concat them together
 Unit:RegisterEvent('BANKFRAME_OPENED', function() Unit.atBank = true end)
 Unit:RegisterEvent('BANKFRAME_CLOSED', function() Unit.atBank = false end)
 
-Unit:RegisterEvent('VOID_STORAGE_OPEN', function() Unit.atVoidBank = true end)
-Unit:RegisterEvent('VOID_STORAGE_CLOSE', function() Unit.atVoidBank = false end)
+if BSYC.IsRetail then
+	Unit:RegisterEvent('VOID_STORAGE_OPEN', function() Unit.atVoidBank = true end)
+	Unit:RegisterEvent('VOID_STORAGE_CLOSE', function() Unit.atVoidBank = false end)
+end
 
-Unit:RegisterEvent('GUILDBANKFRAME_OPENED', function() Unit.atGuildBank = true end)
-Unit:RegisterEvent('GUILDBANKFRAME_CLOSED', function() Unit.atGuildBank = false end)
+if BSYC.IsRetail then
+	Unit:RegisterEvent('GUILDBANKFRAME_OPENED', function() Unit.atGuildBank = true end)
+	Unit:RegisterEvent('GUILDBANKFRAME_CLOSED', function() Unit.atGuildBank = false end)
+end
 
 Unit:RegisterEvent('MAIL_SHOW', function() Unit.atMailbox = true end)
 Unit:RegisterEvent('MAIL_CLOSED', function() Unit.atMailbox = false end)
@@ -109,6 +113,7 @@ function Unit:IsInBG()
 end
 
 function Unit:IsInArena()
+	if not BSYC.IsRetail then return false end
 	local a,b = IsActiveBattlefieldArena()
 	if not a then
 		return false
@@ -117,5 +122,5 @@ function Unit:IsInArena()
 end
 
 function Unit:InCombatLockdown()
-	return self:IsInBG() or self:IsInArena() or InCombatLockdown() or UnitAffectingCombat("player") or C_PetBattles.IsInBattle()
+	return self:IsInBG() or self:IsInArena() or InCombatLockdown() or UnitAffectingCombat("player") or BSYC.IsRetail and C_PetBattles.IsInBattle()
 end
