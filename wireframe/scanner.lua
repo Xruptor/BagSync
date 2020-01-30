@@ -142,7 +142,7 @@ function Scanner:GetXRGuild()
 end
 
 function Scanner:SaveGuildBank()
-	if not IsInGuild() then return end
+	if not Unit.atGuildBank then return end
 	if Scanner.isScanningGuild then return end
 
 	local numTabs = GetNumGuildBankTabs()
@@ -160,7 +160,7 @@ function Scanner:SaveGuildBank()
 					local speciesID
 					local itemName, itemLink, _, _, _, itemType, itemSubType = GetItemInfo(link)
 					local _, count = GetGuildBankItemInfo(tab, slot)
-					
+					--no itemid is returned unlike scanning for mailbox.  So I can't check for itemid 82800, pet cage
 					if itemType and itemSubType and itemType == "Battle Pets" or itemSubType == "BattlePet" then
 						speciesID = GameTooltip:SetGuildBankItem(tab, slot)
 					end
@@ -169,10 +169,8 @@ function Scanner:SaveGuildBank()
 					else
 						link = BSYC:ParseItemLink(link, count)
 					end
-					
 					table.insert(slotItems, link)
 				end
-				
 			end
 		end
 	end

@@ -19,24 +19,6 @@ local function Debug(...)
 	end
 end
 
---used for debugging, prints out all the events so we can see what is being triggered
--- local check = {
-	-- ["TRANSMOG_COLLECTION_ITEM_UPDATE"] = true,
-	-- ["UNIT_AURA"] = true,
-	-- ["COMBAT_LOG_EVENT_UNFILTERED"] = true,
-	-- ["SPELL_ACTIVATION_OVERLAY_HIDE"] = true,
-	-- ["CURSOR_UPDATE"] = true,
--- }
-
--- local eventCheck = CreateFrame("Frame",nil,UIParent)
--- eventCheck:RegisterAllEvents()
-
--- eventCheck:HookScript("OnEvent", function(self, event)
-	-- if not check[event] then
-		-- print(event)
-	-- end
--- end)
-
 local alertTooltip = CreateFrame("GameTooltip", "BSYC_EventAlertTooltip", UIParent, "GameTooltipTemplate")
 alertTooltip:SetOwner(UIParent, "ANCHOR_NONE")
 alertTooltip:SetHeight(30)
@@ -209,6 +191,7 @@ function Events:BAG_UPDATE(event, bagid)
 end
 
 function Events:GUILDBANKFRAME_OPENED()
+	if not BSYC.options.enableGuild then return end
 	if not self.GuildTabQueryQueue then self.GuildTabQueryQueue = {} end
 	
 	if Events.alertTooltip then
@@ -231,6 +214,8 @@ function Events:GUILDBANKFRAME_OPENED()
 end
 
 function Events:GUILDBANKFRAME_CLOSED()
+	if not BSYC.options.enableGuild then return end
+	
 	if self.queryGuild then
 		BSYC:Print(L.ScanGuildBankError)
 		self.queryGuild = false
@@ -242,6 +227,7 @@ end
 
 function Events:GUILDBANKBAGSLOTS_CHANGED()
 	if not Unit.atGuildBank then return end
+	if not BSYC.options.enableGuild then return end
 	
 	-- check if we need to process the queue
 	local tab = next(self.GuildTabQueryQueue)
