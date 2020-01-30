@@ -75,6 +75,7 @@ L.UnitDBAuctionReset = "Auction data has been reset for all characters."
 L.ScanGuildBankStart = "Querying server for Guild Bank info, please wait....."
 L.ScanGuildBankDone = "Guild Bank scan complete!"
 L.ScanGuildBankError = "Warning: Guild Bank scanning incomplete."
+L.ScanGuildBankScanInfo = "Scanning Guild Tab (%s/%s)."  
 -- ----THESE ARE FOR SLASH COMMANDS
 L.SlashItemName = "[itemname]"
 L.SlashSearch = "search"

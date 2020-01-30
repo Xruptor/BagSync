@@ -159,7 +159,7 @@ function Tooltip:MoneyTooltip()
 	tooltip:ClearLines()
 	tooltip:ClearAllPoints()
 	tooltip:SetOwner(UIParent, "ANCHOR_NONE")
-	tooltip:SetPoint("CENTER",UIParent,"CENTER",0,0)
+	tooltip:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 	tooltip:AddLine("BagSync")
 	tooltip:AddLine(" ")
 	

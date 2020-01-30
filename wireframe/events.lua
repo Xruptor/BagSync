@@ -37,6 +37,18 @@ end
 	-- end
 -- end)
 
+local alertTooltip = CreateFrame("GameTooltip", "BSYC_EventAlertTooltip", UIParent, "GameTooltipTemplate")
+alertTooltip:SetOwner(UIParent, "ANCHOR_NONE")
+alertTooltip:SetHeight(30)
+alertTooltip:SetClampedToScreen(true)
+alertTooltip:SetFrameStrata("FULLSCREEN_DIALOG")
+alertTooltip:SetFrameLevel(1000)
+alertTooltip:SetToplevel(true)
+alertTooltip:ClearAllPoints()
+alertTooltip:SetPoint("CENTER", UIParent, "CENTER")
+alertTooltip:Hide()
+Events.alertTooltip = alertTooltip
+
 function Events:DoTimer(sName, sFunc, sDelay, sRepeat)
 	if not self.timers then self.timers = {} end
 	if not sRepeat then
@@ -199,6 +211,13 @@ end
 function Events:GUILDBANKFRAME_OPENED()
 	if not self.GuildTabQueryQueue then self.GuildTabQueryQueue = {} end
 	
+	if Events.alertTooltip then
+		--tooltip will not show unless you set the owner again and put it in middle, Show and Hide will fail
+		Events.alertTooltip:ClearAllPoints()
+		Events.alertTooltip:SetOwner(UIParent, "ANCHOR_NONE")
+		Events.alertTooltip:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+	end
+			
 	local numTabs = GetNumGuildBankTabs()
 	for tab = 1, numTabs do
 		local name, icon, isViewable, canDeposit, numWithdrawals, remainingWithdrawals = GetGuildBankTabInfo(tab)
@@ -216,6 +235,9 @@ function Events:GUILDBANKFRAME_CLOSED()
 		BSYC:Print(L.ScanGuildBankError)
 		self.queryGuild = false
 	end
+	if Events.alertTooltip then
+		Events.alertTooltip:Hide()
+	end
 end
 
 function Events:GUILDBANKBAGSLOTS_CHANGED()
@@ -226,10 +248,21 @@ function Events:GUILDBANKBAGSLOTS_CHANGED()
 	if tab then
 		QueryGuildBankTab(tab)
 		self.GuildTabQueryQueue[tab] = nil
+
+		if Events.alertTooltip then
+			Events.alertTooltip:ClearLines()
+			Events.alertTooltip:AddLine("|cffff6600BagSync|r")
+			local numTab = string.format(L.ScanGuildBankScanInfo, tab or 0, GetNumGuildBankTabs() or 0)
+			Events.alertTooltip:AddLine("|cffddff00"..numTab.."|r")
+			Events.alertTooltip:Show()
+		end
 	else
 		if self.queryGuild then
 			self.queryGuild = false
 			BSYC:Print(L.ScanGuildBankDone)
+			if Events.alertTooltip then
+				Events.alertTooltip:Hide()
+			end
 		end
 		-- the bank is ready for reading
 		Scanner:SaveGuildBank()
