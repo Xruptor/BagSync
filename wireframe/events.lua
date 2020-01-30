@@ -198,14 +198,7 @@ end
 function Events:GUILDBANKFRAME_OPENED()
 	if not BSYC.options.enableGuild then return end
 	if not self.GuildTabQueryQueue then self.GuildTabQueryQueue = {} end
-	
-	if Events.alertTooltip then
-		--tooltip will not show unless you set the owner again and put it in middle, Show and Hide will fail
-		Events.alertTooltip:ClearAllPoints()
-		Events.alertTooltip:SetOwner(UIParent, "ANCHOR_NONE")
-		Events.alertTooltip:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-	end
-			
+		
 	local numTabs = GetNumGuildBankTabs()
 	for tab = 1, numTabs do
 		local name, icon, isViewable, canDeposit, numWithdrawals, remainingWithdrawals = GetGuildBankTabInfo(tab)
@@ -241,6 +234,9 @@ function Events:GUILDBANKBAGSLOTS_CHANGED()
 		self.GuildTabQueryQueue[tab] = nil
 
 		if Events.alertTooltip then
+			Events.alertTooltip:ClearAllPoints()
+			Events.alertTooltip:SetOwner(UIParent, "ANCHOR_NONE")
+			Events.alertTooltip:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 			Events.alertTooltip:ClearLines()
 			Events.alertTooltip:AddLine("|cffff6600BagSync|r")
 			local numTab = string.format(L.ScanGuildBankScanInfo, tab or 0, GetNumGuildBankTabs() or 0)
