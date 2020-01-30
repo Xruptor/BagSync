@@ -205,14 +205,22 @@ function Scanner:SaveMailbox()
 	--scan the inbox
 	if (numInbox > 0) then
 		for mailIndex = 1, numInbox do
-			local hasCooldown, speciesID, level, breedQuality, maxHealth, power, speed, name = GameTooltip:SetInboxItem(mailIndex)
 			for i = 1, ATTACHMENTS_MAX_RECEIVE do
 				local name, itemID, itemTexture, count, quality, canUse = GetInboxItem(mailIndex, i)
 				local link = GetInboxItemLink(mailIndex, i)
+				local byPass = false
 				if name and link then
-					if speciesID then
-						link = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
-					else
+					--check for battle pet cages
+					if itemID and itemID == 82800 then
+						local hasCooldown, speciesID, level, breedQuality, maxHealth, power, speed, name = GameTooltip:SetInboxItem(mailIndex)
+						GameTooltip:Hide()
+						
+						if speciesID then
+							link = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
+							byPass = true
+						end
+					end
+					if not byPass then
 						link = BSYC:ParseItemLink(link, count)
 					end
 					table.insert(slotItems, link)
@@ -222,7 +230,7 @@ function Scanner:SaveMailbox()
 	end
 	
 	BSYC.db.player.mailbox = slotItems
-	
+
 	self.isCheckingMail = false
 end
 

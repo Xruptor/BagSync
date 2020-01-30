@@ -19,6 +19,24 @@ local function Debug(...)
 	end
 end
 
+--used for debugging, prints out all the events so we can see what is being triggered
+-- local check = {
+	-- ["TRANSMOG_COLLECTION_ITEM_UPDATE"] = true,
+	-- ["UNIT_AURA"] = true,
+	-- ["COMBAT_LOG_EVENT_UNFILTERED"] = true,
+	-- ["SPELL_ACTIVATION_OVERLAY_HIDE"] = true,
+	-- ["CURSOR_UPDATE"] = true,
+-- }
+
+-- local eventCheck = CreateFrame("Frame",nil,UIParent)
+-- eventCheck:RegisterAllEvents()
+
+-- eventCheck:HookScript("OnEvent", function(self, event)
+	-- if not check[event] then
+		-- print(event)
+	-- end
+-- end)
+
 function Events:DoTimer(sName, sFunc, sDelay, sRepeat)
 	if not self.timers then self.timers = {} end
 	if not sRepeat then
@@ -64,8 +82,10 @@ function Events:OnEnable()
 	self:RegisterEvent("VOID_TRANSFER_DONE", function() Scanner:SaveVoidBank() end)
 	
 	self:RegisterEvent("MAIL_SHOW", function() Scanner:SaveMailbox() end)
-	self:RegisterEvent("MAIL_INBOX_UPDATE", function() Scanner:SaveMailbox() end)
-	
+	self:RegisterEvent("MAIL_INBOX_UPDATE", function()
+		self:DoTimer("MailBoxScan", function() Scanner:SaveMailbox() end, 0.3)
+	end)
+
 	self:RegisterEvent("BANKFRAME_OPENED", function() Scanner:SaveBank() end)
 	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", function() Scanner:SaveBank(true) end)
 	self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED", function() Scanner:SaveReagents() end)
@@ -74,7 +94,7 @@ function Events:OnEnable()
 	self:RegisterEvent("GUILDBANKFRAME_OPENED")
 	self:RegisterEvent("GUILDBANKFRAME_CLOSED")
 	self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED", function()
-		self:DoTimer("GuildBankScan", function() self:GUILDBANKBAGSLOTS_CHANGED() end, 0.3)
+		self:DoTimer("GuildBankScan", function() self:GUILDBANKBAGSLOTS_CHANGED() end, 0.2)
 	end)
 	
 	local function doAuctionUpdate(timerName)
