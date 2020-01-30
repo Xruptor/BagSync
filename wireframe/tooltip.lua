@@ -97,16 +97,16 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm)
 	end
 	
 	if BSYC.options.enableXR_BNETRealmNames then
-		BSYC.options.enableRealmAstrickName = false
-		BSYC.options.enableRealmShortName = false
+		if BSYC.options.enableRealmAstrickName then BSYC.options.enableRealmAstrickName = false end
+		if BSYC.options.enableRealmShortName then BSYC.options.enableRealmShortName = false end
 		realm = unitObj.realm
 	elseif BSYC.options.enableRealmAstrickName then
-		BSYC.options.enableXR_BNETRealmNames = false
-		BSYC.options.enableRealmShortName = false
+		if BSYC.options.enableXR_BNETRealmNames then BSYC.options.enableXR_BNETRealmNames = false end
+		if BSYC.options.enableRealmShortName then BSYC.options.enableRealmShortName = false end
 		realm = "*"
 	elseif BSYC.options.enableRealmShortName then
-		BSYC.options.enableXR_BNETRealmNames = false
-		BSYC.options.enableRealmAstrickName = false
+		if BSYC.options.enableXR_BNETRealmNames then BSYC.options.enableXR_BNETRealmNames = false end
+		if BSYC.options.enableRealmAstrickName then BSYC.options.enableRealmAstrickName = false end
 		realm = string.sub(unitObj.realm, 1, 5)
 	else
 		realm = ""
@@ -307,7 +307,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		objTooltip.qTip = LibQTip:Acquire(objTooltip:GetName(), 3, "LEFT", "CENTER", "RIGHT")
 		objTooltip.qTip:Clear()
 		--objTooltip.qTip:SmartAnchorTo(objTooltip)
-		objTooltip.qTip:SetPoint("TOPLEFT", objTooltip, "BOTTOMLEFT")
+		objTooltip.qTip:SetPoint("TOPRIGHT", objTooltip, "BOTTOMRIGHT")
 		objTooltip.qTip.OnRelease = function() objTooltip.qTip = nil end
 	elseif objTooltip.qTip then
 		--clear any item data already in the tooltip

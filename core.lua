@@ -17,12 +17,20 @@ local function Debug(...)
 	end
 end
 
+function BagSync_ShowWindow(windowName)
+    if windowName == "Gold" then
+        BSYC:GetModule("Tooltip"):MoneyTooltip()
+    else
+        BSYC:GetModule(windowName).frame:Show()
+    end
+end
+
 function BSYC:ParseItemLink(link, count)
 	if link then
 	
 		--if we are parsing a database entry just return it, chances are it's a battlepet anyways
 		local qLink, qCount, qIdentifier = strsplit(";", link)
-		if qLink and qCount and qIdentifier then
+		if qLink and qCount then
 			return link
 		end
 		
@@ -37,10 +45,13 @@ function BSYC:ParseItemLink(link, count)
 	
 		--there are times link comes in as a number and breaks string matching, convert to string to fix
 		if type(link) == "number" then link = tostring(link) end
-	
+		
+		local result = link:match("item:([%d:]+)")
+		local shortID = self:GetShortItemID(link)
+		
 		--sometimes the profession window has a bug for the items it parses, so lets fix it
 		-----------------------------
-		if tonumber(self:GetShortItemID(link)) == 0 and TradeSkillFrame then
+		if shortID and tonumber(shortID) == 0 and TradeSkillFrame then
 			local focus = GetMouseFocus():GetName()
 
 			if focus == 'TradeSkillSkillIcon' then 
@@ -53,9 +64,6 @@ function BSYC:ParseItemLink(link, count)
 			end
 		end
 		-----------------------------
-		
-		local result = link:match("item:([%d:]+)")
-		local shortID = self:GetShortItemID(link)
 		
 		if result then
 			--split everything into a table so we can count up to the bonusID portion
