@@ -100,6 +100,7 @@ function Data:OnEnable()
 	if BSYC.options.enableShowUniqueItemsTotals == nil then BSYC.options.enableShowUniqueItemsTotals = true end
 	if BSYC.options.enableXR_BNETRealmNames == nil then BSYC.options.enableXR_BNETRealmNames = true end
 	if BSYC.options.showGuildInGoldTooltip == nil then BSYC.options.showGuildInGoldTooltip = true end
+	if BSYC.options.showGuildCurrentCharacter == nil then BSYC.options.showGuildCurrentCharacter = false end
 	
 	--setup the default colors
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end
@@ -349,6 +350,20 @@ function Data:IterateUnits(dumpAll)
 							
 							--check for previous listed guilds just in case, because of connected realms (can have same guild on multiple connected realms)
 							if BSYC.options.enableGuild and isGuild and v.realmKey then
+							
+								if BSYC.options.showGuildCurrentCharacter and player.guild then
+									if v.realmKey == player.realmKey then
+										--same realm, but lets check name
+										if k ~= player.guild then
+											skipChk = true
+										end
+										--otherwise it matches so don't skip it
+									else
+										--not same realm so skip it
+										skipChk = true
+									end
+								end
+							
 								local XRName = k .. v.realmKey
 								if not previousGuilds[XRName] then
 									previousGuilds[XRName] = true

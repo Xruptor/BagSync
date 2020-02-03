@@ -48,52 +48,53 @@ end
 function Tooltip:ColorizeUnit(unitObj, bypass, showRealm)
 	if not unitObj.data then return nil end
 	
-	if unitObj.isGuild then
-		return self:HexColor(BSYC.options.colors.first, select(2, Unit:GetUnitAddress(unitObj.name)) )
-	end
-	
 	local player = Unit:GetUnitInfo()
 	local tmpTag = ""
 	local realm = unitObj.realm
 	local realmTag = ""
 	local delimiter = " "
 	
-	--first colorize by class color
-	if bypass or BSYC.options.enableUnitClass and RAID_CLASS_COLORS[unitObj.data.class] then
-		tmpTag = self:HexColor(RAID_CLASS_COLORS[unitObj.data.class], unitObj.name)
+	if not unitObj.isGuild then
+		--first colorize by class color
+		if bypass or BSYC.options.enableUnitClass and RAID_CLASS_COLORS[unitObj.data.class] then
+			tmpTag = self:HexColor(RAID_CLASS_COLORS[unitObj.data.class], unitObj.name)
+		else
+			tmpTag = self:HexColor(BSYC.options.colors.first, unitObj.name)
+		end
+		
+		--add green checkmark
+		if unitObj.name == player.name and unitObj.realm == player.realm then
+			if bypass or BSYC.options.enableTooltipGreenCheck then
+				local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
+				tmpTag = ReadyCheck.." "..tmpTag
+			end
+		end
+		
+		--add faction icons
+		if bypass or BSYC.options.enableFactionIcons then
+			local FactionIcon = [[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]
+			
+			if unitObj.data.faction == "Alliance" then
+				FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]]
+			elseif unitObj.data.faction == "Horde" then
+				FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
+			end
+			
+			tmpTag = FactionIcon.." "..tmpTag
+		end
+		
+		--return the bypass
+		if bypass then
+			--check for showRealm tag before returning
+			if showRealm then
+				realmTag = L.TooltipBattleNetTag..delimiter
+				tmpTag = self:HexColor(BSYC.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
+			end
+			return tmpTag
+		end
 	else
-		tmpTag = self:HexColor(BSYC.options.colors.first, unitObj.name)
-	end
-	
-	--add green checkmark
-	if unitObj.name == player.name and unitObj.realm == player.realm then
-		if bypass or BSYC.options.enableTooltipGreenCheck then
-			local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
-			tmpTag = ReadyCheck.." "..tmpTag
-		end
-	end
-	
-	--add faction icons
-	if bypass or BSYC.options.enableFactionIcons then
-		local FactionIcon = [[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]
-		
-		if unitObj.data.faction == "Alliance" then
-			FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]]
-		elseif unitObj.data.faction == "Horde" then
-			FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
-		end
-		
-		tmpTag = FactionIcon.." "..tmpTag
-	end
-	
-	--return the bypass
-	if bypass then
-		--check for showRealm tag before returning
-		if showRealm then
-			realmTag = L.TooltipBattleNetTag..delimiter
-			tmpTag = self:HexColor(BSYC.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
-		end
-		return tmpTag
+		--is guild
+		tmpTag = self:HexColor(BSYC.options.colors.guild, select(2, Unit:GetUnitAddress(unitObj.name)) )
 	end
 	
 	if BSYC.options.enableXR_BNETRealmNames then

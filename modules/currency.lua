@@ -77,6 +77,8 @@ function Currency:AddEntry(entry, isHeader)
 		label.userdata.color = {64/255, 224/255, 208/255} --hex: 40e0d0
 		label:SetColor(unpack(label.userdata.color))
 		label:ApplyJustifyH("LEFT")
+		label:SetImage(entry.icon)
+		label:SetImageSize(18, 18)
 		label.userdata.isHeader = false
 		label.userdata.text = entry.name
 		label.userdata.icon = entry.icon

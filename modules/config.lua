@@ -309,6 +309,16 @@ options.args.display = {
 					set = set,
 					arg = "display.enableFaction",
 				},
+				guildcurrentcharacter = {
+					order = 6,
+					type = "toggle",
+					name = L.DisplayGuildCurrentCharacter,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.showGuildCurrentCharacter",
+				},
 			}
 		},
 		grouptags = {

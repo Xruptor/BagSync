@@ -131,6 +131,7 @@ function Search:AddEntry(entry)
 	label:SetFullWidth(true)
 	label:SetColor( r, g, b)
 	label:SetImage(texture)
+	label:SetImageSize(18, 18)
 	label:SetCallback(
 		"OnClick", 
 		function (widget, sometable, button)
