@@ -94,6 +94,10 @@ end
 	
 bgMinimapButton:SetScript('OnMouseUp', function(self, button)
 	if button == 'LeftButton' then
+		if BSYC:GetModule("Search").frame:IsVisible() then
+			BSYC:GetModule("Search").frame:Hide()
+			return
+		end
 		BSYC:GetModule("Search").frame:Show()
 	elseif button == 'RightButton' then
 		ToggleDropDownMenu(1, nil, bgsMinimapDD, 'cursor', 0, 0)

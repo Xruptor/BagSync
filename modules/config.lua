@@ -318,6 +318,7 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.showGuildCurrentCharacter",
+					disabled = function() return not BSYC.options["enableGuild"] end,
 				},
 			}
 		},

@@ -156,12 +156,13 @@ function Scanner:SaveGuildBank()
 			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
 				local link = GetGuildBankItemLink(tab, slot)
 				if link then
-
 					local speciesID
-					local itemName, itemLink, _, _, _, itemType, itemSubType = GetItemInfo(link)
+					local shortID = BSYC:GetShortItemID(link)
 					local _, count = GetGuildBankItemInfo(tab, slot)
-					--no itemid is returned unlike scanning for mailbox.  So I can't check for itemid 82800, pet cage
-					if itemType and itemSubType and itemType == "Battle Pets" or itemSubType == "BattlePet" then
+					
+					--check if it's a battle pet cage or something, pet cage is 82800.  This is the placeholder for battle pets
+					--if it's a battlepet link it will be parsed anyways in ParseItemLink
+					if shortID and tonumber(shortID) == 82800 then
 						speciesID = GameTooltip:SetGuildBankItem(tab, slot)
 					end
 					if speciesID then
