@@ -650,6 +650,121 @@ options.args.faq = {
 	},
 }
 
+BSYC.config = { 
+	hookedIndentFrames = {}, 
+	indentList = {},
+}
+
+local function indentOption(optFrame, appName, optName, indent, newFontSize)
+	if not optFrame or not appName or not optName or not indent then return end
+	
+	local hookedFrame = BSYC.config.hookedIndentFrames
+	local indentList = BSYC.config.indentList
+	
+	--we only want to hook this once, otherwise just add to the frames indentList
+	if not hookedFrame[optFrame] then
+		hookedFrame[optFrame] = true
+
+		--hook the sub frame object of the options panel
+		optFrame:HookScript("OnShow", function(self)
+
+
+	print('starting')
+	if configDialog.BlizOptions and configDialog.BlizOptions[appName] then
+	print('inside')
+		for key, parent in pairs(configDialog.BlizOptions[appName]) do
+			local user = parent:GetUserDataTable()
+			print('weee')
+			if parent:IsVisible() then
+				--widget:GetUserData("appName")
+				--user.basepath
+				--configDialog:Open(widget:GetUserData("appName"), widget, unpack(user.basepath or emptyTbl))
+				print(parent:GetUserData("appName"), parent:GetUserData("name"), parent:GetUserData("path"))
+				print(unpack(user))
+				
+			end
+		end
+	end
+	
+			--get the panel children, this only gets populated WHEN the panel is SHOWN
+			if optFrame.obj.children then
+
+				--should only be one child since we only passed one options table to this panel
+				local optList = optFrame.obj.children
+				
+				for i = 1, #optList do
+
+					if optList[i].children then
+						--get the subchildren which are the options for the single child panel
+						
+						for k = 1, #optList[i].children do
+							--object.frame, object.check, object.checkbg, object.image, object.text, object.userdata
+							
+							--get the subchildren which are the options for the single child panel
+							local object = optList[i].children[k]
+							
+							--make sure we have a frame to work with
+							if object.frame then
+								local objectName = object.userdata[1]
+								local objectAppName = object.userdata["appName"]
+								local fontCheck = false
+								
+								if object.text and not object.oldFontSize then
+									local fontPath, oldSize, fontFlags = object.text:GetFont()
+									if not object.oldFontSize then object.oldFontSize = oldSize end
+									if not object.oldFontPath then object.oldFontPath = fontPath end
+									if not object.oldFontFlags then object.oldFontFlags = fontFlags end
+								end
+
+								if indentList[objectAppName] and indentList[objectAppName][objectName] then
+									local totalIndent = indentList[objectAppName][objectName].indent
+									local point, relativeTo, relativePoint, xOffset, yOffset = object.frame:GetPoint()
+									object.frame:ClearAllPoints()
+									object.frame:SetPoint(point, relativeTo, relativePoint, xOffset + totalIndent, yOffset)
+									
+									--this interferes with the OnAquire for the CheckBox widget of Ace3.  It resizes future controls.
+									--we need to reset it with old font size each time this checkbox is visible on frames OhShow
+									local grabFontSize = indentList[objectAppName][objectName].fontSize
+									
+									if object.text and grabFontSize and tonumber(grabFontSize) then
+										object.text:SetFont(object.oldFontPath, grabFontSize, object.oldFontFlags)
+										fontCheck = true
+									end
+								end
+								
+								--reset the font for future aquire if no resize was given to the original font size
+								if object.text and not fontCheck then
+									object.text:SetFont(object.oldFontPath, object.oldFontSize, object.oldFontFlags)
+								end
+								
+								-- --use this to make sure it stays put when they click on it
+								-- object.frame:HookScript("OnShow", function(self)
+									-- if self.obj then
+										-- --grab the frame object (which is just a reference to the parent object)
+										-- --print('yes')
+									-- end
+								-- end)
+							
+							end
+							
+						end
+						
+					end
+					
+				end
+				
+			end
+
+		end)
+	
+	end
+	
+
+	--add it to the indent list
+	if not indentList[appName] then indentList[appName] = {} end
+	indentList[appName][optName] = {indent = indent, fontSize = newFontSize}
+end
+
 local function LoadAboutFrame()
 
 	--Code inspired from tekKonfigAboutPanel
@@ -705,6 +820,7 @@ BSYC.aboutPanel = LoadAboutFrame()
 -- General Options
 config:RegisterOptionsTable("BagSync-General", options.args.main)
 BSYC.blizzPanel = configDialog:AddToBlizOptions("BagSync-General", options.args.main.name, "BagSync")
+indentOption(BSYC.blizzPanel, "BagSync-General", "enableexternaltooltip", 25, 11)
 
 -- Display Options
 config:RegisterOptionsTable("BagSync-Display", options.args.display)
@@ -717,4 +833,3 @@ configDialog:AddToBlizOptions("BagSync-Color", options.args.color.name, "BagSync
 -- FAQ / Help Options
 config:RegisterOptionsTable("BagSync-FAQ", options.args.faq)
 configDialog:AddToBlizOptions("BagSync-FAQ", options.args.faq.name, "BagSync")
-
