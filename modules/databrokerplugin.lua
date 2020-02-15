@@ -26,6 +26,10 @@ local Plugin = LDB:NewDataObject("BagSyncLDB", {
 		
 	OnClick = function(self, button)
 		if button == "LeftButton" then
+			if BSYC:GetModule("Search").frame:IsVisible() then
+				BSYC:GetModule("Search").frame:Hide()
+				return
+			end
 			BSYC:GetModule("Search").frame:Show()
 		elseif button == "RightButton" then
 			ToggleDropDownMenu(1, nil, BSYC:GetModule("Minimap").dropdown, "cursor", 0, 0)

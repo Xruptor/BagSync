@@ -21,9 +21,16 @@ end
 local options = {}
 local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
 
-local 	factionString = " ( "..[[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
+local factionString = ""
+
+if BSYC.IsRetail then
+		factionString = " ( "..[[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
 		factionString = factionString.." "..[[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]]
 		factionString = factionString.." "..[[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]..")"
+else
+		factionString = " ( "..[[|TInterface\Icons\inv_bannerpvp_01:18|t]]
+		factionString = factionString.." "..[[|TInterface\Icons\inv_bannerpvp_02:18|t]]..")"
+end
 
 options.type = "group"
 options.name = "BagSync"
@@ -154,6 +161,7 @@ options.args.main = {
 			get = get,
 			set = set,
 			arg = "keybind.BAGSYNCCURRENCY",
+			hidden = function() return not BSYC.IsRetail end,
 		},
 		keybindgold = {
 			order = 8,
@@ -174,6 +182,7 @@ options.args.main = {
 			get = get,
 			set = set,
 			arg = "keybind.BAGSYNCPROFESSIONS",
+			hidden = function() return not BSYC.IsRetail end,
 		},
 		keybindprofiles = {
 			order = 10,
@@ -239,6 +248,7 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.enableGuild",
+					hidden = function() return not BSYC.IsRetail end,
 				},
 			}
 		},
@@ -318,6 +328,8 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.showGuildCurrentCharacter",
+					disabled = function() return not BSYC.options["enableGuild"] end,
+					hidden = function() return not BSYC.IsRetail end,
 				},
 			}
 		},
@@ -716,4 +728,3 @@ configDialog:AddToBlizOptions("BagSync-Color", options.args.color.name, "BagSync
 -- FAQ / Help Options
 config:RegisterOptionsTable("BagSync-FAQ", options.args.faq)
 configDialog:AddToBlizOptions("BagSync-FAQ", options.args.faq.name, "BagSync")
-

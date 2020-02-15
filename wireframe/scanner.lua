@@ -97,7 +97,7 @@ function Scanner:SaveBank(rootOnly)
 end
 
 function Scanner:SaveReagents()
-	if not Unit.atBank then return end
+	if not Unit.atBank or not BSYC.IsRetail then return end
 	
 	if IsReagentBankUnlocked() then 
 		self:SaveBag("reagents", REAGENTBANK_CONTAINER)
@@ -105,7 +105,7 @@ function Scanner:SaveReagents()
 end
 
 function Scanner:SaveVoidBank()
-	if not Unit.atVoidBank then return end
+	if not Unit.atVoidBank or not BSYC.IsRetail then return end
 	if not BSYC.db.player.void then BSYC.db.player.void = {} end
 	
 	local slotItems = {}
@@ -142,7 +142,7 @@ function Scanner:GetXRGuild()
 end
 
 function Scanner:SaveGuildBank()
-	if not Unit.atGuildBank then return end
+	if not Unit.atGuildBank or not BSYC.IsRetail then return end
 	if Scanner.isScanningGuild then return end
 
 	local numTabs = GetNumGuildBankTabs()
@@ -156,12 +156,13 @@ function Scanner:SaveGuildBank()
 			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
 				local link = GetGuildBankItemLink(tab, slot)
 				if link then
-
 					local speciesID
-					local itemName, itemLink, _, _, _, itemType, itemSubType = GetItemInfo(link)
+					local shortID = BSYC:GetShortItemID(link)
 					local _, count = GetGuildBankItemInfo(tab, slot)
-					--no itemid is returned unlike scanning for mailbox.  So I can't check for itemid 82800, pet cage
-					if itemType and itemSubType and itemType == "Battle Pets" or itemSubType == "BattlePet" then
+					
+					--check if it's a battle pet cage or something, pet cage is 82800.  This is the placeholder for battle pets
+					--if it's a battlepet link it will be parsed anyways in ParseItemLink
+					if shortID and tonumber(shortID) == 82800 then
 						speciesID = GameTooltip:SetGuildBankItem(tab, slot)
 					end
 					if speciesID then
@@ -209,7 +210,7 @@ function Scanner:SaveMailbox()
 				local byPass = false
 				if name and link then
 					--check for battle pet cages
-					if itemID and itemID == 82800 then
+					if BSYC.IsRetail and itemID and itemID == 82800 then
 						local hasCooldown, speciesID, level, breedQuality, maxHealth, power, speed, name = GameTooltip:SetInboxItem(mailIndex)
 						GameTooltip:Hide()
 						
@@ -278,8 +279,8 @@ function Scanner:SaveAuctionHouse()
 end
 
 function Scanner:SaveCurrency()
-	if Unit:InCombatLockdown() then return end
 	if not BSYC.IsRetail then return end
+	if Unit:InCombatLockdown() then return end
 	
 	local lastHeader
 	local limit = GetCurrencyListSize()

@@ -126,6 +126,9 @@ function Search:AddEntry(entry)
 		isBattlePet = true
 	end
 	
+	--if we aren't retail then just don't add the item to the list if we have a battle pet
+	if isBattlePet and not BSYC.IsRetail then return end
+	
 	label:SetText(name)
 	label:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
 	label:SetFullWidth(true)

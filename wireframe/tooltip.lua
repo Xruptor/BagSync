@@ -72,15 +72,27 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm)
 		
 		--add faction icons
 		if bypass or BSYC.options.enableFactionIcons then
-			local FactionIcon = [[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]
+			local FactionIcon = ""
 			
-			if unitObj.data.faction == "Alliance" then
-				FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]]
-			elseif unitObj.data.faction == "Horde" then
-				FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
+			if BSYC.IsRetail then
+				FactionIcon = [[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]
+				if unitObj.data.faction == "Alliance" then
+					FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]]
+				elseif unitObj.data.faction == "Horde" then
+					FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
+				end
+			else
+				FactionIcon = [[|TInterface\Icons\ability_seal:18|t]]
+				if unitObj.data.faction == "Alliance" then
+					FactionIcon = [[|TInterface\Icons\inv_bannerpvp_02:18|t]]
+				elseif unitObj.data.faction == "Horde" then
+					FactionIcon = [[|TInterface\Icons\inv_bannerpvp_01:18|t]]
+				end
 			end
 			
-			tmpTag = FactionIcon.." "..tmpTag
+			if FactionIcon ~= "" then
+				tmpTag = FactionIcon.." "..tmpTag
+			end
 		end
 		
 		--return the bypass

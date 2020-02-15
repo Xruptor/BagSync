@@ -113,6 +113,8 @@ function BSYC:ParseItemLink(link, count)
 end
 
 function BSYC:CreateFakeBattlePetID(link, count, speciesID)
+	if not BSYC.IsRetail then return nil end
+	
 	--either pass the link or speciesID
 	if link or speciesID then
 	

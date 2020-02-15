@@ -139,7 +139,7 @@ function Events:OnEnable()
 			--query and update items being sold
 			if AuctionHouseFrame then
 				AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions)
-				--hook the post buttons
+				--hook the post buttons only once
 				if not self.auctionPostClick then
 					self.auctionPostClick = true
 					AuctionHouseFrame.CommoditiesSellFrame.PostButton:HookScript("OnClick", function()
@@ -155,7 +155,6 @@ function Events:OnEnable()
 		self:RegisterEvent("OWNED_AUCTIONS_UPDATED", function()
 			self:DoTimer("ScanAuction", function() Scanner:SaveAuctionHouse() end, 1)
 		end)
-	
 	end
 	
 	Scanner:StartupScans() --do the login player scans
@@ -199,6 +198,12 @@ function Events:GUILDBANKFRAME_OPENED()
 	if not BSYC.options.enableGuild then return end
 	if not self.GuildTabQueryQueue then self.GuildTabQueryQueue = {} end
 		
+	if Events.alertTooltip then
+		Events.alertTooltip:ClearAllPoints()
+		Events.alertTooltip:SetOwner(UIParent, "ANCHOR_NONE")
+		Events.alertTooltip:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+	end
+	
 	local numTabs = GetNumGuildBankTabs()
 	for tab = 1, numTabs do
 		local name, icon, isViewable, canDeposit, numWithdrawals, remainingWithdrawals = GetGuildBankTabInfo(tab)
@@ -234,9 +239,6 @@ function Events:GUILDBANKBAGSLOTS_CHANGED()
 		self.GuildTabQueryQueue[tab] = nil
 
 		if Events.alertTooltip then
-			Events.alertTooltip:ClearAllPoints()
-			Events.alertTooltip:SetOwner(UIParent, "ANCHOR_NONE")
-			Events.alertTooltip:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 			Events.alertTooltip:ClearLines()
 			Events.alertTooltip:AddLine("|cffff6600BagSync|r")
 			local numTab = string.format(L.ScanGuildBankScanInfo, tab or 0, GetNumGuildBankTabs() or 0)
@@ -268,7 +270,7 @@ function Events:CURRENCY_DISPLAY_UPDATE()
 end
 
 function Events:PLAYER_REGEN_ENABLED()
-	if Unit:InCombatLockdown() then return end
+	if Unit:InCombatLockdown() or not BSYC.IsRetail then return end
 	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
 	self.doCurrencyUpdate = nil
 	Scanner:SaveCurrency()
