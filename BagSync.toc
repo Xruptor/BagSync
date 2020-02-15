@@ -2,7 +2,7 @@
 ## Title: BagSync
 ## Notes: BagSync tracks your characters items and displays it within tooltips.
 ## Author: Xruptor
-## Version: 13.1
+## Version: 13.2
 ## X-Curse-Project-ID: 22067
 ## X-WoWI-ID: 15351
 ## OptionalDeps: tekDebug
