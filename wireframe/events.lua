@@ -155,6 +155,9 @@ function Events:OnEnable()
 		self:RegisterEvent("OWNED_AUCTIONS_UPDATED", function()
 			self:DoTimer("ScanAuction", function() Scanner:SaveAuctionHouse() end, 1)
 		end)
+	else
+		--classic auction house
+		self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE", function() Scanner:SaveAuctionHouse() end)
 	end
 	
 	Scanner:StartupScans() --do the login player scans

@@ -238,39 +238,76 @@ function Scanner:SaveAuctionHouse()
 	if not BSYC.db.player.auction then BSYC.db.player.auction = {} end
 
 	local slotItems = {}
-	local numActiveAuctions = C_AuctionHouse.GetNumOwnedAuctions()
-		
-	--scan the auction house
-	if (numActiveAuctions > 0) then
-		for ahIndex = 1, numActiveAuctions do
-		
-			--https://wow.gamepedia.com/API_C_AuctionHouse.GetOwnedAuctionInfo
-			local itemObj = C_AuctionHouse.GetOwnedAuctionInfo(ahIndex)
+	
+	if BSYC.IsRetail then
+		local numActiveAuctions = C_AuctionHouse.GetNumOwnedAuctions()
 			
-			--we only want active auctions not sold one.  So check itemObj.status
-			if itemObj and itemObj.timeLeftSeconds and itemObj.status == 0 then
-
-				local expTime = time() + itemObj.timeLeftSeconds -- current Time + advance time in seconds to get expiration time and date
-				local itemCount = itemObj.quantity or 1
-				local parseLink = ""
+		--scan the auction house
+		if (numActiveAuctions > 0) then
+			for ahIndex = 1, numActiveAuctions do
+			
+				--https://wow.gamepedia.com/API_C_AuctionHouse.GetOwnedAuctionInfo
+				local itemObj = C_AuctionHouse.GetOwnedAuctionInfo(ahIndex)
 				
-				if itemObj.itemLink then
-					parseLink = BSYC:ParseItemLink(itemObj.itemLink, itemCount)
-				elseif itemObj.itemKey and itemObj.itemKey.itemID then
-					parseLink = BSYC:ParseItemLink(itemObj.itemKey.itemID, itemCount)
-				end
-				
-				--we are going to make the third field an identifier field, so we can know what it is for future reference
-				--for now auction house will be 1, with 4th field being expTime
-				if itemCount <= 1 then
-					parseLink = parseLink..";1;1;"..expTime
-				else
-					parseLink = parseLink..";1;"..expTime
-				end
+				--we only want active auctions not sold one.  So check itemObj.status
+				if itemObj and itemObj.timeLeftSeconds and itemObj.status == 0 then
 
-				table.insert(slotItems, parseLink)
+					local expTime = time() + itemObj.timeLeftSeconds -- current Time + advance time in seconds to get expiration time and date
+					local itemCount = itemObj.quantity or 1
+					local parseLink = ""
+					
+					if itemObj.itemLink then
+						parseLink = BSYC:ParseItemLink(itemObj.itemLink, itemCount)
+					elseif itemObj.itemKey and itemObj.itemKey.itemID then
+						parseLink = BSYC:ParseItemLink(itemObj.itemKey.itemID, itemCount)
+					end
+					
+					--we are going to make the third field an identifier field, so we can know what it is for future reference
+					--for now auction house will be 1, with 4th field being expTime
+					if itemCount <= 1 then
+						parseLink = parseLink..";1;1;"..expTime
+					else
+						parseLink = parseLink..";1;"..expTime
+					end
+
+					table.insert(slotItems, parseLink)
+				end
 			end
 		end
+		
+	else
+		--this is for WOW Classic Auction House
+		local numActiveAuctions = GetNumAuctionItems("owner")
+		local timestampChk = { 30*60, 2*60*60, 12*60*60, 48*60*60 }
+		
+		--scan the auction house
+		if (numActiveAuctions > 0) then
+			for ahIndex = 1, numActiveAuctions do
+				local name, texture, count, quality, canUse, level, minBid, minIncrement, buyoutPrice, bidAmount, highBidder, owner, saleStatus  = GetAuctionItemInfo("owner", ahIndex)
+				if name then
+					local link = GetAuctionItemLink("owner", ahIndex)
+					local timeLeft = GetAuctionItemTimeLeft("owner", ahIndex)
+					if link and timeLeft and tonumber(timeLeft) then
+						count = (count or 1)
+						--since classic doesn't return the exact time on old auction house, we got to add it manually
+						--it only does short, long and very long
+						local expireTime = time() + timestampChk[tonumber(timeLeft)]
+						local parseLink = BSYC:ParseItemLink(link, count)
+						
+						--we are going to make the third field an identifier field, so we can know what it is for future reference
+						--for now auction house will be 1, with 4th field being expTime
+						if count <= 1 then
+							parseLink = parseLink..";1;1;"..expireTime
+						else
+							parseLink = parseLink..";1;"..expireTime
+						end
+						
+						table.insert(slotItems, parseLink)
+					end
+				end
+			end
+		end
+		
 	end
 	
 	BSYC.db.player.auction.bag = slotItems
