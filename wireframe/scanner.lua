@@ -289,11 +289,12 @@ function Scanner:SaveAuctionHouse()
 					local timeLeft = GetAuctionItemTimeLeft("owner", ahIndex)
 					if link and timeLeft and tonumber(timeLeft) then
 						count = (count or 1)
+						timeLeft = tonumber(timeLeft)
+						if not timeLeft or timeLeft < 1 or timeLeft > 4 then timeLeft = 4 end --just in case				
 						--since classic doesn't return the exact time on old auction house, we got to add it manually
 						--it only does short, long and very long
-						local expireTime = time() + timestampChk[tonumber(timeLeft)]
+						local expireTime = time() + timestampChk[timeLeft]
 						local parseLink = BSYC:ParseItemLink(link, count)
-						
 						--we are going to make the third field an identifier field, so we can know what it is for future reference
 						--for now auction house will be 1, with 4th field being expTime
 						if count <= 1 then
