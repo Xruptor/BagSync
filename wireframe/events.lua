@@ -69,7 +69,7 @@ function Events:OnEnable()
 	self:RegisterEvent("TRADE_SKILL_LIST_UPDATE")
 	self:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
 
-	self:RegisterEvent("MAIL_SHOW", function() Scanner:SaveMailbox() end)
+	self:RegisterEvent("MAIL_SHOW", function() Scanner:SaveMailbox(true) end)
 	self:RegisterEvent("MAIL_INBOX_UPDATE", function()
 		self:DoTimer("MailBoxScan", function() Scanner:SaveMailbox() end, 0.3)
 	end)
