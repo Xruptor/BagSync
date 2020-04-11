@@ -62,7 +62,6 @@ function Profiles:OnEnable()
 		hideOnEscape = 1,
 		OnShow = function (self)
 			--entry.unitObj.realm
-			POOPCRAP = self
 			self.text:SetText(L.ProfilesRemove:format(self.data.colorized, self.data.unitObj.realm));
 		end,
 		OnAccept = function (self)

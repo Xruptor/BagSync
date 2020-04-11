@@ -583,6 +583,30 @@ function Tooltip:HookTooltip(objTooltip)
 				Tooltip:CurrencyTooltip(self, name, icon, currencyID)
 			end
 		end)
+		--for some strange reason on token vendors the SetCurrencyByID, SetCurrencyToken, and SetCurrencyTokenByID do not fire.  It's almost as if it's a hidden function or another tooltip.
+		--the only thing I can think of is to hook each individual token frame and push it onEnter
+		-- local oldAltCurrencyFrame_Update = AltCurrencyFrame_Update
+		-- AltCurrencyFrame_Update = function(frameName, texture, cost, canAfford)
+			-- if _G[frameName] and _G[frameName].itemLink then
+				-- if not _G[frameName].isBagSyncHooked then
+					-- _G[frameName]:HookScript("OnEnter", function() 
+						-- local currencyID = BSYC:GetCurrencyID(_G[frameName].itemLink)
+						-- if currencyID then
+							-- local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(currencyID)
+							-- if name and icon then
+								-- --prevent it from spamming
+								-- if GameTooltip.__tooltipUpdated then return end
+								-- --force it to be GameTooltip as it cannot be any others
+								-- Tooltip:CurrencyTooltip(GameTooltip, name, icon, currencyID)
+							-- end
+						-- end
+					-- end)
+					-- --only hook this thing once, otherwise currency info will repeat
+					-- _G[frameName].isBagSyncHooked = true
+				-- end
+			-- end
+			-- oldAltCurrencyFrame_Update(frameName, texture, cost, canAfford)
+		-- end
 		hooksecurefunc(objTooltip, "SetBackpackToken", function(self, index)
 			if self.__tooltipUpdated then return end
 			local name, count, icon, currencyID = GetBackpackCurrencyInfo(index)
@@ -590,6 +614,22 @@ function Tooltip:HookTooltip(objTooltip)
 				Tooltip:CurrencyTooltip(self, name, icon, currencyID)
 			end
 		end)
+		hooksecurefunc(objTooltip, "SetMerchantCostItem", function(self, index, currencyIndex)
+			--see MerchantFrame_UpdateAltCurrency
+			if self.__tooltipUpdated then return end
+			
+			local itemTexture, itemValue, itemLink = GetMerchantItemCostItem(index, currencyIndex)
+			if itemTexture and itemLink then
+				local currencyID = BSYC:GetCurrencyID(itemLink)
+				if currencyID then
+					local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(currencyID)
+					if name and icon then
+						Tooltip:CurrencyTooltip(objTooltip, name, icon, currencyID)
+					end
+				end
+			end
+		end)
+		
 	end
 
 end
