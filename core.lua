@@ -122,7 +122,7 @@ function BSYC:CreateFakeBattlePetID(link, count, speciesID)
 		
 		if isBattlepet then
 		
-			if not speciesID and link then
+			if not speciesID then
 				local _, _ , _ , petID, petLevel, petRarity, petHP, petAtk, petSpeed, _ , petName = string.find(link,"(.*)battlepet:(%d+):(%d+):(%d+):(%d+):(%d+):(%d+):(.*)%[(.*)%]")
 				speciesID = petID
 			end
