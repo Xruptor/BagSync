@@ -328,30 +328,32 @@ function Scanner:SaveCurrency()
 	if Unit:InCombatLockdown() then return end
 	
 	local lastHeader
-	local limit = GetCurrencyListSize()
+	local limit = C_CurrencyInfo.GetCurrencyListSize()
 	local slotItems = {}
 
 	for i=1, limit do
 
-		local name, isHeader, isExpanded, _, _, count, icon = GetCurrencyListInfo(i)
-		local link = GetCurrencyListLink(i)
+		local currencyinfo = C_CurrencyInfo.GetCurrencyListInfo(i)
+		--local name = currencyinfo.name
+		--local name, isHeader, isExpanded, _, _, count, icon = C_CurrencyInfo.GetCurrencyListInfo(i)
+		local link = C_CurrencyInfo.GetCurrencyListLink(i)
 		
 		local currencyID = BSYC:GetCurrencyID(link)
 		
-		if name then
-			if(isHeader and not isExpanded) then
-				ExpandCurrencyList(i,1)
-				lastHeader = name
-				limit = GetCurrencyListSize()
-			elseif isHeader then
-				lastHeader = name
+		if currencyinfo.name then
+			if(currencyinfo.isHeader and not currencyinfo.isExpanded) then
+				C_CurrencyInfo.ExpandCurrencyList(i,1)
+				lastHeader = currencyinfo.name
+				limit = C_CurrencyInfo.GetCurrencyListSize()
+			elseif currencyinfo.isHeader then
+				lastHeader = currencyinfo.name
 			end
-			if (not isHeader) then
+			if (not currencyinfo.isHeader) then
 				slotItems[currencyID] = slotItems[currencyID] or {}
-				slotItems[currencyID].name = name
-				slotItems[currencyID].header = lastHeader
-				slotItems[currencyID].count = count
-				slotItems[currencyID].icon = icon
+				slotItems[currencyID].name = currencyinfo.name
+				slotItems[currencyID].header = currencyinfo.lastHeader
+				slotItems[currencyID].count = currencyinfo.count
+				slotItems[currencyID].icon = currencyinfo.icon
 			end
 		end
 	end
