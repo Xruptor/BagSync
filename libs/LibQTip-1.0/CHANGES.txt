@@ -1,21 +1,668 @@
-------------------------------------------------------------------------
-r188 | Torhal | 2018-07-21 06:14:41 +0000 (Sat, 21 Jul 2018) | 1 line
-Changed paths:
-   M /trunk/LibQTip-1.0.toc
+commit b11a09ee563e834f5215d953f98b3b22aa17a093
+Author: Elkano <elkano@unknown.unknown>
+Date:   Sat Jul 25 16:33:26 2020 +0000
 
-Updating ToC Interface to 80000
-------------------------------------------------------------------------
-r187 | Torhal | 2018-07-21 06:13:54 +0000 (Sat, 21 Jul 2018) | 1 line
-Changed paths:
-   A /trunk/LibStub
-   A /trunk/LibStub/LibStub.lua
+    - adjusts TOC for 8.3.x
+    - adds compatibility for 9.x's backdrop changes
 
-Hard-embed LibStub, to stop the WoW 8.x client from complaining about being unable to load it under a dev environment.
-------------------------------------------------------------------------
-r186 | Torhal | 2018-07-21 06:13:15 +0000 (Sat, 21 Jul 2018) | 1 line
-Changed paths:
-   M /trunk/.pkgmeta
+commit 6879d6b3b10dd495ec00ecc57fcddd0065bb437b
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sat Jul 21 06:14:41 2018 +0000
 
-Hard-embed LibStub, to stop the WoW 8.x client from complaining about being unable to load it under a dev environment.
-------------------------------------------------------------------------
+    Updating ToC Interface to 80000
+
+commit 6dcaa7eda95eb63eb54a83b4da4d3e1cebe60394
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sat Jul 21 06:13:54 2018 +0000
+
+    Hard-embed LibStub, to stop the WoW 8.x client from complaining about being unable to load it under a dev environment.
+
+commit 8b44f7eeb2bbd86285e6152a192671e86010a662
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sat Jul 21 06:13:15 2018 +0000
+
+    Hard-embed LibStub, to stop the WoW 8.x client from complaining about being unable to load it under a dev environment.
+
+commit a0ddbb8e6b09e28fa03f71b83aae0063f2410bc7
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Thu Apr 12 00:31:08 2018 +0000
+
+    Fix regression for custom labelproviders which don't provide a fontString.
+
+commit b6d422353cca7e0a24e3b8d8b7b8cd45a594b044
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Thu Apr 5 18:18:28 2018 +0000
+
+    Fix scrolling which was broken in the previous version.
+
+commit 38e00bb98b2126ce0a51d20eb87fa5d838e40ce9
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Wed Apr 4 09:10:07 2018 +0000
+
+    General cleanups: Reformat code for readability, rename some variables for clarity and to remove shadowing, and upvalue some missing items. Fix leftover colors bleeding into recycled cells from tipPrototype:SetCellTextColor - fixes ticket #38. Update ToC to 70300 and bump library MINOR version.
+
+commit c406c7edf9b5bb991809960e2119bdcd5c79cbdb
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Fri Nov 18 21:08:47 2016 +0000
+
+    Update ToC Interface to 70100
+
+commit 42e5cf3d90fed609a0df4af652aecc7f82065d0b
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Tue Jul 19 07:09:09 2016 +0000
+
+    Bump ToC Interface to 70000
+
+commit c40f6f0fd3f1769076717fb91e9aef4b39209818
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Tue Nov 17 01:27:04 2015 +0000
+
+    ToC bump because I finally have Subversion access again...
+
+commit 086f493e30d3ee11df7e407a7021035ca7f6e6ba
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Wed Feb 25 01:21:15 2015 +0000
+
+    Updated ToC Interface to 60100.
+
+commit 29db19db382e765161e52714aaa06aab36109063
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Wed Feb 4 01:00:41 2015 +0000
+
+    Added releaseHandler parameter to SetAutoHideDelay() to facilitate good housekeeping practices. Must be a function. Addresses ticket #42
+
+commit f35ece0359cd0dafd91745fa974fca3ea6a2141c
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sun Nov 16 14:51:42 2014 +0000
+
+    Upped MINOR version.
+
+commit 3dbd0b7f897dbe7a2b8ddbbc9e5c96d3170ef2bd
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sun Nov 16 14:51:02 2014 +0000
+
+    Added tooltip:SetHighlightTexture() and tooltip:SetHighlightTexCoord() methods.
+
+commit dd0db22d3441ae323ee1e887a2dfcb3e07fbf6c8
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sat Oct 25 18:09:58 2014 +0000
+
+    Updated ToC Interface to 60000
+
+commit ccbcb619e2016e47a61449058b71f47f621dd880
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Wed Mar 13 23:47:38 2013 +0000
+
+    Fixes for ticket 37
+
+commit 8bae0d0bd009e4f2bc4c24accb963a388579903c
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Tue Mar 12 22:13:43 2013 +0000
+
+    Fixed incorrect resetting of cell font on release.
+
+commit 34aa98032720be3a7524a11748798391e6f05bd3
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Fri Mar 8 13:18:36 2013 +0000
+
+    Check for nil tooltip before attempting to reset font colors.
+
+commit 6d0f6432f32e035fb4a8e5e67db5b3d8bb18fcef
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Thu Mar 7 17:11:07 2013 +0000
+
+    Added tooltip methods :SetCellTextColor(), :SetColumnTextColor(), and :SetLineTextColor() - also did some minor cleanup.
+
+commit 4a662389130e76a9f8a79da886727889fbe30e07
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Tue Mar 5 11:06:25 2013 +0000
+
+    Bumped ToC version to 50200.
+
+commit 29e03daa5ef17bfa967787d224b2df79db926290
+Author: ArPharazon <arpharazon@unknown.unknown>
+Date:   Wed Dec 19 23:51:12 2012 +0000
+
+    TOC updated for 5.1
+
+commit 8d157635e1fe3c8b7744bf939afa0504034e7360
+Author: ArPharazon <arpharazon@unknown.unknown>
+Date:   Sun Sep 2 01:43:45 2012 +0000
+
+    Updated link to website
+
+commit 1d85ea76d69c76221c64d61d05350d87d1f27f55
+Author: ArPharazon <arpharazon@unknown.unknown>
+Date:   Sun Sep 2 01:37:08 2012 +0000
+
+    Updated ToC version for WoW 5.04
+
+commit e13ae6d1b6be1a7ce918c448d199d247d98e924e
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Fri Aug 17 21:40:16 2012 +0000
+
+    Update ToC Interface to 40300 just to say "Fuck off" to World of Addons. Take my shit off of your goddamn page, you thieving assholes.
+
+commit b62494ffb760748fd674cc9e88d0936ee3c194fb
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Wed Apr 27 08:09:30 2011 +0000
+
+    Updated ToC version for WoW 4.1
+
+commit 4de44d001454eef0aec10f293a70b4c82204fde0
+Author: David Hedbor <david@ookla.com>
+Date:   Sun Nov 28 09:11:14 2010 +0000
+
+    Fixed bug in UpdateScrolling if scale ~= 1.0
+
+commit 37f8268c22abb1455f78996c8930a8ae73fcc814
+Author: David Hedbor <david@ookla.com>
+Date:   Sun Nov 28 05:13:52 2010 +0000
+
+    Added a method :SetScrollSpeed(step) to configure the mouse wheel scroll step value.
+
+commit 8ccfb0c528649e29bcc82376cf0c2681b9a7fc25
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sat Nov 27 22:39:38 2010 +0000
+
+    In _SetCell(): If the font parameter is nil, set it based on whether or not the line is a header line - whether or not a previous cell exists and, if so, what font it's using should never have mattered - fixes ticket #27.
+    Bumped MINOR version.
+
+commit 31dd938e22ec00345fb1937f6ef985765c647dc5
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sat Nov 27 22:30:12 2010 +0000
+
+    Added support for strings to look up global font instances, such as "GameFontNormal", since omitting the quotations and simply using the actual FontObject is somehow considered retarded...
+
+commit f1ba4ccd23563e5b6b8eb7bac330dd064dfe2ebb
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Mon Nov 22 02:31:08 2010 +0000
+
+    Mark lines added with :AddHeader() as header lines, so calls to :SetCell() do not require an explicit font argument (the tooltip's header font will automagically be used).
+
+commit dad3fd1f81fdd53469f1b65a3b3eefc3ba535fcc
+Author: David Hedbor <david@ookla.com>
+Date:   Sat Nov 20 22:30:49 2010 +0000
+
+    Added support for OnReceiveDrag.
+
+commit 5e8355e31edd02edde911f50d33ec249b3bb3184
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Mon Nov 1 10:39:15 2010 +0000
+
+    Bumped ToC version.
+
+commit 49b4dc2f9eda7f6951bdc58372f85efef3328507
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Mon Nov 1 10:05:25 2010 +0000
+
+    Added 'enable-nolib-creation: no' to .pkgmeta
+
+commit d2e22a7aa54727c7d3da73f594bf335200d53328
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Tue Aug 3 20:56:32 2010 +0000
+
+    Upped the MINOR version.
+
+commit 739d35f75cf99ba384d23c5919f1c427dc2271b9
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Tue Aug 3 05:39:42 2010 +0000
+
+    In InitializeTooltip(): Store the result of GameTooltip:GetBackdrop() before using it to set the backdrop so tooltip AddOns which set it to nil will not cause an error to be raised.
+
+commit 42782d3c8a5c5f0b9afdb0b7c4d88a3e3b15611b
+Author: Elkano <elkano@unknown.unknown>
+Date:   Tue Jul 27 15:27:08 2010 +0000
+
+    - changed the way colspans resize cols to get enough width
+    - row height is now recalculated when colspans have been resized
+    !WARNING! custom cells need to provide the function cell::getContentHeight() that should return the height of the cell given its current width
+
+commit 975fa7d92c9284f0c7022a65eac02dc214c8505e
+Author: Adirelle <adirelle+github@gmail.com>
+Date:   Mon Apr 12 12:23:26 2010 +0000
+
+    Added a OnRelease callback.
+
+commit a889adeb87e4f5cee995c39420fb71d2133202f0
+Author: Adirelle <adirelle+github@gmail.com>
+Date:   Mon Apr 12 10:03:25 2010 +0000
+
+    Track and remove all tooltip script handlers on release. tooltip:HookScript is not allowed anymore because handlers added by that method cannot be removed.
+
+commit b1df995f996fc84646a509e02224e7be45becb3e
+Author: Adirelle <adirelle+github@gmail.com>
+Date:   Mon Apr 12 09:49:17 2010 +0000
+
+    Added tooltip methods :Release() and :IsAcquiredBy(key).
+
+commit cfb863b667a25f8a29b10a8f104173a6c16ebe3d
+Author: Adirelle <adirelle+github@gmail.com>
+Date:   Mon Apr 12 09:45:02 2010 +0000
+
+    Secured ReleaseTooltip against OnHide scripts that call lib:Release().
+
+commit b45cd419e8cc9e7e9a35005bb6825cd7599740eb
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Mon Feb 8 16:37:07 2010 +0000
+
+    Urk. Forgot to up the MINOR.
+
+commit 0333f1c19139ec1be8fd7d571590dc20612c608c
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Mon Feb 8 15:39:55 2010 +0000
+
+    In AcquireTooltip(): Fixed typo in the name of the parent of scrollChild.
+    New function: tipPrototype:SetCellMarginH() - sets the tooltip's horizontal cell margin. Only usable before adding lines.
+    New function: tipPrototype:SetCellMarginV() - sets the tooltip's vertical cell margin. Only usable before adding lines.
+    Changed some whitespace formatting in the code.
+
+commit 2b4d1845d24c4cb0a57c81ec8dca5e4063c912ed
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sat Jan 16 19:03:33 2010 +0000
+
+    In UpdateScrolling(): Changed scale modifiers to work correctly with fractional sizes less than one.
+
+commit f4a0757f5c09ad6c9218a65bc6a67aa66cd3eb54
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Fri Jan 1 11:05:28 2010 +0000
+
+    In tipPrototype:UpdateScrolling() - modified to account for the scale of the tooltip so the function will actually work if the tooltip has been scaled to gigantic proportions.
+    Made the library load-on-demand.
+
+commit 807a04122342bcdd50f4e696dc4b13f3dd194f22
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Wed Dec 9 05:39:19 2009 +0000
+
+    Updated ToC. Changed MouseIsOver(frame) to frame:IsMouseOver()
+
+commit 19a6bc619a584f0ec216d0b8e569b1b3267ebd2a
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Tue Jul 21 03:46:58 2009 +0000
+
+    Removed argument-checking for the tipPrototype methods SetLineColor() and SetColumnColor() - instead, they now check for the existence of their intended target.
+    Added tipPrototype:SetCellColor().
+    In ReleaseCell(): Set the cell's backdrop to nil.
+
+commit 12e939413c8e5bd957424005457f1bb787a5df10
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Fri Jul 10 09:17:08 2009 +0000
+
+    In InitializeTooltip(): Set the alpha level to 1 always, since GameTooltip may be in the middle of fading when we acquire. Lib users can override this themselves by setting their own alpha on the tooltip frame.
+
+commit 5c1a2a51a8d570e659e4bf3beaa14aa8e883fbdf
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Wed Jul 8 06:38:50 2009 +0000
+
+    In labelPrototype:SetupCell(): Replaced the select() massacre with static parameters.
+
+commit ed96812920e1d3a447d19dcb5d6874d4daee1a92
+Author: Elkano <elkano@unknown.unknown>
+Date:   Mon Jul 6 07:42:45 2009 +0000
+
+    moved most of the LibQTipClick functionality into LibQTip itself (though with different code)
+    new API (script is OnEnter/OnLeave/OnMouseDown/OnMouseUp, function will be called as frame:function(argument, ...)):
+    - SetCellScript(line, column, script, function, argument)
+    - SetLineScript(line, script, function, argument)
+    - SetColumnScript(column, script, function, argument)
+
+commit 84b33ce2ffdb97a752adecec3bf2bb8ba228140a
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Mon Jun 22 09:23:30 2009 +0000
+
+    In labelPrototype:SetupSell(): Set the fontstring's width always, not just when max_width is smaller than width - this should normalize the display when a previous call modified the width.
+
+commit fb3e5606148234593adbe7baa5f81cd4fa3d51f8
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Mon Jun 22 08:17:30 2009 +0000
+
+    In CreateLine(): Make the line's parent be tooltip.scrollChild instead of tooltip, so that separators play nice with scrollable tooltips.
+
+commit fbb2fd643e36861b693464cd21a7079a938954f0
+Author: Adirelle <adirelle+github@gmail.com>
+Date:   Thu Jun 11 14:11:35 2009 +0000
+
+    Removed useless .docmeta.
+
+commit 7b35caa05463e8e6eeda01597b8e6b0b57d281c1
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Thu Jun 11 08:55:24 2009 +0000
+
+    In AutoHideTimerFrame_OnUpdate(): Fixed MouseIsOver() check.
+
+commit 7ee9865076b1ebdd18ae1b7962547d5b3fd46408
+Author: Adirelle <adirelle+github@gmail.com>
+Date:   Thu Jun 11 06:03:51 2009 +0000
+
+    Fixed AutoHideTimerFrame_OnUpdate logic while keeping CPU usage low.
+
+commit d3044534736914a4a3d535bfb32b578c9eb00ad4
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Wed Jun 10 21:19:43 2009 +0000
+
+    In tipPrototype:SetAutoHideDelay(): Set the tooltip as the value of timerFrame.parent.
+    In AutoHideTimerFrame_OnUpdate(): Revamped to always increment self.elapsed and check against self.delayed _before_ checking whether or not the mouse is over self.parent or self.alternateFrame. Decreased CPU usage from roughly 0.185/sec to roughly 0.045/sec.
+    Upped MINOR to 23.
+
+commit e587066d6a3396b1e278a354b39aa09fe7e2467e
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Wed Jun 3 03:59:55 2009 +0000
+
+    Adjusted ResetTooltipSize() - hopefully this fixes the right-edge clipping issue.
+
+commit 383c493de02ac4836c0a01fb0e338ce7f9887545
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Mon Jun 1 01:06:20 2009 +0000
+
+    Fixed default backdrop colors in tooltip:SetLineColor() and tooltip:SetColumnColor().
+
+commit 2bfa7468ce6e0510ec80cb495d8702519c719dca
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Fri May 29 03:02:14 2009 +0000
+
+    Upped MINOR to 21
+
+commit 09d9c4182b11567aef3874de77706f1b5b11b063
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Fri May 29 02:14:42 2009 +0000
+
+    Bah. I knew I was overcomplicating things: Removed GetPosition() and its references in AcquireCell/ReleaseCell - replaced all that with labelPrototype:GetPosition()
+
+commit 674335fad765eec214891caf61fa190d82a0ce18
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Fri May 29 01:51:30 2009 +0000
+
+    Added local function GetPosition() - assigned to a cell when it's acquired - which returns the cell's line and column.
+    In _SetCell(): Added assignment of line and column data to the affected cell.
+    In AcquireCell(): Added assignment of GetPosition() to the cell.
+    In ReleaseCell(): Remove line, column, and GetPosition() from the cell.
+
+commit ea3d420be2e0315490325cf4022ffcdba997f09e
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Tue May 26 22:16:06 2009 +0000
+
+    In labelPrototype:SetupCell(): Added optional min_width parameter - verify that max_width is not less than min_width, and set return width value to min_width if it is smaller.
+
+commit ab64aa500acd0a6dab0bb4a1fb8f07276048ebfd
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Tue May 26 07:43:57 2009 +0000
+
+    Completely removed dangling letter check in favor of simply adding 2 pixels to ResetTooltipSize().
+
+commit 1483939c4171a7de656490d38a2526e0a0502788
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Tue May 26 07:33:52 2009 +0000
+
+    In labelPrototype:SetupCell(): Commented out dangling-letter check for the time being, and fix a bug with line-wrapping by re-setting the returned height value if max_width is set.
+    In tipPrototype:AddSeparator(): Fixed clipping at the bottom of the tooltip by adding a call to SetTooltipSize().
+
+commit 42c0e411b20c336b580290852234ebd45891efb0
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Tue May 26 03:16:04 2009 +0000
+
+    Fixed accidental globals and non-working tooltip:SetLineColor() - fucking copy-pasta.
+    Replaced all occurances of "LibQTip" with "lib" for my own sanity.
+    Upvalued "math" and "string.find".
+    Upped MINOR to 20.
+    Some miscellaneous file re-structuring.
+
+commit bdb1309c94a05e4352384631c9f09ad6d5cab1cf
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Mon May 25 08:56:51 2009 +0000
+
+    Renamed SeparatorBackdrop to GenericBackdrop.
+    Removed deprecated tooltip methods AcquireLine() and AcquireColumn().
+    Added tooltip methods SetColumnColor() and SetLineColor().
+    Set MINOR to 19.
+
+commit 2a1e8349f5e8ca2732fd7c6b665fd08d0223b93c
+Author: Adirelle <adirelle+github@gmail.com>
+Date:   Mon May 25 08:33:58 2009 +0000
+
+    Dished the commented, bugged upgrade code since having spare frames at the time of upgrading is unlikely.
+
+commit 18ec11c2425420c5223830410846e6ed95fdc35a
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Mon May 25 08:04:45 2009 +0000
+
+    In labelPrototype:InitializeCell(): Removed FontString anchoring.
+    In labelPrototype:SetupCell(): Replaced padding check to a check for l_pad and r_pad, and anchor the FontString using them. SetPoint() is evil - never count on defaults of 0 when you don't specify args!
+
+commit a9dccbc9ad7d08c4b957d380e79b91254f3c2446
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Mon May 25 07:19:02 2009 +0000
+
+    In labelPrototype:SetupCell(): Check for dangling letters - only add to height if found.
+    In InitializeTooltip(): Set the tooltip's alpha level to that of GameTooltip so tooltip addons can skin it properly.
+
+commit 331c328fa3389ece169980b588ebc36cc800dd3c
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sun May 24 16:45:51 2009 +0000
+
+    In ReleaseTooltip(): Remove the tooltip from the layoutCleaner registry.
+
+commit 23154e9b5c422202931fb026eeb396db2ca02cfa
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sun May 24 05:43:40 2009 +0000
+
+    Fixed debug substitutions.
+    Placed upgrade code in debug comment block to stop it from breaking addons using older versions of the lib...
+
+commit 32d4c62b88c6b5dbbdcc0d21c19eac7d6885c27e
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sun May 24 02:29:54 2009 +0000
+
+    Upvalued AcquireTable and ReleaseTable
+    In lablePrototype:SetupCell(): Added checks for new (optional) parameters passed from SetCell() - padding and maxwidth.
+    If maxwidth is less than the length of the text in the cell, the text will wrap to the next line.
+    Fixed dangling letter clipping (bottoms of g, y, etc being cut off).
+    AcquireTable() and ReleaseTable() are now used for a tooltip's columns, lines, and colspans - less GC!
+    In LayoutColspans(), _SetCell(), and CreateLine(): Renamed "self" parameter to "tooltip".
+    Upped MINOR to 18
+
+commit 59ddd4c6ac79e7c46d8b3527fbf72acb85c52381
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sat May 23 04:58:49 2009 +0000
+
+    Added tableHeap, AcquireTable(), ReleaseTable() - at the moment only used in CreateLine() for line.cells
+    In AcquireTooltip(): Renamed the tip variable to tooltip for consistency.
+    In InitializeTooltip(): Renamed the self parameter to tooltip.
+    In tipPrototype:Clear(): Use ReleaseTable() on line.cells, then set line.cells to nil.
+    Hand-merged Elkano's changes to the r77 version:
+    Relocated and grouped related functions and variables.
+    Renamed SetTipSize() to SetTooltipSize() and reworked it to not be a member method of tipPrototype.
+    Renamed FinalizeTooltip() to ReleaseTooltip() and relocated into it some code from tipPrototype:Release().
+    Removed the tooltip parameter from providerPrototype:AcquireCell(), as it was unused.
+    In tipPrototype:Clear(): Check if cell is non-nil before calling ReleaseCell().
+    In AcquireCell(): Rename self parameter to tooltip, set cell._provider as provider parameter.
+    In ReleaseCell(): Remove self parameter and all relevant checks.
+    In _SetCell(): Remove cell._provider assignment, as this is now done in AcquireCell().
+    In CreateLine(): Check for self.lines[lineNum] before acquiring a new line.
+
+commit e6fdf2863060eaf5680308d6a815ce8766cd74cf
+Author: Adirelle <adirelle+github@gmail.com>
+Date:   Fri May 22 10:07:58 2009 +0000
+
+    Do not forget oldminor may be nil.
+
+commit 2fa002d40dafad081c3700c1c0b27773bc814072
+Author: Adirelle <adirelle+github@gmail.com>
+Date:   Fri May 22 09:07:57 2009 +0000
+
+    Reset auto-hiding on release (so we recycle the timer frame).
+    Properly recycle frame lineHeap and columnHeap when upgrading from version prior to minor 14.
+
+commit 7d9f4306040222ba8ba014634c428e51bafee060
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Fri May 22 04:31:45 2009 +0000
+
+    Re-instated the frameHeap. The lineHeap and columnHeap are no more.
+    Added tipPrototype:AddSeparator() - allows the addition of a separator line with optional height, r, g, b, and alpha arguments.
+    Reworked tipPrototype:SetAutoHideDelay() to use the frameHeap, and release self.autoHideTimerFrame when done.
+
+commit df322cf36f3878aec135189d341be8eb44c02a54
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Thu May 21 05:21:44 2009 +0000
+
+    In AutoHideTimerFrame_OnUpdate(): Changed behavior from hiding the parent to having the library release the parent.
+
+commit f398d903f3cb5c50aced79a72e1d5faa5a89a19c
+Author: Elkano <elkano@unknown.unknown>
+Date:   Mon May 18 08:15:05 2009 +0000
+
+    ...and pushed minor for that
+
+commit cb0181dea4d5c082b7fd475f483833c0d2508c51
+Author: Elkano <elkano@unknown.unknown>
+Date:   Mon May 18 08:14:40 2009 +0000
+
+    fixed parenting for column and line frames fixing scaling problems
+
+commit 64b5e691df414d3b0fbc54ab28ffec13570d9537
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sun May 17 06:11:37 2009 +0000
+
+    Removed tipPrototype:GetTipSize() - completely unnecessary. Not upping library version until I'm ready to tag.
+
+commit b66f6770d5ac4aaffa045216a7b167d5b2ce7bec
+Author: Adirelle <adirelle+github@gmail.com>
+Date:   Fri May 15 07:35:38 2009 +0000
+
+    Library minor version has to be manually increased.
+
+commit eaa1d01f7830635ec1ce9b39436d022c71197bbe
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Tue May 12 21:27:49 2009 +0000
+
+    Added tipPrototype:GetTipSize()
+
+commit 8cea7f938bfdde193dc312019656c9d8d5abf720
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sat May 9 07:55:47 2009 +0000
+
+    Updated Author section and added Credits for TOC.
+
+commit 19c190e196a1f23e1614c8bc3faa97ca00c93c82
+Author: aesirrising <aesirrising@unknown.unknown>
+Date:   Sat May 9 02:20:10 2009 +0000
+
+    TOC Interface updated to 30100
+
+commit 9906136f1b2a7c876581b61cf3bcebde0d8bc6de
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sat May 9 01:53:58 2009 +0000
+
+    Merged in Elkano's scrollable branch.
+    Upvalued heavily-used globals.
+    Fixed two accidental globals/bugs in scrollable code. (tip as reference instead of self)
+
+commit 5bb82e3b53a33721317d88759bd35141c4826595
+Author: Adirelle <adirelle+github@gmail.com>
+Date:   Mon May 4 06:09:20 2009 +0000
+
+    Added optional auto-hiding feature.
+
+commit 1dab3b62cf52d51ef57ff2947f9af6e521998034
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sun Mar 22 08:29:36 2009 +0000
+
+    Removed nolib-strip
+
+commit 818069db19b0be776ec922ba00890978305ba4dd
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Tue Mar 17 05:16:57 2009 +0000
+
+    Added lib.xml
+    Removed LibQTip-1.0.lua from the .toc and replaced it with lib.xml
+
+commit 170c999f86170c504feebd243f1cad10079de0b4
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Tue Mar 17 05:09:48 2009 +0000
+
+    Moved LibQTip-1.0.lua into trunk and deleted its subdirectory.
+    Removed hard-embedded LibStub and added it as an external in .pkgmeta
+    Updated LibQTip-1.0.toc to reflect the structural changes.
+
+commit d5bb8dfb8d157d99ad34f3cd2d8f2c15dc295317
+Author: Adirelle <adirelle+github@gmail.com>
+Date:   Wed Feb 25 13:40:08 2009 +0000
+
+    Added a global frame that is reponsible for laying out colspans when need be (but at most once per update).
+    Cells are now created as children of UIParent and then "reparented" to the tooltip. This ensures the fontstrings get properly initialized and should fixes the "truncated text on first display" issue (ticket #4).
+
+commit e48defa7465170830cfa7b33d44a69c46bf7ba0d
+Author: Adirelle <adirelle+github@gmail.com>
+Date:   Wed Feb 25 12:56:44 2009 +0000
+
+    Moved lineHeap and columnHeap into the library itself. There is no need to duplicate them into each frame now that there are indexed by tooltip key.
+
+commit 7c2116d736f29719a9df661d4ca13c6c3dd9ad3d
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Wed Feb 25 12:10:03 2009 +0000
+
+    Bumped MAJOR.
+
+commit 28bdc330b24037b243433f4464c513f2e46b9441
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Wed Feb 25 08:16:13 2009 +0000
+
+    In ResizeColspans(): Removed line which only allowed the function to run if the tooltip was shown. Fixes ticket #4.
+    In InitializeTooltip(): Removed line which set ResizeColspans() to the tooltip's OnShow(), as this only worked after the tooltip was shown - making it rather useless.
+
+commit e10a7ea23b439c8ec49b05b6a7685cfce62864a9
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Fri Feb 13 01:03:28 2009 +0000
+
+    Added lineHeap[key] and columnHeap[key] to make each heap unique to the specified tooltip. This fixes the issue of setting a column/line's background to a different color which would propagate to another tooltip upon re-use.
+
+commit 6daa7bbd7b65e7e99b9d55c226f697d4f1f2ba88
+Author: Adirelle <adirelle+github@gmail.com>
+Date:   Sun Jan 11 09:17:28 2009 +0000
+
+    First try at adding luadoc using .docmeta
+
+commit 1c3d528a549c50f1f6c1b6338ff51e836a9e91f9
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Mon Jan 5 05:03:31 2009 +0000
+
+    Removed bgFrame, as InitializeTooltip() now "inherits" the backdrop/border and initial scale from GameTooltip.
+
+commit 57302ffa86be2543af8a64cc2776f5540dfd962d
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Tue Dec 23 19:26:19 2008 +0000
+
+    Removed frameHeap, as it has been deprecated by the tooltip's lineHeap and columnHeap.
+    Removed needless whitespace (mostly Tabs) at the ends of some lines.
+
+commit 48b5c34621d6f2cc4447ff17511d1255bef9e3fd
+Author: Adirelle <adirelle+github@gmail.com>
+Date:   Tue Dec 23 11:13:19 2008 +0000
+
+    Fixed tickets #6 and #7.
+
+commit e0d12bfe20ee065e9fc2896e303c4c253c80f72b
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Fri Dec 19 19:57:52 2008 +0000
+
+    Moved license text from main Lua file to LICENSE.txt
+    Cleaned up some comments and removed irrelevant ones.
+    Added tipPrototype methods :SetDefaultProvider() and :GetDefaultProvider()
+
+commit a8ce7cbaf90d1097010fbcacdc3ba28297193ad8
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Wed Dec 10 02:33:08 2008 +0000
+
+    Upped MINOR to 5.
+
+commit ef691096d68613fedad0a9531b7f790cd94f0e4e
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Wed Dec 10 01:54:03 2008 +0000
+
+    In _SetCell(): Replaced non-existent "tooltip" argument with "self" in call to cell:SetupCell()
+
+commit 3bbe281afb6da6efba1d05c05776de7e76c75809
+Author: Adirelle <adirelle+github@gmail.com>
+Date:   Mon Nov 24 07:01:57 2008 +0000
+
+    Fixed colspan width handling with column numbers greater than 9.
 
