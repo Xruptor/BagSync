@@ -78,7 +78,7 @@ function Events:OnEnable()
 	
 	--Force guild roster update, so we can grab guild name.  Note this is nil on login
 	--https://wow.gamepedia.com/API_GetGuildInfo
-	GuildRoster()
+	C_GuildInfo.GuildRoster()
 	
 	self:RegisterEvent("PLAYER_MONEY")
 	self:RegisterEvent("GUILD_ROSTER_UPDATE")
