@@ -595,6 +595,7 @@ function Tooltip:HookTooltip(objTooltip)
 			if self.__tooltipUpdated then return end
 			
 			local currencyID = select(currencyIndex, C_CurrencyInfo.GetMerchantCurrencies())
+			
 			if currencyID then
 				local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = C_CurrencyInfo.GetCurrencyInfo(currencyID)
 				if name and icon then
