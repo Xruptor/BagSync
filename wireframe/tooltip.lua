@@ -562,8 +562,8 @@ function Tooltip:HookTooltip(objTooltip)
 		end)
 		hooksecurefunc(objTooltip, "SetCurrencyToken", function(self, index)
 			if self.__tooltipUpdated then return end
-			local name, isHeader, isExpanded, isUnused, isWatched, count, icon = GetCurrencyListInfo(index)
-			local link = GetCurrencyListLink(index)
+			local name, isHeader, isExpanded, isUnused, isWatched, count, icon = C_CurrencyInfo.GetCurrencyListInfo(index)
+			local link = C_CurrencyInfo.GetCurrencyListLink(index)
 			if name and icon and link then
 				local currencyID = BSYC:GetCurrencyID(link)
 				Tooltip:CurrencyTooltip(self, name, icon, currencyID)
@@ -571,21 +571,21 @@ function Tooltip:HookTooltip(objTooltip)
 		end)
 		hooksecurefunc(objTooltip, "SetCurrencyTokenByID", function(self, currencyID)
 			if self.__tooltipUpdated then return end
-			local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(currencyID)
+			local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = C_CurrencyInfo.GetCurrencyInfo(currencyID)
 			if name and icon then
 				Tooltip:CurrencyTooltip(self, name, icon, currencyID)
 			end
 		end)
 		hooksecurefunc(objTooltip, "SetCurrencyByID", function(self, currencyID)
 			if self.__tooltipUpdated then return end
-			local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(currencyID)
+			local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = C_CurrencyInfo.GetCurrencyInfo(currencyID)
 			if name and icon then
 				Tooltip:CurrencyTooltip(self, name, icon, currencyID)
 			end
 		end)
 		hooksecurefunc(objTooltip, "SetBackpackToken", function(self, index)
 			if self.__tooltipUpdated then return end
-			local name, count, icon, currencyID = GetBackpackCurrencyInfo(index)
+			local name, count, icon, currencyID = C_CurrencyInfo.GetBackpackCurrencyInfo(index)
 			if name and icon and currencyID then
 				Tooltip:CurrencyTooltip(self, name, icon, currencyID)
 			end
@@ -596,7 +596,7 @@ function Tooltip:HookTooltip(objTooltip)
 			
 			local currencyID = select(currencyIndex, GetMerchantCurrencies())
 			if currencyID then
-				local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(currencyID)
+				local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = C_CurrencyInfo.GetCurrencyInfo(currencyID)
 				if name and icon then
 					Tooltip:CurrencyTooltip(objTooltip, name, icon, currencyID)
 				end
@@ -606,7 +606,7 @@ function Tooltip:HookTooltip(objTooltip)
 			-- if itemTexture and itemLink then
 				-- local currencyID = BSYC:GetCurrencyID(itemLink)
 				-- if currencyID then
-					-- local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = GetCurrencyInfo(currencyID)
+					-- local name, currentAmount, icon, earnedThisWeek, weeklyMax, totalMax, isDiscovered, rarity = C_CurrencyInfo.GetCurrencyInfo(currencyID)
 					-- if name and icon then
 						-- Tooltip:CurrencyTooltip(objTooltip, name, icon, currencyID)
 					-- end
