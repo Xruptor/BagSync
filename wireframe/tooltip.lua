@@ -20,6 +20,10 @@ local function Debug(...)
 	end
 end
 
+local function CanAccessObject(obj)
+    return issecure() or not obj:IsForbidden();
+end
+
 local function comma_value(n)
 	if not n then return "?" end
 	n = tostring(n)
@@ -278,7 +282,7 @@ end
 
 function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if not BSYC.options.enableTooltips then return end
-	if not (issecure() or not objTooltip:IsForbidden()) then return end
+	if not CanAccessObject(objTooltip) then return end
 	
 	--only show tooltips in search frame if the option is enabled
 	if BSYC.options.tooltipOnlySearch and objTooltip:GetOwner() and objTooltip:GetOwner():GetName() and not string.find(objTooltip:GetOwner():GetName(), "BagSyncSearchRow") then
