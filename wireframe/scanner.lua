@@ -414,9 +414,12 @@ function Scanner:SaveProfessions()
 		--store the recipes
 		for i = 1, #recipeIDs do
 		
-			if C_TradeSkillUI.GetRecipeInfo(recipeIDs[i], recipeData) then
+			if C_TradeSkillUI.GetRecipeInfo(recipeIDs[i]) then
+			
+				--grab the info in a table
+				recipeData = C_TradeSkillUI.GetRecipeInfo(recipeIDs[i])
+				
 				local categoryID = recipeData.categoryID
-
 				local categoryData = C_TradeSkillUI.GetCategoryInfo(categoryID)
 
 				--grab the parent name, Engineering, Herbalism, Blacksmithing, etc...
