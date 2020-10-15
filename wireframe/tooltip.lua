@@ -525,7 +525,7 @@ function Tooltip:HookTooltip(objTooltip)
 	objTooltip:HookScript("OnTooltipSetItem", function(self)
 		if self.__tooltipUpdated then return end
 		local name, link = self:GetItem()
-		if name and string.len(name) > 0 and link then
+		if link then
 			Tooltip:TallyUnits(self, link, "OnTooltipSetItem")
 		end
 	end)
