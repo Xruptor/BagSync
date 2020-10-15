@@ -76,10 +76,6 @@ end
 
 function Events:OnEnable()
 	
-	--Force guild roster update, so we can grab guild name.  Note this is nil on login
-	--https://wow.gamepedia.com/API_GetGuildInfo
-	C_GuildInfo.GuildRoster()
-	
 	self:RegisterEvent("PLAYER_MONEY")
 	self:RegisterEvent("GUILD_ROSTER_UPDATE")
 	self:RegisterEvent("PLAYER_GUILD_UPDATE")
@@ -99,6 +95,11 @@ function Events:OnEnable()
 	self:RegisterEvent("BANKFRAME_OPENED", function() Scanner:SaveBank() end)
 	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", function() Scanner:SaveBank(true) end)
 
+	--Force guild roster update, so we can grab guild name.  Note this is nil on login, have to check for Classic and Retail though
+	--https://wow.gamepedia.com/API_GetGuildInfo
+	if C_GuildInfo and C_GuildInfo.GuildRoster then C_GuildInfo.GuildRoster() end  -- Retail
+	if GuildRoster then GuildRoster() end -- Classic
+	
 	if BSYC.IsRetail then
 		
 		local timerName = "QueryAuction"
