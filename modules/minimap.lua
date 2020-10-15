@@ -81,7 +81,7 @@ bgsMinimapDD.initialize = function(self, level)
 			BSYC:GetModule("Profiles").frame:Show()
 		end)
 		addButton(level, L.FixDB, nil, 1, nil, 'fixdb', function(frame, ...)
-			BSYC:GetModule("Data"):CleanDB()
+			BSYC:GetModule("Data"):FixDB()
 		end)
 		addButton(level, L.Config, nil, 1, nil, 'config', function(frame, ...)
 			InterfaceOptionsFrame:Show() --has to be here to load the about frame onLoad
