@@ -21,6 +21,8 @@ local function Debug(...)
 end
 
 local function comma_value(n)
+	if not n then return "?" end
+	n = tostring(n)
 	local left,num,right = string.match(n,'^([^%d]*%d)(%d*)(.-)$')
 	return left..(num:reverse():gsub('(%d%d%d)','%1,'):reverse())..right
 end
@@ -497,7 +499,9 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	end
 
 	for i=1, table.getn(usrData) do
-		objTooltip:AddDoubleLine(usrData[i].colorized, comma_value(usrData[i].count), 1, 1, 1, 1, 1, 1)
+		if usrData[i].count then
+			objTooltip:AddDoubleLine(usrData[i].colorized, comma_value(usrData[i].count), 1, 1, 1, 1, 1, 1)
+		end
 	end
 
 	objTooltip.__tooltipUpdated = true
