@@ -19,6 +19,9 @@ local function Debug(...)
 	end
 end
 
+--use /framestack to debug windows and show tooltip information
+--use if you press SHIFT while doing the above command it gives you a bit more information
+
 function BagSync_ShowWindow(windowName)
     if windowName == "Gold" then
         BSYC:GetModule("Tooltip"):MoneyTooltip()

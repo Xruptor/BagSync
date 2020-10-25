@@ -42,9 +42,6 @@ local function showEventAlert(text, alertType)
 	Events.alertTooltip:AddLine("|cffff6600BagSync|r")
 	Events.alertTooltip:AddLine("|cffddff00"..text.."|r")
 	Events.alertTooltip:HookScript("OnUpdate", function(self, elapse)
-		if self.alertType == "AUCTION" and not Unit.atAuction then
-			self:Hide()
-		end
 		if self.alertType == "GUILDBANK" and not Unit.atGuildBank then
 			self:Hide()
 		end
@@ -102,88 +99,6 @@ function Events:OnEnable()
 	
 	if BSYC.IsRetail then
 		
-		local timerName = "QueryAuction"
-		
-		local AuctionsFrameDisplayMode = {
-			AllAuctions = 1,
-			BidsList = 2,
-			Item = 3,
-			Commodity = 4,
-		}
-					
-		local function doAuctionUpdate(timerName, customDelay)
-			
-			--show the waiting alert for auction scanning
-			showEventAlert(L.ScanAuctionsWait, "AUCTION")
-
-			--stop the timer first
-			self:StopTimer(timerName)
-			
-			--recreate the repeating timer
-			self:DoTimer(timerName, function()
-				if not Unit.atAuction then
-					self:StopTimer(timerName)
-					return
-				end
-				
-				local dispMode = AuctionHouseFrame:GetDisplayMode()
-				local state, spinner
-
-				if dispMode == AuctionHouseFrameDisplayMode.CommoditiesSell then
-					state = AuctionHouseFrame:GetCommoditiesSellListFrames().state
-					spinner = AuctionHouseFrame:GetCommoditiesSellListFrames().LoadingSpinner
-					
-				elseif dispMode == AuctionHouseFrameDisplayMode.ItemSell then
-					state = AuctionHouseFrame:GetItemSellList().state
-					spinner = AuctionHouseFrame:GetItemSellList().LoadingSpinner
-					
-				elseif dispMode == AuctionHouseFrameDisplayMode.Buy then 
-					state = AuctionHouseFrame:GetBrowseResultsFrame().ItemList.state
-					spinner = AuctionHouseFrame:GetBrowseResultsFrame().ItemList.LoadingSpinner
-
-				elseif dispMode == AuctionHouseFrameDisplayMode.CommoditiesBuy then 
-					state = AuctionHouseFrame.CommoditiesBuyFrame.ItemList.state
-					spinner = AuctionHouseFrame.CommoditiesBuyFrame.ItemList.LoadingSpinner
-					
-				elseif dispMode == AuctionHouseFrameDisplayMode.ItemBuy then 
-					state = AuctionHouseFrame.ItemBuyFrame.ItemList.state
-					spinner = AuctionHouseFrame.ItemBuyFrame.ItemList.LoadingSpinner
-					
-				elseif dispMode == AuctionHouseFrameDisplayMode.Auctions then
-					local frame = AuctionHouseFrame.AuctionsFrame
-					local dispMode = frame.displayMode
-					
-					if dispMode == AuctionsFrameDisplayMode.AllAuctions then
-						state = frame.AllAuctionsList.state
-						spinner = frame.AllAuctionsList.LoadingSpinner
-					elseif dispMode == AuctionsFrameDisplayMode.BidsList then
-						state = frame.BidsList.state
-						spinner = frame.BidsList.LoadingSpinner
-					elseif dispMode == AuctionsFrameDisplayMode.Item then
-						state = frame.ItemList.state
-						spinner = frame.ItemList.LoadingSpinner
-					elseif dispMode == AuctionsFrameDisplayMode.Commodity then
-						state = frame.CommoditiesList.state
-						spinner = frame.CommoditiesList.LoadingSpinner
-					end
-				else
-					--it's something else we don't know so return
-					return
-				end
-				
-				--if we have nothing to work with return until we do
-				if not state or not spinner then return end
-
-				--can we query? state 3 = ResultsPending, and we don't have the LoadingSpinner Visible
-				if Events.canQueryAuctions and state ~= 3 and not spinner:IsVisible() then
-					Events.canQueryAuctions = false --set to false so we wait for response query
-					AuctionHouseFrame:QueryAll(AuctionHouseSearchContext.AllAuctions)
-					self:StopTimer(timerName)
-				end
-				
-			end, customDelay or 3, true)
-		end
-		
 		self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
 		
 		self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED", function() Scanner:SaveReagents() end)
@@ -200,37 +115,42 @@ function Events:OnEnable()
 			self:DoTimer("GuildBankScan", function() self:GUILDBANKBAGSLOTS_CHANGED() end, 0.2)
 		end)
 		
-		self:RegisterEvent("AUCTION_HOUSE_SHOW", function()
-			--don't process auction or perform any timers unless we have it enabled
+		local timerName = "QueryOwnedAuctions"
+		
+		local function doAuctionUpdate()
+            --stop the timer first, to prevent it causing conflicts with current actions being done by the Auction House
+			--each time we recreate it, it just pushes the timer forward to wait until all actions are done
+            self:StopTimer(timerName)
+			--recreate the timer
+			self:DoTimer(timerName, function()
+				if not Events.canQueryAuctions or not Unit.atAuction then
+					self:StopTimer(timerName)
+					return
+				end
+				--check to see if it's okay to query the server
+				if C_AuctionHouse.IsThrottledMessageSystemReady() then
+					C_AuctionHouse.QueryOwnedAuctions({})
+					self:StopTimer(timerName)
+					return
+				end
+			end, 0.6, true)
+		end
+		self:RegisterEvent("AUCTION_HOUSE_AUCTION_CREATED", function()
 			if not BSYC.options.enableAuction then return end
-			Events.canQueryAuctions = false --reset to false to check for query
-			
-			--do the initial grab
-			doAuctionUpdate(timerName, 1.5)
-			
-			--hook the post buttons only once
-			if not self.auctionPostClick then
-				self.auctionPostClick = true
-				AuctionHouseFrame.CommoditiesSellFrame.PostButton:HookScript("OnClick", function()
-					doAuctionUpdate(timerName)
-				end)
-				AuctionHouseFrame.ItemSellFrame.PostButton:HookScript("OnClick", function()
-					doAuctionUpdate(timerName)
-				end)
-			end
+			--the user posted an item to sell, so lets schedule an auction scan
+			Events.canQueryAuctions = true
+		end)		
+		self:RegisterEvent("COMMODITY_SEARCH_RESULTS_UPDATED", function()
+			if not BSYC.options.enableAuction then return end
+			--if we have an auction scan scheduled, then run it only if the server is ready
+			if Events.canQueryAuctions then doAuctionUpdate() end
+		end)
+		self:RegisterEvent("OWNED_AUCTIONS_UPDATED", function()
+			if not BSYC.options.enableAuction then return end
+			Events.canQueryAuctions = false --reset this
+			self:DoTimer("ScanAuction", function() Scanner:SaveAuctionHouse() end, 0.5)
 		end)
 
-		--set canQueryAuctions depending on event
-		self:RegisterEvent("AUCTION_HOUSE_CLOSED", function() Events.canQueryAuctions = false end)
-		--these occur at the start and end of a query so they should be sufficient for checking status
-		self:RegisterEvent("AUCTION_HOUSE_THROTTLED_SYSTEM_READY", function() Events.canQueryAuctions = true end)
-		self:RegisterEvent("AUCTION_HOUSE_THROTTLED_MESSAGE_SENT", function() Events.canQueryAuctions = false end)
-		self:RegisterEvent("OWNED_AUCTIONS_UPDATED", function()
-			--don't process auction or perform any timers unless we have it enabled
-			if not BSYC.options.enableAuction then return end
-			self:DoTimer("ScanAuction", function() Scanner:SaveAuctionHouse() end, 1)
-			Events.alertTooltip:Hide()
-		end)
 	else
 		--classic auction house
 		self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE", function() Scanner:SaveAuctionHouse() end)

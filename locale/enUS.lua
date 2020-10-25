@@ -76,7 +76,6 @@ L.ScanGuildBankStart = "Querying server for Guild Bank info, please wait....."
 L.ScanGuildBankDone = "Guild Bank scan complete!"
 L.ScanGuildBankError = "Warning: Guild Bank scanning incomplete."
 L.ScanGuildBankScanInfo = "Scanning Guild Tab (%s/%s)."
-L.ScanAuctionsWait = "Waiting to scan your auctions..."
 -- ----THESE ARE FOR SLASH COMMANDS
 L.SlashItemName = "[itemname]"
 L.SlashSearch = "search"
