@@ -60,12 +60,16 @@ function BSYC:ParseItemLink(link, count)
 			local focus = GetMouseFocus():GetName()
 
 			if focus == 'TradeSkillSkillIcon' then 
-				link = GetTradeSkillItemLink(TradeSkillFrame.selectedSkill)
+				link = C_TradeSkillUI.GetRecipeItemLink(TradeSkillFrame.selectedSkill)
 			else
 				local i = focus:match('TradeSkillReagent(%d+)')
 				if i then
-					link = GetTradeSkillReagentItemLink(TradeSkillFrame.selectedSkill, tonumber(i))
+					link = C_TradeSkillUI.GetRecipeReagentItemLink(TradeSkillFrame.selectedSkill, tonumber(i))
 				end
+			end
+			if link then
+				result = link:match("item:([%d:]+)")
+				shortID = self:GetShortItemID(link)
 			end
 		end
 		-----------------------------
