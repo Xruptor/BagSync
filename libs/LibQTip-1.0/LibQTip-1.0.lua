@@ -1,5 +1,5 @@
 local MAJOR = "LibQTip-1.0"
-local MINOR = 47 -- Should be manually increased
+local MINOR = 48 -- Should be manually increased
 local LibStub = _G.LibStub
 
 assert(LibStub, MAJOR .. " requires LibStub")
@@ -37,7 +37,12 @@ local geterrorhandler = _G.geterrorhandler
 ------------------------------------------------------------------------------
 -- Tables and locals
 ------------------------------------------------------------------------------
-lib.frameMetatable = lib.frameMetatable or {__index = CreateFrame("Frame", nil, nil, BackdropTemplateMixin and "BackdropTemplate")}
+if BackdropTemplateMixin and oldMinor and (oldMinor < 48) and lib.frameMetatable then
+    -- mix new BackdropTemplateMixin into frame metatable
+    Mixin(lib.frameMetatable["__index"], BackdropTemplateMixin)
+else
+    lib.frameMetatable = lib.frameMetatable or {__index = CreateFrame("Frame", nil, nil, BackdropTemplateMixin and "BackdropTemplate")}
+end
 
 lib.tipPrototype = lib.tipPrototype or setmetatable({}, lib.frameMetatable)
 lib.tipMetatable = lib.tipMetatable or {__index = lib.tipPrototype}
@@ -93,9 +98,9 @@ local SetFrameScript, ClearFrameScripts
 ------------------------------------------------------------------------------
 -- Cache debugging.
 ------------------------------------------------------------------------------
--- @debug @
+
 local usedTables, usedFrames, usedTooltips = 0, 0, 0
---@end-debug@
+
 
 ------------------------------------------------------------------------------
 -- Internal constants to tweak the layout
@@ -171,9 +176,6 @@ local frameHeap = lib.frameHeap
 local function AcquireFrame(parent)
 	local frame = tremove(frameHeap) or CreateFrame("Frame", nil, nil, BackdropTemplateMixin and "BackdropTemplate")
 	frame:SetParent(parent)
-	--@debug@
-	usedFrames = usedFrames + 1
-	--@end-debug@
 	return frame
 end
 
@@ -186,9 +188,6 @@ local function ReleaseFrame(frame)
 	ClearFrameScripts(frame)
 
 	tinsert(frameHeap, frame)
-	--@debug@
-	usedFrames = usedFrames - 1
-	--@end-debug@
 end
 
 ------------------------------------------------------------------------------
@@ -398,9 +397,6 @@ function AcquireTooltip()
 		setmetatable(tooltip, tipMetatable)
 	end
 
-	--@debug@
-	usedTooltips = usedTooltips + 1
-	--@end-debug@
 	return tooltip
 end
 
@@ -463,9 +459,6 @@ function ReleaseTooltip(tooltip)
 	highlightTexture:SetTexture(DEFAULT_HIGHLIGHT_TEXTURE_PATH)
 	highlightTexture:SetTexCoord(0, 1, 0, 1)
 
-	--@debug@
-	usedTooltips = usedTooltips - 1
-	--@end-debug@
 end
 
 ------------------------------------------------------------------------------
@@ -513,9 +506,6 @@ local tableHeap = lib.tableHeap
 -- Returns a table
 function AcquireTable()
 	local tbl = tremove(tableHeap) or {}
-	--@debug@
-	usedTables = usedTables + 1
-	--@end-debug@
 	return tbl
 end
 
@@ -523,9 +513,6 @@ end
 function ReleaseTable(tableInstance)
 	wipe(tableInstance)
 	tinsert(tableHeap, tableInstance)
-	--@debug@
-	usedTables = usedTables - 1
-	--@end-debug@
 end
 
 ------------------------------------------------------------------------------
@@ -690,7 +677,7 @@ end
 ------------------------------------------------------------------------------
 -- Scrollbar data and functions
 ------------------------------------------------------------------------------
-local BACKDROP_SLIDER_8_8 = {
+local BACKDROP_SLIDER_8_8 = BACKDROP_SLIDER_8_8 or {
 	bgFile = "Interface\\Buttons\\UI-SliderBar-Background",
 	edgeFile = "Interface\\Buttons\\UI-SliderBar-Border",
 	tile = true,
@@ -1520,7 +1507,7 @@ end
 ------------------------------------------------------------------------------
 -- Debug slashcmds
 ------------------------------------------------------------------------------
--- @debug @
+
 local print = print
 local function PrintStats()
 	local tipCache = tostring(#tooltipHeap)
@@ -1543,4 +1530,4 @@ end
 
 SLASH_LibQTip1 = "/qtip"
 _G.SlashCmdList["LibQTip"] = PrintStats
---@end-debug@
+
