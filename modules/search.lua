@@ -200,7 +200,8 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 						tempList[link] = dName
 						table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
 					end					
-				else
+				elseif not tempList[link] then
+					--only show a warning if we haven't already processed that item
 					countWarning = countWarning + 1
 				end
 			end
