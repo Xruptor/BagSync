@@ -24,6 +24,9 @@ function Recipes:OnEnable()
 
 	--lets create our widgets
 	local RecipesFrame = AceGUI:Create("Window")
+	_G["BagSyncRecipesFrame"] = RecipesFrame
+    --Add to special frames so window can be closed when the escape key is pressed.
+    tinsert(UISpecialFrames, "BagSyncRecipesFrame")
 	Recipes.frame = RecipesFrame
 
 	RecipesFrame:SetTitle("BagSync - "..L.Recipes)

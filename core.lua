@@ -26,7 +26,11 @@ function BagSync_ShowWindow(windowName)
     if windowName == "Gold" then
         BSYC:GetModule("Tooltip"):MoneyTooltip()
     else
-        BSYC:GetModule(windowName).frame:Show()
+		if BSYC:GetModule(windowName).frame:IsVisible() then
+			BSYC:GetModule(windowName).frame:Hide()
+		else
+			BSYC:GetModule(windowName).frame:Show()
+		end
     end
 end
 

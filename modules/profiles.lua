@@ -26,6 +26,9 @@ function Profiles:OnEnable()
 
 	--lets create our widgets
 	local ProfilesFrame = AceGUI:Create("Window")
+	_G["BagSyncProfilesFrame"] = ProfilesFrame
+    --Add to special frames so window can be closed when the escape key is pressed.
+    tinsert(UISpecialFrames, "BagSyncProfilesFrame")
 	Profiles.frame = ProfilesFrame
 	Profiles.parentFrame = ProfilesFrame.frame
 

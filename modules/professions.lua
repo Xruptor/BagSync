@@ -25,6 +25,9 @@ function Professions:OnEnable()
 
 	--lets create our widgets
 	local ProfessionsFrame = AceGUI:Create("Window")
+	_G["BagSyncProfessionsFrame"] = ProfessionsFrame
+    --Add to special frames so window can be closed when the escape key is pressed.
+    tinsert(UISpecialFrames, "BagSyncProfessionsFrame")
 	Professions.frame = ProfessionsFrame
 	Professions.parentFrame = ProfessionsFrame.frame
 

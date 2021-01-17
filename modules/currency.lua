@@ -25,6 +25,9 @@ function Currency:OnEnable()
 
 	--lets create our widgets
 	local CurrencyFrame = AceGUI:Create("Window")
+	_G["BagSyncCurrencyFrame"] = CurrencyFrame
+    --Add to special frames so window can be closed when the escape key is pressed.
+    tinsert(UISpecialFrames, "BagSyncCurrencyFrame")
 	Currency.frame = CurrencyFrame
 	Currency.parentFrame = CurrencyFrame.frame
 

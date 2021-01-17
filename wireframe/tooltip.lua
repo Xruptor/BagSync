@@ -101,32 +101,44 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm)
 			end
 		end
 		
-		--return the bypass
+		--if we have selected to 'Bypass' it means we don't want to do the XREALM stuff below just return what we got
+		--This is used primarily in the Profiles Module
 		if bypass then
-			--check for showRealm tag before returning
+		
+			--check for showRealm tag before returning, this is mostly used for DEBUGGING purposes.  We don't want to add default tags normally.
+			--for that we want to use the XREALM procedures below for tagging.
 			if showRealm then
 				realmTag = L.TooltipBattleNetTag..delimiter
 				tmpTag = self:HexColor(BSYC.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
 			end
+			
 			return tmpTag
+			
 		end
 	else
 		--is guild
 		tmpTag = self:HexColor(BSYC.options.colors.guild, select(2, Unit:GetUnitAddress(unitObj.name)) )
 	end
 	
+	--Always set certain features off if it conflicts with currently enabled options.
 	if BSYC.options.enableXR_BNETRealmNames then
-		if BSYC.options.enableRealmAstrickName then BSYC.options.enableRealmAstrickName = false end
-		if BSYC.options.enableRealmShortName then BSYC.options.enableRealmShortName = false end
+		BSYC.options.enableRealmAstrickName = false
+		BSYC.options.enableRealmShortName = false
+	
 		realm = unitObj.realm
+	
 	elseif BSYC.options.enableRealmAstrickName then
-		if BSYC.options.enableXR_BNETRealmNames then BSYC.options.enableXR_BNETRealmNames = false end
-		if BSYC.options.enableRealmShortName then BSYC.options.enableRealmShortName = false end
+		BSYC.options.enableXR_BNETRealmNames = false
+		BSYC.options.enableRealmShortName = false
+		
 		realm = "*"
+	
 	elseif BSYC.options.enableRealmShortName then
-		if BSYC.options.enableXR_BNETRealmNames then BSYC.options.enableXR_BNETRealmNames = false end
-		if BSYC.options.enableRealmAstrickName then BSYC.options.enableRealmAstrickName = false end
+		BSYC.options.enableXR_BNETRealmNames = false
+		BSYC.options.enableRealmAstrickName = false
+		
 		realm = string.sub(unitObj.realm, 1, 5)
+	
 	else
 		realm = ""
 		delimiter = ""
@@ -154,7 +166,10 @@ function Tooltip:MoneyTooltip()
 	
 	if (not tooltip) then
 			tooltip = CreateFrame("GameTooltip", "BagSyncMoneyTooltip", UIParent, "GameTooltipTemplate")
-			
+			_G["BagSyncMoneyTooltip"] = tooltip
+			--Add to special frames so window can be closed when the escape key is pressed.
+			tinsert(UISpecialFrames, "BagSyncMoneyTooltip")
+	
 			local closeButton = CreateFrame("Button", nil, tooltip, "UIPanelCloseButton")
 			closeButton:SetPoint("TOPRIGHT", tooltip, 1, 0)
 			

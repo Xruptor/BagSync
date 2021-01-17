@@ -26,6 +26,9 @@ function Search:OnEnable()
 
 	--lets create our widgets
 	local SearchFrame = AceGUI:Create("Window")
+	_G["BagSyncSearchFrame"] = SearchFrame
+    --Add to special frames so window can be closed when the escape key is pressed.
+    tinsert(UISpecialFrames, "BagSyncSearchFrame")
 	Search.frame = SearchFrame
 
 	SearchFrame:SetTitle("BagSync - "..L.Search)
@@ -172,7 +175,7 @@ function Search:AddEntry(entry)
 	self.scrollframe:AddChild(label)
 end
 
-local function checkData(data, searchStr, searchTable, tempList, countWarning, playerSearch)
+local function checkData(data, searchStr, searchTable, tempList, countWarning, viewCustomList)
 	for i=1, table.getn(data) do
 		if data[i] then
 			local link, count, identifier, optOne = strsplit(";", data[i])
@@ -193,7 +196,7 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, p
 				end
 				
 				if dName and not tempList[link] then
-					if playerSearch or testMatch then
+					if viewCustomList or testMatch then
 						tempList[link] = dName
 						table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
 					end					
@@ -219,7 +222,7 @@ function Search:DoSearch(searchStr)
 	local searchTable = {}
 	local tempList = {}
 	local countWarning = 0
-	local playerSearch
+	local viewCustomList
 	local player = Unit:GetUnitInfo()
 
 	local allowList = {
@@ -233,7 +236,8 @@ function Search:DoSearch(searchStr)
 		["guild"] = 0,
 	}
 	
-	if string.len(searchStr) > 1 and string.find(searchStr, "@") and allowList[string.sub(searchStr, 2)] ~= nil then playerSearch = string.sub(searchStr, 2) end
+	--This is used when a player is requesting to view a custom list, such as @bank, @auction, @bag etc...
+	if string.len(searchStr) > 1 and string.find(searchStr, "@") and allowList[string.sub(searchStr, 2)] ~= nil then viewCustomList = string.sub(searchStr, 2) end
 	
 	for unitObj in Data:IterateUnits() do
 	
@@ -243,8 +247,8 @@ function Search:DoSearch(searchStr)
 					--bags, bank, reagents are stored in individual bags
 					if k == "bag" or k == "bank" or k == "reagents" then
 						for bagID, bagData in pairs(v) do
-							if not playerSearch or playerSearch == k and unitObj.name == player.name and unitObj.realm == player.realm then
-								countWarning = checkData(bagData, searchStr, searchTable, tempList, countWarning, playerSearch)
+							if not viewCustomList or viewCustomList == k and unitObj.name == player.name and unitObj.realm == player.realm then
+								countWarning = checkData(bagData, searchStr, searchTable, tempList, countWarning, viewCustomList)
 							end
 						end
 					else
@@ -253,16 +257,16 @@ function Search:DoSearch(searchStr)
 						if k == "mailbox" and not BSYC.options.enableMailbox then passChk = false end
 						
 						if passChk then
-							if not playerSearch or playerSearch == k and unitObj.name == player.name and unitObj.realm == player.realm then
-								countWarning = checkData(k == "auction" and v.bag or v, searchStr, searchTable, tempList, countWarning, playerSearch)
+							if not viewCustomList or viewCustomList == k and unitObj.name == player.name and unitObj.realm == player.realm then
+								countWarning = checkData(k == "auction" and v.bag or v, searchStr, searchTable, tempList, countWarning, viewCustomList)
 							end
 						end
 					end
 				end
 			end
 		else
-			if not playerSearch or playerSearch == "guild" and unitObj.name == player.guild and unitObj.data.realmKey == player.realmKey then
-				countWarning = checkData(unitObj.data.bag, searchStr, searchTable, tempList, countWarning, playerSearch)
+			if not viewCustomList or viewCustomList == "guild" and unitObj.name == player.guild and unitObj.data.realmKey == player.realmKey then
+				countWarning = checkData(unitObj.data.bag, searchStr, searchTable, tempList, countWarning, viewCustomList)
 			end
 		end
 
