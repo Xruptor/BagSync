@@ -144,6 +144,10 @@ function Profiles:AddEntry(entry, isHeader)
 		function (widget, sometable)
 			if not label.userdata.isHeader then
 				label:SetColor(1, 0, 0)
+				--override the single tooltip use of BagSync
+				label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+				label.highlight:SetVertexColor(0,1,0,0.3)
+				
 				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
 				
 				if not label.entry.unitObj.isGuild then
@@ -159,6 +163,8 @@ function Profiles:AddEntry(entry, isHeader)
 		"OnLeave",
 		function (widget, sometable)
 			label:SetColor(1, 1, 1)
+			--override the single tooltip use of BagSync
+			label.highlight:SetTexture(nil)
 			GameTooltip:Hide()
 		end)
 

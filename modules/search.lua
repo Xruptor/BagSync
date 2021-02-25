@@ -7,6 +7,7 @@ local BSYC = select(2, ...) --grab the addon namespace
 local Search = BSYC:NewModule("Search")
 local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
+local Tooltip = BSYC:GetModule("Tooltip")
 
 local debugf = tekDebug and tekDebug:GetFrame("BagSync")
 local function Debug(...)
@@ -69,43 +70,119 @@ function Search:OnEnable()
 	Search.scrollframe = scrollframe
 	SearchFrame:AddChild(scrollframe)
 
-	local warningframe = AceGUI:Create("Window")
-	warningframe:SetTitle(L.WarningHeader)
-	warningframe:SetWidth(300)
-	warningframe:SetHeight(280)
-	warningframe.frame:SetParent(SearchFrame.frame)
-	warningframe:SetLayout("Flow")
-	warningframe:EnableResize(false)
+	----------------------------------------------------------
+	----------------------------------------------------------
+	-------  WARNING FRAME
+	
+	local WarningFrame = AceGUI:Create("Window")
+	WarningFrame:SetTitle(L.WarningHeader)
+	WarningFrame:SetWidth(300)
+	WarningFrame:SetHeight(280)
+	WarningFrame.frame:SetParent(SearchFrame.frame)
+	WarningFrame:SetLayout("Flow")
+	WarningFrame:EnableResize(false)
 
 	local warninglabel = AceGUI:Create("Label")
 	warninglabel:SetText(L.WarningItemSearch)
 	warninglabel:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
 	warninglabel:SetColor(1, 165/255, 0) --orange, red is just too much sometimes
 	warninglabel:SetFullWidth(true)
-	warningframe:AddChild(warninglabel)
+	WarningFrame:AddChild(warninglabel)
 
 	local warninglabel2 = AceGUI:Create("Label")
 	warninglabel2:SetText(L.ObsoleteWarning)
 	warninglabel2:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
 	warninglabel2:SetColor(50/255, 165/255, 0)
 	warninglabel2:SetFullWidth(true)
-	warningframe:AddChild(warninglabel2)
+	WarningFrame:AddChild(warninglabel2)
 	
-	Search.warningframe = warningframe
+	Search.warningframe = WarningFrame
 	Search.warninglabel = warninglabel
 	
-	hooksecurefunc(warningframe, "Show" ,function()
-		--always show the warning frame on the right of the BagSync window
-		warningframe.frame:ClearAllPoints()
-		warningframe:SetPoint( "TOPLEFT", SearchFrame.frame, "TOPRIGHT", 0, 0)
+	hooksecurefunc(WarningFrame, "Show" ,function()
+		--always show the warning frame on the right of the BagSync Search window
+		WarningFrame.frame:ClearAllPoints()
+		WarningFrame:SetPoint( "TOPLEFT", SearchFrame.frame, "TOPRIGHT", 0, 0)
 	end)
 	
 	--hide the warning window if they close the search window
 	SearchFrame:SetCallback("OnClose",function(widget)
-		warningframe:Hide()
+		WarningFrame:Hide()
 	end)
 	
-	warningframe:Hide()
+	WarningFrame:Hide()
+	
+	----------------------------------------------------------
+	----------------------------------------------------------
+	-------  ADVANCED SEARCH
+	
+	--Button
+	local spacer = AceGUI:Create("Label")
+    spacer:SetFullWidth(true)
+	spacer:SetText(" ")
+	SearchFrame:AddChild(spacer)
+
+	local advSearchBtn = AceGUI:Create("Button")
+	advSearchBtn:SetText(L.AdvancedSearch)
+	advSearchBtn:SetHeight(20)
+	
+	SearchFrame:AddChild(advSearchBtn)
+	advSearchBtn:ClearAllPoints()
+	advSearchBtn:SetPoint("CENTER", SearchFrame.frame, "BOTTOM", 0, 25)
+	
+	--------------------
+	
+	local AdvancedSearchFrame = AceGUI:Create("Window")
+	AdvancedSearchFrame:SetTitle(L.AdvancedSearch)
+	AdvancedSearchFrame:SetHeight(500)
+	AdvancedSearchFrame:SetWidth(380)
+	AdvancedSearchFrame.frame:SetParent(SearchFrame.frame)
+	AdvancedSearchFrame:EnableResize(false)
+	
+	Search.advancedsearchframe = AdvancedSearchFrame
+	
+	local advSearchInformation = AceGUI:Create("Label")
+	advSearchInformation:SetText(L.AdvancedSearchInformation)
+	advSearchInformation:SetFont(STANDARD_TEXT_FONT, 12, THICKOUTLINE)
+	advSearchInformation:SetColor(1, 165/255, 0)
+	advSearchInformation:SetFullWidth(true)
+	AdvancedSearchFrame:AddChild(advSearchInformation)
+	
+	hooksecurefunc(AdvancedSearchFrame, "Show" ,function()
+		--always show the advanced search on the left of the BagSync Search window
+		AdvancedSearchFrame.frame:ClearAllPoints()
+		AdvancedSearchFrame:SetPoint( "TOPRIGHT", SearchFrame.frame, "TOPLEFT", 0, 0)
+	end)
+	
+	--hide the advanced search if they close the search window
+	SearchFrame:SetCallback("OnClose",function(widget)
+		AdvancedSearchFrame:Hide()
+	end)
+	
+	advSearchBtn:SetCallback("OnClick", function()
+		AdvancedSearchFrame:Show()
+	end)
+	
+	--player list
+	local playerListScrollFrame = AceGUI:Create("ScrollFrame");
+	playerListScrollFrame:SetFullWidth(true)
+	playerListScrollFrame:SetLayout("Flow")
+	playerListScrollFrame:SetHeight(250)
+
+	AdvancedSearchFrame.playerlistscrollframe = playerListScrollFrame
+	AdvancedSearchFrame:AddChild(playerListScrollFrame)
+
+ 	--location list (bank, bags, etc..)
+
+ 	hooksecurefunc(AdvancedSearchFrame, "Show" ,function()
+		self:DisplayAdvSearchLists()
+	end)
+  
+	AdvancedSearchFrame:Hide()
+	
+	----------------------------------------------------------
+	----------------------------------------------------------
+	
 	SearchFrame:Hide()
 end
 
@@ -132,6 +209,9 @@ function Search:AddEntry(entry)
 	--if we aren't retail then just don't add the item to the list if we have a battle pet
 	if isBattlePet and not BSYC.IsRetail then return end
 	
+	label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+	label.highlight:SetVertexColor(0,1,0,0.3)
+				
 	label:SetText(name)
 	label:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
 	label:SetFullWidth(true)
@@ -175,6 +255,63 @@ function Search:AddEntry(entry)
 	self.scrollframe:AddChild(label)
 end
 
+function Search:AdvancedSearchAddEntry(entry, isHeader, isPlayer)
+
+	local label = AceGUI:Create("BagSyncInteractiveLabel")
+
+	label:SetHeaderHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+
+	label:ToggleHeaderHighlight(false)
+	label.entry = entry
+	label:SetColor(1, 1, 1)
+	
+	if isHeader then
+		label:SetText(entry.unitObj.realm)
+		label:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
+		label:SetFullWidth(true)
+		label:ApplyJustifyH("CENTER")
+		label:ToggleHeaderHighlight(true)
+		label.userdata.isHeader = true
+	else
+		if entry.unitObj.isGuild then
+			label:SetText(GUILD..":  "..entry.colorized)
+		else
+			label:SetText(entry.colorized)
+		end
+		label:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
+		label:SetFullWidth(true)
+		label:ApplyJustifyH("LEFT")
+		label.userdata.isHeader = false
+	end
+
+	label:SetCallback(
+		"OnClick", 
+		function (widget, sometable, button)
+			
+		end)
+	label:SetCallback(
+		"OnEnter",
+		function (widget, sometable)
+			if not label.userdata.isHeader then
+				label:SetColor(1, 0, 0)
+				--override the single tooltip use of BagSync
+				label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+				label.highlight:SetVertexColor(0,1,0,0.3)
+			end
+		end)
+	label:SetCallback(
+		"OnLeave",
+		function (widget, sometable)
+			label:SetColor(1, 1, 1)
+			--override the single tooltip use of BagSync
+			label.highlight:SetTexture(nil)
+		end)
+	
+	if isPlayer then
+		self.advancedsearchframe.playerlistscrollframe:AddChild(label)
+	end
+end
+
 local function checkData(data, searchStr, searchTable, tempList, countWarning, viewCustomList)
 	for i=1, table.getn(data) do
 		if data[i] then
@@ -209,6 +346,10 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 	end
 	return countWarning
 end
+
+--function Search:DoAdvancedSearch(searchStr)
+-- Use a custom window with search criteria selected by the player to do an advanced search.  Such as selected characters and allowList locations.
+--end
 
 function Search:DoSearch(searchStr)
 	if not searchStr then return end
@@ -292,4 +433,41 @@ function Search:DoSearch(searchStr)
 		self.scrollframe.frame:Hide()
 	end
 		
+end
+
+function Search:DisplayAdvSearchLists()
+
+	self.advancedsearchframe.playerlistscrollframe:ReleaseChildren() --clear out the scrollframe
+	
+	local playerListTable = {}
+	local tempList = {}
+	
+	for unitObj in Data:IterateUnits(true) do
+		table.insert(playerListTable, { unitObj=unitObj, colorized=Tooltip:ColorizeUnit(unitObj, true) } )
+	end
+
+	if table.getn(playerListTable) > 0 then
+	
+		table.sort(playerListTable, function(a, b)
+			if a.unitObj.realm  == b.unitObj.realm then
+				return a.unitObj.name < b.unitObj.name;
+			end
+			return a.unitObj.realm < b.unitObj.realm;
+		end)
+	
+		local lastHeader = ""
+		for i=1, #playerListTable do
+			if lastHeader ~= playerListTable[i].unitObj.realm then
+				self:AdvancedSearchAddEntry(playerListTable[i], true, true) --add header
+				self:AdvancedSearchAddEntry(playerListTable[i], false, true) --add entry
+				lastHeader = playerListTable[i].unitObj.realm
+			else
+				self:AdvancedSearchAddEntry(playerListTable[i], false, true) --add entry
+			end
+		end
+		self.advancedsearchframe.playerlistscrollframe.frame:Show()
+	else
+		self.advancedsearchframe.playerlistscrollframe.frame:Hide()
+	end
+
 end
