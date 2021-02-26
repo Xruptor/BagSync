@@ -51,7 +51,7 @@ function Tooltip:GetSortIndex(unitObj)
 	return 4
 end
 
-function Tooltip:ColorizeUnit(unitObj, bypass, showRealm)
+function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple)
 	if not unitObj.data then return nil end
 	
 	local player = Unit:GetUnitInfo()
@@ -60,65 +60,76 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm)
 	local realmTag = ""
 	local delimiter = " "
 	
+	--showSimple: returns only colorized name no images
+	--bypass: shows colorized names, checkmark, and faction icons but no XR or BNET tags
+	--showRealm: is used for debugging purposes and adds realm tags
+	
 	if not unitObj.isGuild then
+	
 		--first colorize by class color
-		if bypass or BSYC.options.enableUnitClass and RAID_CLASS_COLORS[unitObj.data.class] then
+		if bypass or showSimple or BSYC.options.enableUnitClass and RAID_CLASS_COLORS[unitObj.data.class] then
 			tmpTag = self:HexColor(RAID_CLASS_COLORS[unitObj.data.class], unitObj.name)
 		else
 			tmpTag = self:HexColor(BSYC.options.colors.first, unitObj.name)
 		end
 		
-		--add green checkmark
-		if unitObj.name == player.name and unitObj.realm == player.realm then
-			if bypass or BSYC.options.enableTooltipGreenCheck then
-				local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
-				tmpTag = ReadyCheck.." "..tmpTag
-			end
-		end
+		--ignore certain stuff if we only want to return simple colored units
+		if not showSimple then
 		
-		--add faction icons
-		if bypass or BSYC.options.enableFactionIcons then
-			local FactionIcon = ""
-			
-			if BSYC.IsRetail then
-				FactionIcon = [[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]
-				if unitObj.data.faction == "Alliance" then
-					FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]]
-				elseif unitObj.data.faction == "Horde" then
-					FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
-				end
-			else
-				FactionIcon = [[|TInterface\Icons\ability_seal:18|t]]
-				if unitObj.data.faction == "Alliance" then
-					FactionIcon = [[|TInterface\Icons\inv_bannerpvp_02:18|t]]
-				elseif unitObj.data.faction == "Horde" then
-					FactionIcon = [[|TInterface\Icons\inv_bannerpvp_01:18|t]]
+			--add green checkmark
+			if unitObj.name == player.name and unitObj.realm == player.realm then
+				if bypass or BSYC.options.enableTooltipGreenCheck then
+					local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
+					tmpTag = ReadyCheck.." "..tmpTag
 				end
 			end
 			
-			if FactionIcon ~= "" then
-				tmpTag = FactionIcon.." "..tmpTag
-			end
-		end
-		
-		--if we have selected to 'Bypass' it means we don't want to do the XREALM stuff below just return what we got
-		--This is used primarily in the Profiles Module
-		if bypass then
-		
-			--check for showRealm tag before returning, this is mostly used for DEBUGGING purposes.  We don't want to add default tags normally.
-			--for that we want to use the XREALM procedures below for tagging.
-			if showRealm then
-				realmTag = L.TooltipBattleNetTag..delimiter
-				tmpTag = self:HexColor(BSYC.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
+			--add faction icons
+			if bypass or BSYC.options.enableFactionIcons then
+				local FactionIcon = ""
+				
+				if BSYC.IsRetail then
+					FactionIcon = [[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]
+					if unitObj.data.faction == "Alliance" then
+						FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]]
+					elseif unitObj.data.faction == "Horde" then
+						FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
+					end
+				else
+					FactionIcon = [[|TInterface\Icons\ability_seal:18|t]]
+					if unitObj.data.faction == "Alliance" then
+						FactionIcon = [[|TInterface\Icons\inv_bannerpvp_02:18|t]]
+					elseif unitObj.data.faction == "Horde" then
+						FactionIcon = [[|TInterface\Icons\inv_bannerpvp_01:18|t]]
+					end
+				end
+				
+				if FactionIcon ~= "" then
+					tmpTag = FactionIcon.." "..tmpTag
+				end
 			end
 			
-			return tmpTag
-			
 		end
+
 	else
 		--is guild
 		tmpTag = self:HexColor(BSYC.options.colors.guild, select(2, Unit:GetUnitAddress(unitObj.name)) )
 	end
+	
+	----------------
+	--If we Bypass or showSimple none of the XR or BNET stuff will be shown
+	----------------
+	if bypass or showSimple then
+		--DEBUGGING: check for showRealm tag before returning, this is mostly used for DEBUGGING purposes.  We don't want to add default tags normally.
+		--for that we want to use the XREALM procedures below for tagging.
+		if showRealm then
+			realmTag = L.TooltipBattleNetTag..delimiter
+			tmpTag = self:HexColor(BSYC.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
+		end
+		--since we Bypass don't show anything else just return what we got
+		return tmpTag
+	end
+	----------------
 	
 	--Always set certain features off if it conflicts with currently enabled options.
 	if BSYC.options.enableXR_BNETRealmNames then

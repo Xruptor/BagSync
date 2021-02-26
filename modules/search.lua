@@ -134,7 +134,7 @@ function Search:OnEnable()
 	
 	local AdvancedSearchFrame = AceGUI:Create("Window")
 	AdvancedSearchFrame:SetTitle(L.AdvancedSearch)
-	AdvancedSearchFrame:SetHeight(500)
+	AdvancedSearchFrame:SetHeight(530)
 	AdvancedSearchFrame:SetWidth(380)
 	AdvancedSearchFrame.frame:SetParent(SearchFrame.frame)
 	AdvancedSearchFrame:EnableResize(false)
@@ -164,20 +164,83 @@ function Search:OnEnable()
 	end)
 	
 	--player list
+	local spacer = AceGUI:Create("Label")
+    spacer:SetFullWidth(true)
+	spacer:SetText(" ")
+	AdvancedSearchFrame:AddChild(spacer)
+	
+	local pListInfo = AceGUI:Create("Label")
+	pListInfo:SetText(L.Units)
+	pListInfo:SetFont(STANDARD_TEXT_FONT, 12, THICKOUTLINE)
+	pListInfo:SetColor(0, 1, 0)
+	pListInfo:SetFullWidth(true)
+	AdvancedSearchFrame:AddChild(pListInfo)
+	
 	local playerListScrollFrame = AceGUI:Create("ScrollFrame");
 	playerListScrollFrame:SetFullWidth(true)
 	playerListScrollFrame:SetLayout("Flow")
-	playerListScrollFrame:SetHeight(250)
+	playerListScrollFrame:SetHeight(240)
 
 	AdvancedSearchFrame.playerlistscrollframe = playerListScrollFrame
 	AdvancedSearchFrame:AddChild(playerListScrollFrame)
 
  	--location list (bank, bags, etc..)
+	local spacer = AceGUI:Create("Label")
+    spacer:SetFullWidth(true)
+	spacer:SetText(" ")
+	AdvancedSearchFrame:AddChild(spacer)
+	
+	local locListInfo = AceGUI:Create("Label")
+	locListInfo:SetText(L.Locations)
+	locListInfo:SetFont(STANDARD_TEXT_FONT, 12, THICKOUTLINE)
+	locListInfo:SetColor(0, 1, 0)
+	locListInfo:SetFullWidth(true)
+	AdvancedSearchFrame:AddChild(locListInfo)
+	
+	local locationListScrollFrame = AceGUI:Create("ScrollFrame");
+	locationListScrollFrame:SetFullWidth(true)
+	locationListScrollFrame:SetLayout("Flow")
+	locationListScrollFrame:SetHeight(150)
+
+	AdvancedSearchFrame.locationlistscrollframe = locationListScrollFrame
+	AdvancedSearchFrame:AddChild(locationListScrollFrame)
 
  	hooksecurefunc(AdvancedSearchFrame, "Show" ,function()
 		self:DisplayAdvSearchLists()
 	end)
   
+	local spacer = AceGUI:Create("Label")
+    spacer:SetFullWidth(true)
+	spacer:SetText(" ")
+	AdvancedSearchFrame:AddChild(spacer)
+	
+	local spacer = AceGUI:Create("Label")
+    spacer:SetFullWidth(true)
+	spacer:SetText(" ")
+	AdvancedSearchFrame:AddChild(spacer)
+	
+	local advDoSearchBtn = AceGUI:Create("Button")
+	advDoSearchBtn:SetText(L.Search)
+	advDoSearchBtn:SetHeight(20)
+	advDoSearchBtn:SetWidth(150)
+	advDoSearchBtn:SetCallback("OnClick", function()
+		Search:DoAdvancedSearch()
+	end)
+	AdvancedSearchFrame:AddChild(advDoSearchBtn)
+	
+	local advDoResetBtn = AceGUI:Create("Button")
+	advDoResetBtn:SetText(L.Reset)
+	advDoResetBtn:SetHeight(20)
+	advDoResetBtn:SetWidth(150)
+	advDoResetBtn:SetCallback("OnClick", function()
+		--just refresh the list to empty it
+		Search:DisplayAdvSearchLists()
+	end)
+	AdvancedSearchFrame:AddChild(advDoResetBtn)
+	
+	advDoResetBtn:ClearAllPoints()
+	advDoResetBtn:SetPoint("LEFT", advDoSearchBtn.frame, "LEFT", 210, 0)
+	
 	AdvancedSearchFrame:Hide()
 	
 	----------------------------------------------------------
@@ -255,7 +318,7 @@ function Search:AddEntry(entry)
 	self.scrollframe:AddChild(label)
 end
 
-function Search:AdvancedSearchAddEntry(entry, isHeader, isPlayer)
+function Search:AdvancedSearchAddEntry(entry, isHeader, isUnit)
 
 	local label = AceGUI:Create("BagSyncInteractiveLabel")
 
@@ -264,7 +327,7 @@ function Search:AdvancedSearchAddEntry(entry, isHeader, isPlayer)
 	label:ToggleHeaderHighlight(false)
 	label.entry = entry
 	label:SetColor(1, 1, 1)
-	
+
 	if isHeader then
 		label:SetText(entry.unitObj.realm)
 		label:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
@@ -282,18 +345,26 @@ function Search:AdvancedSearchAddEntry(entry, isHeader, isPlayer)
 		label:SetFullWidth(true)
 		label:ApplyJustifyH("LEFT")
 		label.userdata.isHeader = false
+		
+		label:SetImage("Interface\\RaidFrame\\ReadyCheck-NotReady")
+		label.isSelected = false
 	end
 
 	label:SetCallback(
 		"OnClick", 
 		function (widget, sometable, button)
-			
+			if label.isSelected then
+				label:SetImage("Interface\\RaidFrame\\ReadyCheck-NotReady")
+				label.isSelected = false
+			else
+				label.isSelected = true
+				label:SetImage("Interface\\RaidFrame\\ReadyCheck-Ready")
+			end
 		end)
 	label:SetCallback(
 		"OnEnter",
 		function (widget, sometable)
 			if not label.userdata.isHeader then
-				label:SetColor(1, 0, 0)
 				--override the single tooltip use of BagSync
 				label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
 				label.highlight:SetVertexColor(0,1,0,0.3)
@@ -302,13 +373,14 @@ function Search:AdvancedSearchAddEntry(entry, isHeader, isPlayer)
 	label:SetCallback(
 		"OnLeave",
 		function (widget, sometable)
-			label:SetColor(1, 1, 1)
 			--override the single tooltip use of BagSync
 			label.highlight:SetTexture(nil)
 		end)
 	
-	if isPlayer then
+	if isUnit then
 		self.advancedsearchframe.playerlistscrollframe:AddChild(label)
+	else
+		self.advancedsearchframe.locationlistscrollframe:AddChild(label)
 	end
 end
 
@@ -347,9 +419,28 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 	return countWarning
 end
 
---function Search:DoAdvancedSearch(searchStr)
--- Use a custom window with search criteria selected by the player to do an advanced search.  Such as selected characters and allowList locations.
---end
+function Search:DoAdvancedSearch()
+	
+	--units
+	for i = 1, #self.advancedsearchframe.playerlistscrollframe.children do
+		local label = self.advancedsearchframe.playerlistscrollframe.children[i] --grab the label
+		
+		if not label.userdata.isHeader then
+		
+			if not label.entry.unitObj.isGuild then
+				--print(label.entry.colorized)
+			end
+			
+		end
+	end
+	
+	--locations
+	for i = 1, #self.advancedsearchframe.locationlistscrollframe.children do
+		local label = self.advancedsearchframe.locationlistscrollframe.children[i] --grab the label
+		print(label.entry.colorized)
+	end
+			
+end
 
 function Search:DoSearch(searchStr)
 	if not searchStr then return end
@@ -438,14 +529,17 @@ end
 function Search:DisplayAdvSearchLists()
 
 	self.advancedsearchframe.playerlistscrollframe:ReleaseChildren() --clear out the scrollframe
-	
+	self.advancedsearchframe.locationlistscrollframe:ReleaseChildren() --clear out the scrollframe
+
 	local playerListTable = {}
 	local tempList = {}
 	
+	--show simple for ColorizeUnit
 	for unitObj in Data:IterateUnits(true) do
-		table.insert(playerListTable, { unitObj=unitObj, colorized=Tooltip:ColorizeUnit(unitObj, true) } )
+		table.insert(playerListTable, { unitObj=unitObj, colorized=Tooltip:ColorizeUnit(unitObj, false, false, true) } )
 	end
-
+	
+	--units
 	if table.getn(playerListTable) > 0 then
 	
 		table.sort(playerListTable, function(a, b)
@@ -469,5 +563,33 @@ function Search:DisplayAdvSearchLists()
 	else
 		self.advancedsearchframe.playerlistscrollframe.frame:Hide()
 	end
+	
+	--locations
+	local list = {
+		[1] = { source="bag", 		desc=L.TooltipBag },
+		[2] = { source="bank", 		desc=L.TooltipBank },
+		[3] = { source="reagents", 	desc=L.TooltipReagent },
+		[4] = { source="equip", 	desc=L.TooltipEquip },
+		[5] = { source="guild", 	desc=L.TooltipGuild },
+		[6] = { source="mailbox", 	desc=L.TooltipMail },
+		[7] = { source="void", 		desc=L.TooltipVoid },
+		[8] = { source="auction", 	desc=L.TooltipAuction },
+	}
+	
+	for i = 1, #list do
+		
+		local stripColon = strsub(list[i].desc, 0, string.len(list[i].desc) - 1) --remove colon at end
+		
+		--make sure to return not player
+		local tmpLoc = {
+			unitObj={name=list[i].source, isGuild=false, isConnectedRealm=false},
+			colorized=Tooltip:HexColor(BSYC.options.colors.first, stripColon)
+		}
+		
+		self:AdvancedSearchAddEntry(tmpLoc, false, false) --add entry
+
+	end
+	self.advancedsearchframe.locationlistscrollframe.frame:Show()
+	
 
 end
