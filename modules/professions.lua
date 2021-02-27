@@ -146,7 +146,7 @@ function Professions:DisplayList()
 		end
 	end
 
-	if table.getn(professionsTable) > 0 then
+	if #professionsTable > 0 then
 	
 		table.sort(professionsTable, function(a, b)
 			if a.skillData.name == b.skillData.name then

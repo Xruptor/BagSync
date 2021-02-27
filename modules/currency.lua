@@ -128,7 +128,7 @@ function Currency:DisplayList()
 		end
 	end
 	
-	if table.getn(usrData) > 0 then
+	if #usrData > 0 then
 	
 		--sort the list by header, name
 		table.sort(usrData, function(a, b)

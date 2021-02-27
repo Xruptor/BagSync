@@ -263,7 +263,7 @@ function Blacklist:DisplayList()
 	end
 
 	--show or hide the scrolling frame depending on count
-	if table.getn(blacklistTable) > 0 then
+	if #blacklistTable > 0 then
 		table.sort(blacklistTable, function(a,b) return (a.value < b.value) end)
 		for i=1, #blacklistTable do
 			self:AddEntry(blacklistTable[i])

@@ -134,7 +134,7 @@ function Recipes:DisplayList(data)
 		if v.recipes then
 			local recipeList = {strsplit("|", v.recipes)}
 			
-			if table.getn(recipeList) > 0 then
+			if #recipeList > 0 then
 			
 				for idx = 1, #recipeList do
 					if recipeList[idx] and string.len(recipeList[idx]) > 0 then
@@ -166,7 +166,7 @@ function Recipes:DisplayList(data)
 	end
 
 	--now do the recipes per tier
-	if table.getn(tierTable) > 0 then
+	if #tierTable > 0 then
 		
 		--sort the tiers
 		table.sort(tierTable, function(a, b)

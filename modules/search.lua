@@ -61,6 +61,7 @@ function Search:OnEnable()
 		searchbar:ClearFocus()
 		self:DoSearch(searchbar:GetText())
 	end)
+	Search.refreshbutton = refreshbutton
 	w:AddChild(refreshbutton)
 
 	local scrollframe = AceGUI:Create("ScrollFrame");
@@ -130,11 +131,13 @@ function Search:OnEnable()
 	advSearchBtn:ClearAllPoints()
 	advSearchBtn:SetPoint("CENTER", SearchFrame.frame, "BOTTOM", 0, 25)
 	
+	SearchFrame.advsearchbtn = advSearchBtn
+	
 	--------------------
 	
 	local AdvancedSearchFrame = AceGUI:Create("Window")
 	AdvancedSearchFrame:SetTitle(L.AdvancedSearch)
-	AdvancedSearchFrame:SetHeight(530)
+	AdvancedSearchFrame:SetHeight(550)
 	AdvancedSearchFrame:SetWidth(380)
 	AdvancedSearchFrame.frame:SetParent(SearchFrame.frame)
 	AdvancedSearchFrame:EnableResize(false)
@@ -148,6 +151,16 @@ function Search:OnEnable()
 	advSearchInformation:SetFullWidth(true)
 	AdvancedSearchFrame:AddChild(advSearchInformation)
 	
+	local advSearchbar = AceGUI:Create("EditBox")
+	advSearchbar:SetText()
+	advSearchbar:SetWidth(255)
+	advSearchbar:SetCallback("OnEnterPressed",function(widget)
+		advSearchbar:ClearFocus()
+		Search:DoAdvancedSearch()
+	end)
+	AdvancedSearchFrame.advsearchbar = advSearchbar
+	AdvancedSearchFrame:AddChild(advSearchbar)
+	
 	hooksecurefunc(AdvancedSearchFrame, "Show" ,function()
 		--always show the advanced search on the left of the BagSync Search window
 		AdvancedSearchFrame.frame:ClearAllPoints()
@@ -160,7 +173,11 @@ function Search:OnEnable()
 	end)
 	
 	advSearchBtn:SetCallback("OnClick", function()
-		AdvancedSearchFrame:Show()
+		if AdvancedSearchFrame.frame:IsVisible() then
+			AdvancedSearchFrame:Hide()
+		else
+			AdvancedSearchFrame:Show()
+		end
 	end)
 	
 	--player list
@@ -197,10 +214,17 @@ function Search:OnEnable()
 	locListInfo:SetFullWidth(true)
 	AdvancedSearchFrame:AddChild(locListInfo)
 	
+	local advLocationInformation = AceGUI:Create("Label")
+	advLocationInformation:SetText(L.AdvancedLocationInformation)
+	advLocationInformation:SetFont(STANDARD_TEXT_FONT, 12, THICKOUTLINE)
+	advLocationInformation:SetColor(1, 165/255, 0)
+	advLocationInformation:SetFullWidth(true)
+	AdvancedSearchFrame:AddChild(advLocationInformation)
+	
 	local locationListScrollFrame = AceGUI:Create("ScrollFrame");
 	locationListScrollFrame:SetFullWidth(true)
 	locationListScrollFrame:SetLayout("Flow")
-	locationListScrollFrame:SetHeight(150)
+	locationListScrollFrame:SetHeight(140)
 
 	AdvancedSearchFrame.locationlistscrollframe = locationListScrollFrame
 	AdvancedSearchFrame:AddChild(locationListScrollFrame)
@@ -214,19 +238,15 @@ function Search:OnEnable()
 	spacer:SetText(" ")
 	AdvancedSearchFrame:AddChild(spacer)
 	
-	local spacer = AceGUI:Create("Label")
-    spacer:SetFullWidth(true)
-	spacer:SetText(" ")
-	AdvancedSearchFrame:AddChild(spacer)
-	
 	local advDoSearchBtn = AceGUI:Create("Button")
-	advDoSearchBtn:SetText(L.Search)
+	advDoSearchBtn:SetText(L.AdvSearchBtn)
 	advDoSearchBtn:SetHeight(20)
 	advDoSearchBtn:SetWidth(150)
 	advDoSearchBtn:SetCallback("OnClick", function()
 		Search:DoAdvancedSearch()
 	end)
 	AdvancedSearchFrame:AddChild(advDoSearchBtn)
+	AdvancedSearchFrame.advdosearchbtn = advDoSearchBtn
 	
 	local advDoResetBtn = AceGUI:Create("Button")
 	advDoResetBtn:SetText(L.Reset)
@@ -237,9 +257,19 @@ function Search:OnEnable()
 		Search:DisplayAdvSearchLists()
 	end)
 	AdvancedSearchFrame:AddChild(advDoResetBtn)
+	AdvancedSearchFrame.advdoresetbtn = advDoResetBtn
 	
 	advDoResetBtn:ClearAllPoints()
 	advDoResetBtn:SetPoint("LEFT", advDoSearchBtn.frame, "LEFT", 210, 0)
+	
+	AdvancedSearchFrame:SetCallback("OnShow",function(widget)
+		Search.searchbar.frame:Hide()
+		Search.refreshbutton.frame:Hide()
+	end)
+	AdvancedSearchFrame:SetCallback("OnClose",function(widget)
+		Search.searchbar.frame:Show()
+		Search.refreshbutton.frame:Show()
+	end)
 	
 	AdvancedSearchFrame:Hide()
 	
@@ -385,7 +415,8 @@ function Search:AdvancedSearchAddEntry(entry, isHeader, isUnit)
 end
 
 local function checkData(data, searchStr, searchTable, tempList, countWarning, viewCustomList)
-	for i=1, table.getn(data) do
+
+	for i=1, #data do
 		if data[i] then
 			local link, count, identifier, optOne = strsplit(";", data[i])
 			
@@ -398,7 +429,7 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 					dName, dTexture = C_PetJournal.GetPetInfoBySpeciesID(optOne)
 					dRarity = 1
 					dItemLink = data[i]
-					testMatch = LibStub('CustomSearch-1.0'):Find(searchStr, dName)
+					testMatch = LibStub('CustomSearch-1.0'):Find(searchStr or '', dName) --searchStr cannot be nil
 				else
 					dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo("item:"..link)
 					testMatch = itemScanner:Matches(dItemLink, searchStr)
@@ -421,35 +452,50 @@ end
 
 function Search:DoAdvancedSearch()
 	
+	local advUnitList = {}
+	
 	--units
 	for i = 1, #self.advancedsearchframe.playerlistscrollframe.children do
 		local label = self.advancedsearchframe.playerlistscrollframe.children[i] --grab the label
+		local unitObj = label.entry.unitObj
 		
-		if not label.userdata.isHeader then
-		
-			if not label.entry.unitObj.isGuild then
-				--print(label.entry.colorized)
-			end
-			
+		--if it's not a headler and it's selected in the list
+		if not label.userdata.isHeader and label.isSelected then
+			--order of operations for filters -> realm -> name -> realmKey
+			if not advUnitList[unitObj.realm] then advUnitList[unitObj.realm] = {} end
+			advUnitList[unitObj.realm][unitObj.name] = {realmKey=unitObj.data.realmKey}
 		end
 	end
+	
+	local advAllowList = {}
 	
 	--locations
 	for i = 1, #self.advancedsearchframe.locationlistscrollframe.children do
 		local label = self.advancedsearchframe.locationlistscrollframe.children[i] --grab the label
-		print(label.entry.colorized)
+		if label.isSelected then
+			advAllowList[label.entry.unitObj.name] = true --get the source name
+		end
 	end
-			
+
+	--send it off to the regular search
+	self:DoSearch(nil, advUnitList, advAllowList)
+	
 end
 
-function Search:DoSearch(searchStr)
-	if not searchStr then return end
-	local searchStr = searchStr or self.searchbar:GetText()
+function Search:DoSearch(searchStr, advUnitList, advAllowList)
+	
+	--only do if we aren't doing an advanced search
+	if not advUnitList then
+		if not searchStr then return end
+		if string.len(searchStr) < 1 then return end
+		searchStr = searchStr or self.searchbar:GetText()
+	else
+		searchStr = searchStr or self.advancedsearchframe.advsearchbar:GetText()
+		self.advancedsearchframe.advsearchbar:SetText(nil) --reset always, we only want to use searchStr
+	end
+	
+	self.searchbar:SetText(nil) --reset always, we only want to use searchStr
 	searchStr = searchStr:lower() --always make sure everything is lowercase when doing searches
-	if string.len(searchStr) < 1 then return end
-	
-	self.searchbar:SetText(nil) --reset to make searching faster
-	
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
 	
 	local searchTable = {}
@@ -458,21 +504,31 @@ function Search:DoSearch(searchStr)
 	local viewCustomList
 	local player = Unit:GetUnitInfo()
 
+	--items aren't counted into this array, it's just for allowing the search to pass through
 	local allowList = {
-		["bag"] = 0,
-		["bank"] = 0,
-		["reagents"] = 0,
-		["equip"] = 0,
-		["mailbox"] = 0,
-		["void"] = 0,
-		["auction"] = 0,
-		["guild"] = 0,
+		["bag"] = true,
+		["bank"] = true,
+		["reagents"] = true,
+		["equip"] = true,
+		["mailbox"] = true,
+		["void"] = true,
+		["auction"] = true,
 	}
 	
 	--This is used when a player is requesting to view a custom list, such as @bank, @auction, @bag etc...
-	if string.len(searchStr) > 1 and string.find(searchStr, "@") and allowList[string.sub(searchStr, 2)] ~= nil then viewCustomList = string.sub(searchStr, 2) end
+	--only do if we aren't using an advance search
+	if not advUnitList then
+		if string.len(searchStr) > 1 and string.find(searchStr, "@") and allowList[string.sub(searchStr, 2)] ~= nil then viewCustomList = string.sub(searchStr, 2) end
+	else
+		--override the allowList with the advanced search one, only if we customized it.  Otherwise do a full search
+		--this is not an indexed table, it's a hash table because it uses custom keys for the index, # won't work
+		if BSYC:GetHashTableLen(advAllowList) > 0 then
+			allowList = advAllowList
+		end
+	end
 	
-	for unitObj in Data:IterateUnits() do
+	--advUnitList will force dumpAll to be true if necessary for advanced search
+	for unitObj in Data:IterateUnits(false, advUnitList) do
 	
 		if not unitObj.isGuild then
 			for k, v in pairs(unitObj.data) do
@@ -498,7 +554,11 @@ function Search:DoSearch(searchStr)
 				end
 			end
 		else
-			if not viewCustomList or viewCustomList == "guild" and unitObj.name == player.guild and unitObj.data.realmKey == player.realmKey then
+			if not advUnitList then
+				if not viewCustomList or viewCustomList == "guild" and unitObj.name == player.guild and unitObj.data.realmKey == player.realmKey then
+					countWarning = checkData(unitObj.data.bag, searchStr, searchTable, tempList, countWarning, viewCustomList)
+				end
+			else
 				countWarning = checkData(unitObj.data.bag, searchStr, searchTable, tempList, countWarning, viewCustomList)
 			end
 		end
@@ -508,13 +568,19 @@ function Search:DoSearch(searchStr)
 	--show warning window if the server hasn't queried all the items yet
 	if countWarning > 0 then
 		self.warninglabel:SetText(L.WarningItemSearch:format(countWarning))
-		self.searchbar:SetText(searchStr) --set for the refresh button
+		
+		if not advUnitList then
+			self.searchbar:SetText(searchStr) --set for the refresh button
+		else
+			self.advancedsearchframe.advsearchbar:SetText(searchStr) --set for the refresh button
+		end
+		
 		self.warningframe:Show()
 	else
 		self.warningframe:Hide()
 	end
 		
-	if table.getn(searchTable) > 0 then
+	if #searchTable > 0 then
 		table.sort(searchTable, function(a,b) return (a.name < b.name) end)
 		for i=1, #searchTable do
 			self:AddEntry(searchTable[i])
@@ -527,7 +593,8 @@ function Search:DoSearch(searchStr)
 end
 
 function Search:DisplayAdvSearchLists()
-
+	
+	self.scrollframe:ReleaseChildren() --clear out the main search scroll frame
 	self.advancedsearchframe.playerlistscrollframe:ReleaseChildren() --clear out the scrollframe
 	self.advancedsearchframe.locationlistscrollframe:ReleaseChildren() --clear out the scrollframe
 
@@ -540,7 +607,7 @@ function Search:DisplayAdvSearchLists()
 	end
 	
 	--units
-	if table.getn(playerListTable) > 0 then
+	if #playerListTable > 0 then
 	
 		table.sort(playerListTable, function(a, b)
 			if a.unitObj.realm  == b.unitObj.realm then
@@ -570,10 +637,9 @@ function Search:DisplayAdvSearchLists()
 		[2] = { source="bank", 		desc=L.TooltipBank },
 		[3] = { source="reagents", 	desc=L.TooltipReagent },
 		[4] = { source="equip", 	desc=L.TooltipEquip },
-		[5] = { source="guild", 	desc=L.TooltipGuild },
-		[6] = { source="mailbox", 	desc=L.TooltipMail },
-		[7] = { source="void", 		desc=L.TooltipVoid },
-		[8] = { source="auction", 	desc=L.TooltipAuction },
+		[5] = { source="mailbox", 	desc=L.TooltipMail },
+		[6] = { source="void", 		desc=L.TooltipVoid },
+		[7] = { source="auction", 	desc=L.TooltipAuction },
 	}
 	
 	for i = 1, #list do

@@ -323,8 +323,9 @@ function Data:CheckExpiredAuctions()
 	
 end
 
-function Data:IterateUnits(dumpAll)
-
+function Data:IterateUnits(dumpAll, filterList)
+	if filterList then dumpAll = true end
+	
 	local player = Unit:GetUnitInfo()
 	local previousGuilds = {}
 	local argKey, argValue = next(BagSyncDB)
@@ -345,7 +346,26 @@ function Data:IterateUnits(dumpAll)
 						
 						--return everything regardless of user settings
 						if dumpAll then
-							return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm}
+							local skipReturn = false
+							
+							if filterList then
+								--check realm, name and realmkey
+								if filterList[argKey] and filterList[argKey][k] then
+								
+									local realmKey = filterList[argKey][k].realmKey
+									
+									if realmKey and v.realmKey and realmKey ~= v.realmKey then
+										--if it has a realmkey it's because it's a guild, lets check if it doesn't match to skip
+										skipReturn = true
+									end
+								else
+									skipReturn = true
+								end
+							end
+						
+							if not skipReturn then
+								return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm}
+							end
 							
 						elseif (argKey == player.realm) or (isConnectedRealm and BSYC.options.enableCrossRealmsItems) or (BSYC.options.enableBNetAccountItems) then
 							
@@ -354,6 +374,8 @@ function Data:IterateUnits(dumpAll)
 							--check for previous listed guilds just in case, because of connected realms (can have same guild on multiple connected realms)
 							if BSYC.options.enableGuild and isGuild and v.realmKey then
 							
+								--realmKey is a concat of connected realms to determine if one guild exists on multiple realms
+								--it's also used for any XR connection matching.  See GetXRGuild and Unit module in wireframe.
 								if BSYC.options.showGuildCurrentCharacter and player.guild then
 									if v.realmKey == player.realmKey then
 										--same realm, but lets check name

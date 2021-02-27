@@ -231,7 +231,7 @@ function Tooltip:MoneyTooltip()
 		return a.sortIndex < b.sortIndex;
 	end)
 
-	for i=1, table.getn(usrData) do
+	for i=1, #usrData do
 		--use GetMoneyString and true to seperate it by thousands
 		tooltip:AddDoubleLine(usrData[i].colorized, GetMoneyString(usrData[i].unitObj.data.money, true), 1, 1, 1, 1, 1, 1)
 		total = total + usrData[i].unitObj.data.money
@@ -289,9 +289,9 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList)
 end
 
 function Tooltip:ItemCount(data, itemID, allowList, source, total)
-	if table.getn(data) < 1 then return total end
+	if #data < 1 then return total end
 	
-	for i=1, table.getn(data) do
+	for i=1, #data do
 		if data[i] then
 			local link, count, identifier = strsplit(";", data[i])
 			if link then
@@ -363,8 +363,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	
 	--if we already did the item, then display the previous information
 	if self.__lastLink and self.__lastLink == link then
-		if self.__lastTally and table.getn(self.__lastTally) > 0 then
-			for i=1, table.getn(self.__lastTally) do
+		if self.__lastTally and #self.__lastTally > 0 then
+			for i=1, #self.__lastTally do
 				local color = BSYC.options.colors.total --this is a cover all color we are going to use
 				if BSYC.options.enableExtTooltip or isBattlePet then
 					local lineNum = objTooltip.qTip:AddLine(self.__lastTally[i].colorized, 	string.rep(" ", 4), self.__lastTally[i].tallyString)
@@ -438,7 +438,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	end
 	
 	--only sort items if we have something to work with
-	if table.getn(unitList) > 0 then
+	if #unitList > 0 then
 
 		table.sort(unitList, function(a, b)
 			if a.sortIndex  == b.sortIndex then
@@ -455,7 +455,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local desc, value = '', ''
 	
 	--add [Total] if we have more than one unit to work with
-	if BSYC.options.showTotal and grandTotal > 0 and table.getn(unitList) > 1 then
+	if BSYC.options.showTotal and grandTotal > 0 and #unitList > 1 then
 		desc = self:HexColor(BSYC.options.colors.total, L.TooltipTotal)
 		value = self:HexColor(BSYC.options.colors.second, comma_value(grandTotal))
 		table.insert(unitList, { colorized=desc, tallyString=value} )
@@ -472,12 +472,12 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	end
 	
 	--add seperator if enabled and only if we have something to work with
-	if not objTooltip.qTip and BSYC.options.enableTooltipSeperator and table.getn(unitList) > 0 then
+	if not objTooltip.qTip and BSYC.options.enableTooltipSeperator and #unitList > 0 then
 		table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
 	end
 	
 	--finally display it
-	for i=1, table.getn(unitList) do
+	for i=1, #unitList do
 		local color = BSYC.options.colors.total --this is a cover all color we are going to use
 		if BSYC.options.enableExtTooltip or isBattlePet then
 			-- Add an new line, using all columns
@@ -532,7 +532,7 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 		objTooltip:AddLine(" ")
 	end
 
-	for i=1, table.getn(usrData) do
+	for i=1, #usrData do
 		if usrData[i].count then
 			objTooltip:AddDoubleLine(usrData[i].colorized, comma_value(usrData[i].count), 1, 1, 1, 1, 1, 1)
 		end

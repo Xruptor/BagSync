@@ -182,7 +182,7 @@ function Profiles:DisplayList()
 		table.insert(profilesTable, { unitObj=unitObj, colorized=Tooltip:ColorizeUnit(unitObj, true) } )
 	end
 
-	if table.getn(profilesTable) > 0 then
+	if #profilesTable > 0 then
 	
 		table.sort(profilesTable, function(a, b)
 			if a.unitObj.realm  == b.unitObj.realm then

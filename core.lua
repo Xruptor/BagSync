@@ -22,6 +22,16 @@ end
 --use /framestack to debug windows and show tooltip information
 --use if you press SHIFT while doing the above command it gives you a bit more information
 
+--this is only for hash tables that aren't indexed with 1,2,3,4 etc.. but use custom index keys
+--if you are using table.insert() or tables that are indexed with numbers then use # instead for table length.  #table as example
+function BSYC:GetHashTableLen(tbl)
+    local count = 0
+    for _, __ in pairs(tbl) do
+        count = count + 1
+    end
+    return count
+end
+
 function BagSync_ShowWindow(windowName)
     if windowName == "Gold" then
         BSYC:GetModule("Tooltip"):MoneyTooltip()
