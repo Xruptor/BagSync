@@ -468,18 +468,20 @@ function Search:DoAdvancedSearch()
 	end
 	
 	local advAllowList = {}
+	local count = 0
 	
 	--locations
 	for i = 1, #self.advancedsearchframe.locationlistscrollframe.children do
 		local label = self.advancedsearchframe.locationlistscrollframe.children[i] --grab the label
 		if label.isSelected then
 			advAllowList[label.entry.unitObj.name] = true --get the source name
+			count = count + 1
 		end
 	end
+	if count < 1 then advAllowList = nil end
 
 	--send it off to the regular search
 	self:DoSearch(nil, advUnitList, advAllowList)
-	
 end
 
 function Search:DoSearch(searchStr, advUnitList, advAllowList)
@@ -517,15 +519,12 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 	
 	--This is used when a player is requesting to view a custom list, such as @bank, @auction, @bag etc...
 	--only do if we aren't using an advance search
-	if not advUnitList then
-		if string.len(searchStr) > 1 and string.find(searchStr, "@") and allowList[string.sub(searchStr, 2)] ~= nil then viewCustomList = string.sub(searchStr, 2) end
-	else
-		--override the allowList with the advanced search one, only if we customized it.  Otherwise do a full search
-		--this is not an indexed table, it's a hash table because it uses custom keys for the index, # won't work
-		if BSYC:GetHashTableLen(advAllowList) > 0 then
-			allowList = advAllowList
-		end
+	if not advUnitList and string.len(searchStr) > 1 and string.find(searchStr, "@") and allowList[string.sub(searchStr, 2)] ~= nil then
+		viewCustomList = string.sub(searchStr, 2)
 	end
+
+	--overwrite the allowlist with the advance one if it isn't empty
+	allowList = advAllowList or allowList
 	
 	--advUnitList will force dumpAll to be true if necessary for advanced search
 	for unitObj in Data:IterateUnits(false, advUnitList) do
