@@ -90,7 +90,11 @@ function Events:OnEnable()
 	end)
 
 	self:RegisterEvent("BANKFRAME_OPENED", function() Scanner:SaveBank() end)
-	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", function() Scanner:SaveBank(true) end)
+	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", function(event, slotID)
+		Scanner:SaveBank(true)
+		--check if they crafted an item outside the bank, if so then do a parse check to update item count.
+		Scanner:SaveCraftedReagents("bank", slotID)
+	end)
 
 	--Force guild roster update, so we can grab guild name.  Note this is nil on login, have to check for Classic and Retail though
 	--https://wow.gamepedia.com/API_GetGuildInfo
@@ -101,7 +105,14 @@ function Events:OnEnable()
 		
 		self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
 		
-		self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED", function() Scanner:SaveReagents() end)
+		--save any crafted item info in case they aren't at a bank
+		self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", function(event, unitTarget, castGUID, spellID) Scanner:ParseCraftedInfo(unitTarget, castGUID, spellID) end)
+		
+		self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED", function(event, slotID)
+			Scanner:SaveReagents()
+			--check if they crafted an item outside the bank, if so then do a parse check to update item count.
+			Scanner:SaveCraftedReagents("reagents", slotID)
+		end)
 		self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:SaveReagents() end)
 		
 		self:RegisterEvent("VOID_STORAGE_OPEN", function() Scanner:SaveVoidBank() end)
@@ -276,5 +287,6 @@ function Events:TRADE_SKILL_DATA_SOURCE_CHANGED()
 	--this gets fired when they switch professions while still having the tradeskill window open
 	if not self._TradeSkillEvent then
 		self._TradeSkillEvent = true
+		--this will trigger TRADE_SKILL_LIST_UPDATE and SaveProfessions which will save all the recipesIDs to Scanner.recipeIDs
 	end
 end

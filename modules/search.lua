@@ -119,7 +119,7 @@ function Search:OnEnable()
 	
 	--Button
 	local spacer = AceGUI:Create("Label")
-    spacer:SetFullWidth(true)
+	spacer:SetFullWidth(true)
 	spacer:SetText(" ")
 	SearchFrame:AddChild(spacer)
 
