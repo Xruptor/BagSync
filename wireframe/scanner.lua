@@ -639,5 +639,8 @@ function Scanner:SaveCraftedReagents()
 	
 	--now save it back to the bank root
 	BSYC.db.player[bagtype][BANK_CONTAINER] = rootBankItems
+	
+	--set the tooltip to be refreshed so that it displays the new values
+	BSYC.refreshTooltip = true
 
 end

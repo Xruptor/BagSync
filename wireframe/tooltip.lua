@@ -361,6 +361,12 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		objTooltip.qTip:Clear()
 	end
 	
+	--check if are requesting that the tooltip be refreshed regardless if it has last item stored
+	if BSYC.refreshTooltip then
+		BSYC.refreshTooltip = nil
+		self.__lastLink = nil
+	end
+
 	--if we already did the item, then display the previous information
 	if self.__lastLink and self.__lastLink == link then
 		if self.__lastTally and #self.__lastTally > 0 then
