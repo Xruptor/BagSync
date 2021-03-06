@@ -93,7 +93,7 @@ function Events:OnEnable()
 	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", function(event, slotID)
 		Scanner:SaveBank(true)
 		--check if they crafted an item outside the bank, if so then do a parse check to update item count.
-		Scanner:SaveCraftedReagents("bank", slotID)
+		self:DoTimer("SaveCraftedReagents", function() Scanner:SaveCraftedReagents() end, 1)
 	end)
 
 	--Force guild roster update, so we can grab guild name.  Note this is nil on login, have to check for Classic and Retail though
@@ -111,7 +111,7 @@ function Events:OnEnable()
 		self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED", function(event, slotID)
 			Scanner:SaveReagents()
 			--check if they crafted an item outside the bank, if so then do a parse check to update item count.
-			Scanner:SaveCraftedReagents("reagents", slotID)
+			self:DoTimer("SaveCraftedReagents", function() Scanner:SaveCraftedReagents() end, 1)
 		end)
 		self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:SaveReagents() end)
 		
