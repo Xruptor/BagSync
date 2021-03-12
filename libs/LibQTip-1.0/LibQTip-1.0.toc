@@ -1,4 +1,4 @@
-## Interface: 90001
+## Interface: 90005
 ## Title: Lib: QTip-1.0
 ## Notes: Library providing multi-column tooltips.
 ## Author: Torhal, Adirelle, Elkano, Tristanian
