@@ -22,6 +22,7 @@ end
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local AceGUI = LibStub("AceGUI-3.0")
 local itemScanner = LibStub('LibItemSearch-1.2')
+local customSearch = LibStub('CustomSearch-1.0')
 
 function Search:OnEnable()
 
@@ -429,7 +430,7 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 					dName, dTexture = C_PetJournal.GetPetInfoBySpeciesID(optOne)
 					dRarity = 1
 					dItemLink = data[i]
-					testMatch = LibStub('CustomSearch-1.0'):Find(searchStr or '', dName) --searchStr cannot be nil
+					testMatch = customSearch:Find(searchStr or '', dName) --searchStr cannot be nil
 				else
 					dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo("item:"..link)
 					testMatch = itemScanner:Matches(dItemLink, searchStr)
