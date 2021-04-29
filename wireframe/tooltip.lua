@@ -653,14 +653,24 @@ function Tooltip:HookTooltip(objTooltip)
 		hooksecurefunc(objTooltip, "SetMerchantCostItem", function(self, index, currencyIndex)
 			--see MerchantFrame_UpdateAltCurrency
 			if self.__tooltipUpdated then return end
-			
+
 			local currencyID = select(currencyIndex, GetMerchantCurrencies())
-			
+
 			if currencyID then
 				local currencyData = C_CurrencyInfo.GetCurrencyInfo(currencyID)
 				
 				if currencyData.name and currencyData.iconFileID then
 					Tooltip:CurrencyTooltip(self, currencyData.name, currencyData.iconFileID, currencyID, "SetMerchantCostItem")
+				end
+				return
+			end
+			
+			--if we don't have a currency token id that means it's probably and item required to purchase like Raid Finder token turnins or whatnot.
+			if not currencyID then
+				local itemTexture, itemValue, itemLink = GetMerchantItemCostItem(index, currencyIndex)
+				--make sure we have something to work with
+				if itemTexture then
+					Tooltip:TallyUnits(self, itemLink, "SetMerchantCostItem")
 				end
 			end
 			
