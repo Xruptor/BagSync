@@ -666,12 +666,10 @@ function Tooltip:HookTooltip(objTooltip)
 			end
 			
 			--if we don't have a currency token id that means it's probably and item required to purchase like Raid Finder token turnins or whatnot.
-			if not currencyID then
-				local itemTexture, itemValue, itemLink = GetMerchantItemCostItem(index, currencyIndex)
-				--make sure we have something to work with
-				if itemTexture then
-					Tooltip:TallyUnits(self, itemLink, "SetMerchantCostItem")
-				end
+			local itemTexture, itemValue, itemLink = GetMerchantItemCostItem(index, currencyIndex)
+			--make sure we have something to work with
+			if itemTexture then
+				Tooltip:TallyUnits(self, itemLink, "SetMerchantCostItem")
 			end
 			
 		end)
