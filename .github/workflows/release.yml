@@ -1,5 +1,5 @@
 # description of this workflow, can be anything you want
-name: Package and release
+name: WOW Packager (WOWInterface/CurseForge)
 
 # we need to let GitHub know _when_ we want to release, typically only when we create a new tag.
 # this will target only tags, and not all pushes to the master branch.
@@ -35,14 +35,19 @@ jobs:
       # we first have to clone the AddOn project, this is a required step
       - name: Clone project
         uses: actions/checkout@v1
-
-      # once cloned, we just run the GitHub Action for the packager project
-      - name: Package and release
+ 
+      # Package and release the retail version
+      - name: Create Retail Package
         uses: BigWigsMods/packager@master
 
-      # another example where we supply additional arguments, this example is specifically to release
-      # for the Classic version of the game
-      - name: Package and release for Classic
+      # Package and release the Classic version
+      - name: Create Classic Package
         uses: BigWigsMods/packager@master
         with:
-          args: -g 1.13.6 -w 0
+          args: -g classic
+
+      # Package and release the TBC version
+      - name: Create BCC Package
+        uses: BigWigsMods/packager@master
+        with:
+          args: -g bcc
