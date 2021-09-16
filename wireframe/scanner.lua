@@ -145,18 +145,21 @@ function Scanner:GetXRGuild()
 end
 
 function Scanner:SaveGuildBank()
-	if not Unit.atGuildBank or not BSYC.IsRetail then return end
+	if not Unit.atGuildBank then return end
 	if Scanner.isScanningGuild then return end
 
 	local numTabs = GetNumGuildBankTabs()
 	local slotItems = {}
+	local max_guildbank_slots_per_tab = MAX_GUILDBANK_SLOTS_PER_TAB
 	Scanner.isScanningGuild = true
+
+	if not BSYC.IsRetail then max_guildbank_slots_per_tab = 98 end
 	
 	for tab = 1, numTabs do
 		local name, icon, isViewable, canDeposit, numWithdrawals, remainingWithdrawals = GetGuildBankTabInfo(tab)
 		--if we don't check for isViewable we get a weirdo permissions error for the player when they attempt it
 		if isViewable then
-			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
+			for slot = 1, max_guildbank_slots_per_tab do
 				local link = GetGuildBankItemLink(tab, slot)
 				if link then
 					local speciesID

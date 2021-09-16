@@ -163,6 +163,14 @@ function Events:OnEnable()
 		end)
 
 	else
+		self:RegisterEvent("GUILDBANKFRAME_OPENED")
+		self:RegisterEvent("GUILDBANKFRAME_CLOSED")
+		self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED", function()
+			self:DoTimer("GuildBankScan", function() self:GUILDBANKBAGSLOTS_CHANGED() end, 0.2)
+		end)
+
+		local timerName = "QueryOwnedAuctions"
+
 		--classic auction house
 		self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE", function() Scanner:SaveAuctionHouse() end)
 	end

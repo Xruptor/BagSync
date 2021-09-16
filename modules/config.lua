@@ -248,7 +248,6 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.enableGuild",
-					hidden = function() return not BSYC.IsRetail end,
 				},
 			}
 		},
