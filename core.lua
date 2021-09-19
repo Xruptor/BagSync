@@ -7,7 +7,14 @@ local BAGSYNC, BSYC = ... --grab the addon namespace
 LibStub("AceAddon-3.0"):NewAddon(BSYC, "BagSync", "AceEvent-3.0", "AceConsole-3.0")
 _G[BAGSYNC] = BSYC --add it to the global frame space, otherwise you won't be able to call it
 
+local WOW_PROJECT_ID = _G.WOW_PROJECT_ID
+local WOW_PROJECT_MAINLINE = _G.WOW_PROJECT_MAINLINE
+local WOW_PROJECT_CLASSIC = _G.WOW_PROJECT_CLASSIC
+local WOW_PROJECT_BURNING_CRUSADE_CLASSIC = _G.WOW_PROJECT_BURNING_CRUSADE_CLASSIC
+
 BSYC.IsRetail = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
+BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
+BSYC.IsTBC_C = WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC
 
 local debugf = tekDebug and tekDebug:GetFrame("BagSync")
 local function Debug(...)

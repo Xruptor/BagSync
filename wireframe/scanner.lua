@@ -145,7 +145,7 @@ function Scanner:GetXRGuild()
 end
 
 function Scanner:SaveGuildBank()
-	if not Unit.atGuildBank or not BSYC.IsRetail then return end
+	if not Unit.atGuildBank or BSYC.IsClassic then return end
 	if Scanner.isScanningGuild then return end
 
 	local numTabs = GetNumGuildBankTabs()

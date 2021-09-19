@@ -53,6 +53,9 @@ Unit:RegisterEvent('BANKFRAME_CLOSED', function() Unit.atBank = false end)
 if BSYC.IsRetail then
 	Unit:RegisterEvent('VOID_STORAGE_OPEN', function() Unit.atVoidBank = true end)
 	Unit:RegisterEvent('VOID_STORAGE_CLOSE', function() Unit.atVoidBank = false end)
+end
+
+if not BSYC.IsClassic then
 	Unit:RegisterEvent('GUILDBANKFRAME_OPENED', function() Unit.atGuildBank = true end)
 	Unit:RegisterEvent('GUILDBANKFRAME_CLOSED', function() Unit.atGuildBank = false end)
 end

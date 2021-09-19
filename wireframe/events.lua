@@ -120,12 +120,6 @@ function Events:OnEnable()
 		self:RegisterEvent("VOID_STORAGE_CONTENTS_UPDATE", function() Scanner:SaveVoidBank() end)
 		self:RegisterEvent("VOID_TRANSFER_DONE", function() Scanner:SaveVoidBank() end)
 		
-		self:RegisterEvent("GUILDBANKFRAME_OPENED")
-		self:RegisterEvent("GUILDBANKFRAME_CLOSED")
-		self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED", function()
-			self:DoTimer("GuildBankScan", function() self:GUILDBANKBAGSLOTS_CHANGED() end, 0.2)
-		end)
-		
 		local timerName = "QueryOwnedAuctions"
 		
 		local function doAuctionUpdate()
@@ -165,6 +159,15 @@ function Events:OnEnable()
 	else
 		--classic auction house
 		self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE", function() Scanner:SaveAuctionHouse() end)
+	end
+	
+	--only load certain things if NOT in classic
+	if not BSYC.IsClassic then
+		self:RegisterEvent("GUILDBANKFRAME_OPENED")
+		self:RegisterEvent("GUILDBANKFRAME_CLOSED")
+		self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED", function()
+			self:DoTimer("GuildBankScan", function() self:GUILDBANKBAGSLOTS_CHANGED() end, 0.2)
+		end)
 	end
 	
 	Scanner:StartupScans() --do the login player scans
@@ -264,6 +267,7 @@ function Events:CURRENCY_DISPLAY_UPDATE()
 end
 
 function Events:PLAYER_REGEN_ENABLED()
+	--only run this on retail
 	if Unit:InCombatLockdown() or not BSYC.IsRetail then return end
 	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
 	self.doCurrencyUpdate = nil

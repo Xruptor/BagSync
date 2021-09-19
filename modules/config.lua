@@ -248,7 +248,7 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.enableGuild",
-					hidden = function() return not BSYC.IsRetail end,
+					hidden = function() return BSYC.IsClassic end,
 				},
 			}
 		},
@@ -329,7 +329,7 @@ options.args.display = {
 					set = set,
 					arg = "display.showGuildCurrentCharacter",
 					disabled = function() return not BSYC.options["enableGuild"] end,
-					hidden = function() return not BSYC.IsRetail end,
+					hidden = function() return BSYC.IsClassic end,
 				},
 			}
 		},
