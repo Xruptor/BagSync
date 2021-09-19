@@ -313,7 +313,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	--Debug(link, source)
 	
 	--only show tooltips in search frame if the option is enabled
-	if BSYC.options.tooltipOnlySearch and objTooltip:GetOwner() and objTooltip:GetOwner():GetName() and not string.find(objTooltip:GetOwner():GetName(), "BagSyncSearchRow") then
+	if BSYC.options.tooltipOnlySearch and objTooltip.GetOwner and objTooltip:GetOwner() and objTooltip:GetOwner():GetName() and not string.find(objTooltip:GetOwner():GetName(), "BagSyncSearchRow") then
 		objTooltip:Show()
 		return
 	end
