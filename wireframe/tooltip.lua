@@ -593,6 +593,19 @@ function Tooltip:HookTooltip(objTooltip)
 		end
 	end)
 	
+	--only parse CraftFrame when it's not the RETAIL but Classic and TBC, because this was changed to TradeSkillUI on retail
+	if not BSYC.IsRetail then
+		hooksecurefunc(objTooltip, "SetCraftItem", function(self, index, reagent)
+			if self.__tooltipUpdated then return end
+			local _, _, count = GetCraftReagentInfo(index, reagent)
+			--YOU NEED to do the above or it will return an empty link!
+			local link = GetCraftReagentItemLink(index, reagent)
+			if link then
+				Tooltip:TallyUnits(self, link, "SetCraftItem")
+			end
+		end)
+	end
+	
 	--------------------------------------------------
 	if BSYC.IsRetail then
 		--------------------------------------------------RECIPES
