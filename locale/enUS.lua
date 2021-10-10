@@ -84,6 +84,8 @@ L.ScanGuildBankDone = "Guild Bank scan complete!"
 L.ScanGuildBankError = "Warning: Guild Bank scanning incomplete."
 L.ScanGuildBankScanInfo = "Scanning Guild Tab (%s/%s)."
 -- ----THESE ARE FOR SLASH COMMANDS
+L.SlashBagSyncCommand1 = "bgs"
+L.SlashBagSyncCommand2 = "bagsync"
 L.SlashItemName = "[itemname]"
 L.SlashSearch = "search"
 L.SlashGold = "gold"

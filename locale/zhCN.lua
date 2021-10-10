@@ -87,6 +87,8 @@ L.ScanGuildBankDone = "公会银行扫描完成!"
 L.ScanGuildBankError = "警告: 公会银行扫描不完整"
 L.ScanGuildBankScanInfo = "扫描公会标签 (%s/%s)"
 -- ----THESE ARE FOR SLASH COMMANDS
+L.SlashBagSyncCommand1 = "bgs"
+L.SlashBagSyncCommand2 = "bagsync"
 L.SlashItemName = "[物品名称]"
 L.SlashSearch = "搜索"
 L.SlashGold = "金币"

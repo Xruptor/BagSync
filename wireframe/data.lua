@@ -287,8 +287,9 @@ function Data:LoadSlashCommand()
 		BSYC:Print(L.HelpConfigWindow)
 	end
 	
-	BSYC:RegisterChatCommand("bgs", ChatCommand)
-	BSYC:RegisterChatCommand("bagsync", ChatCommand)
+	--/bgs and /bagsync
+	BSYC:RegisterChatCommand(L.SlashBagSyncCommand1, ChatCommand)
+	BSYC:RegisterChatCommand(L.SlashBagSyncCommand2, ChatCommand)
 	
 end
 
