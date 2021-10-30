@@ -83,9 +83,7 @@ L.ScanGuildBankStart = "Querying server for Guild Bank info, please wait....."
 L.ScanGuildBankDone = "Guild Bank scan complete!"
 L.ScanGuildBankError = "Warning: Guild Bank scanning incomplete."
 L.ScanGuildBankScanInfo = "Scanning Guild Tab (%s/%s)."
--- ----THESE ARE FOR SLASH COMMANDS
-L.SlashBagSyncCommand1 = "bgs"
-L.SlashBagSyncCommand2 = "bagsync"
+-- ----THESE ARE FOR SLASH COMMANDS OPERATORS
 L.SlashItemName = "[itemname]"
 L.SlashSearch = "search"
 L.SlashGold = "gold"
@@ -98,6 +96,7 @@ L.SlashProfessions = "professions"
 L.SlashBlacklist = "blacklist"
 L.SlashResetDB = "resetdb"
 ------------------------
+-- ----THESE USE THE SLASH OPERATOR COMMANDS FOUND ABOVE
 L.HelpSearchItemName = "/bgs [itemname] - Does a quick search for an item"
 L.HelpSearchWindow = "/bgs search - Opens the search window"
 L.HelpGoldTooltip = "/bgs gold (or /bgs money) - Displays a tooltip with the amount of gold on each character."
@@ -108,6 +107,7 @@ L.HelpResetDB = "/bgs resetdb - Resets the entire BagSync database."
 L.HelpConfigWindow = "/bgs config - Opens the BagSync Config Window"
 L.HelpProfessionsWindow = "/bgs professions - Opens the professions window."
 L.HelpBlacklistWindow = "/bgs blacklist - Opens the blacklist window."
+------------------------
 L.EnableBagSyncTooltip = "Enable BagSync Tooltips"
 L.EnableExtTooltip = "Display item count data in an external toolip."
 L.EnableLoginVersionInfo = "Display BagSync version text at login."

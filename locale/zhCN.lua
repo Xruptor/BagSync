@@ -86,9 +86,7 @@ L.ScanGuildBankStart = "公会银行内信息正在查询服务器,请稍候....
 L.ScanGuildBankDone = "公会银行扫描完成!"
 L.ScanGuildBankError = "警告: 公会银行扫描不完整"
 L.ScanGuildBankScanInfo = "扫描公会标签 (%s/%s)"
--- ----THESE ARE FOR SLASH COMMANDS
-L.SlashBagSyncCommand1 = "bgs"
-L.SlashBagSyncCommand2 = "bagsync"
+-- ----THESE ARE FOR SLASH COMMANDS OPERATORS
 L.SlashItemName = "[物品名称]"
 L.SlashSearch = "搜索"
 L.SlashGold = "金币"
@@ -101,6 +99,7 @@ L.SlashProfessions = "专业"
 L.SlashBlacklist = "黑名单"
 L.SlashResetDB = "重置"
 ------------------------
+-- ----THESE USE THE SLASH OPERATOR COMMANDS FOUND ABOVE
 L.HelpSearchItemName = "/bgs [物品名称] - 快速搜索一件物品"
 L.HelpSearchWindow = "/bgs 搜索 - 打开搜索窗口"
 L.HelpGoldTooltip = "/bgs 金币  - 显示各角色的金钱统计"
@@ -111,6 +110,7 @@ L.HelpResetDB = "/bgs 重置 - 重置 BagSync 内的数据库"
 L.HelpConfigWindow = "/bgs 配置 - 打开配置文件"
 L.HelpProfessionsWindow = "/bgs 专业 - 打开专业窗口"
 L.HelpBlacklistWindow = "/bgs 黑名单 - 打开黑名单窗口"
+------------------------
 L.EnableBagSyncTooltip = "启用BagSync鼠标提示"
 L.EnableExtTooltip = "在单独框体上显示物品统计数据"
 L.EnableLoginVersionInfo = "显示BagSync的登录信息"
