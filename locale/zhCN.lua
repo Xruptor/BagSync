@@ -3,7 +3,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhCN")
 if not L then return end
 
 --  zhCN client (NGA-[男爵凯恩]补齐)
---  Last update: 2021/08/10
+--  Last update: 2021/11/03
 
 L.Yes = "Yes"
 L.No = "No"
@@ -79,7 +79,7 @@ L.KeybindGold = "显示金币窗口"
 L.KeybindProfessions = "显示职业窗口"
 L.KeybindProfiles = "显示配置文件"
 L.KeybindSearch = "显示搜索窗口"
-L.ObsoleteWarning = "\n\n注意：过时的物品将继续显示为缺失。 要修复此问题,请再次扫描您的角色以删除过时的物品。\n（袋子、银行、虚空等 ...)"
+L.ObsoleteWarning = "\n\n注意：过时的物品将继续显示为缺失。 要修复此问题,请再次扫描您的角色以删除过时的物品。\n（背包、银行、虚空银行等 ...)"
 L.DatabaseReset = "由于数据库的变化。您的BagSync数据库已重置"
 L.UnitDBAuctionReset = "所有角色的拍卖数据已重置。 "
 L.ScanGuildBankStart = "公会银行内信息正在查询服务器,请稍候....."
@@ -158,8 +158,8 @@ L.ConfigDisplay = "显示"
 L.ConfigTooltipHeader = "显示的 BagSync 提示信息的设置"
 L.ConfigColor = "颜色"
 L.ConfigColorHeader = "BagSync 提示信息的颜色设置"
-L.ConfigMain = "主要"
-L.ConfigMainHeader = "BagSync 的主要设置"
+L.ConfigMain = "主设置"
+L.ConfigMainHeader = "BagSync 的主设置"
 L.WarningItemSearch = "警告：共有 [|cFFFFFFFF%s|r] 个物品未被搜索！\n\nBagSync 仍在等待服务器/数据库响应\n\n按“搜索”或“刷新”按钮"
 L.WarningUpdatedDB = "您已更新到最新的版本!您将需要再次重新扫描所有角色!|r "
 L.WarningHeader = "警告!"
@@ -169,24 +169,24 @@ L.FAQ_Question_1 = "我遇到鼠标提示上/卡顿/滞后"
 L.FAQ_Question_1_p1 = [[
 当数据库中有旧的和损坏的数据 BagSync 无法解读时,通常会发生此问题。当 BagSync 需要处理大量的数据时,也会出现该问题,如果您在多个数据中数千个物品,那么在一秒钟内需要处理大量数据.这可能会导致您的计算机在短时间内滞后。最后,此问题的另一个原因是您拥有一台非常旧的计算机。当 BagSync 处理数以千计的物品和角色数据时,较旧的计算机会遇到滞后/卡顿的情况。具有更快的CPU和更大的内存的计算机通常不会出现这些问题。
 
-为了解决这个问题,您可以尝试重置数据库。通常可以解决问题。使用以下命令： |cFF99CC33/bgs resetdb|r
+为了解决这个问题,您可以尝试重置数据库。通常可以解决问题。使用以下命令： |cFF99CC33/bgs 重置|r
 如果这不能解决您的问题,请在 GitHub 上的 BagSync 提交问题报告。
 ]]
-L.FAQ_Question_2 = " 在|cFFDF2B2B单独|r |cff3587ff战网|r 帐号中。找不到我的其他WOW帐号的物品数据"
+L.FAQ_Question_2 = " 在|cFFDF2B2B单独|r |cff3587ff战网|r 帐号中。找不到我的其他魔兽世界帐号的物品数据"
 L.FAQ_Question_2_p1 = [[
-插件无法从其他 WOW 帐户读取数据。这是因为它们不共享相同的 SavedVariable 文件夹。这是暴雪 WOW 客户端的内置限制。因此,您将无法在 |cFFDF2B2Bsingle|r |cff3587ffBattle.net|r 下看到多个 WOW 帐户的物品数据。 BagSync 将只能读取同一 WOW 帐户内跨多个服务器的角色数据,而不是整个战网帐户。|cFF99CC33https://www.wowhead.com/guide=934|r
+插件无法从其他魔兽世界帐户读取数据。这是因为它们不共享相同的 SavedVariable 文件夹。这是暴雪魔兽世界客户端的内置限制。因此,您将无法在 |cFFDF2B2Bsingle|r |cff3587ffBattle.net|r 下看到多个魔兽世界帐户内的物品数据。 BagSync 将只能读取同一魔兽世界帐户内跨多个服务器的角色数据,而不是整个战网帐户。|cFF99CC33https://www.wowhead.com/guide=934|r
 
-有一种方法可以在 |cFFDF2B2Bsingle|r |cff3587ffBattle.net|r 帐户内连接多个 WOW 帐户,以便它们共享相同的 SavedVariables 文件夹。 这涉及创建服务器链接文件夹。我不会在这方面提供帮助。所以别问了！请访问以下指南了解更多详情。 
+有一种方法可以在 |cFFDF2B2Bsingle|r |cff3587ffBattle.net|r 帐户内连接多个魔兽世界帐户,以便它们共享相同的 SavedVariables 文件夹。 这涉及创建服务器链接文件夹。我不会在这方面提供帮助。所以别问了！请访问以下指南了解更多详情。 
 ]]
 L.FAQ_Question_3 = "您可以查看来自 |cFFDF2B2B多个|r |cff3587ff战网|r 账号内的物品数据吗?"
 L.FAQ_Question_3_p1 = "不,这不可能。我不会在这方面提供帮助。所以不要问!"
-L.FAQ_Question_4 = "我可以在|cFFDF2B2B当前登录|r的帐号查看多个WOW账户的物品数据吗?"
+L.FAQ_Question_4 = "我可以在|cFFDF2B2B当前登录|r的帐号查看多个魔兽世界账户的物品数据吗?"
 L.FAQ_Question_4_p1 = "目前 BagSync 不支持在多个登录的 WOW 帐户之间传输数据。这在未来可能会改变。"
 L.FAQ_Question_5 = "为什么会提示公会银行扫描未完成?"
 L.FAQ_Question_5_p1 = [[
 BagSync 必须向服务器查询您的公会银行的 |cFF99CC33全部|r 信息。服务器传输所有数据需要时间。为了让 BagSync 正确存储您的所有物品,您必须等到服务器查询完成。扫描过程完成后,BagSync 将在聊天栏通知您。在扫描过程完成之前关闭公会银行窗口,将导致为您的公会银行存储不完整的数据。 
 ]]
-L.FAQ_Question_6 = "为什么我看到战斗宠物的 [虚拟ID] 而不是 [物品ID]?"
+L.FAQ_Question_6 = "为什么我看到战斗宠物是虚拟ID[FakeID]而不是物品ID[ItemID]?"
 L.FAQ_Question_6_p1 = [[
-暴雪不会将 ItemID 分配给 WOW 的战斗宠物。相反,WOW 中的战斗宠物会从服务器分配一个临时的 PetID。这个 PetID 不是唯一的,会在服务器重置时更改。为了跟踪战斗宠物,BagSync 会生成一个 FakeID。 FakeID 是根据与战斗宠物相关联的静态数字生成的。使用 FakeID 允许 BagSync 甚至在服务器重置期间跟踪战斗宠物。 
+暴雪不会将物品ID[ItemID]分配给魔兽世界的战斗宠物。相反,魔兽世界中的战斗宠物会从服务器分配到一个临时的宠物ID[PetID]。这个宠物ID[PetID]不是唯一的,会在服务器重置时更改。为了跟踪战斗宠物,BagSync 会生成一个虚拟ID[FakeID]。 虚拟ID[FakeI]是根据与战斗宠物相关联的静态数字生成的。使用虚拟ID[FakeID]是 BagSync 在服务器重置期间可以跟踪战斗宠物。 
 ]]
