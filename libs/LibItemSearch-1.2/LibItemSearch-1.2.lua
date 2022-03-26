@@ -5,15 +5,10 @@
 
 local Search = LibStub('CustomSearch-1.0')
 local Unfit = LibStub('Unfit-1.0')
-local Lib = LibStub:NewLibrary('LibItemSearch-1.2', 22)
+local Lib = LibStub:NewLibrary('LibItemSearch-1.2', 15)
 if Lib then
-	Lib.Filters = {}
 	Lib.Scanner = LibItemSearchTooltipScanner or CreateFrame('GameTooltip', 'LibItemSearchTooltipScanner', UIParent, 'GameTooltipTemplate')
-	Lib.Scanner:RegisterEvent('GET_ITEM_INFO_RECEIVED')
-	Lib.Scanner:SetScript('OnEvent', function()
-		Lib.Filters.tipPhrases.keywords[FOLLOWERLIST_LABEL_CHAMPIONS:lower()] = Lib:TooltipLine('item:147556', 2)
-		Lib.Filters.tipPhrases.keywords[GARRISON_FOLLOWERS:lower()] = Lib:TooltipLine('item:147556', 2)
-	end)
+	Lib.Filters = {}
 else
 	return
 end
@@ -31,14 +26,6 @@ end
 
 function Lib:TooltipPhrase(link, search)
 	return link and self.Filters.tipPhrases:match(link, nil, search)
-end
-
-function Lib:ForQuest(link)
-	return self:Tooltip(link, GetItemClassInfo(LE_ITEM_CLASS_QUESTITEM):lower())
-end
-
-function Lib:IsReagent(link)
-	return self:TooltipPhrase(link, PROFESSIONS_USED_IN_COOKING)
 end
 
 function Lib:InSet(link, search)
@@ -87,7 +74,7 @@ elseif IsAddOnLoaded('Wardrobe') then
 		end
 	end
 
-elseif C_EquipmentSet then
+else
 	function Lib:BelongsToSet(id, search)
 		for i, setID in pairs(C_EquipmentSet.GetEquipmentSetIDs()) do
 			local name = C_EquipmentSet.GetEquipmentSetInfo(setID)
@@ -101,13 +88,10 @@ elseif C_EquipmentSet then
 			end
 		end
 	end
-
-else
-	function Lib:BelongsToSet() end
 end
 
 
---[[ General Filters ]]--
+--[[ General ]]--
 
 Lib.Filters.name = {
   tags = {'n', 'name'},
@@ -117,7 +101,7 @@ Lib.Filters.name = {
 	end,
 
 	match = function(self, item, _, search)
-		return Search:Find(search, C_Item.GetItemNameByID(item) or item:match('%[(.+)%]'))
+		return Search:Find(search, C_Item.GetItemNameByID(item))
 	end
 }
 
@@ -189,7 +173,7 @@ Lib.Filters.quality = {
 	end,
 
 	match = function(self, link, operator, num)
-		local quality = link:find('battlepet') and tonumber(link:match('%d+:%d+:(%d+)')) or C_Item.GetItemQualityByID(link)
+		local quality = link:sub(1, 9) == 'battlepet' and tonumber(link:match('%d+:%d+:(%d+)')) or C_Item.GetItemQualityByID(link)
 		return Search:Compare(operator, quality, num)
 	end,
 }
@@ -199,7 +183,7 @@ for i = 0, #ITEM_QUALITY_COLORS do
 end
 
 
---[[ Classic Keywords ]]--
+--[[ Keywords ]]--
 
 Lib.Filters.items = {
 	keyword = ITEMS:lower(),
@@ -228,38 +212,31 @@ Lib.Filters.usable = {
 	end
 }
 
+Lib.Filters.artifact = {
+	keyword1 = ITEM_QUALITY6_DESC:lower(),
+	keyword2 = RELICSLOT:lower(),
 
---[[ Retail Keywords ]]--
+	canSearch = function(self, operator, search)
+		return not operator and self.keyword1:find(search) or self.keyword2:find(search)
+	end,
 
-if C_ArtifactUI then
-	Lib.Filters.artifact = {
-		keyword1 = ITEM_QUALITY6_DESC:lower(),
-		keyword2 = RELICSLOT:lower(),
+	match = function(self, link)
+		local id = link:match('item:(%d+)')
+		return id and C_ArtifactUI.GetRelicInfoByItemID(id)
+	end
+}
 
-		canSearch = function(self, operator, search)
-			return not operator and self.keyword1:find(search) or self.keyword2:find(search)
-		end,
+Lib.Filters.azerite = {
+	keyword = C_CurrencyInfo.GetBasicCurrencyInfo(C_CurrencyInfo.GetAzeriteCurrencyID()).name:lower(),
 
-		match = function(self, link)
-			local id = link:match('item:(%d+)')
-			return id and C_ArtifactUI.GetRelicInfoByItemID(id)
-		end
-	}
-end
+	canSearch = function(self, operator, search)
+		return not operator and self.keyword:find(search)
+	end,
 
-if C_AzeriteItem then
-	Lib.Filters.azerite = {
-		keyword = C_CurrencyInfo.GetBasicCurrencyInfo(C_CurrencyInfo.GetAzeriteCurrencyID()).name:lower(),
-
-		canSearch = function(self, operator, search)
-			return not operator and self.keyword:find(search)
-		end,
-
-		match = function(self, link)
-			return C_AzeriteItem.IsAzeriteItemByID(link) or C_AzeriteEmpoweredItem.IsAzeriteEmpoweredItemByID(link)
-		end
-	}
-end
+	match = function(self, link)
+		return C_AzeriteItem.IsAzeriteItemByID(link) or C_AzeriteEmpoweredItem.IsAzeriteEmpoweredItemByID(link)
+	end
+}
 
 
 --[[ Tooltips ]]--
@@ -329,8 +306,10 @@ Lib.Filters.tipPhrases = {
 		[QUESTS_LABEL:lower()] = ITEM_BIND_QUEST,
 		[GetItemClassInfo(LE_ITEM_CLASS_QUESTITEM):lower()] = ITEM_BIND_QUEST,
 		[PROFESSIONS_USED_IN_COOKING:lower()] = PROFESSIONS_USED_IN_COOKING,
-		[APPEARANCE_LABEL:lower()] = TRANSMOGRIFY_TOOLTIP_APPEARANCE_UNKNOWN,
 		[TOY:lower()] = TOY,
+
+		[FOLLOWERLIST_LABEL_CHAMPIONS:lower()] = Lib:TooltipLine('item:147556', 2),
+		[GARRISON_FOLLOWERS:lower()] = Lib:TooltipLine('item:147556', 2),
 
   	['bound'] = ITEM_BIND_ON_PICKUP,
   	['bop'] = ITEM_BIND_ON_PICKUP,
