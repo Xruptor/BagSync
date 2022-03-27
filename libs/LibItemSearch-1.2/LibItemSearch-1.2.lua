@@ -226,18 +226,19 @@ Lib.Filters.artifact = {
 	end
 }
 
-Lib.Filters.azerite = {
-	keyword = C_CurrencyInfo.GetBasicCurrencyInfo(C_CurrencyInfo.GetAzeriteCurrencyID()).name:lower(),
+if C_AzeriteItem and C_CurrencyInfo.GetAzeriteCurrencyID then
+	Lib.Filters.azerite = {
+		keyword = C_CurrencyInfo.GetBasicCurrencyInfo(C_CurrencyInfo.GetAzeriteCurrencyID()).name:lower(),
 
-	canSearch = function(self, operator, search)
-		return not operator and self.keyword:find(search)
-	end,
+		canSearch = function(self, operator, search)
+			return not operator and self.keyword:find(search)
+		end,
 
-	match = function(self, link)
-		return C_AzeriteItem.IsAzeriteItemByID(link) or C_AzeriteEmpoweredItem.IsAzeriteEmpoweredItemByID(link)
-	end
-}
-
+		match = function(self, link)
+			return C_AzeriteItem.IsAzeriteItemByID(link) or C_AzeriteEmpoweredItem.IsAzeriteEmpoweredItemByID(link)
+		end
+	}
+end
 
 --[[ Tooltips ]]--
 
