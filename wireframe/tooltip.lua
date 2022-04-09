@@ -310,8 +310,6 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if not BSYC.options.enableTooltips then return end
 	if not CanAccessObject(objTooltip) then return end
 	
-	--Debug(link, source)
-	
 	--only show tooltips in search frame if the option is enabled
 	if BSYC.options.tooltipOnlySearch and objTooltip.GetOwner and objTooltip:GetOwner() and objTooltip:GetOwner():GetName() and not string.find(objTooltip:GetOwner():GetName(), "BagSyncSearchRow") then
 		objTooltip:Show()
@@ -477,6 +475,14 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
 	end
 	
+	--add debug info
+	if BSYC.options.enableSourceDebugInfo and source then
+		desc = self:HexColor(BSYC.options.colors.debug, L.TooltipDebug)
+		value = self:HexColor(BSYC.options.colors.second, "1|"..source)
+		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
+		--Debug(link, source)
+	end
+
 	--add seperator if enabled and only if we have something to work with
 	if not objTooltip.qTip and BSYC.options.enableTooltipSeperator and #unitList > 0 then
 		table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
@@ -509,8 +515,9 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)
+
+	currencyID = tonumber(currencyID) --make sure it's a number we are working with and not a string
 	if not currencyID then return end
-	
 	--Debug(currencyName, currencyIcon, currencyID, source)
 	
 	--loop through our characters
@@ -542,6 +549,18 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 		if usrData[i].count then
 			objTooltip:AddDoubleLine(usrData[i].colorized, comma_value(usrData[i].count), 1, 1, 1, 1, 1, 1)
 		end
+	end
+	
+	if BSYC.options.enableTooltipItemID and currencyID then
+		desc = self:HexColor(BSYC.options.colors.itemid, L.TooltipCurrencyID)
+		value = self:HexColor(BSYC.options.colors.second, currencyID)
+		objTooltip:AddDoubleLine(desc, value, 1, 1, 1, 1, 1, 1)
+	end
+	
+	if BSYC.options.enableSourceDebugInfo and source then
+		desc = self:HexColor(BSYC.options.colors.debug, L.TooltipDebug)
+		value = self:HexColor(BSYC.options.colors.second, "2|"..source)
+		objTooltip:AddDoubleLine(desc, value, 1, 1, 1, 1, 1, 1)
 	end
 
 	objTooltip.__tooltipUpdated = true
@@ -631,8 +650,10 @@ function Tooltip:HookTooltip(objTooltip)
 			local link = C_CurrencyInfo.GetCurrencyListLink(index)
 			
 			if currencyData.name and currencyData.iconFileID and link then
-				local currencyID = BSYC:GetCurrencyID(link)
-				Tooltip:CurrencyTooltip(self, currencyData.name, currencyData.iconFileID, currencyID, "SetCurrencyToken")
+				local currencyID = BSYC:GetShortCurrencyID(link)
+				if currencyID then
+					Tooltip:CurrencyTooltip(self, currencyData.name, currencyData.iconFileID, currencyID, "SetCurrencyToken")
+				end
 			end
 			
 		end)
@@ -666,22 +687,49 @@ function Tooltip:HookTooltip(objTooltip)
 		hooksecurefunc(objTooltip, "SetMerchantCostItem", function(self, index, currencyIndex)
 			--see MerchantFrame_UpdateAltCurrency
 			if self.__tooltipUpdated then return end
+			
+			--https://wowpedia.fandom.com/wiki/API_GetMerchantItemCostItem
+			local currencyID
+			local itemTexture, itemValue, itemLink, currencyName = GetMerchantItemCostItem(index, currencyIndex)
+			local itemCurrencyID = BSYC:GetShortCurrencyID(itemLink)
 
-			local currencyID = select(currencyIndex, GetMerchantCurrencies())
-
-			if currencyID then
-				local currencyData = C_CurrencyInfo.GetCurrencyInfo(currencyID)
+			--if there is no itemlink or currency name then an item is required instead of currency
+			if itemCurrencyID or currencyName then
+			
+				local currencies = { GetMerchantCurrencies() }
 				
-				if currencyData.name and currencyData.iconFileID then
-					Tooltip:CurrencyTooltip(self, currencyData.name, currencyData.iconFileID, currencyID, "SetMerchantCostItem")
+				if itemCurrencyID then
+					currencyID = itemCurrencyID
+				else
+					--we didn't get the currencyID from the link so lets try the currency array list
+					for i=1, #currencies do
+						if currencies[i] then
+							local currencyInfo = C_CurrencyInfo.GetCurrencyInfo(currencies[i])
+							if currencyInfo then
+								local name = currencyInfo.name
+								if ( currencyName and name and name ~= "" and name == currencyName ) then
+									currencyID = currencies[i]
+									break
+								end
+							end
+						end
+					end
 				end
-				return
+
+				if currencyID then
+					local currencyData = C_CurrencyInfo.GetCurrencyInfo(currencyID)
+					
+					if currencyData.name and currencyData.iconFileID then
+						Tooltip:CurrencyTooltip(self, currencyData.name, currencyData.iconFileID, currencyID, "SetMerchantCostItem")
+					end
+					return
+				end
+				
 			end
 			
 			--if we don't have a currency token id that means it's probably and item required to purchase like Raid Finder token turnins or whatnot.
-			local itemTexture, itemValue, itemLink = GetMerchantItemCostItem(index, currencyIndex)
 			--make sure we have something to work with
-			if itemTexture then
+			if itemLink then
 				Tooltip:TallyUnits(self, itemLink, "SetMerchantCostItem")
 			end
 			

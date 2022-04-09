@@ -154,6 +154,7 @@ function BSYC:CreateFakeBattlePetID(link, count, speciesID)
 		if isBattlepet then
 		
 			if not speciesID then
+				--https://wowpedia.fandom.com/wiki/Hyperlinks#battlepet
 				local _, _ , _ , petID, petLevel, petRarity, petHP, petAtk, petSpeed, _ , petName = string.find(link,"(.*)battlepet:(%d+):(%d+):(%d+):(%d+):(%d+):(%d+):(.*)%[(.*)%]")
 				speciesID = petID
 			end
@@ -196,21 +197,11 @@ function BSYC:GetShortItemID(link)
 end
 
 function BSYC:GetShortCurrencyID(link)
-	if link then
-		if type(link) == "number" then link = tostring(link) end
-		local link = link:match("currency:(%d+):") or link:match("^(%d+):") or link
-		return tonumber(link)
-	end
-end
-
-function BSYC:GetCurrencyID(link)
-	if link then
-		local result = link:match("currency:([%d:]+)")
-		local currencyID = self:GetShortCurrencyID(link)
-		if result then
-			result = currencyID --set this to default currencyID, if we have something we will replace it below
-		end
-		link = result or currencyID
-		return link
-	end
+	--https://wowpedia.fandom.com/wiki/Hyperlinks#currency
+    if link then
+        if type(link) == "number" then link = tostring(link) end
+        link = link:match("currency:([%d:]+)[:]?") or link
+        local link = link:match("currency:([%d:]+):") or link:match("currency:(%d+):") or link:match("^(%d+):") or link
+        return tonumber(link)
+    end
 end

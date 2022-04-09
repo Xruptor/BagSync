@@ -91,6 +91,7 @@ function Data:OnEnable()
 	if BSYC.options.enableCrossRealmsItems == nil then BSYC.options.enableCrossRealmsItems = true end
 	if BSYC.options.enableBNetAccountItems == nil then BSYC.options.enableBNetAccountItems = false end
 	if BSYC.options.enableTooltipItemID == nil then BSYC.options.enableTooltipItemID = false end
+	if BSYC.options.enableSourceDebugInfo == nil then BSYC.options.enableSourceDebugInfo = false end
 	if BSYC.options.enableTooltipGreenCheck == nil then BSYC.options.enableTooltipGreenCheck = true end
 	if BSYC.options.enableRealmIDTags == nil then BSYC.options.enableRealmIDTags = true end
 	if BSYC.options.enableRealmAstrickName == nil then BSYC.options.enableRealmAstrickName = false end
@@ -108,7 +109,7 @@ function Data:OnEnable()
 	if BSYC.options.colors.second == nil then BSYC.options.colors.second = { r = 1, g = 1, b = 1 }  end
 	if BSYC.options.colors.total == nil then BSYC.options.colors.total = { r = 244/255, g = 164/255, b = 96/255 }  end
 	if BSYC.options.colors.guild == nil then BSYC.options.colors.guild = { r = 101/255, g = 184/255, b = 192/255 }  end --very grayish light blue
-	--if BSYC.options.colors.guild == nil then BSYC.options.colors.guild = { r = 77/255, g = 216/255, b = 39/255 }  end --fel green
+	if BSYC.options.colors.debug == nil then BSYC.options.colors.debug = { r = 77/255, g = 216/255, b = 39/255 }  end --fel green
 	if BSYC.options.colors.cross == nil then BSYC.options.colors.cross = { r = 1, g = 125/255, b = 10/255 }  end
 	if BSYC.options.colors.bnet == nil then BSYC.options.colors.bnet = { r = 53/255, g = 136/255, b = 1 }  end
 	if BSYC.options.colors.itemid == nil then BSYC.options.colors.itemid = { r = 82/255, g = 211/255, b = 134/255 }  end

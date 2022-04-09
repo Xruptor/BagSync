@@ -346,9 +346,9 @@ function Scanner:SaveCurrency()
 		--local name, isHeader, isExpanded, _, _, count, icon = C_CurrencyInfo.GetCurrencyListInfo(i)
 		local link = C_CurrencyInfo.GetCurrencyListLink(i)
 		
-		local currencyID = BSYC:GetCurrencyID(link)
+		local currencyID = BSYC:GetShortCurrencyID(link)
 		
-		if currencyinfo.name then
+		if currencyinfo.name and currencyID then
 			if(currencyinfo.isHeader and not currencyinfo.isHeaderExpanded) then
 				C_CurrencyInfo.ExpandCurrencyList(i,1)
 				lastHeader = currencyinfo.name

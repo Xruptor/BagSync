@@ -288,8 +288,18 @@ options.args.display = {
 					set = set,
 					arg = "display.enableTooltipItemID",
 				},
-				total = {
+				sourcedebuginfo = {
 					order = 3,
+					type = "toggle",
+					name = L.DisplaySourceDebugInfo,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.enableSourceDebugInfo",
+				},
+				total = {
+					order = 4,
 					type = "toggle",
 					name = L.DisplayTotal,
 					width = "full",
@@ -299,7 +309,7 @@ options.args.display = {
 					arg = "display.showTotal",
 				},
 				guildgoldtooltip = {
-					order = 4,
+					order = 5,
 					type = "toggle",
 					name = L.DisplayGuildGoldInGoldTooltip,
 					width = "full",
@@ -310,7 +320,7 @@ options.args.display = {
 					disabled = function() return not BSYC.options["enableGuild"] end,
 				},
 				faction = {
-					order = 5,
+					order = 6,
 					type = "toggle",
 					name = L.DisplayFaction,
 					width = "full",
@@ -320,7 +330,7 @@ options.args.display = {
 					arg = "display.enableFaction",
 				},
 				guildcurrentcharacter = {
-					order = 6,
+					order = 7,
 					type = "toggle",
 					name = L.DisplayGuildCurrentCharacter,
 					width = "full",
