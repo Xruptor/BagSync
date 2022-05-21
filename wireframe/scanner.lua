@@ -336,32 +336,37 @@ function Scanner:SaveCurrency()
 	if Unit:InCombatLockdown() then return end
 	
 	local lastHeader
-	local limit = C_CurrencyInfo.GetCurrencyListSize()
 	local slotItems = {}
+	
+	--first lets expand everything just in case
+	local whileChk = true
 
-	for i=1, limit do
-
+	while whileChk do
+		whileChk = false -- turn the while loop off, it will only continue if we found an unexpanded header until all are expanded
+		for k=1, C_CurrencyInfo.GetCurrencyListSize() do
+			local headerCheck = C_CurrencyInfo.GetCurrencyListInfo(k)
+			if headerCheck.isHeader and not headerCheck.isHeaderExpanded then
+				C_CurrencyInfo.ExpandCurrencyList(k, true)
+				whileChk = true
+			end
+		end
+	end
+	
+	for i=1, C_CurrencyInfo.GetCurrencyListSize() do
 		local currencyinfo = C_CurrencyInfo.GetCurrencyListInfo(i)
-		--local name = currencyinfo.name
-		--local name, isHeader, isExpanded, _, _, count, icon = C_CurrencyInfo.GetCurrencyListInfo(i)
 		local link = C_CurrencyInfo.GetCurrencyListLink(i)
-		
 		local currencyID = BSYC:GetShortCurrencyID(link)
 		
-		if currencyinfo.name and currencyID then
-			if(currencyinfo.isHeader and not currencyinfo.isHeaderExpanded) then
-				C_CurrencyInfo.ExpandCurrencyList(i,1)
+		if currencyinfo.name then
+			if currencyinfo.isHeader then
 				lastHeader = currencyinfo.name
-				limit = C_CurrencyInfo.GetCurrencyListSize()
-			elseif currencyinfo.isHeader then
-				lastHeader = currencyinfo.name
-			end
-			if (not currencyinfo.isHeader) then
+			elseif not currencyinfo.isHeader and currencyID then
 				slotItems[currencyID] = slotItems[currencyID] or {}
 				slotItems[currencyID].name = currencyinfo.name
 				slotItems[currencyID].header = lastHeader
 				slotItems[currencyID].count = currencyinfo.quantity
 				slotItems[currencyID].icon = currencyinfo.iconFileID
+				Debug(currencyinfo.name, lastHeader)
 			end
 		end
 	end

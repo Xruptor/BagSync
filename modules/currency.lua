@@ -119,10 +119,11 @@ function Currency:DisplayList()
 	for unitObj in Data:IterateUnits() do
 		if not unitObj.isGuild and unitObj.data.currency then
 			for k, v in pairs(unitObj.data.currency) do
+				local header = v.header or L.Currency
 				--only do the entry once per heading and name
-				if not tempList[v.header..v.name] then
-					table.insert(usrData, { header=v.header, name=v.name, icon=v.icon, currencyID=k} )
-					tempList[v.header..v.name] = true
+				if not tempList[header..v.name] then
+					table.insert(usrData, { header=header, name=v.name, icon=v.icon, currencyID=k} )
+					tempList[header..v.name] = true
 				end
 			end
 		end
