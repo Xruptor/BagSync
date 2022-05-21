@@ -366,7 +366,6 @@ function Scanner:SaveCurrency()
 				slotItems[currencyID].header = lastHeader
 				slotItems[currencyID].count = currencyinfo.quantity
 				slotItems[currencyID].icon = currencyinfo.iconFileID
-				Debug(currencyinfo.name, lastHeader)
 			end
 		end
 	end
