@@ -25,15 +25,21 @@ local function CanAccessObject(obj)
 end
 
 local function comma_value(n)
-	if not n then return "?" end
-	n = tostring(n)
-	local left,num,right = string.match(n,'^([^%d]*%d)(%d*)(.-)$')
-	return left..(num:reverse():gsub('(%d%d%d)','%1,'):reverse())..right
+	if not n or not tonumber(n) then return "?" end
+	return tostring(BreakUpLargeNumbers(tonumber(n)))
+end
+
+--https://wowwiki-archive.fandom.com/wiki/User_defined_functions
+local function RGBPercToHex(r, g, b)
+	r = r <= 1 and r >= 0 and r or 0
+	g = g <= 1 and g >= 0 and g or 0
+	b = b <= 1 and b >= 0 and b or 0
+	return string.format("%02x%02x%02x", r*255, g*255, b*255)
 end
 
 function Tooltip:HexColor(color, str)
 	if type(color) == "table" then
-		return string.format("|cff%02x%02x%02x%s|r", (color.r or 1) * 255, (color.g or 1) * 255, (color.b or 1) * 255, tostring(str))
+		return string.format("|cff%s%s|r", RGBPercToHex(color.r, color.g, color.b), tostring(str))
 	end
 	return string.format("|cff%s%s|r", tostring(color), tostring(str))
 end
@@ -269,20 +275,20 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList)
 			total = total + count
 			
 			desc = self:HexColor(BSYC.options.colors.first, desc)
-			count = self:HexColor(BSYC.options.colors.second, count)
+			count = self:HexColor(BSYC.options.colors.second, comma_value(count))
 			
-			tallyString = tallyString..L.TooltipDelimiter..desc.." "..comma_value(count)
+			tallyString = tallyString..L.TooltipDelimiter..desc.." "..count
 		end
 	end
 	
 	tallyString = strsub(tallyString, string.len(L.TooltipDelimiter) + 1) --remove first delimiter
 	if total < 1 or string.len(tallyString) < 1 then return end
-	
+
 	--if it's groupped up and has more then one item then use a different color and show total
 	if grouped > 1 then
 		tallyString = self:HexColor(BSYC.options.colors.second, comma_value(total)).." ("..tallyString..")"
 	end
-	
+
 	--add to list
 	table.insert(unitList, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), tallyString=tallyString, sortIndex=self:GetSortIndex(unitObj) } )
 
@@ -480,7 +486,6 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		desc = self:HexColor(BSYC.options.colors.debug, L.TooltipDebug)
 		value = self:HexColor(BSYC.options.colors.second, "1|"..source)
 		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
-		--Debug(link, source)
 	end
 
 	--add seperator if enabled and only if we have something to work with

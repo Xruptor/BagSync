@@ -575,6 +575,15 @@ options.args.color = {
 			set = set,
 			arg = "color.itemid",
 		},
+		resetcolors = {
+			order = 8,
+			type = "execute",
+			name = L.DefaultColors,
+			func = function()
+				BSYC:GetModule("Data"):ResetColors()
+				InterfaceOptionsFrame:Hide()
+			end,
+		},
 	},
 }
 

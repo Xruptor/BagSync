@@ -85,6 +85,7 @@ L.ScanGuildBankStart = "Querying server for Guild Bank info, please wait....."
 L.ScanGuildBankDone = "Guild Bank scan complete!"
 L.ScanGuildBankError = "Warning: Guild Bank scanning incomplete."
 L.ScanGuildBankScanInfo = "Scanning Guild Tab (%s/%s)."
+L.DefaultColors = "Default Colors"
 -- ----THESE ARE FOR SLASH COMMANDS OPERATORS
 L.SlashItemName = "[itemname]"
 L.SlashSearch = "search"
