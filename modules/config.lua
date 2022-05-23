@@ -341,6 +341,18 @@ options.args.display = {
 					disabled = function() return not BSYC.options["enableGuild"] end,
 					hidden = function() return BSYC.IsClassic end,
 				},
+				guildbankscanalert = {
+					order = 8,
+					type = "toggle",
+					name = L.DisplayGuildBankScanAlert,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.showGuildBankScanAlert",
+					disabled = function() return not BSYC.options["enableGuild"] end,
+					hidden = function() return BSYC.IsClassic end,
+				},
 			}
 		},
 		grouptags = {

@@ -139,6 +139,7 @@ L.DisplayRealmAstrick = "Display [*] instead of realm names for |cffff7d0a[XR]|r
 L.DisplayShortRealmName = "Display short realm names for |cffff7d0a[XR]|r and |cff3587ff[BNet]|r."
 L.DisplayFactionIcons = "Display faction icons in tooltip."
 L.DisplayGuildCurrentCharacter = "Display [Guild] items only for currently logged in character."
+L.DisplayGuildBankScanAlert = "Display the Guild Bank scanning alert window."
 L.DisplayShowUniqueItemsTotals = "Enabling this option will allow unique items to be added towards the total item count, regardless of item stats. |cFF99CC33(Recommended)|r."
 L.DisplayShowUniqueItemsTotals_2 = [[
 Certain items like |cffff7d0a[Legendaries]|r can share the same name but have different stats.  Since these items are treated independently from one another, they are sometimes not counted towards the total item count. Enabling this option will completely disregard the unique item stats and treat them all the same, so long as they share the same item name.

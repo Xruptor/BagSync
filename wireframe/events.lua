@@ -243,7 +243,9 @@ function Events:GUILDBANKBAGSLOTS_CHANGED()
 		self.GuildTabQueryQueue[tab] = nil
 		--show the alert
 		local numTab = string.format(L.ScanGuildBankScanInfo, tab or 0, GetNumGuildBankTabs() or 0)
-		showEventAlert(numTab, "GUILDBANK")
+		if BSYC.options.showGuildBankScanAlert then
+			showEventAlert(numTab, "GUILDBANK")
+		end
 	else
 		if self.queryGuild then
 			self.queryGuild = false
