@@ -71,7 +71,20 @@ function Search:OnEnable()
 
 	Search.scrollframe = scrollframe
 	SearchFrame:AddChild(scrollframe)
+	
+	local totalCountLabel = AceGUI:Create("Label")
 
+	totalCountLabel:SetText(L.TooltipTotal.." |cFFFFFFFF0|r")
+	totalCountLabel:SetFont(STANDARD_TEXT_FONT, 12, THICKOUTLINE)
+	totalCountLabel:SetColor(1, 165/255, 0)
+	totalCountLabel:SetFullWidth(true)
+	
+	totalCountLabel:ClearAllPoints()
+	totalCountLabel.frame:SetParent(SearchFrame.frame)
+	totalCountLabel:SetPoint("CENTER", SearchFrame.frame, "BOTTOM", -75, 25)
+	totalCountLabel.frame:Show()
+	Search.totalCountLabel = totalCountLabel
+	
 	----------------------------------------------------------
 	----------------------------------------------------------
 	-------  WARNING FRAME
@@ -127,10 +140,11 @@ function Search:OnEnable()
 	local advSearchBtn = AceGUI:Create("Button")
 	advSearchBtn:SetText(L.AdvancedSearch)
 	advSearchBtn:SetHeight(20)
+	advSearchBtn:SetWidth(150)
 	
 	SearchFrame:AddChild(advSearchBtn)
 	advSearchBtn:ClearAllPoints()
-	advSearchBtn:SetPoint("CENTER", SearchFrame.frame, "BOTTOM", 0, 25)
+	advSearchBtn:SetPoint("CENTER", SearchFrame.frame, "BOTTOM", 105, 25)
 	
 	SearchFrame.advsearchbtn = advSearchBtn
 	
@@ -586,7 +600,9 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 			self:AddEntry(searchTable[i])
 		end
 		self.scrollframe.frame:Show()
+		self.totalCountLabel:SetText(L.TooltipTotal.." |cFFFFFFFF"..tostring(#searchTable).."|r")
 	else
+		self.totalCountLabel:SetText(L.TooltipTotal.." |cFFFFFFFF0|r")
 		self.scrollframe.frame:Hide()
 	end
 		
@@ -655,7 +671,9 @@ function Search:DisplayAdvSearchLists()
 		self:AdvancedSearchAddEntry(tmpLoc, false, false) --add entry
 
 	end
-	self.advancedsearchframe.locationlistscrollframe.frame:Show()
 	
+	self.totalCountLabel:SetText(L.TooltipTotal.." |cFFFFFFFF0|r")
+	
+	self.advancedsearchframe.locationlistscrollframe.frame:Show()
 
 end
