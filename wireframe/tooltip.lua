@@ -523,8 +523,7 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 
 	currencyID = tonumber(currencyID) --make sure it's a number we are working with and not a string
 	if not currencyID then return end
-	--Debug(currencyName, currencyIcon, currencyID, source)
-	
+
 	--loop through our characters
 	local usrData = {}
 	
