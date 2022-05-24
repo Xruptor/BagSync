@@ -340,15 +340,24 @@ function Scanner:SaveCurrency()
 	
 	--first lets expand everything just in case
 	local whileChk = true
-
+	local exitCount = 0
+	
 	while whileChk do
 		whileChk = false -- turn the while loop off, it will only continue if we found an unexpanded header until all are expanded
+		exitCount = exitCount + 1 --catch all to prevent endless loop
+		
 		for k=1, C_CurrencyInfo.GetCurrencyListSize() do
 			local headerCheck = C_CurrencyInfo.GetCurrencyListInfo(k)
 			if headerCheck.isHeader and not headerCheck.isHeaderExpanded then
 				C_CurrencyInfo.ExpandCurrencyList(k, true)
 				whileChk = true
 			end
+		end
+		
+		--this is a catch all in case something happens above and for some reason it's always true
+		if exitCount >= 50 then
+			whileChk = false --just in case
+			break
 		end
 	end
 	
