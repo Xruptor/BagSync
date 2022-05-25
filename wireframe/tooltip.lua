@@ -484,7 +484,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	--add debug info
 	if BSYC.options.enableSourceDebugInfo and source then
 		desc = self:HexColor(BSYC.options.colors.debug, L.TooltipDebug)
-		value = self:HexColor(BSYC.options.colors.second, "1|"..source)
+		value = self:HexColor(BSYC.options.colors.second, "1;"..source..";"..tostring(shortID or 0)..";"..tostring(isBattlePet or "false"))
+		table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
 		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
 	end
 
@@ -563,7 +564,8 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	
 	if BSYC.options.enableSourceDebugInfo and source then
 		desc = self:HexColor(BSYC.options.colors.debug, L.TooltipDebug)
-		value = self:HexColor(BSYC.options.colors.second, "2|"..source)
+		value = self:HexColor(BSYC.options.colors.second, "2;"..source..";"..tostring(currencyID or 0)..";"..tostring(currencyIcon or 0))
+		objTooltip:AddDoubleLine(" ", " ", 1, 1, 1, 1, 1, 1)
 		objTooltip:AddDoubleLine(desc, value, 1, 1, 1, 1, 1, 1)
 	end
 
