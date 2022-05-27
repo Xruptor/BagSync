@@ -3,7 +3,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhCN")
 if not L then return end
 
 --  zhCN client (NGA-[男爵凯恩]补齐)
---  Last update: 2021/11/03
+--  Last update: 2022/05/27
 
 L.Yes = "Yes"
 L.No = "No"
@@ -55,7 +55,7 @@ L.ProfessionInformation = "|cffddff00左键|r |cff00ff00查看专业配方|r"
 L.ClickViewProfession = "点击查看专业: "
 L.ClickHere = "点这里"
 L.ErrorUserNotFound = "BagSync: 错误,未找到用户!"
-L.EnterItemID = "输入物品ID(用 http://Wowhead.com/ 查询)"
+L.EnterItemID = "输入物品ID(请用 http://Wowhead.com/ 查询.)"
 L.AddGuild = "添加公会"
 L.AddItemID = "添加物品ID"
 L.RemoveItemID = "移除物品ID"
