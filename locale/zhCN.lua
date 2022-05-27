@@ -142,14 +142,14 @@ L.DisplayRealmAstrick = "显示 [*] 而不是显示 |cffff7d0a[XR]|r 和 |cff358
 L.DisplayShortRealmName = "显示短位名字 |cffff7d0a[XR]|r 和 |cff3587ff[BNet]|r"
 L.DisplayFactionIcons = "显示阵营图案"
 L.DisplayGuildCurrentCharacter = "仅显示当前游戏角色的 [公会] 物品"
-L.DisplayGuildBankScanAlert = "显示扫描公会银行警报窗口。"
+L.DisplayGuildBankScanAlert = "显示公会银行扫描窗口。"
 L.DisplayShowUniqueItemsTotals = "启用该选项将允许物品总数量增加独特的物品,无论物品的统计信息。|cFF99CC33（推荐）|r"
 L.DisplayShowUniqueItemsTotals_2 = [[
 某些物品例如 |cffff7d0a[Legendaries]|r 可以共享相同的名字但具有不同的统计数据。由于这些物品是彼此独立处理,因此有时不计入总物品数。启用此选项将完全忽略独特的物品统计数据并一视同仁,,只要它们共享相同的物品名称。
 
 禁用此选项将独立显示物品计数,因此将考虑物品统计信息。物品总数将只显示每个游戏角色共享相同的唯一物品和完全相同的统计数据|cFFDF2B2B(不推荐)|r
 ]]
-L.DisplayShowUniqueItemsTotalsTitle = "显示唯一物品的总数在提示上"
+L.DisplayShowUniqueItemsTotalsTitle = "在鼠标提示上显示唯一物品的总数"
 L.DisplayShowUniqueItemsEnableText = "启用唯一物品的总数"
 L.ColorPrimary = "主要 BagSync 提示颜色"
 L.ColorSecondary = "辅助 BagSync 提示颜色"
