@@ -573,8 +573,6 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	objTooltip:Show()
 end
 
---LibExtraTip has a few more hook methods for tooltip, we don't really need them all
-
 function Tooltip:HookTooltip(objTooltip)
 
 	objTooltip:HookScript("OnHide", function(self)
