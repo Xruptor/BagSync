@@ -29,7 +29,7 @@ L.Reset = "Reset"
 L.Refresh = "Aktualisierung"
 L.AdvancedSearch = "Erweiterte Suche"
 L.AdvancedSearchInformation = "* Benutze BagSync |cffff7d0a[XR]|r und |cff3587ff[BNet]|r Einstellungen."
-L.AdvancedLocationInformation = "* Wenn Sie keine auswählen, wird standardmäßig ALLE ausgewählt."
+L.AdvancedLocationInformation = "* Wenn Du keine auswählst, wird standardmäßig ALLE ausgewählt."
 L.Units = "Einheiten:"
 L.Locations = "Standort:"
 L.Profiles = "Profile"
@@ -55,8 +55,8 @@ L.ClickViewProfession = "Click to view profession: "
 L.ClickHere = "Klicke hier"
 L.ErrorUserNotFound = "BagSync: Fehler, Benutzer nicht gefunden!"
 L.EnterItemID = "Trage bitte eine ItemID ein. (Benutze wowhead.com)"
-L.AddGuild = "Add Guild"
-L.AddItemID = "Add ItemID"
+L.AddGuild = "Gilde einfügen"
+L.AddItemID = "ItemID Einfügen"
 L.RemoveItemID = "Entferne ItemID"
 L.ItemIDNotFound = "[%s] ItemID not found.  Try again!"
 L.ItemIDNotValid = "[%s] ItemID not valid ItemID or the server didn't respond.  Try again!"
@@ -77,8 +77,8 @@ L.ProfessionHasNoRecipes = "Has no recipes to view."
 L.KeybindBlacklist = "Show Blacklist window."
 L.KeybindCurrency = "Show Currency window."
 L.KeybindGold = "Show Gold tooltip."
-L.KeybindProfessions = "Show Professions window."
-L.KeybindProfiles = "Show Profiles window."
+L.KeybindProfessions = "Zeige Berufefenster."
+L.KeybindProfiles = "Zeige Profilfenster."
 L.KeybindSearch = "Zeige Suchfenster."
 L.ObsoleteWarning = "\n\nNote: Obsolete items will continue to show as missing.  To repair this issue, scan your characters again in order to remove obsolete items.\n(Bags, Bank, Reagent, Void, etc...)"
 L.DatabaseReset = "Due to changes in the database.  Your BagSync database has been reset."
@@ -186,13 +186,11 @@ L.FAQ_Question_3 = "Can you view item data from |cFFDF2B2Bmultiple|r |cff3587ffB
 L.FAQ_Question_3_p1 = "No, it's not possible.  I will not provide assistance in this.  So don't ask!"
 L.FAQ_Question_4 = "Can I view item data from multiple WOW accounts |cFFDF2B2Bcurrently logged in|r?"
 L.FAQ_Question_4_p1 = "Currently BagSync does not support transmitting data between multiple logged in WOW accounts.  This may change in the future."
-L.FAQ_Question_5 = "Why do I get a message that guild bank scanning is incomplete?"
+L.FAQ_Question_5 = "Warum erhalte ich eine Meldung, dass das Scannen der Gildenbank unvollständig ist?"
 L.FAQ_Question_5_p1 = [[
-BagSync has to query the server for |cFF99CC33ALL|r your guild bank information.  It takes time for the server to transmit all the data.  In order for BagSync to properly store all your items, you must wait until the server query is complete.  When the scanning process is complete, BagSync will notify you in chat.  Leaving the Guild Bank window before the scanning process is done, will result in incorrect data being stored for your Guild Bank.
+BagSync muss den Server nach |cFF99CC33ALL|r deiner Gildenbankdaten abfragen. Es dauert einige Zeit, bis der Server alle Daten übertragen hat. Damit BagSync alle Ihre Artikel ordnungsgemäß speichern kann, müssen Sie warten, bis die Serverabfrage abgeschlossen ist. Wenn der Scanvorgang abgeschlossen ist, benachrichtigt BagSync Sie im Chat. Wenn Sie das Gildenbank-Fenster verlassen, bevor der Scanvorgang abgeschlossen ist, werden falsche Daten für Ihre Gildenbank gespeichert.
 ]]
-L.FAQ_Question_6 = "Why do I see [FakeID] instead of [ItemID] for Battle Pets?"
+L.FAQ_Question_6 = "Warum sehe ich [FakeID] anstelle von [ItemID] für Kampfhaustiere?"
 L.FAQ_Question_6_p1 = [[
-Blizzard does not assign ItemID's to Battle Pets for WOW.  Instead, Battle Pets in WOW are assigned a temporary PetID from the server.  This PetID is not unique and will be changed when the server resets.  In order to keep track of Battle Pets, BagSync generates a FakeID.  A FakeID is generated from static numbers associated with the Battle Pet.  Using a FakeID allows BagSync to track Battle Pets even across server resets.
+Blizzard weist Kampfhaustieren keine ItemIDs für WOW zu. Stattdessen wird Battle Pets in WOW eine temporäre PetID vom Server zugewiesen. Diese PetID ist nicht eindeutig und wird geändert, wenn der Server zurückgesetzt wird. Um Battle Pets im Auge zu behalten, generiert BagSync eine FakeID. Eine FakeID wird aus statischen Nummern generiert, die dem Battle Pet zugeordnet sind. Die Verwendung einer FakeID ermöglicht es BagSync, Battle Pets sogar über Server-Resets hinweg zu verfolgen.
 ]]
-
-
