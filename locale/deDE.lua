@@ -131,61 +131,61 @@ L.DisplayBNET = "Aktiviere Battle.net Account Charaktere. |cff3587ff[BNet]|r |cF
 L.DisplayItemID = "Display ItemID in tooltip."
 L.DisplaySourceDebugInfo = "Display helpful [Debug] information in tooltip."
 L.DisplayTooltipTags = "Tags"
-L.DisplayTooltipStorage = "Storage"
+L.DisplayTooltipStorage = "Lagerung"
 L.DisplayTooltipExtra = "Extra"
-L.DisplayTooltipAccountWide = "Account-Wide"
-L.DisplayGreenCheck = "Display %s next to current character name."
-L.DisplayRealmIDTags = "Display |cffff7d0a[XR]|r and |cff3587ff[BNet]|r realm identifiers."
-L.DisplayRealmNames = "Display realm names."
-L.DisplayRealmAstrick = "Display [*] instead of realm names for |cffff7d0a[XR]|r and |cff3587ff[BNet]|r."
-L.DisplayShortRealmName = "Display short realm names for |cffff7d0a[XR]|r and |cff3587ff[BNet]|r."
-L.DisplayFactionIcons = "Display faction icons in tooltip."
-L.DisplayGuildCurrentCharacter = "Display [Guild] items only for currently logged in character."
-L.DisplayGuildBankScanAlert = "Display the Guild Bank scanning alert window."
-L.DisplayShowUniqueItemsTotals = "Enabling this option will allow unique items to be added towards the total item count, regardless of item stats. |cFF99CC33(Recommended)|r."
+L.DisplayTooltipAccountWide = "Accountweit"
+L.DisplayGreenCheck = "Zeige %s neben dem aktuellen Charakternamen an."
+L.DisplayRealmIDTags = "Zeige |cffff7d0a[XR]|r- und |cff3587ff[BNet]|r-Realm-IDs an."
+L.DisplayRealmNames = "Realname anzeigen."
+L.DisplayRealmAstrick = "Zeige [*] anstelle von Realmnamen für |cffff7d0a[XR]|r und |cff3587ff[BNet]|r an."
+L.DisplayShortRealmName = "Kurze Realmnamen für |cffff7d0a[XR]|r und |cff3587ff[BNet]|r anzeigen."
+L.DisplayFactionIcons = "Fraktionssymbole im Tooltip anzeigen."
+L.DisplayGuildCurrentCharacter = "Zeige [Gilden] Gegenstände nur für den aktuell eingeloggten Charakter."
+L.DisplayGuildBankScanAlert = "Zeigt das Scan Warnfenster der Gildenbank an."
+L.DisplayShowUniqueItemsTotals = "Wenn Du diese Option aktivierst, können einzigartige Gegenstände zur Gesamtzahl der Gegenstände hinzugefügt werden, unabhängig von den Gegenstandsstatistiken. |cFF99CC33(Empfohlen)|r."
 L.DisplayShowUniqueItemsTotals_2 = [[
-Certain items like |cffff7d0a[Legendaries]|r can share the same name but have different stats.  Since these items are treated independently from one another, they are sometimes not counted towards the total item count. Enabling this option will completely disregard the unique item stats and treat them all the same, so long as they share the same item name.
+Bestimmte Gegenstände wie |cffff7d0a[Legendäre]|r können den gleichen Namen haben, aber unterschiedliche Werte haben. Da diese Artikel unabhängig voneinander behandelt werden, werden sie manchmal nicht auf die Gesamtanzahl der Artikel angerechnet. Wenn Sie diese Option aktivieren, werden die einzigartigen Gegenstandsstatistiken vollständig ignoriert und alle gleich behandelt, solange sie denselben Gegenstandsnamen haben.
 
-Disabling this option will display the item counts independently as item stats will be taken into consideration.  Item totals will only display for each character that share the same unique item with the exact same stats. |cFFDF2B2B(Not Recommended)|r
+Wenn Du diese Option deaktivierst, werden die Artikelanzahlen unabhängig angezeigt, da die Artikelstatistiken berücksichtigt werden. Gegenstandssummen werden nur für jeden Charakter angezeigt, der denselben einzigartigen Gegenstand mit exakt denselben Werten hat. |cFFDF2B2B(Nicht empfohlen)|r
 ]]
 L.DisplayShowUniqueItemsTotalsTitle = "QuickInfo Gesamtsummen für einzigartige Gegenstände anzeigen"
 L.DisplayShowUniqueItemsEnableText = "Aktiviere einzigartige Artikelsummen."
-L.ColorPrimary = "Primäre BagSync Tooltipfarbe."
-L.ColorSecondary = "Secondary BagSync tooltip color."
-L.ColorTotal = "BagSync [Total] tooltip color."
-L.ColorGuild = "BagSync [Guild] tooltip color."
-L.ColorCrossRealm = "BagSync [Cross-Realms] tooltip color."
-L.ColorBNET = "BagSync [Battle.Net] tooltip color."
-L.ColorItemID = "BagSync [ItemID] tooltip color."
-L.ConfigHeader = "Settings for various BagSync features."
+L.ColorPrimary = "Primärer BagSync Tooltipfarbe."
+L.ColorSecondary = "Sekundär BagSync Tooltipfarbe."
+L.ColorTotal = "BagSync [Total] Tooltipfarbe."
+L.ColorGuild = "BagSync [Gilde] Tooltipfarbe."
+L.ColorCrossRealm = "BagSync [Cross-Realms] Tooltipfarbe."
+L.ColorBNET = "BagSync [Battle.Net] Tooltipfarbe."
+L.ColorItemID = "BagSync [ItemID] Tooltipfarbe."
+L.ConfigHeader = "Einstellungen für verschiedene BagSync Funktionen."
 L.ConfigDisplay = "Display"
-L.ConfigTooltipHeader = "Settings for the displayed BagSync tooltip information."
-L.ConfigColor = "Color"
-L.ConfigColorHeader = "Color settings for BagSync tooltip information."
-L.ConfigMain = "Main"
-L.ConfigMainHeader = "Main settings for BagSync."
-L.WarningItemSearch = "WARNING: A total of [|cFFFFFFFF%s|r] items were not searched!\n\nBagSync is still waiting for the server/cache to respond.\n\nPress Search or Refresh button."
-L.WarningUpdatedDB = "You have been updated to latest database version!  You will need to rescan all your characters again!|r"
-L.WarningHeader = "Warning!"
-L.ConfigFAQ= "FAQ / Help"
-L.ConfigFAQHeader = "Frequently asked questions and help section for BagSync."
-L.FAQ_Question_1 = "I'm experiencing hitching/stuttering/lagging with tooltips."
+L.ConfigTooltipHeader = "Einstellungen für die angezeigten BagSync Tooltip Informationen."
+L.ConfigColor = "Farbe"
+L.ConfigColorHeader = "Farbeinstellungen für BagSync-Tooltip Informationen."
+L.ConfigMain = "Hauptkonfig"
+L.ConfigMainHeader = "Haupteinstellungen von BagSync."
+L.WarningItemSearch = "WARNUNG: Insgesamt [|cFFFFFFFF%s|r] Elemente wurden nicht durchsucht!\n\nBagSync wartet immer noch auf die Antwort des Servers/Cache.\n\nDrücke die Suchen- oder Aktualisieren Taste."
+L.WarningUpdatedDB = "Du wurdest auf die neueste Datenbankversion aktualisiert! Alle Deine Charaktere müssen erneut gescannt werden!|r"
+L.WarningHeader = "Warnung!"
+L.ConfigFAQ= "FAQ / Hilfe"
+L.ConfigFAQHeader = "Häufig gestellte Fragen und Hilfebereich für BagSync."
+L.FAQ_Question_1 = "Ich erlebe Ruckeln/Stottern/Verzögerungen bei Tooltips."
 L.FAQ_Question_1_p1 = [[
-This issue normally happens when there is old or corrupt data in the database, which BagSync cannot interpret.  The problem can also occur when there is overwhelming amount of data for BagSync to go through.  If you have thousands of items across multiple characters, that's a lot of data to go through within a second.  This can lead to your client stuttering for a brief moment.  Finally, another cause for this problem is having an extremely old computer.  Older computer's will experience hitching/stuttering as BagSync processes thousands of item and character data.  Newer computer's with faster CPU's and memory don't typically have this issue.
+Dieses Problem tritt normalerweise auf, wenn alte oder beschädigte Daten in der Datenbank vorhanden sind, die BagSync nicht interpretieren kann. Das Problem kann auch auftreten, wenn BagSync eine überwältigende Datenmenge verarbeiten muss. Wenn Sie Tausende von Elementen über mehrere Charaktere hinweg haben, müssen Sie innerhalb einer Sekunde eine Menge Daten durchgehen. Dies kann dazu führen, dass Ihr Kunde für einen kurzen Moment stottert. Schließlich ist ein extrem alter Computer eine weitere Ursache für dieses Problem. Bei älteren Computern kommt es zu Ruckeln/Stottern, da BagSync Tausende von Artikel- und Charakterdaten verarbeitet. Neuere Computer mit schnelleren CPUs und Arbeitsspeicher haben dieses Problem normalerweise nicht.
 
-In order to fix this problem, you can try resetting the database.  This usually resolves the problem.  Use the following slash command. |cFF99CC33/bgs resetdb|r
-If this does not resolve your issue, please file an issue ticket on GitHub for BagSync.
+Um dieses Problem zu beheben, kannst Du versuchen, die Datenbank zurückzusetzen. Dies behebt normalerweise das Problem. Verwende den folgenden Slash-Befehl. |cFF99CC33/bgs resetdb|r
+Wenn dies Dein Problem nicht löst, reiche bitte ein Problemticket auf GitHub für BagSync ein.
 ]]
-L.FAQ_Question_2 = "No item data for my other WOW accounts found in a |cFFDF2B2Bsingle|r |cff3587ffBattle.net|r account."
+L.FAQ_Question_2 = "Keine Gegenstandsdaten für meine anderen WOW-Konten in einem |cFFDF2B2Bsingle|r |cff3587ffBattle.net|r-Konto gefunden."
 L.FAQ_Question_2_p1 = [[
-Addon's do not have the ability to read data from other WOW accounts.  This is because they don't share the same SavedVariable folder.  This is a built in limitation within Blizzard's WOW Client.  Therefore, you will not be able to see item data for multiple WOW accounts under a |cFFDF2B2Bsingle|r |cff3587ffBattle.net|r.  BagSync will only be able to read character data across multiple realms within the same WOW Account, not the entire Battle.net account.
+Addons haben nicht die Fähigkeit, Daten von anderen WOW-Konten zu lesen. Dies liegt daran, dass sie nicht denselben SavedVariable-Ordner gemeinsam nutzen. Dies ist eine eingebaute Einschränkung im WOW-Client von Blizzard. Daher können Sie Artikeldaten für mehrere WOW-Konten unter einem |cFFDF2B2Bsingle|r |cff3587ffBattle.net|r nicht sehen. BagSync kann nur Charakterdaten über mehrere Realms innerhalb desselben WOW-Kontos lesen, nicht das gesamte Battle.net-Konto.
 
-There is a way to connect multiple WOW Accounts, within a |cFFDF2B2Bsingle|r |cff3587ffBattle.net|r account, so that they share the same SavedVariables folder.  This involves creating Symlink folders.  I will not provide assistance on this.  So don't ask!  Please visit the following guide for more details.  |cFF99CC33https://www.wowhead.com/guide=934|r
+Es gibt eine Möglichkeit, mehrere WOW-Konten innerhalb eines |cFFDF2B2Bsingle|r |cff3587ffBattle.net|r-Kontos zu verbinden, sodass sie denselben SavedVariables-Ordner teilen. Dazu gehört das Erstellen von Symlink-Ordnern. Ich werde diesbezüglich keine Hilfe leisten. Also frag nicht! Weitere Informationen findest Du in der folgenden Anleitung. |cFF99CC33https://www.wowhead.com/guide=934|r
 ]]
-L.FAQ_Question_3 = "Can you view item data from |cFFDF2B2Bmultiple|r |cff3587ffBattle.net|r Accounts?"
-L.FAQ_Question_3_p1 = "No, it's not possible.  I will not provide assistance in this.  So don't ask!"
-L.FAQ_Question_4 = "Can I view item data from multiple WOW accounts |cFFDF2B2Bcurrently logged in|r?"
-L.FAQ_Question_4_p1 = "Currently BagSync does not support transmitting data between multiple logged in WOW accounts.  This may change in the future."
+L.FAQ_Question_3 = "Kannst Du Gegenstandsdaten von |cFFDF2B2Bmehreren|r |cff3587ffBattle.net|r Accounts anzeigen?"
+L.FAQ_Question_3_p1 = "Nein, das ist nicht möglich. Ich werde dabei keine Hilfe leisten."
+L.FAQ_Question_4 = "Kann ich Artikeldaten von mehreren WOW-Konten anzeigen, |cFFDF2B2Bderzeit eingeloggt|r?"
+L.FAQ_Question_4_p1 = "Derzeit unterstützt BagSync die Übertragung von Daten zwischen mehreren angemeldeten WOW-Konten nicht. Dies kann sich in Zukunft ändern."
 L.FAQ_Question_5 = "Warum erhalte ich eine Meldung, dass das Scannen der Gildenbank unvollständig ist?"
 L.FAQ_Question_5_p1 = [[
 BagSync muss den Server nach |cFF99CC33ALL|r deiner Gildenbankdaten abfragen. Es dauert einige Zeit, bis der Server alle Daten übertragen hat. Damit BagSync alle Ihre Artikel ordnungsgemäß speichern kann, müssen Sie warten, bis die Serverabfrage abgeschlossen ist. Wenn der Scanvorgang abgeschlossen ist, benachrichtigt BagSync Sie im Chat. Wenn Sie das Gildenbank-Fenster verlassen, bevor der Scanvorgang abgeschlossen ist, werden falsche Daten für Ihre Gildenbank gespeichert.
