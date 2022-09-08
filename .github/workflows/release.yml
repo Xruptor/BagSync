@@ -1,4 +1,6 @@
 # description of this workflow, can be anything you want
+#https://wowpedia.fandom.com/wiki/Using_the_BigWigs_Packager_with_GitHub_Actions
+
 name: WOW Packager (WOWInterface/CurseForge)
 
 # we need to let GitHub know _when_ we want to release, typically only when we create a new tag.

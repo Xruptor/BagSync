@@ -1,11 +1,11 @@
 ## Interface: 90207
-## Interface-Retail: 90200
+## Interface-Retail: 90207
 ## Interface-Classic: 11403
 ## Interface-Wrath: 30400
 ## Title: BagSync
 ## Notes: BagSync tracks your characters items and displays it within tooltips.
 ## Author: Xruptor
-## Version: 16.7
+## Version: 16.8
 ## X-Curse-Project-ID: 22067
 ## X-WoWI-ID: 15351
 ## OptionalDeps: tekDebug
