@@ -46,8 +46,8 @@ jobs:
         with:
           args: -g classic
 
-      # Package and release the TBC version
-      - name: Create BCC Package
+      # Package and release the wrath version
+      - name: Create Wrath Package
         uses: BigWigsMods/packager@master
         with:
-          args: -g bcc
+          args: -g wrath
