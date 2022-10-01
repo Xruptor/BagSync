@@ -4,6 +4,7 @@
 ## Interface-Wrath: 30400
 ## Title: BagSync
 ## Notes: BagSync tracks your characters items and displays it within tooltips.
+## Notes-zhCN: BagSync 统计您的角色物品并将其显示在工具提示中.
 ## Author: Xruptor
 ## Version: 16.8
 ## X-Curse-Project-ID: 22067
