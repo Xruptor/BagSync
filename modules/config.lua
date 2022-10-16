@@ -207,9 +207,28 @@ options.args.main = {
 	},
 }
 
-options.args.display = {
+options.args.search = {
 	type = "group",
 	order = 3,
+	name = L.ConfigSearch,
+	desc = L.ConfigSearchHeader,
+	args = {
+		focussearcheditbox = {
+			order = 1,
+			type = "toggle",
+			name = L.FocusSearchEditBox,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "search.focusSearchEditBox",
+		},
+	}
+}
+
+options.args.display = {
+	type = "group",
+	order = 4,
 	name = L.ConfigDisplay,
 	desc = L.ConfigTooltipHeader,
 	args = {
@@ -506,7 +525,7 @@ options.args.display = {
 	
 options.args.color = {
 	type = "group",
-	order = 4,
+	order = 5,
 	name = L.ConfigColor,
 	desc = L.ConfigColorHeader,
 	args = {
@@ -601,7 +620,7 @@ options.args.color = {
 
 options.args.faq = {
 	type = "group",
-	order = 5,
+	order = 6,
 	name = L.ConfigFAQ,
 	desc = L.ConfigFAQHeader,
 	args = {
@@ -747,6 +766,10 @@ BSYC.aboutPanel = LoadAboutFrame()
 -- General Options
 config:RegisterOptionsTable("BagSync-General", options.args.main)
 BSYC.blizzPanel = configDialog:AddToBlizOptions("BagSync-General", options.args.main.name, "BagSync")
+
+-- Search Options
+config:RegisterOptionsTable("BagSync-Search", options.args.search)
+configDialog:AddToBlizOptions("BagSync-Search", options.args.search.name, "BagSync")
 
 -- Display Options
 config:RegisterOptionsTable("BagSync-Display", options.args.display)

@@ -50,10 +50,16 @@ function Search:OnEnable()
 		searchbar:ClearFocus()
 		self:DoSearch(searchbar:GetText())
 	end)
-	
+
+	if BSYC.options.focusSearchEditBox then
+		SearchFrame:SetCallback("OnShow", function()
+			searchbar:SetFocus()
+		end)
+	end
+
 	Search.searchbar = searchbar
 	w:AddChild(searchbar)
-	
+
 	local refreshbutton = AceGUI:Create("Button")
 	refreshbutton:SetText(L.Refresh)
 	refreshbutton:SetWidth(100)
