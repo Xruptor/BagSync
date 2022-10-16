@@ -122,8 +122,18 @@ options.args.main = {
 			set = set,
 			arg = "main.tooltipOnlySearch",
 		},
-		enableminimap = {
+		focussearcheditbox = {
 			order = 4,
+			type = "toggle",
+			name = L.FocusSearchEditBox,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "main.focusSearchEditBox",
+		},
+		enableminimap = {
+			order = 5,
 			type = "toggle",
 			name = L.DisplayMinimap,
 			width = "full",
@@ -133,7 +143,7 @@ options.args.main = {
 			arg = "minimap.enableMinimap",
 		},
 		enableversiontext = {
-			order = 5,
+			order = 6,
 			type = "toggle",
 			name = L.EnableLoginVersionInfo,
 			width = "full",
@@ -143,7 +153,7 @@ options.args.main = {
 			arg = "main.enableLoginVersionInfo",
 		},
 		keybindblacklist = {
-			order = 6,
+			order = 7,
 			type = "keybinding",
 			name = L.KeybindBlacklist,
 			width = "full",
@@ -153,7 +163,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCBLACKLIST",
 		},
 		keybindcurrency = {
-			order = 7,
+			order = 8,
 			type = "keybinding",
 			name = L.KeybindCurrency,
 			width = "full",
@@ -164,7 +174,7 @@ options.args.main = {
 			hidden = function() return not BSYC.IsRetail end,
 		},
 		keybindgold = {
-			order = 8,
+			order = 9,
 			type = "keybinding",
 			name = L.KeybindGold,
 			width = "full",
@@ -174,7 +184,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCGOLD",
 		},
 		keybindprofessions = {
-			order = 9,
+			order = 10,
 			type = "keybinding",
 			name = L.KeybindProfessions,
 			width = "full",
@@ -185,7 +195,7 @@ options.args.main = {
 			hidden = function() return not BSYC.IsRetail end,
 		},
 		keybindprofiles = {
-			order = 10,
+			order = 11,
 			type = "keybinding",
 			name = L.KeybindProfiles,
 			width = "full",
@@ -195,7 +205,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCPROFILES",
 		},
 		keybindsearch = {
-			order = 11,
+			order = 12,
 			type = "keybinding",
 			name = L.KeybindSearch,
 			width = "full",
@@ -207,28 +217,9 @@ options.args.main = {
 	},
 }
 
-options.args.search = {
-	type = "group",
-	order = 3,
-	name = L.ConfigSearch,
-	desc = L.ConfigSearchHeader,
-	args = {
-		focussearcheditbox = {
-			order = 1,
-			type = "toggle",
-			name = L.FocusSearchEditBox,
-			width = "full",
-			descStyle = "hide",
-			get = get,
-			set = set,
-			arg = "search.focusSearchEditBox",
-		},
-	}
-}
-
 options.args.display = {
 	type = "group",
-	order = 4,
+	order = 3,
 	name = L.ConfigDisplay,
 	desc = L.ConfigTooltipHeader,
 	args = {
@@ -525,7 +516,7 @@ options.args.display = {
 	
 options.args.color = {
 	type = "group",
-	order = 5,
+	order = 4,
 	name = L.ConfigColor,
 	desc = L.ConfigColorHeader,
 	args = {
@@ -620,7 +611,7 @@ options.args.color = {
 
 options.args.faq = {
 	type = "group",
-	order = 6,
+	order = 5,
 	name = L.ConfigFAQ,
 	desc = L.ConfigFAQHeader,
 	args = {
@@ -766,10 +757,6 @@ BSYC.aboutPanel = LoadAboutFrame()
 -- General Options
 config:RegisterOptionsTable("BagSync-General", options.args.main)
 BSYC.blizzPanel = configDialog:AddToBlizOptions("BagSync-General", options.args.main.name, "BagSync")
-
--- Search Options
-config:RegisterOptionsTable("BagSync-Search", options.args.search)
-configDialog:AddToBlizOptions("BagSync-Search", options.args.search.name, "BagSync")
 
 -- Display Options
 config:RegisterOptionsTable("BagSync-Display", options.args.display)
