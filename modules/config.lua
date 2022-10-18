@@ -122,8 +122,18 @@ options.args.main = {
 			set = set,
 			arg = "main.tooltipOnlySearch",
 		},
-		enableminimap = {
+		focussearcheditbox = {
 			order = 4,
+			type = "toggle",
+			name = L.FocusSearchEditBox,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "main.focusSearchEditBox",
+		},
+		enableminimap = {
+			order = 5,
 			type = "toggle",
 			name = L.DisplayMinimap,
 			width = "full",
@@ -133,7 +143,7 @@ options.args.main = {
 			arg = "minimap.enableMinimap",
 		},
 		enableversiontext = {
-			order = 5,
+			order = 6,
 			type = "toggle",
 			name = L.EnableLoginVersionInfo,
 			width = "full",
@@ -143,7 +153,7 @@ options.args.main = {
 			arg = "main.enableLoginVersionInfo",
 		},
 		keybindblacklist = {
-			order = 6,
+			order = 7,
 			type = "keybinding",
 			name = L.KeybindBlacklist,
 			width = "full",
@@ -153,7 +163,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCBLACKLIST",
 		},
 		keybindcurrency = {
-			order = 7,
+			order = 8,
 			type = "keybinding",
 			name = L.KeybindCurrency,
 			width = "full",
@@ -164,7 +174,7 @@ options.args.main = {
 			hidden = function() return not BSYC.IsRetail end,
 		},
 		keybindgold = {
-			order = 8,
+			order = 9,
 			type = "keybinding",
 			name = L.KeybindGold,
 			width = "full",
@@ -174,7 +184,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCGOLD",
 		},
 		keybindprofessions = {
-			order = 9,
+			order = 10,
 			type = "keybinding",
 			name = L.KeybindProfessions,
 			width = "full",
@@ -185,7 +195,7 @@ options.args.main = {
 			hidden = function() return not BSYC.IsRetail end,
 		},
 		keybindprofiles = {
-			order = 10,
+			order = 11,
 			type = "keybinding",
 			name = L.KeybindProfiles,
 			width = "full",
@@ -195,7 +205,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCPROFILES",
 		},
 		keybindsearch = {
-			order = 11,
+			order = 12,
 			type = "keybinding",
 			name = L.KeybindSearch,
 			width = "full",
