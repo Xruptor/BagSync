@@ -48,7 +48,7 @@ table.sort(Realms, function(a,b) return (a < b) end) --sort them alphabetically
 local realmKey = table.concat(Realms, ";") --concat them together
 
 --Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
-self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", function(winArg)
+Unit:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", function(winArg)
 	winArg = tonumber(winArg) or 0
 	
 	--mailbox
@@ -71,7 +71,7 @@ self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", function(winArg)
 end)
 
 --Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
-self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE", function(winArg)
+Unit:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE", function(winArg)
 	winArg = tonumber(winArg) or 0
 	
 	--mailbox
