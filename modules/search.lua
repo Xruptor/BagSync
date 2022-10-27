@@ -51,12 +51,6 @@ function Search:OnEnable()
 		self:DoSearch(searchbar:GetText())
 	end)
 
-	if BSYC.options.focusSearchEditBox then
-		SearchFrame:SetCallback("OnShow", function()
-			searchbar:SetFocus()
-		end)
-	end
-
 	Search.searchbar = searchbar
 	w:AddChild(searchbar)
 
@@ -90,6 +84,12 @@ function Search:OnEnable()
 	totalCountLabel:SetPoint("CENTER", SearchFrame.frame, "BOTTOM", -75, 25)
 	totalCountLabel.frame:Show()
 	Search.totalCountLabel = totalCountLabel
+	
+	SearchFrame:SetCallback("OnShow", function()
+		if BSYC.options.focusSearchEditBox then
+			searchbar:SetFocus()
+		end
+	end)
 	
 	----------------------------------------------------------
 	----------------------------------------------------------

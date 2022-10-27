@@ -99,43 +99,43 @@ function Events:OnEnable()
 	if C_GuildInfo and C_GuildInfo.GuildRoster then C_GuildInfo.GuildRoster() end  -- Retail
 	if GuildRoster then GuildRoster() end -- Classic
 	
-	
-	--Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
-	self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", function(winArg)
-		winArg = tonumber(winArg) or 0
+	--Do old calls for non-retail
+	if not BSYC.IsRetail then
+		self:RegisterEvent("MAIL_SHOW", function() Scanner:SaveMailbox(true) end)
+		self:RegisterEvent("BANKFRAME_OPENED", function() Scanner:SaveBank() end)
 		
-		--mailbox
-		if winArg == 17 then Scanner:SaveMailbox(true) end
-		--bank
-		if winArg == 8 then Scanner:SaveBank() end
-
-		if BSYC.IsRetail then
-			--void storage
-			if winArg == 26 then Scanner:SaveVoidBank() end
-		end
-
+		--WOTLK or higher
 		if not BSYC.IsClassic then
-			--Guildbank
-			if winArg == 10 then self:GuildBank_Open() end
+			self:RegisterEvent("GUILDBANKFRAME_OPENED", function() self:GuildBank_Open() end)
+			self:RegisterEvent("GUILDBANKFRAME_CLOSED", function() self:GuildBank_Close() end)
 		end
-
-	end)
-
-	--Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
-	self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE", function(winArg)
-		winArg = tonumber(winArg) or 0
-		
-		if not BSYC.IsClassic then
-			--Guildbank
-			if winArg == 10 then self:GuildBank_Close() end
-		end
-
-	end)
-
-
+	end
 	
 	if BSYC.IsRetail then
 		
+		--Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
+		self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", function(event, winArg)
+			winArg = tonumber(winArg) or 0
+
+			--mailbox
+			if winArg == 17 then Scanner:SaveMailbox(true) end
+			--bank
+			if winArg == 8 then Scanner:SaveBank() end
+			--void storage
+			if winArg == 26 then Scanner:SaveVoidBank() end
+			--Guildbank
+			if winArg == 10 then self:GuildBank_Open() end
+
+		end)
+		
+		--Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
+		self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE", function(event, winArg)
+			winArg = tonumber(winArg) or 0
+			
+			--Guildbank
+			if winArg == 10 then self:GuildBank_Close() end
+		end)
+	
 		self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
 		
 		--save any crafted item info in case they aren't at a bank

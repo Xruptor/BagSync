@@ -47,51 +47,57 @@ end
 table.sort(Realms, function(a,b) return (a < b) end) --sort them alphabetically
 local realmKey = table.concat(Realms, ";") --concat them together
 
---Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
-Unit:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", function(winArg)
-	winArg = tonumber(winArg) or 0
+--Do old calls for non-retail
+if not BSYC.IsRetail then
+	Unit:RegisterEvent('BANKFRAME_OPENED', function() Unit.atBank = true end)
+	Unit:RegisterEvent('BANKFRAME_CLOSED', function() Unit.atBank = false end)
+	Unit:RegisterEvent('MAIL_SHOW', function() Unit.atMailbox = true end)
+	Unit:RegisterEvent('MAIL_CLOSED', function() Unit.atMailbox = false end)
+	Unit:RegisterEvent('AUCTION_HOUSE_SHOW', function() Unit.atAuction = true end)
+	Unit:RegisterEvent('AUCTION_HOUSE_CLOSED', function() Unit.atAuction = false end)
 	
-	--mailbox
-	if winArg == 17 then Unit.atMailbox = true end
-	--bank
-	if winArg == 8 then Unit.atBank = true end
-	--Auction
-	if winArg == 21 then Unit.atAuction = true end
-	
-	if BSYC.IsRetail then
+	--WOTLK or higher
+	if not BSYC.IsClassic then
+		Unit:RegisterEvent('GUILDBANKFRAME_OPENED', function() Unit.atGuildBank = true end)
+		Unit:RegisterEvent('GUILDBANKFRAME_CLOSED', function() Unit.atGuildBank = false end)
+	end
+end
+
+if BSYC.IsRetail then
+	--Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
+	Unit:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", function(event, winArg)
+		winArg = tonumber(winArg) or 0
+
+		--mailbox
+		if winArg == 17 then Unit.atMailbox = true end
+		--bank
+		if winArg == 8 then Unit.atBank = true end
+		--Auction
+		if winArg == 21 then Unit.atAuction = true end
 		--void storage
 		if winArg == 26 then Unit.atVoidBank = true end
-	end
-
-	if not BSYC.IsClassic then
 		--Guildbank
 		if winArg == 10 then Unit.atGuildBank = true end
-	end
 
-end)
+	end)
 
---Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
-Unit:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE", function(winArg)
-	winArg = tonumber(winArg) or 0
-	
-	--mailbox
-	if winArg == 17 then Unit.atMailbox = false end
-	--bank
-	if winArg == 8 then Unit.atBank = false end
-	--Auction
-	if winArg == 21 then Unit.atAuction = false end
-	
-	if BSYC.IsRetail then
+	--Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
+	Unit:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE", function(event, winArg)
+		winArg = tonumber(winArg) or 0
+
+		--mailbox
+		if winArg == 17 then Unit.atMailbox = false end
+		--bank
+		if winArg == 8 then Unit.atBank = false end
+		--Auction
+		if winArg == 21 then Unit.atAuction = false end
 		--void storage
 		if winArg == 26 then Unit.atVoidBank = false end
-	end
-
-	if not BSYC.IsClassic then
 		--Guildbank
 		if winArg == 10 then Unit.atGuildBank = false end
-	end
 
-end)
+	end)
+end
 
 function Unit:GetUnitAddress(unit)
 	if not unit then
