@@ -115,11 +115,6 @@ function Events:OnEnable()
 		end)
 		self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:SaveReagents() end)
 		
-		self:RegisterEvent("VOID_STORAGE_OPEN", function() Scanner:SaveVoidBank() end)
-		self:RegisterEvent("VOID_STORAGE_UPDATE", function() Scanner:SaveVoidBank() end)
-		self:RegisterEvent("VOID_STORAGE_CONTENTS_UPDATE", function() Scanner:SaveVoidBank() end)
-		self:RegisterEvent("VOID_TRANSFER_DONE", function() Scanner:SaveVoidBank() end)
-		
 		local timerName = "QueryOwnedAuctions"
 		
 		local function doAuctionUpdate()

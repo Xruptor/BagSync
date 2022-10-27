@@ -277,7 +277,9 @@ function Data:LoadSlashCommand()
 				StaticPopup_Show("BAGSYNC_RESETDATABASE")
 				return true
 			elseif cmd == L.SlashConfig then
-				InterfaceOptionsFrame:Show() --has to be here to load the about frame onLoad
+				if InCombatLockdown() or GameMenuFrame:IsShown() or InterfaceOptionsFrame then
+					return false
+				end
 				InterfaceOptionsFrame_OpenToCategory(BSYC.aboutPanel) --force the panel to show
 				return true
 			else

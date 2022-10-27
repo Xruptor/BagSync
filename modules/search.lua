@@ -81,7 +81,7 @@ function Search:OnEnable()
 	local totalCountLabel = AceGUI:Create("Label")
 
 	totalCountLabel:SetText(L.TooltipTotal.." |cFFFFFFFF0|r")
-	totalCountLabel:SetFont(STANDARD_TEXT_FONT, 12, THICKOUTLINE)
+	totalCountLabel:SetFont(STANDARD_TEXT_FONT, 12, "THICKOUTLINE")
 	totalCountLabel:SetColor(1, 165/255, 0)
 	totalCountLabel:SetFullWidth(true)
 	
@@ -105,14 +105,14 @@ function Search:OnEnable()
 
 	local warninglabel = AceGUI:Create("Label")
 	warninglabel:SetText(L.WarningItemSearch)
-	warninglabel:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
+	warninglabel:SetFont(STANDARD_TEXT_FONT, 14, "THICKOUTLINE")
 	warninglabel:SetColor(1, 165/255, 0) --orange, red is just too much sometimes
 	warninglabel:SetFullWidth(true)
 	WarningFrame:AddChild(warninglabel)
 
 	local warninglabel2 = AceGUI:Create("Label")
 	warninglabel2:SetText(L.ObsoleteWarning)
-	warninglabel2:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
+	warninglabel2:SetFont(STANDARD_TEXT_FONT, 14, "THICKOUTLINE")
 	warninglabel2:SetColor(50/255, 165/255, 0)
 	warninglabel2:SetFullWidth(true)
 	WarningFrame:AddChild(warninglabel2)
@@ -167,7 +167,7 @@ function Search:OnEnable()
 	
 	local advSearchInformation = AceGUI:Create("Label")
 	advSearchInformation:SetText(L.AdvancedSearchInformation)
-	advSearchInformation:SetFont(STANDARD_TEXT_FONT, 12, THICKOUTLINE)
+	advSearchInformation:SetFont(STANDARD_TEXT_FONT, 12, "THICKOUTLINE")
 	advSearchInformation:SetColor(1, 165/255, 0)
 	advSearchInformation:SetFullWidth(true)
 	AdvancedSearchFrame:AddChild(advSearchInformation)
@@ -209,7 +209,7 @@ function Search:OnEnable()
 	
 	local pListInfo = AceGUI:Create("Label")
 	pListInfo:SetText(L.Units)
-	pListInfo:SetFont(STANDARD_TEXT_FONT, 12, THICKOUTLINE)
+	pListInfo:SetFont(STANDARD_TEXT_FONT, 12, "THICKOUTLINE")
 	pListInfo:SetColor(0, 1, 0)
 	pListInfo:SetFullWidth(true)
 	AdvancedSearchFrame:AddChild(pListInfo)
@@ -230,14 +230,14 @@ function Search:OnEnable()
 	
 	local locListInfo = AceGUI:Create("Label")
 	locListInfo:SetText(L.Locations)
-	locListInfo:SetFont(STANDARD_TEXT_FONT, 12, THICKOUTLINE)
+	locListInfo:SetFont(STANDARD_TEXT_FONT, 12, "THICKOUTLINE")
 	locListInfo:SetColor(0, 1, 0)
 	locListInfo:SetFullWidth(true)
 	AdvancedSearchFrame:AddChild(locListInfo)
 	
 	local advLocationInformation = AceGUI:Create("Label")
 	advLocationInformation:SetText(L.AdvancedLocationInformation)
-	advLocationInformation:SetFont(STANDARD_TEXT_FONT, 12, THICKOUTLINE)
+	advLocationInformation:SetFont(STANDARD_TEXT_FONT, 12, "THICKOUTLINE")
 	advLocationInformation:SetColor(1, 165/255, 0)
 	advLocationInformation:SetFullWidth(true)
 	AdvancedSearchFrame:AddChild(advLocationInformation)
@@ -327,7 +327,7 @@ function Search:AddEntry(entry)
 	label.highlight:SetVertexColor(0,1,0,0.3)
 				
 	label:SetText(name)
-	label:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
+	label:SetFont(STANDARD_TEXT_FONT, 14, "THICKOUTLINE")
 	label:SetFullWidth(true)
 	label:SetColor( r, g, b)
 	label:SetImage(texture)
@@ -381,7 +381,7 @@ function Search:AdvancedSearchAddEntry(entry, isHeader, isUnit)
 
 	if isHeader then
 		label:SetText(entry.unitObj.realm)
-		label:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
+		label:SetFont(STANDARD_TEXT_FONT, 14, "THICKOUTLINE")
 		label:SetFullWidth(true)
 		label:ApplyJustifyH("CENTER")
 		label:ToggleHeaderHighlight(true)
@@ -392,7 +392,7 @@ function Search:AdvancedSearchAddEntry(entry, isHeader, isUnit)
 		else
 			label:SetText(entry.colorized)
 		end
-		label:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
+		label:SetFont(STANDARD_TEXT_FONT, 14, "THICKOUTLINE")
 		label:SetFullWidth(true)
 		label:ApplyJustifyH("LEFT")
 		label.userdata.isHeader = false
@@ -534,7 +534,6 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 		["reagents"] = true,
 		["equip"] = true,
 		["mailbox"] = true,
-		["void"] = true,
 		["auction"] = true,
 	}
 	
@@ -660,8 +659,7 @@ function Search:DisplayAdvSearchLists()
 		[3] = { source="reagents", 	desc=L.TooltipReagent },
 		[4] = { source="equip", 	desc=L.TooltipEquip },
 		[5] = { source="mailbox", 	desc=L.TooltipMail },
-		[6] = { source="void", 		desc=L.TooltipVoid },
-		[7] = { source="auction", 	desc=L.TooltipAuction },
+		[6] = { source="auction", 	desc=L.TooltipAuction },
 	}
 	
 	for i = 1, #list do

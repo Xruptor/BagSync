@@ -264,8 +264,7 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList)
 		[4] = { source="equip", 	desc=L.TooltipEquip },
 		[5] = { source="guild", 	desc=L.TooltipGuild },
 		[6] = { source="mailbox", 	desc=L.TooltipMail },
-		[7] = { source="void", 		desc=L.TooltipVoid },
-		[8] = { source="auction", 	desc=L.TooltipAuction },
+		[7] = { source="auction", 	desc=L.TooltipAuction },
 	}
 		
 	for i = 1, #list do
@@ -408,7 +407,6 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			["reagents"] = 0,
 			["equip"] = 0,
 			["mailbox"] = 0,
-			["void"] = 0,
 			["auction"] = 0,
 			["guild"] = 0,
 		}
@@ -424,7 +422,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 					else
 						--with the exception of auction, everything else is stored in a numeric list
 						--auction is stored in a numeric list but within an individual bag
-						--auction, equip, void, mailbox
+						--auction, equip, mailbox
 						local passChk = true
 						if k == "auction" and not BSYC.options.enableAuction then passChk = false end
 						if k == "mailbox" and not BSYC.options.enableMailbox then passChk = false end
@@ -637,13 +635,6 @@ function Tooltip:HookTooltip(objTooltip)
 			local link = C_TradeSkillUI.GetRecipeReagentItemLink(recipeID, reagentIndex)
 			if link then
 				Tooltip:TallyUnits(self, link, "SetRecipeReagentItem")
-			end
-		end)
-		hooksecurefunc(objTooltip, "SetRecipeResultItem", function(self, recipeID)
-			if self.__tooltipUpdated then return end
-			local link = C_TradeSkillUI.GetRecipeItemLink(recipeID)
-			if link then
-				Tooltip:TallyUnits(self, link, "SetRecipeResultItem")
 			end
 		end)
 		--------------------------------------------------CURRENCY

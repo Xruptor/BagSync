@@ -38,7 +38,7 @@ function Professions:OnEnable()
 	
 	local information = AceGUI:Create("Label")
 	information:SetText(L.ProfessionInformation)
-	information:SetFont(STANDARD_TEXT_FONT, 12, THICKOUTLINE)
+	information:SetFont(STANDARD_TEXT_FONT, 12, "THICKOUTLINE")
 	information:SetColor(1, 165/255, 0)
 	information:SetFullWidth(true)
 	ProfessionsFrame:AddChild(information)
@@ -69,7 +69,7 @@ function Professions:AddEntry(entry, isHeader)
 	
 	if isHeader then
 		label:SetText(entry.skillData.name)
-		label:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
+		label:SetFont(STANDARD_TEXT_FONT, 14, "THICKOUTLINE")
 		label:SetFullWidth(true)
 		label:ApplyJustifyH("CENTER")
 		label.userdata.hasRecipes = false
@@ -77,7 +77,7 @@ function Professions:AddEntry(entry, isHeader)
 		label.userdata.isHeader = true
 	else
 		label:SetText(entry.colorized)
-		label:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
+		label:SetFont(STANDARD_TEXT_FONT, 14, "THICKOUTLINE")
 		label:SetFullWidth(true)
 		if not entry.skillData.secondary then
 			label.userdata.hasRecipes = true

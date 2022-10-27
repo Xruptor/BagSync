@@ -17,12 +17,6 @@ local function Debug(...)
 	end
 end
 
---https://github.com/tomrus88/BlizzardInterfaceCode/blob/master/Interface/AddOns/Blizzard_VoidStorageUI/Blizzard_VoidStorageUI.lua
-local VOID_DEPOSIT_MAX = 9
-local VOID_WITHDRAW_MAX = 9
-local VOID_STORAGE_MAX = 80
-local VOID_STORAGE_PAGES = 2
-
 local MAX_GUILDBANK_SLOTS_PER_TAB = 98
 local NUM_SLOTS_PER_GUILDBANK_GROUP = 14
 local NUM_GUILDBANK_ICONS_SHOWN = 0
@@ -113,24 +107,6 @@ function Scanner:SaveReagents()
 	if IsReagentBankUnlocked() then 
 		self:SaveBag("reagents", REAGENTBANK_CONTAINER)
 	end
-end
-
-function Scanner:SaveVoidBank()
-	if not Unit.atVoidBank or not BSYC.IsRetail then return end
-	if not BSYC.db.player.void then BSYC.db.player.void = {} end
-	
-	local slotItems = {}
-	
-	for tab = 1, VOID_STORAGE_PAGES do
-		for i = 1, VOID_STORAGE_MAX do
-			local link, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(tab, i)
-			if link then
-				table.insert(slotItems, BSYC:ParseItemLink(link))
-			end
-		end
-	end
-	
-	BSYC.db.player.void = slotItems
 end
 
 function Scanner:GetXRGuild()
