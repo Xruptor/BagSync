@@ -1,10 +1,8 @@
-lightweight tag 5f307596c9a7618e36d529b7af3c331e4808be9f 9.0.1.2
-Author:	James D. Callahan III <darkenelf@gmail.com>
-Date:	Sun Oct 25 17:33:10 2020 -0500
+Changes since tag 9.0.1.2
 
-commit 5f307596c9a7618e36d529b7af3c331e4808be9f
-Author: James D. Callahan III <darkenelf@gmail.com>
-Date:   Sun Oct 25 17:33:10 2020 -0500
+commit 4c6a3d882373fa0b52c6b71d09acc0b87ec1ae00
+Author: Elkano <elkano@gmx.de>
+Date:   Wed Nov 3 19:49:57 2021 +0100
 
-    Update ToC Interface for the WoW 9.0.1 version.
+    update for WoW 9.1.5's new TooltipBackdropTemplate
 

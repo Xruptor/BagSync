@@ -112,7 +112,7 @@ L.HelpProfessionsWindow = "/bgs professions - Opens the professions window."
 L.HelpBlacklistWindow = "/bgs blacklist - Opens the blacklist window."
 ------------------------
 L.EnableBagSyncTooltip = "Enable BagSync Tooltips"
-L.EnableExtTooltip = "Display item count data in an external toolip."
+L.EnableExtTooltip = "Display item count data in an external tooltip."
 L.EnableLoginVersionInfo = "Display BagSync version text at login."
 L.FocusSearchEditBox = "Focus the search box when opening the search window"
 L.DisplayTotal = "Display [Total] amount."

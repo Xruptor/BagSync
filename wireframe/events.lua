@@ -84,12 +84,10 @@ function Events:OnEnable()
 	self:RegisterEvent("TRADE_SKILL_LIST_UPDATE")
 	self:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
 
-	self:RegisterEvent("MAIL_SHOW", function() Scanner:SaveMailbox(true) end)
 	self:RegisterEvent("MAIL_INBOX_UPDATE", function()
 		self:DoTimer("MailBoxScan", function() Scanner:SaveMailbox() end, 0.3)
 	end)
 
-	self:RegisterEvent("BANKFRAME_OPENED", function() Scanner:SaveBank() end)
 	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", function(event, slotID)
 		Scanner:SaveBank(true)
 		--check if they crafted an item outside the bank, if so then do a parse check to update item count.
@@ -100,6 +98,41 @@ function Events:OnEnable()
 	--https://wow.gamepedia.com/API_GetGuildInfo
 	if C_GuildInfo and C_GuildInfo.GuildRoster then C_GuildInfo.GuildRoster() end  -- Retail
 	if GuildRoster then GuildRoster() end -- Classic
+	
+	
+	--Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
+	self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", function(winArg)
+		winArg = tonumber(winArg) or 0
+		
+		--mailbox
+		if winArg == 17 then Scanner:SaveMailbox(true) end
+		--bank
+		if winArg == 8 then Scanner:SaveBank() end
+
+		if BSYC.IsRetail then
+			--void storage
+			if winArg == 26 then Scanner:SaveVoidBank() end
+		end
+
+		if not BSYC.IsClassic then
+			--Guildbank
+			if winArg == 10 then self:GuildBank_Open() end
+		end
+
+	end)
+
+	--Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
+	self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE", function(winArg)
+		winArg = tonumber(winArg) or 0
+		
+		if not BSYC.IsClassic then
+			--Guildbank
+			if winArg == 10 then self:GuildBank_Close() end
+		end
+
+	end)
+
+
 	
 	if BSYC.IsRetail then
 		
@@ -115,7 +148,6 @@ function Events:OnEnable()
 		end)
 		self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:SaveReagents() end)
 		
-		self:RegisterEvent("VOID_STORAGE_OPEN", function() Scanner:SaveVoidBank() end)
 		self:RegisterEvent("VOID_STORAGE_UPDATE", function() Scanner:SaveVoidBank() end)
 		self:RegisterEvent("VOID_STORAGE_CONTENTS_UPDATE", function() Scanner:SaveVoidBank() end)
 		self:RegisterEvent("VOID_TRANSFER_DONE", function() Scanner:SaveVoidBank() end)
@@ -163,8 +195,6 @@ function Events:OnEnable()
 	
 	--only load certain things if NOT in classic
 	if not BSYC.IsClassic then
-		self:RegisterEvent("GUILDBANKFRAME_OPENED")
-		self:RegisterEvent("GUILDBANKFRAME_CLOSED")
 		self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED", function()
 			self:DoTimer("GuildBankScan", function() self:GUILDBANKBAGSLOTS_CHANGED() end, 0.2)
 		end)
@@ -207,7 +237,7 @@ function Events:BAG_UPDATE(event, bagid)
 	Scanner:SaveBag(bagname, bagid)
 end
 
-function Events:GUILDBANKFRAME_OPENED()
+function Events:GuildBank_Open()
 	if not BSYC.options.enableGuild then return end
 	if not self.GuildTabQueryQueue then self.GuildTabQueryQueue = {} end
 	
@@ -223,7 +253,7 @@ function Events:GUILDBANKFRAME_OPENED()
 	end
 end
 
-function Events:GUILDBANKFRAME_CLOSED()
+function Events:GuildBank_Close()
 	if not BSYC.options.enableGuild then return end
 	
 	if self.queryGuild then

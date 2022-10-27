@@ -220,7 +220,7 @@ function Blacklist:AddEntry(entry)
 	local label = AceGUI:Create("InteractiveLabel")
 
 	label:SetText(entry.value)
-	label:SetFont(STANDARD_TEXT_FONT, 14, THICKOUTLINE)
+	label:SetFont(STANDARD_TEXT_FONT, 14, "THICKOUTLINE")
 	label:SetFullWidth(true)
 	label:SetColor(1, 1, 1)
 	label:SetCallback(
