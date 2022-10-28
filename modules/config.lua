@@ -709,10 +709,10 @@ local function LoadAboutFrame()
 	about.name = "BagSync"
 	about:Hide()
 	
-    local fields = {"Version", "Author"}
+	local fields = {"Version", "Author"}
 	local notes = GetAddOnMetadata("BagSync", "Notes")
 
-    local title = about:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+	local title = about:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 
 	title:SetPoint("TOPLEFT", 16, -16)
 	title:SetText("BagSync")

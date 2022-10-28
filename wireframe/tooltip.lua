@@ -575,6 +575,10 @@ end
 
 function Tooltip:HookTooltip(objTooltip)
 
+	--MORE INFO (https://wowpedia.fandom.com/wiki/Category:API_namespaces/C_TooltipInfo)
+	--(https://wowpedia.fandom.com/wiki/Patch_10.0.2/API_changes#Tooltip_Changes)
+	
+		
 	objTooltip:HookScript("OnHide", function(self)
 		self.__tooltipUpdated = false
 		--reset __lastLink in the addon itself not within the tooltip
@@ -589,6 +593,7 @@ function Tooltip:HookTooltip(objTooltip)
 		--this gets called repeatedly on some occasions. Do not reset Tooltip.__lastLink here
 		self.__tooltipUpdated = false
 	end)
+	
 	objTooltip:HookScript("OnTooltipSetItem", function(self)
 		if self.__tooltipUpdated then return end
 		local name, link = self:GetItem()
@@ -629,9 +634,22 @@ function Tooltip:HookTooltip(objTooltip)
 		end)
 	end
 	
+	
+	-- local function OnTooltipSetItem(tooltip, data)
+		-- if (tooltip == GameTooltip or tooltip == EmbeddedItemTooltip) then
+			-- print("OnTooltipSetItem", tooltip, data)
+		-- end
+	-- end
+
+	-- TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, OnTooltipSetItem)
+	
+	
 	--------------------------------------------------
 	if BSYC.IsRetail then
 		--------------------------------------------------RECIPES
+
+		--data = C_TooltipInfo.GetRecipeReagentItem(recipeSpellID, dataSlotIndex)
+		
 		hooksecurefunc(objTooltip, "SetRecipeReagentItem", function(self, recipeID, reagentIndex)
 			if self.__tooltipUpdated then return end
 			local link = C_TradeSkillUI.GetRecipeReagentItemLink(recipeID, reagentIndex)
@@ -639,13 +657,9 @@ function Tooltip:HookTooltip(objTooltip)
 				Tooltip:TallyUnits(self, link, "SetRecipeReagentItem")
 			end
 		end)
-		hooksecurefunc(objTooltip, "SetRecipeResultItem", function(self, recipeID)
-			if self.__tooltipUpdated then return end
-			local link = C_TradeSkillUI.GetRecipeItemLink(recipeID)
-			if link then
-				Tooltip:TallyUnits(self, link, "SetRecipeResultItem")
-			end
-		end)
+		
+		--data = C_TooltipInfo.GetRecipeResultItem(recipeID [, craftingReagents, recraftItemGUID, recipeLevel, overrideQualityID])
+		
 		--------------------------------------------------CURRENCY
 		hooksecurefunc(objTooltip, "SetCurrencyToken", function(self, index)
 			if self.__tooltipUpdated then return end
@@ -789,6 +803,7 @@ end
 function Tooltip:OnEnable()
 	self:HookTooltip(GameTooltip)
 	self:HookTooltip(ItemRefTooltip)
+	self:HookTooltip(EmbeddedItemTooltip)
 	if BSYC.IsRetail then
 		self:HookBattlePetTooltip(BattlePetTooltip)
 		self:HookBattlePetTooltip(FloatingBattlePetTooltip)

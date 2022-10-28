@@ -84,7 +84,14 @@ bgsMinimapDD.initialize = function(self, level)
 			BSYC:GetModule("Data"):FixDB()
 		end)
 		addButton(level, L.Config, nil, 1, nil, 'config', function(frame, ...)
-			InterfaceOptionsFrame:Show() --has to be here to load the about frame onLoad
+			if not BSYC.IsRetail then
+				--only do this for Expansions less than Retail
+				InterfaceOptionsFrame:Show() --has to be here to load the about frame onLoad
+			else
+				if InCombatLockdown() or GameMenuFrame:IsShown() or InterfaceOptionsFrame then
+					return false
+				end
+			end
 			InterfaceOptionsFrame_OpenToCategory(BSYC.aboutPanel) --force the panel to show
 		end)
 		addButton(level, "", nil, 1) --space ;)
