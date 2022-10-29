@@ -17,6 +17,9 @@ local WOW_PROJECT_WRATH_CLASSIC = _G.WOW_PROJECT_WRATH_CLASSIC
 --/dump select(4, GetBuildInfo())
 --https://wowpedia.fandom.com/wiki/Template:API_LatestInterface
 
+--use the ingame trace tool to debug stuff
+--/etrace
+
 BSYC.IsRetail = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
 BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 --BSYC.IsTBC_C = WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC

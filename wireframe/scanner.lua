@@ -396,9 +396,27 @@ function Scanner:SaveProfessions()
 	Scanner.recipeIDs = C_TradeSkillUI.GetAllRecipeIDs()
 	--invert the table, forcing the value to be the key and the key the value, inverted[v] = k  (see TableUtil.lua)
 	Scanner.invertedRecipeIDs = tInvert(Scanner.recipeIDs)
-
-	local tradeSkillID, skillLineName, skillLineRank, skillLineMaxRank, skillLineModifier, parentSkillLineID, parentSkillLineName =  C_TradeSkillUI.GetTradeSkillLine()
 	
+	--https://wowpedia.fandom.com/wiki/API_C_TradeSkillUI.GetBaseProfessionInfo
+	--https://wowpedia.fandom.com/wiki/API_C_TradeSkillUI.GetTradeSkillLineInfoByID
+	local baseInfo = C_TradeSkillUI.GetBaseProfessionInfo()
+	
+	local parentSkillLineID, parentSkillLineName
+
+	if not baseInfo or not baseInfo.professionID then
+		local professionInfo = C_TradeSkillUI.GetChildProfessionInfo()
+		if not professionInfo or not professionInfo.parentProfessionID then return end
+		
+		parentSkillLineID = professionInfo.parentProfessionID
+		parentSkillLineName = professionInfo.parentProfessionName
+	else
+		parentSkillLineID = baseInfo.professionID
+		parentSkillLineName = baseInfo.professionName
+	end
+	
+	--https://wowpedia.fandom.com/wiki/API_C_TradeSkillUI.GetTradeSkillLineInfoByID
+	--info = C_TradeSkillUI.GetProfessionInfoBySkillLineID(skillLineID)
+
 	if parentSkillLineID and parentSkillLineName then
 	
 		--create the categories, sometimes we have professions with no recipes.  We want to store this anyways
@@ -551,23 +569,31 @@ function Scanner:ParseCraftedInfo(unitTarget, castGUID, spellID)
 	if not BSYC.IsRetail then return end
 	--only do this when they are not at a bank
 	if Unit.atBank then return end
+	if unitTarget ~= "player" then return end --only do the player crafted stuff
 	if not Scanner.recipeIDs or not Scanner.invertedRecipeIDs then return end
 	
 	--reset
-	Scanner.currentReagents = {}
-	
+	Scanner.reagentCount = {}
+
 	--use the inverted since the spellID is the key
     if Scanner.invertedRecipeIDs[spellID] then
-        for i = 1, C_TradeSkillUI.GetRecipeNumReagents(spellID) do
-            local link = C_TradeSkillUI.GetRecipeReagentItemLink(spellID, i)
-            if link then
-				local itemID = BSYC:ParseItemLink(link)
-				if itemID then
-					--save zero to check for reagent count later
-					Scanner.currentReagents[itemID] = 0
+	
+		local recipeSchematic = C_TradeSkillUI.GetRecipeSchematic(spellID, false)
+		
+		if recipeSchematic then
+			for slotIndex, reagentSlotSchematic in ipairs(recipeSchematic.reagentSlotSchematics) do
+				if reagentSlotSchematic.itemID then
+					Scanner.reagentCount[reagentSlotSchematic.itemID] = 0
+				elseif reagentSlotSchematic.reagents then
+					for reagentIndex, reagentInfo in ipairs(reagentSlotSchematic.reagents) do
+						if reagentInfo.itemID then
+							Scanner.reagentCount[reagentInfo.itemID] = 0
+						end
+					end
 				end
 			end
-        end
+		end
+		
     end
 end
 
@@ -577,67 +603,32 @@ function Scanner:SaveCraftedReagents()
 	if Unit.atBank then return end
 
 	--don't do anything if we have nothing to work with
-	if not Scanner.currentReagents or BSYC:GetHashTableLen(Scanner.currentReagents) < 1 then return end
+	if not Scanner.reagentCount or BSYC:GetHashTableLen(Scanner.reagentCount) < 1 then return end
 
-	--reset the stored reagent counts to calculate bank count (minus reagentBank)
-	for k, v in pairs(Scanner.currentReagents) do
-		Scanner.currentReagents[k] = 0
-	end
-
-	local bagtype = "reagents"
-	local bagid = REAGENTBANK_CONTAINER
-
-	--we are allowed to scan the Reagents outside of the bank. GetContainerItemInfo will return information
-	--so lets just save the Reagent data again and grab the reagent counts as we do
-	if IsReagentBankUnlocked() then
-		
-		if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
-		
-		if GetContainerNumSlots(bagid) > 0 then
-			
-			local slotItems = {}
-			
-			for slot = 1, GetContainerNumSlots(bagid) do
-				local _, rgCount, _,_,_,_, rgLink = GetContainerItemInfo(bagid, slot)
-				if rgLink then
-					local rgItemID = BSYC:ParseItemLink(rgLink)
-					if rgItemID and Scanner.currentReagents[rgItemID] then
-						Scanner.currentReagents[rgItemID] = Scanner.currentReagents[rgItemID] + rgCount
-					end
-					table.insert(slotItems,  BSYC:ParseItemLink(rgLink, rgCount))
-				end
-			end
-			
-			BSYC.db.player[bagtype][bagid] = slotItems
-		else
-			BSYC.db.player[bagtype][bagid] = nil
-		end
-		
-	end
-	
-	--------------
-	--BANK SLOT
-	--------------
-	
-	--we cannot scan the bank though when we aren't visiting it.  So this makes a bit more complicated.
-	--First we need to delete all entries that have the reagents that were used
-	--Second we have to force a manual entry in the root Bank bag (BANK_CONTAINER) with the reagent counts if any
-	
+	---------------------------------------------------
+	--First lets remove the stored count in both Bank and Reagents
+	---------------------------------------------------
 	local bagtype = "bank"
+	local rootItems = {}
+	local slotItems = {}
+	local bankCount = 0
+	
+	--BANK
 	if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
 	
-	--first lets delete any reagents used from our database, before we put them back in.
 	for bagID, bagData in pairs(BSYC.db.player[bagtype]) do
 	
-		local slotItems = {}
+		slotItems = {}
 	
 		--search individual bank bags
 		for i=1, #bagData do
 			--do we even have something to work with?
 			if bagData[i] then
 				local itemID, count, identifier = strsplit(";", bagData[i])
+				itemID = tonumber(itemID)
+				
 				--only save if it's not one of the reagents that was used
-				if itemID and not Scanner.currentReagents[itemID] then
+				if itemID and not Scanner.reagentCount[itemID] then
 					table.insert(slotItems, bagData[i])
 				end
 			end
@@ -645,23 +636,94 @@ function Scanner:SaveCraftedReagents()
 		BSYC.db.player[bagtype][bagID] = slotItems
 	end
 	
-	--now lets add them manually to the root bank location (BANK_CONTAINER), create it if it's not found
-	local rootBankItems = BSYC.db.player[bagtype][BANK_CONTAINER] or {}
-	
-	for k, v in pairs(Scanner.currentReagents) do
-	
-		local bankCount = GetItemCount(k, true) --set true to search all bank including reagentBank
-		bankCount = bankCount - v --subtract the reagent count if any
+	--REAGENTS
+	if IsReagentBankUnlocked() then
+		bagtype = "reagents"
 		
+		if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
+		
+		for bagID, bagData in pairs(BSYC.db.player[bagtype]) do
+		
+			slotItems = {}
+		
+			--search individual reagents bags
+			for i=1, #bagData do
+				--do we even have something to work with?
+				if bagData[i] then
+					local itemID, count, identifier = strsplit(";", bagData[i])
+					itemID = tonumber(itemID)
+					
+					--only save if it's not one of the reagents that was used
+					if itemID and not Scanner.reagentCount[itemID] then
+						table.insert(slotItems, bagData[i])
+					end
+				end
+			end
+			BSYC.db.player[bagtype][bagID] = slotItems
+		end
+	end
+	
+	---------------------------------------------------
+	--NOW lets add them back in with new counts at the root of each BagType
+	---------------------------------------------------
+	
+	--BANK
+	bagtype = "bank"
+	
+	--now lets add them manually to the root bank location (BANK_CONTAINER), create it if it's not found
+	rootItems = BSYC.db.player[bagtype][BANK_CONTAINER] or {}
+	
+	for k, v in pairs(Scanner.reagentCount) do
+	
+		--for some reason even if you turn off useReagent, it still calculates it in the total bank amount
+		--so we have to subtract it to get the true bank amount
+		
+		--check for reagentBank count
+		local regCount = GetItemCount(k, false, false, true)
+		bankCount = GetItemCount(k, true, false, false) --only search the bank and not reagent bank
+
 		if bankCount and bankCount > 0 then
-			table.insert(rootBankItems,  BSYC:ParseItemLink(k, bankCount))
+		
+			--now compensate if we have reagents to work with
+			if regCount and regCount > 0 then
+				bankCount = bankCount - regCount
+
+				--check for negative and adjust
+				if bankCount < 0 then
+					bankCount = bankCount * -1
+				end
+			end
+			
+			--only store if after computations its still above 0
+			if bankCount and bankCount > 0 then
+				table.insert(rootItems,  BSYC:ParseItemLink(k, bankCount))
+			end
 		end
 	end
 	
 	--now save it back to the bank root
-	BSYC.db.player[bagtype][BANK_CONTAINER] = rootBankItems
+	BSYC.db.player[bagtype][BANK_CONTAINER] = rootItems
+	
+
+	--REAGENTS
+	bagtype = "reagents"
+	
+	--now lets add them manually to the root bank location (REAGENTBANK_CONTAINER), create it if it's not found
+	rootItems = BSYC.db.player[bagtype][REAGENTBANK_CONTAINER] or {}
+	
+	for k, v in pairs(Scanner.reagentCount) do
+	
+		bankCount = GetItemCount(k, false, false, true) --only search reagent bank
+		
+		if bankCount and bankCount > 0 then
+			table.insert(rootItems,  BSYC:ParseItemLink(k, bankCount))
+		end
+	end
+	
+	--now save it back to the bank root
+	BSYC.db.player[bagtype][REAGENTBANK_CONTAINER] = rootItems
 	
 	--set the tooltip to be refreshed so that it displays the new values
 	BSYC.refreshTooltip = true
-
+	
 end
