@@ -652,7 +652,7 @@ function Tooltip:HookTooltip(objTooltip)
 		
 		hooksecurefunc(objTooltip, "SetRecipeReagentItem", function(self, recipeID, reagentIndex)
 			if self.__tooltipUpdated then return end
-			local link = C_TradeSkillUI.GetRecipeReagentItemLink(recipeID, reagentIndex)
+			local link = C_TradeSkillUI.GetRecipeFixedReagentItemLink(recipeID, reagentIndex)
 			if link then
 				Tooltip:TallyUnits(self, link, "SetRecipeReagentItem")
 			end
