@@ -37,11 +37,56 @@ local LastEquipped = INVSLOT_LAST_EQUIPPED
 local scannerTooltip = CreateFrame("GameTooltip", "BagSyncScannerTooltip", UIParent, "GameTooltipTemplate")
 scannerTooltip:Hide()
 
+--https://wowpedia.fandom.com/wiki/BagID
+function Scanner:GetBagSlots(bagType)
+	if bagType == "bag" then
+		if BSYC.IsRetail then
+			return BACKPACK_CONTAINER, NUM_TOTAL_EQUIPPED_BAG_SLOTS 
+		else
+			return BACKPACK_CONTAINER, BACKPACK_CONTAINER + NUM_BAG_SLOTS
+		end
+
+	elseif bagType == "bank" then
+		if BSYC.IsRetail then
+			return NUM_TOTAL_EQUIPPED_BAG_SLOTS + 1, NUM_TOTAL_EQUIPPED_BAG_SLOTS + NUM_BANKBAGSLOTS
+		else
+			return NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS
+		end
+	end
+end
+
+function Scanner:IsBackpack(bagid)
+	return bagid == BACKPACK_CONTAINER
+end
+
+function Scanner:IsBackpackBag(bagid)
+	local minCnt, maxCnt = self:GetBagSlots("bag")
+	return bagid >= minCnt and bagid <= maxCnt
+end
+
+function Scanner:IsKeyring(bagid)
+	return bagid == KEYRING
+end
+
+function Scanner:IsBank(bagid)
+	return bagid == BANK_CONTAINER
+end
+
+function Scanner:IsBankBag(bagid)
+	local minCnt, maxCnt = self:GetBagSlots("bank")
+	return bagid >= minCnt and bagid <= maxCnt
+end
+
+function Scanner:IsReagentBag(bagid)
+	return bagid == REAGENTBANK_CONTAINER
+end
+
 function Scanner:StartupScans()
 
 	self:SaveEquipment()
-
-	for i = BACKPACK_CONTAINER, BACKPACK_CONTAINER + NUM_BAG_SLOTS do
+	
+	local minCnt, maxCnt = self:GetBagSlots("bag")
+	for i = minCnt, maxCnt do
 		self:SaveBag("bag", i)
 	end
 	
@@ -68,7 +113,7 @@ function Scanner:SaveBag(bagtype, bagid)
 				table.insert(slotItems,  BSYC:ParseItemLink(link, count))
 			end
 		end
-			
+		
 		BSYC.db.player[bagtype][bagid] = slotItems
 	else
 		BSYC.db.player[bagtype][bagid] = nil
@@ -98,8 +143,9 @@ function Scanner:SaveBank(rootOnly)
 	self:SaveBag("bank", BANK_CONTAINER)
 	
 	if not rootOnly then
-		--https://wow.gamepedia.com/BagId#/search
-		for i = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
+		local minCnt, maxCnt = self:GetBagSlots("bank")
+		
+		for i = minCnt, maxCnt do
 			self:SaveBag("bank", i)
 		end
 		--scan the reagents as part of the bank scan
@@ -595,6 +641,8 @@ function Scanner:ParseCraftedInfo(unitTarget, castGUID, spellID)
 		end
 		
     end
+	
+	if BSYC:GetHashTableLen(Scanner.reagentCount) < 1 then Scanner.reagentCount = nil end
 end
 
 function Scanner:SaveCraftedReagents()
@@ -722,6 +770,9 @@ function Scanner:SaveCraftedReagents()
 	
 	--now save it back to the bank root
 	BSYC.db.player[bagtype][REAGENTBANK_CONTAINER] = rootItems
+	
+	--reset our stored reagent count so that it doesn't mess up the regular bank scans
+	Scanner.reagentCount = nil
 	
 	--set the tooltip to be refreshed so that it displays the new values
 	BSYC.refreshTooltip = true

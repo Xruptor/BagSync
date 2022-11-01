@@ -223,18 +223,29 @@ end
 
 function Events:BAG_UPDATE(event, bagid)
 	local bagname
-	
-	--bag updates for the bank slots occur even when the player isn't at the bank, we have to check for that
-	if ((bagid >= NUM_BAG_SLOTS + 1) and (bagid <= NUM_BAG_SLOTS + NUM_BANKBAGSLOTS) and Unit.atBank) then
-		bagname = "bank"
-	elseif (bagid >= BACKPACK_CONTAINER) and (bagid <= BACKPACK_CONTAINER + NUM_BAG_SLOTS) then
+
+	if Scanner:IsBackpack(bagid) or Scanner:IsBackpackBag(bagid) or Scanner:IsKeyring(bagid) then
 		bagname = "bag"
+	elseif Scanner:IsBank(bagid) or Scanner:IsBankBag(bagid) or Scanner:IsReagentBag(bagid) then
+		--only do this while we are at a bank
+		if Unit.atBank then
+			if Scanner:IsReagentBag(bagid) then --just in case
+				Scanner:SaveReagents()
+				return
+			end
+			bagname = "bank"
+		else
+			return
+		end
 	else
-		--probably bank update when user isn't at the bank, that or some bogus bag we don't care about
+		--unknown bag, don't save it
 		return
 	end
 
 	Scanner:SaveBag(bagname, bagid)
+	
+	--check if they crafted an item outside the bank, if so then do a parse check to update item count.
+	self:DoTimer("SaveCraftedReagents", function() Scanner:SaveCraftedReagents() end, 1)
 end
 
 function Events:GuildBank_Open()
