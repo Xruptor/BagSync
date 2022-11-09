@@ -103,12 +103,15 @@ function Scanner:SaveBag(bagtype, bagid)
 	if not bagtype or not bagid then return end
 	if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
 
-	if GetContainerNumSlots(bagid) > 0 then
+	local xGetNumSlots = BSYC.IsRetail and C_Container.GetContainerNumSlots or GetContainerNumSlots
+	local xGetContainerInfo = BSYC.IsRetail and C_Container.GetContainerItemInfo or GetContainerItemInfo
+	
+	if xGetNumSlots(bagid) > 0 then
 		
 		local slotItems = {}
 		
-		for slot = 1, GetContainerNumSlots(bagid) do
-			local _, count, _,_,_,_, link = GetContainerItemInfo(bagid, slot)
+		for slot = 1, xGetNumSlots(bagid) do
+			local _, count, _,_,_,_, link = xGetContainerInfo(bagid, slot)
 			if link then
 				table.insert(slotItems,  BSYC:ParseItemLink(link, count))
 			end
@@ -547,8 +550,11 @@ function Scanner:SaveProfessions()
 						end
 						
 						--now store the recipe information, but make sure we don't already have the recipe stored
+						--we have to do this as sometimes the recipe is scanned multiple times.  It will get refreshed once the profession is saved again though.
+						--so technically it will always be up to date
 						if not tmpRecipe[recipeData.recipeID] then
 							subCatSlot.recipes = (subCatSlot.recipes or "").."|"..recipeData.recipeID
+							tmpRecipe[recipeData.recipeID] = true
 						end
 						
 					end
