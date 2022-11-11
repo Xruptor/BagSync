@@ -312,6 +312,23 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total)
 	return total
 end
 
+function Tooltip:SetTipAnchor(frame, qTip)
+    local x, y = frame:GetCenter()
+	
+	qTip:ClearAllPoints()
+	qTip:SetClampedToScreen(true)
+	
+    if not x or not y then
+        qTip:SetPoint("TOPRIGHT", frame, "BOTTOMRIGHT")
+		return
+    end
+
+    local hhalf = (x > UIParent:GetWidth() * 2 / 3) and "RIGHT" or (x < UIParent:GetWidth() / 3) and "LEFT" or ""
+    local vhalf = (y > UIParent:GetHeight() / 2) and "TOP" or "BOTTOM"
+
+	qTip:SetPoint(vhalf .. hhalf, frame, (vhalf == "TOP" and "BOTTOM" or "TOP") .. hhalf)
+end
+
 function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if not BSYC.options.enableTooltips then return end
 	if not CanAccessObject(objTooltip) then return end
@@ -354,15 +371,16 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	--short the shortID and ignore all BonusID's and stats
 	if BSYC.options.enableShowUniqueItemsTotals then link = shortID end
 	
-	if (BSYC.options.enableExtTooltip or isBattlePet) and not objTooltip.qTip then
-		objTooltip.qTip = LibQTip:Acquire(objTooltip:GetName(), 3, "LEFT", "CENTER", "RIGHT")
+	if (BSYC.options.enableExtTooltip or isBattlePet) then
+		if not objTooltip.qTip or not LibQTip:IsAcquired(objTooltip) then
+			objTooltip.qTip = LibQTip:Acquire(objTooltip, 3, "LEFT", "CENTER", "RIGHT")
+			objTooltip.qTip.OnRelease = function() objTooltip.qTip = nil end
+		end
+		self:SetTipAnchor(objTooltip, objTooltip.qTip)
 		objTooltip.qTip:Clear()
-		--objTooltip.qTip:SmartAnchorTo(objTooltip)
-		objTooltip.qTip:SetPoint("TOPRIGHT", objTooltip, "BOTTOMRIGHT")
-		objTooltip.qTip.OnRelease = function() objTooltip.qTip = nil end
-	elseif objTooltip.qTip then
-		--clear any item data already in the tooltip
-		objTooltip.qTip:Clear()
+
+	elseif not isBattlePet and not BSYC.options.enableExtTooltip and objTooltip.qTip then
+		LibQTip:Release(objTooltip.qTip)
 	end
 	
 	--check if are requesting that the tooltip be refreshed regardless if it has last item stored
@@ -386,7 +404,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			objTooltip:Show()
 			if objTooltip.qTip then objTooltip.qTip:Show() end
 		else
-			if objTooltip.qTip then LibQTip:Release(objTooltip.qTip) end
+			if objTooltip.qTip then objTooltip.qTip:Hide() end
 		end
 		objTooltip.__tooltipUpdated = true
 		return
@@ -515,7 +533,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		if grandTotal > 0 then
 			objTooltip.qTip:Show()
 		else
-			LibQTip:Release(objTooltip.qTip)
+			objTooltip.qTip:Hide()
 		end
 	end
 end
@@ -585,8 +603,7 @@ function Tooltip:HookTooltip(objTooltip)
 		Tooltip.__lastLink = nil
 		
 		if self.qTip then
-			LibQTip:Release(self.qTip)
-			self.qTip = nil
+			self.qTip:Hide()
 		end
 	end)
 	objTooltip:HookScript("OnTooltipCleared", function(self)
@@ -594,6 +611,8 @@ function Tooltip:HookTooltip(objTooltip)
 		self.__tooltipUpdated = false
 	end)
 	
+	--https://github.com/tomrus88/BlizzardInterfaceCode/blob/e4385aa29a69121b3a53850a8b2fcece9553892e/Interface/SharedXML/Tooltip/TooltipDataHandler.lua
+	--https://wowpedia.fandom.com/wiki/Patch_10.0.2/API_changes
 	objTooltip:HookScript("OnTooltipSetItem", function(self)
 		if self.__tooltipUpdated then return end
 		local name, link = self:GetItem()
@@ -790,8 +809,7 @@ function Tooltip:HookBattlePetTooltip(objTooltip)
 		Tooltip.__lastLink = nil
 		
 		if self.qTip then
-			LibQTip:Release(self.qTip)
-			self.qTip = nil
+			self.qTip:Hide()
 		end
 	end)
 	objTooltip:HookScript("OnShow", function(self)
