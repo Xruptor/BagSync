@@ -20,6 +20,8 @@ local WOW_PROJECT_WRATH_CLASSIC = _G.WOW_PROJECT_WRATH_CLASSIC
 --use the ingame trace tool to debug stuff
 --/etrace
 
+--Dump tables DevTools_Dump({ table }) or DevTools_Dump(table)
+
 BSYC.IsRetail = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
 BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 --BSYC.IsTBC_C = WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC
@@ -62,7 +64,8 @@ end
 
 function BSYC:ParseItemLink(link, count)
 	if link then
-	
+		if not count then count = 1 end
+		
 		--if we are parsing a database entry just return it, chances are it's a battlepet anyways
 		local qLink, qCount, qIdentifier = strsplit(";", link)
 		if qLink and qCount then

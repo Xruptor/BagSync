@@ -367,7 +367,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--just use the itemid or fakeid
 		link = qLink
 	end
-	
+
 	--short the shortID and ignore all BonusID's and stats
 	if BSYC.options.enableShowUniqueItemsTotals then link = shortID end
 	
@@ -536,6 +536,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			objTooltip.qTip:Hide()
 		end
 	end
+
 end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)
@@ -595,8 +596,9 @@ function Tooltip:HookTooltip(objTooltip)
 
 	--MORE INFO (https://wowpedia.fandom.com/wiki/Category:API_namespaces/C_TooltipInfo)
 	--(https://wowpedia.fandom.com/wiki/Patch_10.0.2/API_changes#Tooltip_Changes)
+	--https://github.com/tomrus88/BlizzardInterfaceCode/blob/e4385aa29a69121b3a53850a8b2fcece9553892e/Interface/SharedXML/Tooltip/TooltipDataHandler.lua
+	--https://wowpedia.fandom.com/wiki/Patch_10.0.2/API_changes
 	
-		
 	objTooltip:HookScript("OnHide", function(self)
 		self.__tooltipUpdated = false
 		--reset __lastLink in the addon itself not within the tooltip
@@ -611,37 +613,75 @@ function Tooltip:HookTooltip(objTooltip)
 		self.__tooltipUpdated = false
 	end)
 	
-	--https://github.com/tomrus88/BlizzardInterfaceCode/blob/e4385aa29a69121b3a53850a8b2fcece9553892e/Interface/SharedXML/Tooltip/TooltipDataHandler.lua
-	--https://wowpedia.fandom.com/wiki/Patch_10.0.2/API_changes
-	objTooltip:HookScript("OnTooltipSetItem", function(self)
-		if self.__tooltipUpdated then return end
-		local name, link = self:GetItem()
-		if link then
-			--sometimes the link is an empty link with the name being |h[]|h, its a bug with GetItem()
-			--so lets check for that
-			local linkName = string.match(link, "|h%[(.-)%]|h")
-			if not linkName or string.len(linkName) < 1 then return nil end  -- we don't want to store or process it
-			
-			Tooltip:TallyUnits(self, link, "OnTooltipSetItem")
+	if BSYC.IsRetail then
+
+		--Note: tooltip data type corresponds to the Enum.TooltipDataType types
+		--i.e Enum.TooltipDataType.Unit it type 2
+		--see https://github.com/Ketho/wow-ui-source-df/blob/e6d3542fc217592e6144f5934bf22c5d599c1f6c/Interface/AddOns/Blizzard_APIDocumentationGenerated/TooltipInfoSharedDocumentation.lua
+		
+		local function OnTooltipSetItem(tooltip, data)
+		
+			if (tooltip == GameTooltip or tooltip == EmbeddedItemTooltip or tooltip == ItemRefTooltip) then
+				if tooltip.__tooltipUpdated then return end
+				
+				local link = data.hyperlink or data.id
+				
+				if link then
+					Tooltip:TallyUnits(tooltip, link, "OnTooltipSetItem")
+				end
+			end
 		end
-	end)
-	hooksecurefunc(objTooltip, "SetQuestLogItem", function(self, itemType, index)
-		if self.__tooltipUpdated then return end
-		local link = GetQuestLogItemLink(itemType, index)
-		if link then
-			Tooltip:TallyUnits(self, link, "SetQuestLogItem")
+		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, OnTooltipSetItem)
+
+		local function OnTooltipSetCurrency(tooltip, data)
+		
+			if (tooltip == GameTooltip or tooltip == EmbeddedItemTooltip or tooltip == ItemRefTooltip) then
+				if tooltip.__tooltipUpdated then return end
+				
+				local link = data.id or data.hyperlink
+				local currencyID = BSYC:GetShortCurrencyID(link)
+				
+				if currencyID then
+					local currencyData = C_CurrencyInfo.GetCurrencyInfo(currencyID)
+					if currencyData then
+						Tooltip:CurrencyTooltip(tooltip, currencyData.name, currencyData.iconFileID, currencyID, "OnTooltipSetCurrency")
+					end
+				end
+			end
 		end
-	end)
-	hooksecurefunc(objTooltip, "SetQuestItem", function(self, itemType, index)
-		if self.__tooltipUpdated then return end
-		local link = GetQuestItemLink(itemType, index)
-		if link then
-			Tooltip:TallyUnits(self, link, "SetQuestItem")
-		end
-	end)
-	
-	--only parse CraftFrame when it's not the RETAIL but Classic and TBC, because this was changed to TradeSkillUI on retail
-	if not BSYC.IsRetail then
+		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Currency, OnTooltipSetCurrency)
+		
+	else
+		
+		objTooltip:HookScript("OnTooltipSetItem", function(self)
+			if self.__tooltipUpdated then return end
+			local name, link = self:GetItem()
+			if link then
+				--sometimes the link is an empty link with the name being |h[]|h, its a bug with GetItem()
+				--so lets check for that
+				local linkName = string.match(link, "|h%[(.-)%]|h")
+				if not linkName or string.len(linkName) < 1 then return nil end  -- we don't want to store or process it
+				
+				Tooltip:TallyUnits(self, link, "OnTooltipSetItem")
+			end
+		end)
+		
+		hooksecurefunc(objTooltip, "SetQuestLogItem", function(self, itemType, index)
+			if self.__tooltipUpdated then return end
+			local link = GetQuestLogItemLink(itemType, index)
+			if link then
+				Tooltip:TallyUnits(self, link, "SetQuestLogItem")
+			end
+		end)
+		hooksecurefunc(objTooltip, "SetQuestItem", function(self, itemType, index)
+			if self.__tooltipUpdated then return end
+			local link = GetQuestItemLink(itemType, index)
+			if link then
+				Tooltip:TallyUnits(self, link, "SetQuestItem")
+			end
+		end)
+		
+		--only parse CraftFrame when it's not the RETAIL but Classic and TBC, because this was changed to TradeSkillUI on retail
 		hooksecurefunc(objTooltip, "SetCraftItem", function(self, index, reagent)
 			if self.__tooltipUpdated then return end
 			local _, _, count = GetCraftReagentInfo(index, reagent)
@@ -650,126 +690,6 @@ function Tooltip:HookTooltip(objTooltip)
 			if link then
 				Tooltip:TallyUnits(self, link, "SetCraftItem")
 			end
-		end)
-	end
-	
-	
-	-- local function OnTooltipSetItem(tooltip, data)
-		-- if (tooltip == GameTooltip or tooltip == EmbeddedItemTooltip) then
-			-- print("OnTooltipSetItem", tooltip, data)
-		-- end
-	-- end
-
-	-- TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, OnTooltipSetItem)
-	
-	
-	--------------------------------------------------
-	if BSYC.IsRetail then
-		--------------------------------------------------RECIPES
-
-		--data = C_TooltipInfo.GetRecipeReagentItem(recipeSpellID, dataSlotIndex)
-		
-		hooksecurefunc(objTooltip, "SetRecipeReagentItem", function(self, recipeID, reagentIndex)
-			if self.__tooltipUpdated then return end
-			local link = C_TradeSkillUI.GetRecipeFixedReagentItemLink(recipeID, reagentIndex)
-			if link then
-				Tooltip:TallyUnits(self, link, "SetRecipeReagentItem")
-			end
-		end)
-		
-		--data = C_TooltipInfo.GetRecipeResultItem(recipeID [, craftingReagents, recraftItemGUID, recipeLevel, overrideQualityID])
-		
-		--------------------------------------------------CURRENCY
-		hooksecurefunc(objTooltip, "SetCurrencyToken", function(self, index)
-			if self.__tooltipUpdated then return end
-			
-			local currencyData = C_CurrencyInfo.GetCurrencyListInfo(index)
-			local link = C_CurrencyInfo.GetCurrencyListLink(index)
-			
-			if currencyData.name and currencyData.iconFileID and link then
-				local currencyID = BSYC:GetShortCurrencyID(link)
-				if currencyID then
-					Tooltip:CurrencyTooltip(self, currencyData.name, currencyData.iconFileID, currencyID, "SetCurrencyToken")
-				end
-			end
-			
-		end)
-		hooksecurefunc(objTooltip, "SetCurrencyTokenByID", function(self, currencyID)
-			if self.__tooltipUpdated then return end
-			
-			local currencyData = C_CurrencyInfo.GetCurrencyInfo(currencyID)
-			
-			if currencyData.name and currencyData.iconFileID then
-				Tooltip:CurrencyTooltip(self, currencyData.name, currencyData.iconFileID, currencyID, "SetCurrencyTokenByID")
-			end
-		end)
-		hooksecurefunc(objTooltip, "SetCurrencyByID", function(self, currencyID)
-			if self.__tooltipUpdated then return end
-			
-			local currencyData = C_CurrencyInfo.GetCurrencyInfo(currencyID)
-			
-			if currencyData.name and currencyData.iconFileID then
-				Tooltip:CurrencyTooltip(self, currencyData.name, currencyData.iconFileID, currencyID, "SetCurrencyByID")
-			end
-		end)
-		hooksecurefunc(objTooltip, "SetBackpackToken", function(self, index)
-			if self.__tooltipUpdated then return end
-			
-			local currencyData = C_CurrencyInfo.GetBackpackCurrencyInfo(index)
-			
-			if currencyData.name and currencyData.iconFileID and currencyData.currencyTypesID then
-				Tooltip:CurrencyTooltip(self, currencyData.name, currencyData.iconFileID, currencyData.currencyTypesID, "SetBackpackToken")
-			end
-		end)
-		hooksecurefunc(objTooltip, "SetMerchantCostItem", function(self, index, currencyIndex)
-			--see MerchantFrame_UpdateAltCurrency
-			if self.__tooltipUpdated then return end
-			
-			--https://wowpedia.fandom.com/wiki/API_GetMerchantItemCostItem
-			local currencyID
-			local itemTexture, itemValue, itemLink, currencyName = GetMerchantItemCostItem(index, currencyIndex)
-			local itemCurrencyID = BSYC:GetShortCurrencyID(itemLink)
-
-			--if there is no itemlink or currency name then an item is required instead of currency
-			if itemCurrencyID or currencyName then
-			
-				local currencies = { GetMerchantCurrencies() }
-				
-				if itemCurrencyID then
-					currencyID = itemCurrencyID
-				else
-					--we didn't get the currencyID from the link so lets try the currency array list
-					for i=1, #currencies do
-						if currencies[i] then
-							local currencyInfo = C_CurrencyInfo.GetCurrencyInfo(currencies[i])
-							if currencyInfo then
-								local name = currencyInfo.name
-								if ( currencyName and name and name ~= "" and name == currencyName ) then
-									currencyID = currencies[i]
-									break
-								end
-							end
-						end
-					end
-				end
-
-				if currencyID then
-					local currencyData = C_CurrencyInfo.GetCurrencyInfo(currencyID)
-					
-					if currencyData.name and currencyData.iconFileID then
-						Tooltip:CurrencyTooltip(self, currencyData.name, currencyData.iconFileID, currencyID, "SetMerchantCostItem")
-					end
-					return
-				end
-				
-			end
-			
-			--if we don't have a currency token id that means it's probably and item required to purchase like Raid Finder token turnins or whatnot.
-			--make sure we have something to work with
-			if itemLink then
-				Tooltip:TallyUnits(self, itemLink, "SetMerchantCostItem")
-			end
-			
 		end)
 		
 	end
