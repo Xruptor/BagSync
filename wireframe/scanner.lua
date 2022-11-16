@@ -111,9 +111,16 @@ function Scanner:SaveBag(bagtype, bagid)
 		local slotItems = {}
 		
 		for slot = 1, xGetNumSlots(bagid) do
-			local _, count, _,_,_,_, link = xGetContainerInfo(bagid, slot)
-			if link then
-				table.insert(slotItems,  BSYC:ParseItemLink(link, count))
+			if BSYC.IsRetail then
+				local containerInfo = xGetContainerInfo(bagid, slot)
+				if containerInfo and containerInfo.hyperlink then
+					table.insert(slotItems,  BSYC:ParseItemLink(containerInfo.hyperlink, containerInfo.stackCount or 1))
+				end
+			else
+				local _, count, _,_,_,_, link = xGetContainerInfo(bagid, slot)
+				if link then
+					table.insert(slotItems,  BSYC:ParseItemLink(link, count))
+				end
 			end
 		end
 		
@@ -147,7 +154,7 @@ function Scanner:SaveBank(rootOnly)
 	
 	if not rootOnly then
 		local minCnt, maxCnt = self:GetBagSlots("bank")
-		
+
 		for i = minCnt, maxCnt do
 			self:SaveBag("bank", i)
 		end
