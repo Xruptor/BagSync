@@ -35,7 +35,7 @@ function Recipes:OnEnable()
 	RecipesFrame:EnableResize(false)
 	
 	local information = AceGUI:Create("BagSyncInteractiveLabel")
-	information:SetFont(STANDARD_TEXT_FONT, 14, "THICKOUTLINE")
+	information:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
 	information:SetColor(153/255,204/255,51/255)
 	information:SetFullWidth(true)
 	information:ApplyJustifyH("CENTER")
@@ -69,14 +69,14 @@ function Recipes:AddEntry(entry, isHeader)
 	
 	if isHeader then
 		label:SetText(entry.tierData.name..format("   |cFF00FF00[ %s / %s ]|r", entry.tierData.skillLineCurrentLevel, entry.tierData.skillLineMaxLevel))
-		label:SetFont(STANDARD_TEXT_FONT, 14, "THICKOUTLINE")
+		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
 		label:SetFullWidth(true)
 		label:ApplyJustifyH("CENTER")
 		label:ToggleHeaderHighlight(true)
 		label.userdata.isHeader = true
 	else
 		label:SetText(entry.recipeName)
-		label:SetFont(STANDARD_TEXT_FONT, 14, "THICKOUTLINE")
+		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
 		label:SetFullWidth(true)
 		label:SetImage(entry.recipeIcon)
 		label.userdata.isHeader = false

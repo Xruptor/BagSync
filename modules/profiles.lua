@@ -39,7 +39,7 @@ function Profiles:OnEnable()
 	
 	local information = AceGUI:Create("Label")
 	information:SetText(L.DeleteWarning)
-	information:SetFont(STANDARD_TEXT_FONT, 12, "THICKOUTLINE")
+	information:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
 	information:SetColor(1, 165/255, 0)
 	information:SetFullWidth(true)
 	ProfilesFrame:AddChild(information)
@@ -115,7 +115,7 @@ function Profiles:AddEntry(entry, isHeader)
 	
 	if isHeader then
 		label:SetText(entry.unitObj.realm)
-		label:SetFont(STANDARD_TEXT_FONT, 14, "THICKOUTLINE")
+		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
 		label:SetFullWidth(true)
 		label:ApplyJustifyH("CENTER")
 		label:ToggleHeaderHighlight(true)
@@ -126,7 +126,7 @@ function Profiles:AddEntry(entry, isHeader)
 		else
 			label:SetText(entry.colorized)
 		end
-		label:SetFont(STANDARD_TEXT_FONT, 14, "THICKOUTLINE")
+		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
 		label:SetFullWidth(true)
 		label:ApplyJustifyH("LEFT")
 		label.userdata.isHeader = false
