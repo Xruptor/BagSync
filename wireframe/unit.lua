@@ -47,22 +47,6 @@ end
 table.sort(Realms, function(a,b) return (a < b) end) --sort them alphabetically
 local realmKey = table.concat(Realms, ";") --concat them together
 
---Do old calls for non-retail
-if not BSYC.IsRetail then
-	Unit:RegisterEvent('BANKFRAME_OPENED', function() Unit.atBank = true end)
-	Unit:RegisterEvent('BANKFRAME_CLOSED', function() Unit.atBank = false end)
-	Unit:RegisterEvent('MAIL_SHOW', function() Unit.atMailbox = true end)
-	Unit:RegisterEvent('MAIL_CLOSED', function() Unit.atMailbox = false end)
-	Unit:RegisterEvent('AUCTION_HOUSE_SHOW', function() Unit.atAuction = true end)
-	Unit:RegisterEvent('AUCTION_HOUSE_CLOSED', function() Unit.atAuction = false end)
-	
-	--WOTLK or higher
-	if not BSYC.IsClassic then
-		Unit:RegisterEvent('GUILDBANKFRAME_OPENED', function() Unit.atGuildBank = true end)
-		Unit:RegisterEvent('GUILDBANKFRAME_CLOSED', function() Unit.atGuildBank = false end)
-	end
-end
-
 if BSYC.IsRetail then
 	--Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
 	Unit:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", function(event, winArg)
@@ -97,6 +81,19 @@ if BSYC.IsRetail then
 		if winArg == 10 then Unit.atGuildBank = false end
 
 	end)
+else
+	Unit:RegisterEvent('BANKFRAME_OPENED', function() Unit.atBank = true end)
+	Unit:RegisterEvent('BANKFRAME_CLOSED', function() Unit.atBank = false end)
+	Unit:RegisterEvent('MAIL_SHOW', function() Unit.atMailbox = true end)
+	Unit:RegisterEvent('MAIL_CLOSED', function() Unit.atMailbox = false end)
+	Unit:RegisterEvent('AUCTION_HOUSE_SHOW', function() Unit.atAuction = true end)
+	Unit:RegisterEvent('AUCTION_HOUSE_CLOSED', function() Unit.atAuction = false end)
+	
+	--WOTLK or higher
+	if not BSYC.IsClassic then
+		Unit:RegisterEvent('GUILDBANKFRAME_OPENED', function() Unit.atGuildBank = true end)
+		Unit:RegisterEvent('GUILDBANKFRAME_CLOSED', function() Unit.atGuildBank = false end)
+	end
 end
 
 function Unit:GetUnitAddress(unit)
