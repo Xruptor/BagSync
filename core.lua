@@ -155,37 +155,29 @@ end
 function BSYC:CreateFakeBattlePetID(link, count, speciesID)
 	if not BSYC.IsRetail then return nil end
 	
-	--either pass the link or speciesID
-	if link or speciesID then
+	--https://github.com/tomrus88/BlizzardInterfaceCode/blob/8633e552f3335b8c66b1fbcea6760a5cd8bcc06b/Interface/FrameXML/BattlePetTooltip.lua
 	
-		local isBattlepet = speciesID or string.match(link, ".*(battlepet):.*") == "battlepet"
+	if link and not speciesID then
+		local linkType, linkOptions, name = LinkUtil.ExtractLink(link)
+		if linkType ~= "battlepet" then
+			return nil
+		end
+
+		speciesID = strsplit(":", linkOptions)
+	end
 		
-		if isBattlepet then
+	--either pass the link or speciesID
+	if speciesID then
 		
-			if not speciesID then
-				--https://wowpedia.fandom.com/wiki/Hyperlinks#battlepet
-				local _, _ , _ , petID, petLevel, petRarity, petHP, petAtk, petSpeed, _ , petName = string.find(link,"(.*)battlepet:(%d+):(%d+):(%d+):(%d+):(%d+):(%d+):(.*)%[(.*)%]")
-				speciesID = petID
-			end
+		--we do this so as to not interfere with standard itemid's.  Example a speciesID can be 1345 but there is a real item with itemID 1345.
+		--to compensate for this we will use a ridiculous number to avoid conflicting with standard itemid's
+		local fakePetID = 10000000000
+		fakePetID = fakePetID + (speciesID * 100000)
 		
-			--lets generate our own fake PetID
-			if speciesID then 
-				local speciesName, _, petType, companionID, _, _, _, _, _, _, _, creatureDisplayID = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
-				
-				if petType and companionID and creatureDisplayID then
-					local fakePetID = 10000000000
-					fakePetID = fakePetID + (speciesID * 100000)
-					fakePetID = fakePetID + (petType * 1000)
-					fakePetID = fakePetID + (companionID * 100)
-					fakePetID = fakePetID + (creatureDisplayID)
-					
-					if fakePetID then
-						if not count then count = 1 end
-						--put a 2 at the end as an identifier to mark it as a battlepet
-						return fakePetID..';'..count..';2;'..speciesID
-					end
-				end
-			end
+		if fakePetID then
+			if not count then count = 1 end
+			--put a 2 at the end as an identifier to mark it as a battlepet
+			return fakePetID..';'..count..';2;'..speciesID
 		end
 	end
 end

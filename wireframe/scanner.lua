@@ -34,9 +34,6 @@ local MAX_TRANSACTIONS_SHOWN = 21
 local FirstEquipped = INVSLOT_FIRST_EQUIPPED
 local LastEquipped = INVSLOT_LAST_EQUIPPED
 
-local scannerTooltip = CreateFrame("GameTooltip", "BagSyncScannerTooltip", UIParent, "GameTooltipTemplate")
-scannerTooltip:Hide()
-
 --https://wowpedia.fandom.com/wiki/BagID
 function Scanner:GetBagSlots(bagType)
 	if bagType == "bag" then
@@ -208,6 +205,15 @@ function Scanner:GetXRGuild()
 	return BSYC.db.realm[player.guild]
 end
 
+local function findBattleSpeciesIDByIcon(iconTexture)
+	for index = 1, C_PetJournal.GetNumPets() do
+		local petID, speciesID, _, _, _, _, _, _, icon = C_PetJournal.GetPetInfoByIndex(index)
+		if icon == iconTexture then
+			return speciesID
+		end
+	end
+end
+
 function Scanner:SaveGuildBank()
 	if not Unit.atGuildBank or BSYC.IsClassic then return end
 	if Scanner.isScanningGuild then return end
@@ -222,23 +228,30 @@ function Scanner:SaveGuildBank()
 		if isViewable then
 			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
 				local link = GetGuildBankItemLink(tab, slot)
+				
 				if link then
-					local speciesID
+
 					local shortID = BSYC:GetShortItemID(link)
-					local _, count = GetGuildBankItemInfo(tab, slot)
-					
+					local iconTexture, count = GetGuildBankItemInfo(tab, slot)
+
 					--check if it's a battle pet cage or something, pet cage is 82800.  This is the placeholder for battle pets
 					--if it's a battlepet link it will be parsed anyways in ParseItemLink
+
 					if shortID and tonumber(shortID) == 82800 then
-						speciesID = scannerTooltip:SetGuildBankItem(tab, slot)
-						scannerTooltip:Hide()
-					end
-					if speciesID then
-						link = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
+						local speciesID = findBattleSpeciesIDByIcon(iconTexture)
+						
+						if speciesID then
+							link = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
+						else
+							link = nil
+						end
 					else
 						link = BSYC:ParseItemLink(link, count)
 					end
-					table.insert(slotItems, link)
+					
+					if link then
+						table.insert(slotItems, link)
+					end
 				end
 			end
 		end
@@ -282,18 +295,23 @@ function Scanner:SaveMailbox(isShow)
 				if name and link then
 					--check for battle pet cages
 					if BSYC.IsRetail and itemID and itemID == 82800 then
-						local hasCooldown, speciesID, level, breedQuality, maxHealth, power, speed, name = scannerTooltip:SetInboxItem(mailIndex)
-						scannerTooltip:Hide()
+					
+						local speciesID = findBattleSpeciesIDByIcon(itemTexture)
 						
 						if speciesID then
 							link = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
+							byPass = true
+						else
+							link = nil
 							byPass = true
 						end
 					end
 					if not byPass then
 						link = BSYC:ParseItemLink(link, count)
 					end
-					table.insert(slotItems, link)
+					if link then
+						table.insert(slotItems, link)
+					end
 				end
 			end
 		end
