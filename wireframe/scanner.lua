@@ -34,6 +34,9 @@ local MAX_TRANSACTIONS_SHOWN = 21
 local FirstEquipped = INVSLOT_FIRST_EQUIPPED
 local LastEquipped = INVSLOT_LAST_EQUIPPED
 
+local scannerTooltip = CreateFrame("GameTooltip", "BagSyncScannerTooltip", UIParent, "GameTooltipTemplate")
+scannerTooltip:Hide()
+
 --https://wowpedia.fandom.com/wiki/BagID
 function Scanner:GetBagSlots(bagType)
 	if bagType == "bag" then
@@ -205,11 +208,42 @@ function Scanner:GetXRGuild()
 	return BSYC.db.realm[player.guild]
 end
 
-local function findBattleSpeciesIDByIcon(iconTexture)
-	for index = 1, C_PetJournal.GetNumPets() do
-		local petID, speciesID, _, _, _, _, _, _, icon = C_PetJournal.GetPetInfoByIndex(index)
-		if icon == iconTexture then
-			return speciesID
+local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
+	
+	if petName then
+		local speciesId, petGUID = C_PetJournal.FindPetIDByName(petName)
+		if speciesId then
+			return speciesId
+		end
+	end
+	
+	if BSYC.options.enableAccurateBattlePets and arg1 then
+		if typeSlot == "guild" then
+			scannerTooltip:SetGuildBankItem(arg1, arg2)
+			scannerTooltip:Hide()
+		else
+			--mailbox
+			scannerTooltip:SetInboxItem(arg1)
+			scannerTooltip:Hide()
+		end
+
+		local tooltipData = scannerTooltip:GetTooltipData()
+		
+		--https://github.com/tomrus88/BlizzardInterfaceCode/blob/4e7b4f5df63d240038912624218ebb9c0c8a3edf/Interface/SharedXML/Tooltip/TooltipDataRules.lua
+
+		if tooltipData and tooltipData.battlePetSpeciesID then
+			return tooltipData.battlePetSpeciesID
+		end
+	end
+	
+	--this can be totally inaccurate, but until Blizzard allows us to get more info from the GuildBank in regards to Battle Pets.  This is the fastest way without scanning in tooltips.
+	--Example:  Toxic Wasteling shares the same icon as Jade Oozeling
+	if iconTexture then
+		for index = 1, C_PetJournal.GetNumPets() do
+			local petID, speciesID, _, _, _, _, _, _, icon = C_PetJournal.GetPetInfoByIndex(index)
+			if icon == iconTexture then
+				return speciesID
+			end
 		end
 	end
 end
@@ -228,7 +262,7 @@ function Scanner:SaveGuildBank()
 		if isViewable then
 			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
 				local link = GetGuildBankItemLink(tab, slot)
-				
+
 				if link then
 
 					local shortID = BSYC:GetShortItemID(link)
@@ -238,7 +272,7 @@ function Scanner:SaveGuildBank()
 					--if it's a battlepet link it will be parsed anyways in ParseItemLink
 
 					if shortID and tonumber(shortID) == 82800 then
-						local speciesID = findBattleSpeciesIDByIcon(iconTexture)
+						local speciesID = findBattlePet(iconTexture, nil, "guild", tab, slot)
 						
 						if speciesID then
 							link = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
@@ -291,24 +325,22 @@ function Scanner:SaveMailbox(isShow)
 			for i = 1, ATTACHMENTS_MAX_RECEIVE do
 				local name, itemID, itemTexture, count, quality, canUse = GetInboxItem(mailIndex, i)
 				local link = GetInboxItemLink(mailIndex, i)
-				local byPass = false
+
 				if name and link then
 					--check for battle pet cages
 					if BSYC.IsRetail and itemID and itemID == 82800 then
 					
-						local speciesID = findBattleSpeciesIDByIcon(itemTexture)
-						
+						local speciesID = findBattlePet(itemTexture, name, "mail", mailIndex)
+
 						if speciesID then
 							link = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
-							byPass = true
 						else
 							link = nil
-							byPass = true
 						end
-					end
-					if not byPass then
+					else
 						link = BSYC:ParseItemLink(link, count)
 					end
+					
 					if link then
 						table.insert(slotItems, link)
 					end
@@ -352,11 +384,17 @@ function Scanner:SaveAuctionHouse()
 					end
 					
 					--we are going to make the third field an identifier field, so we can know what it is for future reference
-					--for now auction house will be 1, with 4th field being expTime
-					if itemCount <= 1 then
-						parseLink = parseLink..";1;1;"..expTime
-					else
+					--for now auction house will be 1, with 4th field being expTime, unless we already have another identifier in which case it would be 5th
+					
+					--before we do that though, lets check for an exsisting identifier
+					local xLink, xCount, xIdentifier = strsplit(";", parseLink)
+					xIdentifier = tonumber(xIdentifier)
+					
+					if not xIdentifier then
 						parseLink = parseLink..";1;"..expTime
+					else
+						--it's a battlepet or something else, so just add it to the end
+						parseLink = parseLink..";"..expTime
 					end
 
 					table.insert(slotItems, parseLink)
@@ -377,21 +415,31 @@ function Scanner:SaveAuctionHouse()
 					local link = GetAuctionItemLink("owner", ahIndex)
 					local timeLeft = GetAuctionItemTimeLeft("owner", ahIndex)
 					if link and timeLeft and tonumber(timeLeft) then
+					
 						count = (count or 1)
 						timeLeft = tonumber(timeLeft)
-						if not timeLeft or timeLeft < 1 or timeLeft > 4 then timeLeft = 4 end --just in case				
+						
+						if not timeLeft or timeLeft < 1 or timeLeft > 4 then timeLeft = 4 end --just in case	
+						
 						--since classic doesn't return the exact time on old auction house, we got to add it manually
 						--it only does short, long and very long
 						local expireTime = time() + timestampChk[timeLeft]
 						local parseLink = BSYC:ParseItemLink(link, count)
-						--we are going to make the third field an identifier field, so we can know what it is for future reference
-						--for now auction house will be 1, with 4th field being expTime
-						if count <= 1 then
-							parseLink = parseLink..";1;1;"..expireTime
-						else
-							parseLink = parseLink..";1;"..expireTime
-						end
 						
+						--we are going to make the third field an identifier field, so we can know what it is for future reference
+						--for now auction house will be 1, with 4th field being expTime, unless we already have another identifier in which case it would be 5th
+
+						--before we do that though, lets check for an exsisting identifier
+						local xLink, xCount, xIdentifier = strsplit(";", parseLink)
+						xIdentifier = tonumber(xIdentifier)
+						
+						if not xIdentifier then
+							parseLink = parseLink..";1;"..expireTime
+						else
+							--it's a battlepet or something else, so just add it to the end
+							parseLink = parseLink..";"..expireTime
+						end
+					
 						table.insert(slotItems, parseLink)
 					end
 				end

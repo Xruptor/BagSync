@@ -104,6 +104,7 @@ function Data:OnEnable()
 	if BSYC.options.showGuildCurrentCharacter == nil then BSYC.options.showGuildCurrentCharacter = false end
 	if BSYC.options.showGuildBankScanAlert == nil then BSYC.options.showGuildBankScanAlert = true end
 	if BSYC.options.focusSearchEditBox == nil then BSYC.options.focusSearchEditBox = false end
+	if BSYC.options.enableAccurateBattlePets == nil then BSYC.options.enableAccurateBattlePets = true end
 	
 	--setup the default colors
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end
@@ -324,9 +325,19 @@ function Data:CheckExpiredAuctions()
 
 			for x = 1, unitObj.data.auction.count do
 				if unitObj.data.auction.bag[x] then
-
-					local link, count, identifier, timeleft = strsplit(";", unitObj.data.auction.bag[x])
-					--we are using the auction data, no need to check identifier for 1
+					
+					local timeleft
+					local link, count, identifier, optOne, optTwo = strsplit(";", unitObj.data.auction.bag[x])
+					
+					identifier = tonumber(identifier)
+					
+					if identifier and identifier == 1 then
+						--it's a regular auction item
+						timeleft = optOne
+					else
+						--it's a battlepet with identifier of 2
+						timeleft = optTwo
+					end
 					
 					--if the timeleft is greater than current time than keep it, it's not expired
 					if link and timeleft then
