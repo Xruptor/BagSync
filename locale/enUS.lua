@@ -141,6 +141,7 @@ L.DisplayShortRealmName = "Display short realm names for |cffff7d0a[XR]|r and |c
 L.DisplayFactionIcons = "Display faction icons in tooltip."
 L.DisplayGuildCurrentCharacter = "Display [Guild] items only for currently logged in character."
 L.DisplayGuildBankScanAlert = "Display the Guild Bank scanning alert window."
+L.DisplayAccurateBattlePets = "Enable accurate Battle Pets in Guild Bank & Mailbox. |cFFDF2B2B(May cause lag)|r |cff3587ff[See BagSync FAQ]|r"
 L.DisplayShowUniqueItemsTotals = "Enabling this option will allow unique items to be added towards the total item count, regardless of item stats. |cFF99CC33(Recommended)|r."
 L.DisplayShowUniqueItemsTotals_2 = [[
 Certain items like |cffff7d0a[Legendaries]|r can share the same name but have different stats.  Since these items are treated independently from one another, they are sometimes not counted towards the total item count. Enabling this option will completely disregard the unique item stats and treat them all the same, so long as they share the same item name.
@@ -195,4 +196,9 @@ L.FAQ_Question_6 = "Why do I see [FakeID] instead of [ItemID] for Battle Pets?"
 L.FAQ_Question_6_p1 = [[
 Blizzard does not assign ItemID's to Battle Pets for WOW.  Instead, Battle Pets in WOW are assigned a temporary PetID from the server.  This PetID is not unique and will be changed when the server resets.  In order to keep track of Battle Pets, BagSync generates a FakeID.  A FakeID is generated from static numbers associated with the Battle Pet.  Using a FakeID allows BagSync to track Battle Pets even across server resets.
 ]]
+L.FAQ_Question_7 = "What is accurate Battle Pet scanning in Guild Bank & Mailbox?"
+L.FAQ_Question_7_p1 = [[
+Blizzard does not store Battle Pets in the Guild Bank or Mailbox with a proper ItemID or SpeciesID.  In fact Battle Pets are stored in the Guild Bank and Mailbox as |cFF99CC33[Pet Cage]|r with an ItemID of |cFF99CC3382800|r.  This makes grabbing any data in regards to specific Battle Pets difficult for addon authors.  You can see for yourself in the Guild Bank transaction logs, you'll notice Battle Pets are stored as |cFF99CC33[Pet Cage]|r.  If you link one from a Guild Bank it will also be displayed as |cFF99CC33[Pet Cage]|r.  In order to get by this problem, there are two methods that can be used.  The first method is assigning the Battle Pet to a tooltip and then grabbing the SpeciesID from there.  This requires the server to respond to the WOW client and can potentially lead to massive lag, especially if there is a lot of Battle Pets in the Guild Bank.  The second method uses the iconTexture of the Battle Pet to try to find the SpeciesID.  This is sometimes inaccurate as certain Battle Pets share the same iconTexture.  Example:  Toxic Wasteling shares the same iconTexture as Jade Oozeling.  Enabling this option will force the tooltip scanning method to be as accurate as possible, but it can potentially cause lag.  |cFFDF2B2BThere is no way around this until Blizzard gives us more data to work with.|r
+]]
+
 
