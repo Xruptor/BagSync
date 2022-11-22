@@ -264,7 +264,6 @@ function Scanner:SaveGuildBank()
 				local link = GetGuildBankItemLink(tab, slot)
 
 				if link then
-
 					local shortID = BSYC:GetShortItemID(link)
 					local iconTexture, count = GetGuildBankItemInfo(tab, slot)
 
