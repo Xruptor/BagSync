@@ -18,7 +18,7 @@ local WOW_PROJECT_WRATH_CLASSIC = _G.WOW_PROJECT_WRATH_CLASSIC
 --https://wowpedia.fandom.com/wiki/Template:API_LatestInterface
 
 --use the ingame trace tool to debug stuff
---/etrace
+--/etrace or /eventtrace
 
 --Dump tables DevTools_Dump({ table }) or DevTools_Dump(table)
 
@@ -26,6 +26,8 @@ BSYC.IsRetail = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
 BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 --BSYC.IsTBC_C = WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC
 BSYC.IsWLK_C = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
+
+BSYC.debugTrace = false --custom option just for me to debug stuff, do not turn this on :P, you have been warned
 
 local debugf = tekDebug and tekDebug:GetFrame("BagSync")
 local function Debug(...)
@@ -37,6 +39,13 @@ local function Debug(...)
 	end
 end
 
+--According to https://github.com/Xruptor/BagSync/issues/196 this partciular OnEvent causes a significant delay on startup for users.
+--Perhaps the event is being fired WAY too much for folks?
+if LibStub("LibItemSearch-1.2") and LibStub("LibItemSearch-1.2").Scanner and LibStub("LibItemSearch-1.2").Scanner:GetScript("OnEvent") then
+	LibStub("LibItemSearch-1.2").Scanner:UnregisterEvent("GET_ITEM_INFO_RECEIVED")
+	LibStub("LibItemSearch-1.2").Scanner:SetScript("OnEvent", nil)
+end
+	
 --use /framestack to debug windows and show tooltip information
 --use if you press SHIFT while doing the above command it gives you a bit more information
 

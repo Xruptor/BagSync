@@ -39,6 +39,8 @@ scannerTooltip:Hide()
 
 --https://wowpedia.fandom.com/wiki/BagID
 function Scanner:GetBagSlots(bagType)
+	if BSYC.debugTrace then Debug("GetBagSlots", bagType) end
+	
 	if bagType == "bag" then
 		if BSYC.IsRetail then
 			return BACKPACK_CONTAINER, NUM_TOTAL_EQUIPPED_BAG_SLOTS 
@@ -82,7 +84,9 @@ function Scanner:IsReagentBag(bagid)
 end
 
 function Scanner:StartupScans()
-
+	if BSYC.debugTrace then Debug("StartupScans", BSYC.startupScanChk) end
+	if BSYC.startupScanChk then return end --only do this once per load.  Does not include /reloadui
+	
 	self:SaveEquipment()
 	
 	local minCnt, maxCnt = self:GetBagSlots("bag")
@@ -97,9 +101,13 @@ function Scanner:StartupScans()
 	
 	--cleanup any unlearned tradeskills
 	self:CleanupProfessions()
+	
+	BSYC.startupScanChk = true
 end
 
 function Scanner:SaveBag(bagtype, bagid)
+	if BSYC.debugTrace then Debug("SaveBag", bagtype, bagid) end
+	
 	if not bagtype or not bagid then return end
 	if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
 
@@ -131,6 +139,8 @@ function Scanner:SaveBag(bagtype, bagid)
 end
 
 function Scanner:SaveEquipment()
+	if BSYC.debugTrace then Debug("SaveEquipment") end
+	
 	if not BSYC.db.player.equip then BSYC.db.player.equip = {} end
 	
 	local slotItems = {}
@@ -148,6 +158,7 @@ end
 
 function Scanner:SaveBank(rootOnly)
 	if not Unit.atBank then return end
+	if BSYC.debugTrace then Debug("SaveBank", rootOnly) end
 	
 	--force scan of bank bag -1, since blizzard never sends updates for it
 	self:SaveBag("bank", BANK_CONTAINER)
@@ -165,7 +176,8 @@ end
 
 function Scanner:SaveReagents()
 	if not Unit.atBank or not BSYC.IsRetail then return end
-	
+	if BSYC.debugTrace then Debug("SaveReagents") end
+		
 	if IsReagentBankUnlocked() then 
 		self:SaveBag("reagents", REAGENTBANK_CONTAINER)
 	end
@@ -174,6 +186,7 @@ end
 function Scanner:SaveVoidBank()
 	if not Unit.atVoidBank or not BSYC.IsRetail then return end
 	if not BSYC.db.player.void then BSYC.db.player.void = {} end
+	if BSYC.debugTrace then Debug("SaveVoidBank") end
 	
 	local slotItems = {}
 	
@@ -191,6 +204,7 @@ end
 
 function Scanner:GetXRGuild()
 	if not IsInGuild() then return end
+	if BSYC.debugTrace then Debug("GetXRGuild") end
 	
 	--only return one guild stored from a connected realm list, otherwise we will have multiple entries of the same guild on several connected realms
 	local realms = {strsplit(';', Unit:GetRealmKey())}
@@ -209,6 +223,7 @@ function Scanner:GetXRGuild()
 end
 
 local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
+	if BSYC.debugTrace then Debug("findBattlePet", iconTexture, petName, typeSlot, arg1, arg2) end
 	
 	if petName then
 		local speciesId, petGUID = C_PetJournal.FindPetIDByName(petName)
@@ -251,7 +266,8 @@ end
 function Scanner:SaveGuildBank()
 	if not Unit.atGuildBank or BSYC.IsClassic then return end
 	if Scanner.isScanningGuild then return end
-
+	if BSYC.debugTrace then Debug("SaveGuildBank") end
+	
 	local numTabs = GetNumGuildBankTabs()
 	local slotItems = {}
 	Scanner.isScanningGuild = true
@@ -304,6 +320,7 @@ end
 function Scanner:SaveMailbox(isShow)
 	if not Unit.atMailbox or not BSYC.options.enableMailbox then return end
 	if not BSYC.db.player.mailbox then BSYC.db.player.mailbox = {} end
+	if BSYC.debugTrace then Debug("SaveMailbox", isShow) end
 	
 	if self.isCheckingMail then return end --prevent overflow from CheckInbox()
 	self.isCheckingMail = true
@@ -356,7 +373,8 @@ end
 function Scanner:SaveAuctionHouse()
 	if not Unit.atAuction or not BSYC.options.enableAuction then return end
 	if not BSYC.db.player.auction then BSYC.db.player.auction = {} end
-
+	if BSYC.debugTrace then Debug("SaveAuctionHouse") end
+	
 	local slotItems = {}
 	
 	if BSYC.IsRetail then
@@ -455,6 +473,7 @@ end
 function Scanner:SaveCurrency()
 	if not BSYC.IsRetail then return end
 	if Unit:InCombatLockdown() then return end
+	if BSYC.debugTrace then Debug("SaveCurrency") end
 	
 	local lastHeader
 	local slotItems = {}
@@ -505,6 +524,7 @@ end
 	
 function Scanner:SaveProfessions()
 	if not BSYC.IsRetail then return end
+	if BSYC.debugTrace then Debug("SaveProfessions") end
 	
 	--we don't want to do linked tradeskills, guild tradeskills, or a tradeskill from an NPC
 	if _G.C_TradeSkillUI.IsTradeSkillLinked() or _G.C_TradeSkillUI.IsTradeSkillGuild() or _G.C_TradeSkillUI.IsNPCCrafting() then return end
@@ -667,6 +687,7 @@ end
 
 function Scanner:CleanupProfessions()
 	if not BSYC.IsRetail then return end
+	if BSYC.debugTrace then Debug("CleanupProfessions") end
 	
 	--lets remove unlearned tradeskills
 	local tmpList = {}
@@ -695,6 +716,7 @@ function Scanner:ParseCraftedInfo(unitTarget, castGUID, spellID)
 	if Unit.atBank then return end
 	if unitTarget ~= "player" then return end --only do the player crafted stuff
 	if not Scanner.recipeIDs or not Scanner.invertedRecipeIDs then return end
+	if BSYC.debugTrace then Debug("ParseCraftedInfo", unitTarget, castGUID, spellID) end
 	
 	--reset
 	Scanner.reagentCount = {}
@@ -727,10 +749,10 @@ function Scanner:SaveCraftedReagents()
 	if not BSYC.IsRetail then return end
 	--only do this when they are not at a bank
 	if Unit.atBank then return end
-
 	--don't do anything if we have nothing to work with
 	if not Scanner.reagentCount or BSYC:GetHashTableLen(Scanner.reagentCount) < 1 then return end
-
+	if BSYC.debugTrace then Debug("SaveCraftedReagents") end
+	
 	---------------------------------------------------
 	--First lets remove the stored count in Bags, Bank and Reagents
 	---------------------------------------------------

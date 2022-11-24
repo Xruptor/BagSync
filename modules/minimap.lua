@@ -117,7 +117,7 @@ bgMinimapButton:SetScript('OnUpdate', function(self, elapsed)
 	if self:IsDragging() then
 
 		local minimap = self:GetParent()
-		local radius = (minimap:GetWidth() + self:GetWidth()) / 2
+		local radius = (minimap:GetWidth() + self:GetWidth()) / 2.2
 		local width = self:GetWidth()
 		local x,y = minimap:GetCenter()
 		local sc = minimap:GetEffectiveScale()

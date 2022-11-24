@@ -9,11 +9,11 @@ local Lib = LibStub:NewLibrary('LibItemSearch-1.2', 24)
 if Lib then
 	Lib.Filters = {}
 	Lib.Scanner = LibItemSearchTooltipScanner or CreateFrame('GameTooltip', 'LibItemSearchTooltipScanner', UIParent, 'GameTooltipTemplate')
-	Lib.Scanner:RegisterEvent('GET_ITEM_INFO_RECEIVED')
-	Lib.Scanner:SetScript('OnEvent', function()
-		Lib.Filters.tipPhrases.keywords[FOLLOWERLIST_LABEL_CHAMPIONS:lower()] = Lib:TooltipLine('item:147556', 2)
-		Lib.Filters.tipPhrases.keywords[GARRISON_FOLLOWERS:lower()] = Lib:TooltipLine('item:147556', 2)
-	end)
+	-- Lib.Scanner:RegisterEvent('GET_ITEM_INFO_RECEIVED')
+	-- Lib.Scanner:SetScript('OnEvent', function()
+		-- Lib.Filters.tipPhrases.keywords[FOLLOWERLIST_LABEL_CHAMPIONS:lower()] = Lib:TooltipLine('item:147556', 2)
+		-- Lib.Filters.tipPhrases.keywords[GARRISON_FOLLOWERS:lower()] = Lib:TooltipLine('item:147556', 2)
+	-- end)
 else
 	return
 end

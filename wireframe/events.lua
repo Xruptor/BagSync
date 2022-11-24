@@ -34,6 +34,8 @@ alertTooltip:Hide()
 Events.alertTooltip = alertTooltip
 
 local function showEventAlert(text, alertType)
+	if BSYC.debugTrace then Debug("showEventAlert", text, alertType) end
+	
 	Events.alertTooltip.alertType = alertType
 	Events.alertTooltip:ClearAllPoints()
 	Events.alertTooltip:SetOwner(UIParent, "ANCHOR_NONE")
@@ -50,6 +52,8 @@ local function showEventAlert(text, alertType)
 end
 
 function Events:DoTimer(sName, sFunc, sDelay, sRepeat)
+	if BSYC.debugTrace then Debug("DoTimer", sName, sFunc, sDelay, sRepeat) end
+	
 	if not self.timers then self.timers = {} end
 	if not sRepeat then
 		--stop and delete current timer to recreate
@@ -65,6 +69,8 @@ function Events:DoTimer(sName, sFunc, sDelay, sRepeat)
 end
 
 function Events:StopTimer(sName)
+	if BSYC.debugTrace then Debug("StopTimer", sName) end
+	
 	if not self.timers then return end
 	if not sName then return end
 	self:CancelTimer(self.timers[sName])
@@ -72,14 +78,12 @@ function Events:StopTimer(sName)
 end
 
 function Events:OnEnable()
+	if BSYC.debugTrace then Debug("OnEnable") end
 	
 	self:RegisterEvent("PLAYER_MONEY")
 	self:RegisterEvent("GUILD_ROSTER_UPDATE")
 	self:RegisterEvent("PLAYER_GUILD_UPDATE")
 
-	self:RegisterEvent("UNIT_INVENTORY_CHANGED")
-	self:RegisterEvent("BAG_UPDATE")
-	
 	self:RegisterEvent("TRADE_SKILL_SHOW")
 	self:RegisterEvent("TRADE_SKILL_LIST_UPDATE")
 	self:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
@@ -200,7 +204,13 @@ function Events:OnEnable()
 		end)
 	end
 	
-	Scanner:StartupScans() --do the login player scans
+	self:DoTimer("PreventStartupSpam", function()
+		--UNIT_INVENTORY_CHANGED and BAG_UPDATE fires A LOT when logging in for the first time.  So in order to prevent scanning spam, lets add a delay
+		self:RegisterEvent("UNIT_INVENTORY_CHANGED")
+		self:RegisterEvent("BAG_UPDATE")
+		Scanner:StartupScans() --do the login player scans
+	end, 4)
+	
 end
 
 function Events:PLAYER_MONEY()
@@ -222,6 +232,7 @@ function Events:UNIT_INVENTORY_CHANGED(event, unit)
 end
 
 function Events:BAG_UPDATE(event, bagid)
+
 	local bagname
 
 	if Scanner:IsBackpack(bagid) or Scanner:IsBackpackBag(bagid) or Scanner:IsKeyring(bagid) then
@@ -251,6 +262,7 @@ end
 function Events:GuildBank_Open()
 	if not BSYC.options.enableGuild then return end
 	if not self.GuildTabQueryQueue then self.GuildTabQueryQueue = {} end
+	if BSYC.debugTrace then Debug("GuildBank_Open") end
 	
 	local numTabs = GetNumGuildBankTabs()
 	for tab = 1, numTabs do
@@ -266,6 +278,7 @@ end
 
 function Events:GuildBank_Close()
 	if not BSYC.options.enableGuild then return end
+	if BSYC.debugTrace then Debug("GuildBank_Close") end
 	
 	if self.queryGuild then
 		BSYC:Print(L.ScanGuildBankError)
@@ -276,7 +289,7 @@ end
 function Events:GUILDBANKBAGSLOTS_CHANGED()
 	if not Unit.atGuildBank then return end
 	if not BSYC.options.enableGuild then return end
-	
+
 	-- check if we need to process the queue
 	local tab = next(self.GuildTabQueryQueue)
 	if tab then

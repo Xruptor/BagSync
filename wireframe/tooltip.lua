@@ -58,6 +58,7 @@ function Tooltip:GetSortIndex(unitObj)
 end
 
 function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple)
+
 	if not unitObj.data then return nil end
 	
 	local player = Unit:GetUnitInfo()
@@ -180,6 +181,7 @@ end
 
 function Tooltip:MoneyTooltip()
 	local tooltip = _G["BagSyncMoneyTooltip"] or nil
+	if BSYC.debugTrace then Debug("MoneyTooltip") end
 	
 	if (not tooltip) then
 			tooltip = CreateFrame("GameTooltip", "BagSyncMoneyTooltip", UIParent, "GameTooltipTemplate")
@@ -252,6 +254,7 @@ function Tooltip:MoneyTooltip()
 end
 
 function Tooltip:UnitTotals(unitObj, allowList, unitList)
+
 	local tallyString = ""
 	local total = 0
 	local grouped = 0
@@ -313,6 +316,8 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total)
 end
 
 function Tooltip:SetTipAnchor(frame, qTip)
+	if BSYC.debugTrace then Debug("SetTipAnchor", frame, qTip) end
+	
     local x, y = frame:GetCenter()
 	
 	qTip:ClearAllPoints()
@@ -332,6 +337,7 @@ end
 function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if not BSYC.options.enableTooltips then return end
 	if not CanAccessObject(objTooltip) then return end
+	if BSYC.debugTrace then Debug("TallyUnits", objTooltip, link, source, isBattlePet) end
 	
 	--only show tooltips in search frame if the option is enabled
 	if BSYC.options.tooltipOnlySearch and objTooltip.GetOwner and objTooltip:GetOwner() and objTooltip:GetOwner():GetName() and not string.find(objTooltip:GetOwner():GetName(), "BagSyncSearchRow") then
@@ -356,7 +362,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		[128353] = "Admiral's Compass",
 		[141605] = "Flight Master's Whistle",
 	}
-	if permIgnore[tonumber(shortID)] or BSYC.db.blacklist[tonumber(shortID)] then
+	if shortID and permIgnore[tonumber(shortID)] or BSYC.db.blacklist[tonumber(shortID)] then
 		objTooltip:Show()
 		return
 	end
@@ -369,7 +375,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	end
 
 	--short the shortID and ignore all BonusID's and stats
-	if BSYC.options.enableShowUniqueItemsTotals then link = shortID end
+	if BSYC.options.enableShowUniqueItemsTotals and shortID then link = shortID end
 	
 	if (BSYC.options.enableExtTooltip or isBattlePet) then
 		if not objTooltip.qTip or not LibQTip:IsAcquired(objTooltip) then
@@ -540,7 +546,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)
-
+	if BSYC.debugTrace then Debug("CurrencyTooltip", objTooltip, currencyName, currencyIcon, currencyID, source) end
+	
 	currencyID = tonumber(currencyID) --make sure it's a number we are working with and not a string
 	if not currencyID then return end
 
@@ -593,7 +600,8 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 end
 
 function Tooltip:HookTooltip(objTooltip)
-
+	if BSYC.debugTrace then Debug("HookTooltip", objTooltip) end
+	
 	--MORE INFO (https://wowpedia.fandom.com/wiki/Category:API_namespaces/C_TooltipInfo)
 	--(https://wowpedia.fandom.com/wiki/Patch_10.0.2/API_changes#Tooltip_Changes)
 	--https://github.com/tomrus88/BlizzardInterfaceCode/blob/e4385aa29a69121b3a53850a8b2fcece9553892e/Interface/SharedXML/Tooltip/TooltipDataHandler.lua
@@ -698,6 +706,7 @@ end
 
 function Tooltip:HookBattlePetTooltip(objTooltip)
 	if not BSYC.IsRetail then end
+	if BSYC.debugTrace then Debug("HookBattlePetTooltip", objTooltip) end
 	
 	--BattlePetToolTip_Show
 	if objTooltip == BattlePetTooltip then
@@ -739,6 +748,8 @@ function Tooltip:HookBattlePetTooltip(objTooltip)
 end
 
 function Tooltip:OnEnable()
+	if BSYC.debugTrace then Debug("OnEnable") end
+	
 	self:HookTooltip(GameTooltip)
 	self:HookTooltip(ItemRefTooltip)
 	self:HookTooltip(EmbeddedItemTooltip)
