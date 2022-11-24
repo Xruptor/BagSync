@@ -4,7 +4,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
-local Search = BSYC:NewModule("Search")
+local Search = BSYC:NewModule("Search", 'AceTimer-3.0')
 local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
@@ -86,9 +86,12 @@ function Search:OnEnable()
 	Search.totalCountLabel = totalCountLabel
 	
 	SearchFrame:SetCallback("OnShow", function()
-		if BSYC.options.focusSearchEditBox then
-			searchbar:SetFocus()
-		end
+		self:ScheduleTimer(function() 
+			if BSYC.options.focusSearchEditBox then
+				searchbar:ClearFocus()
+				searchbar:SetFocus()
+			end
+		end, 0.5)
 	end)
 	
 	----------------------------------------------------------
