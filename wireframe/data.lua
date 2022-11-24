@@ -106,6 +106,7 @@ function Data:OnEnable()
 	if BSYC.options.showGuildBankScanAlert == nil then BSYC.options.showGuildBankScanAlert = true end
 	if BSYC.options.focusSearchEditBox == nil then BSYC.options.focusSearchEditBox = false end
 	if BSYC.options.enableAccurateBattlePets == nil then BSYC.options.enableAccurateBattlePets = true end
+	if BSYC.options.alwaysShowAdvSearch == nil then BSYC.options.alwaysShowAdvSearch = false end
 	
 	--setup the default colors
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end

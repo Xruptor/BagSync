@@ -86,12 +86,16 @@ function Search:OnEnable()
 	Search.totalCountLabel = totalCountLabel
 	
 	SearchFrame:SetCallback("OnShow", function()
-		self:ScheduleTimer(function() 
-			if BSYC.options.focusSearchEditBox then
-				searchbar:ClearFocus()
-				searchbar:SetFocus()
-			end
-		end, 0.5)
+		if not BSYC.options.alwaysShowAdvSearch then
+			self:ScheduleTimer(function() 
+				if BSYC.options.focusSearchEditBox then
+					searchbar:ClearFocus()
+					searchbar:SetFocus()
+				end
+			end, 0.5)
+		else
+			if self.advancedsearchframe then self.advancedsearchframe:Show() end
+		end
 	end)
 	
 	----------------------------------------------------------
@@ -289,6 +293,13 @@ function Search:OnEnable()
 	AdvancedSearchFrame:SetCallback("OnShow",function(widget)
 		Search.searchbar.frame:Hide()
 		Search.refreshbutton.frame:Hide()
+		
+		self:ScheduleTimer(function() 
+			if BSYC.options.focusSearchEditBox then
+				advSearchbar:ClearFocus()
+				advSearchbar:SetFocus()
+			end
+		end, 0.5)
 	end)
 	AdvancedSearchFrame:SetCallback("OnClose",function(widget)
 		Search.searchbar.frame:Show()
@@ -304,9 +315,16 @@ function Search:OnEnable()
 end
 
 function Search:StartSearch(searchStr)
+
 	self.frame:Show()
-	self.searchbar:SetText(searchStr)
-	self:DoSearch(searchStr)
+	
+	if not BSYC.options.alwaysShowAdvSearch then
+		self.searchbar:SetText(searchStr)
+		self:DoSearch(searchStr)
+	else
+		self.advancedsearchframe.advsearchbar:SetText(searchStr)
+	end
+	
 end
 
 function Search:AddEntry(entry)
