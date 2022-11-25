@@ -2,7 +2,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhTW")
 if not L then return end
 
 --  zhTW client (三皈依-暗影之月@TW補齊)
---  Last update: 2022/05/28
+--  Last update: 2022/11/25
 
 L.Yes = "是"
 L.No = "否"
@@ -87,7 +87,7 @@ L.ScanGuildBankStart = "公會銀行內訊息正在查詢伺服器,請稍候....
 L.ScanGuildBankDone = "公會銀行掃描完成!"
 L.ScanGuildBankError = "警告: 公會銀行掃描不完整"
 L.ScanGuildBankScanInfo = "掃描公會標簽 (%s/%s)"
-L.DefaultColors = "默認顏色"
+L.DefaultColors = "預設顏色"
 -- ----THESE ARE FOR SLASH COMMANDS OPERATORS
 L.SlashItemName = "[物品名稱]"
 L.SlashSearch = "搜索"
@@ -115,7 +115,9 @@ L.HelpBlacklistWindow = "/bgs 黑名單 - 打開黑名單視窗"
 ------------------------
 L.EnableBagSyncTooltip = "啟用BagSync鼠標提示"
 L.EnableExtTooltip = "在單獨框體上顯示物品統計數據"
-L.EnableLoginVersionInfo = "顯示BagSync的登錄訊息"
+L.EnableLoginVersionInfo = "顯示BagSync的登入訊息"
+L.FocusSearchEditBox = "開啟搜尋視窗時聚焦到搜尋框架"
+L.AlwaysShowAdvSearch = "始終顯示BagSync進階搜尋視窗。"
 L.DisplayTotal = "顯示 [總計] 金額"
 L.DisplayGuildGoldInGoldTooltip = "顯示 [公會] 金幣總數"
 L.DisplayGuildBank = "包括公會倉物品|cFF99CC33(需要掃描公會銀行)|r"
@@ -142,6 +144,7 @@ L.DisplayShortRealmName = "顯示短位名字 |cffff7d0a[XR]|r 和 |cff3587ff[BN
 L.DisplayFactionIcons = "顯示陣營圖案"
 L.DisplayGuildCurrentCharacter = "僅顯示當前游戲角色的 [公會] 物品"
 L.DisplayGuildBankScanAlert = "顯示公會銀行掃描視窗。"
+L.DisplayAccurateBattlePets = "在公會銀行和郵箱中啟用準確的戰鬥寵物。 |cFFDF2B2B(可能導致延遲)|r |cff3587ff[請參閱BagSync的常見問題]|r"
 L.DisplayShowUniqueItemsTotals = "啟用該選項將允許物品總數量增加獨特的物品,無論物品的統計訊息。|cFF99CC33（推薦）|r"
 L.DisplayShowUniqueItemsTotals_2 = [[
 某些物品例如 |cffff7d0a[Legendaries]|r 可以共享相同的名字但具有不同的統計數據。由於這些物品是彼此獨立處理,因此有時不計入總物品數。啟用此選項將完全忽略獨特的物品統計數據並一視同仁,,只要它們共享相同的物品名稱。
@@ -149,25 +152,27 @@ L.DisplayShowUniqueItemsTotals_2 = [[
 ]]
 L.DisplayShowUniqueItemsTotalsTitle = "在鼠標提示上顯示唯一物品的總數"
 L.DisplayShowUniqueItemsEnableText = "啟用唯一物品的總數"
-L.ColorPrimary = "主要 BagSync 提示顏色"
-L.ColorSecondary = "輔助 BagSync 提示顏色"
-L.ColorTotal = "BagSync [總計] 提示顏色"
-L.ColorGuild = "BagSync [公會] 提示顏色"
+L.ColorPrimary = "主要BagSync提示顏色"
+L.ColorSecondary = "輔助BagSync提示顏色"
+L.ColorTotal = "BagSync [總計]提示顏色"
+L.ColorGuild = "BagSync [公會]提示顏色"
 L.ColorCrossRealm = "BagSync [伺服器] 提示顏色"
-L.ColorBNET = "BagSync [戰網] 提示顏色"
-L.ColorItemID = "BagSync [物品ID] 提示顏色"
-L.ConfigHeader = "各種 BagSync 功能的設置"
+L.ColorBNET = "BagSync [戰網]提示顏色"
+L.ColorItemID = "BagSync [物品ID]提示顏色"
+L.ConfigHeader = "各種BagSync功能的設置"
 L.ConfigDisplay = "顯示"
-L.ConfigTooltipHeader = "顯示的 BagSync 提示訊息的設置"
+L.ConfigTooltipHeader = "顯示BagSync提示訊息的設置"
 L.ConfigColor = "顏色"
-L.ConfigColorHeader = "BagSync 提示訊息的顏色設置"
+L.ConfigColorHeader = "BagSyn提示訊息的顏色設置"
 L.ConfigMain = "主設置"
-L.ConfigMainHeader = "BagSync 的主設置"
-L.WarningItemSearch = "警告：共有 [|cFFFFFFFF%s|r] 個物品未被搜索！\n\nBagSync 仍在等待伺服器/數據庫響應\n\n按“搜索”或“刷新”按鈕"
+L.ConfigMainHeader = "BagSync的主設置"
+L.ConfigSearch = "搜尋"
+L.ConfigSearchHeader = "搜尋視窗的設定"
+L.WarningItemSearch = "警告：共有 [|cFFFFFFFF%s|r] 個物品未被搜索！\n\nBagSync 仍在等待伺服器/數據庫響應\n\n按“搜尋”或“更新”按鈕"
 L.WarningUpdatedDB = "您已更新到最新的版本!您將需要再次重新掃描所有角色!|r "
 L.WarningHeader = "警告!"
 L.ConfigFAQ= " FAQ / 幫助 "
-L.ConfigFAQHeader = "BagSync 的常見問題和幫助介紹"
+L.ConfigFAQHeader = "BagSync的常見問題和幫助介紹"
 L.FAQ_Question_1 = "我遇到鼠標提示上/卡頓/滯後"
 L.FAQ_Question_1_p1 = [[
 當數據庫中有舊的和損壞的數據 BagSync 無法解讀時,通常會發生此問題。當 BagSync 需要處理大量的數據時,也會出現該問題,如果您在多個數據中數千個物品,那麼在一秒鐘內需要處理大量數據.這可能會導致您的計算機在短時間內滯後。最後,此問題的另一個原因是您擁有一台非常舊的計算機。當 BagSync 處理數以千計的物品和角色數據時,較舊的計算機會遇到滯後/卡頓的情況。具有更快的CPU和更大的內存的計算機通常不會出現這些問題。
@@ -190,4 +195,8 @@ BagSync 必須向伺服器查詢您的公會銀行的 |cFF99CC33全部|r 訊息�
 L.FAQ_Question_6 = "為什麼我看到戰鬥寵物是虛擬ID[FakeID]而不是物品ID[ItemID]?"
 L.FAQ_Question_6_p1 = [[
 暴雪不會將物品ID[ItemID]分配給魔獸世界的戰鬥寵物。相反,魔獸世界中的戰鬥寵物會從伺服器分配到一個臨時的寵物ID[PetID]。這個寵物ID[PetID]不是唯一的,會在伺服器重置時更改。為了跟蹤戰鬥寵物,BagSync 會生成一個虛擬ID[FakeID]。 虛擬ID[FakeID]是根據與戰鬥寵物相關聯的靜態數字生成的。使用虛擬ID[FakeID]可以保證BagSync在伺服器重置期間跟蹤到戰鬥寵物。
+]]
+L.FAQ_Question_7 = "公會銀行和郵箱中準確的戰鬥寵物掃描是什麼？"
+L.FAQ_Question_7_p1 = [[
+暴雪不會將戰鬥寵物存儲在公會銀行或郵箱中，並帶有適當的物品ID或種類ID。事實上，戰鬥寵物以|cFF99CC33[寵物籠]|r的形式存儲在公會銀行和郵箱中，物品ID為|cFF99CC3382800|r。這使得有關插件作者難以進行特定戰鬥寵物的抓取任何數據。您可以在公會銀行交易日誌中看到，您會注意到戰鬥寵物被存儲為|cFF99CC33[寵物籠]|r。如果您從公會銀行鏈接一個，它也將顯示為|cFF99CC33[寵物籠]|r。為了解決這個問題，可以使用兩種方法。第一種方法是將戰鬥寵物分配給工具提示，然後從那裡找到。這要求伺服器響應WOW客戶端，並可能導致大量延遲，尤其是在公會銀行中有很多戰鬥寵物的情況下。第二種方法使用戰鬥寵物的圖示試圖找到。有時由於某些戰鬥寵物共享相同的圖示，這有時是不準確的。示例：毒毒與翡翠軟泥怪具有相同的圖示。啟用此選項將迫使工具提示掃描方法盡可能準確，但可能會導致延遲。|cFF99CC33直暴雪為我們提供更多數據來使用。|r
 ]]
