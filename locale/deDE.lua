@@ -143,6 +143,7 @@ L.DisplayShortRealmName = "Kurze Realmnamen für |cffff7d0a[XR]|r und |cff3587ff
 L.DisplayFactionIcons = "Fraktionssymbole im Tooltip anzeigen"
 L.DisplayGuildCurrentCharacter = "Zeige [Gilden] Gegenstände nur für den aktuell eingeloggten Charakter"
 L.DisplayGuildBankScanAlert = "Zeigt das Scan Warnfenster der Gildenbank an"
+L.DisplayAccurateBattlePets = "Genaue Kampfhaustiere in der Gildenbank und Mailbox aktivieren. |cFFDF2B2B(Kann zu Verzögerungen führen)|r |cff3587ff[Siehe BagSync FAQ]|r"
 L.DisplayShowUniqueItemsTotals = "Wenn Du diese Option aktivierst, können einzigartige Gegenstände zur Gesamtzahl der Gegenstände hinzugefügt werden, unabhängig von den Gegenstandsstatistiken. |cFF99CC33(Empfohlen)|r."
 L.DisplayShowUniqueItemsTotals_2 = [[
 Bestimmte Gegenstände wie |cffff7d0a[Legendäre]|r können den gleichen Namen haben, aber unterschiedliche Werte haben. Da diese Artikel unabhängig voneinander behandelt werden, werden sie manchmal nicht auf die Gesamtanzahl der Artikel angerechnet. Wenn Sie diese Option aktivieren, werden die einzigartigen Gegenstandsstatistiken vollständig ignoriert und alle gleich behandelt, solange sie denselben Gegenstandsnamen haben.
@@ -196,4 +197,8 @@ BagSync muss den Server nach |cFF99CC33ALL|r deiner Gildenbankdaten abfragen. Es
 L.FAQ_Question_6 = "Warum sehe ich [FakeID] anstelle von [ItemID] für Kampfhaustiere?"
 L.FAQ_Question_6_p1 = [[
 Blizzard weist Kampfhaustieren keine ItemIDs für WOW zu. Stattdessen wird Battle Pets in WOW eine temporäre PetID vom Server zugewiesen. Diese PetID ist nicht eindeutig und wird geändert, wenn der Server zurückgesetzt wird. Um Battle Pets im Auge zu behalten, generiert BagSync eine FakeID. Eine FakeID wird aus statischen Nummern generiert, die dem Battle Pet zugeordnet sind. Die Verwendung einer FakeID ermöglicht es BagSync, Battle Pets sogar über Server-Resets hinweg zu verfolgen.
+]]
+L.FAQ_Question_7 = "Was ist ein genaues Scannen von Kampfhaustieren in Gildenbank und Postfach?"
+L.FAQ_Question_7_p1 = [[
+Blizzard speichert Kampfhaustiere nicht mit einer korrekten ItemID oder SpeciesID in der Gildenbank oder Mailbox.  Tatsächlich werden Kampfhaustiere in der Gildenbank und im Postfach gespeichert |cFF99CC33[Pet Cage]|r with an ItemID of |cFF99CC3382800|r.  This makes grabbing any data in regards to specific Battle Pets difficult for addon authors.  You can see for yourself in the Guild Bank transaction logs, you'll notice Battle Pets are stored as |cFF99CC33[Pet Cage]|r.  If you link one from a Guild Bank it will also be displayed as |cFF99CC33[Pet Cage]|r.  In order to get by this problem, there are two methods that can be used.  The first method is assigning the Battle Pet to a tooltip and then grabbing the SpeciesID from there.  This requires the server to respond to the WOW client and can potentially lead to massive lag, especially if there is a lot of Battle Pets in the Guild Bank.  The second method uses the iconTexture of the Battle Pet to try to find the SpeciesID.  This is sometimes inaccurate as certain Battle Pets share the same iconTexture.  Example:  Toxic Wasteling shares the same iconTexture as Jade Oozeling.  Enabling this option will force the tooltip scanning method to be as accurate as possible, but it can potentially cause lag.  |cFFDF2B2BThere is no way around this until Blizzard gives us more data to work with.|r
 ]]
