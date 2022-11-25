@@ -145,6 +145,7 @@ L.DisplayShortRealmName = "显示短位名字 |cffff7d0a[XR]|r 和 |cff3587ff[BN
 L.DisplayFactionIcons = "显示阵营图案"
 L.DisplayGuildCurrentCharacter = "仅显示当前游戏角色的 [公会] 物品"
 L.DisplayGuildBankScanAlert = "显示公会银行扫描窗口。"
+L.DisplayAccurateBattlePets = "启用精准扫描公会银行和邮箱中的战斗宠物。|cFFDF2B2B(可能导致滞后)|r |cff3587ff[详见 BagSync FAQ]|r"
 L.DisplayShowUniqueItemsTotals = "启用该选项将允许物品总数量增加独特的物品,无论物品的统计信息。|cFF99CC33（推荐）|r"
 L.DisplayShowUniqueItemsTotals_2 = [[
 某些物品例如 |cffff7d0a[Legendaries]|r 可以共享相同的名字但具有不同的统计数据。由于这些物品是彼此独立处理,因此有时不计入总物品数。启用此选项将完全忽略独特的物品统计数据并一视同仁,,只要它们共享相同的物品名称。
@@ -198,4 +199,8 @@ BagSync 必须向服务器查询您的公会银行的 |cFF99CC33全部|r 信息�
 L.FAQ_Question_6 = "为什么我看到战斗宠物是虚拟ID[FakeID]而不是物品ID[ItemID]?"
 L.FAQ_Question_6_p1 = [[
 暴雪不会将物品ID[ItemID]分配给魔兽世界的战斗宠物。相反,魔兽世界中的战斗宠物会从服务器分配到一个临时的宠物ID[PetID]。这个宠物ID[PetID]不是唯一的,会在服务器重置时更改。为了跟踪战斗宠物,BagSync 会生成一个虚拟ID[FakeID]。 虚拟ID[FakeID]是根据与战斗宠物相关联的静态数字生成的。使用虚拟ID[FakeID]可以保证BagSync在服务器重置期间跟踪到战斗宠物。
+]]
+L.FAQ_Question_7 = "什么是公会银行和邮箱中准确的扫描战斗宠物?"
+L.FAQ_Question_7_p1 = [[
+暴雪不会将战斗宠物存储在公会银行或邮箱中，并带有适当的物品ID或种类ID。事实上，战斗宠物以|cFF99CC33[宠物笼]|r的形式存储在公会银行和邮箱中，物品ID为|cFF99CC3382800|r。这使得有关插件作者难以进行特定战斗宠物的抓取任何数据。您可以在公会银行交易日志中看到，您会注意到战斗宠物被存储为|cFF99CC33[宠物笼]|r。如果您从公会银行链接一个，它也将显示为|cFF99CC33[宠物笼]|r。为了解决这个问题，可以使用两种方法。第一种方法是将战斗宠物分配给工具提示，然后从那里找到物种。这要求服务器响应WOW客户端，并可能导致大量滞后，尤其是在公会银行中有很多战斗宠物的情况下。第二种方法使用战斗宠物的图标试图找到物种。有时由于某些战斗宠物共享相同的图标，这有时是不准确的。示例：毒毒与翡翠软泥怪具有相同的图标。启用此选项将迫使工具提示扫描方法尽可能准确，但可能会导致滞后。|cFF99CC33直到暴雪为我们提供更多数据来使用。|r
 ]]
