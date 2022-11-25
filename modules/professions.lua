@@ -8,14 +8,8 @@ local Professions = BSYC:NewModule("Professions")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
 
-local debugf = tekDebug and tekDebug:GetFrame("BagSync")
-local function Debug(...)
-    if debugf then
-		local debugStr = string.join(", ", tostringall(...))
-		local moduleName = string.format("|cFFffff00[%s]|r: ", "Professions")
-		debugStr = moduleName..debugStr
-		debugf:AddMessage(debugStr)
-	end
+local function Debug(level, ...)
+    if BSYC.debugTrace and BSYC.DEBUG then BSYC.DEBUG(level, "Professions", ...) end
 end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")

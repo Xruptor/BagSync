@@ -9,14 +9,8 @@ local Unit = BSYC:GetModule("Unit")
 local Scanner = BSYC:GetModule("Scanner")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
-local debugf = tekDebug and tekDebug:GetFrame("BagSync")
-local function Debug(...)
-    if debugf then
-		local debugStr = string.join(", ", tostringall(...))
-		local moduleName = string.format("|cFFffff00[%s]|r: ", "Events")
-		debugStr = moduleName..debugStr
-		debugf:AddMessage(debugStr)
-	end
+local function Debug(level, ...)
+    if BSYC.debugTrace and BSYC.DEBUG then BSYC.DEBUG(level, "Events", ...) end
 end
 
 Events.canQueryAuctions = false
@@ -34,7 +28,7 @@ alertTooltip:Hide()
 Events.alertTooltip = alertTooltip
 
 local function showEventAlert(text, alertType)
-	if BSYC.debugTrace then Debug("showEventAlert", text, alertType) end
+	Debug(2, "showEventAlert", text, alertType)
 	
 	Events.alertTooltip.alertType = alertType
 	Events.alertTooltip:ClearAllPoints()
@@ -52,7 +46,7 @@ local function showEventAlert(text, alertType)
 end
 
 function Events:DoTimer(sName, sFunc, sDelay, sRepeat)
-	if BSYC.debugTrace then Debug("DoTimer", sName, sFunc, sDelay, sRepeat) end
+	Debug(2, "DoTimer", sName, sFunc, sDelay, sRepeat)
 	
 	if not self.timers then self.timers = {} end
 	if not sRepeat then
@@ -69,7 +63,7 @@ function Events:DoTimer(sName, sFunc, sDelay, sRepeat)
 end
 
 function Events:StopTimer(sName)
-	if BSYC.debugTrace then Debug("StopTimer", sName) end
+	Debug(2, "StopTimer", sName)
 	
 	if not self.timers then return end
 	if not sName then return end
@@ -78,7 +72,7 @@ function Events:StopTimer(sName)
 end
 
 function Events:OnEnable()
-	if BSYC.debugTrace then Debug("OnEnable") end
+	Debug(2, "OnEnable")
 	
 	self:RegisterEvent("PLAYER_MONEY")
 	self:RegisterEvent("GUILD_ROSTER_UPDATE")
@@ -206,6 +200,7 @@ function Events:OnEnable()
 	
 	self:DoTimer("PreventStartupSpam", function()
 		--UNIT_INVENTORY_CHANGED and BAG_UPDATE fires A LOT when logging in for the first time.  So in order to prevent scanning spam, lets add a delay
+		Debug(2, "Execute-PreventStartupSpam")
 		self:RegisterEvent("UNIT_INVENTORY_CHANGED")
 		self:RegisterEvent("BAG_UPDATE")
 		Scanner:StartupScans() --do the login player scans
@@ -262,7 +257,7 @@ end
 function Events:GuildBank_Open()
 	if not BSYC.options.enableGuild then return end
 	if not self.GuildTabQueryQueue then self.GuildTabQueryQueue = {} end
-	if BSYC.debugTrace then Debug("GuildBank_Open") end
+	Debug(2, "GuildBank_Open")
 	
 	local numTabs = GetNumGuildBankTabs()
 	for tab = 1, numTabs do
@@ -278,7 +273,7 @@ end
 
 function Events:GuildBank_Close()
 	if not BSYC.options.enableGuild then return end
-	if BSYC.debugTrace then Debug("GuildBank_Close") end
+	Debug(2, "GuildBank_Close")
 	
 	if self.queryGuild then
 		BSYC:Print(L.ScanGuildBankError)

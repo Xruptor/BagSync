@@ -8,14 +8,8 @@ local Currency = BSYC:NewModule("Currency")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
 
-local debugf = tekDebug and tekDebug:GetFrame("BagSync")
-local function Debug(...)
-    if debugf then
-		local debugStr = string.join(", ", tostringall(...))
-		local moduleName = string.format("|cFFffff00[%s]|r: ", "CURRENCY")
-		debugStr = moduleName..debugStr
-		debugf:AddMessage(debugStr)
-	end
+local function Debug(level, ...)
+    if BSYC.debugTrace and BSYC.DEBUG then BSYC.DEBUG(level, "Currency", ...) end
 end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")

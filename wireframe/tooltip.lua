@@ -10,14 +10,8 @@ local Data = BSYC:GetModule("Data")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local LibQTip = LibStub('LibQTip-1.0')
 
-local debugf = tekDebug and tekDebug:GetFrame("BagSync")
-local function Debug(...)
-    if debugf then
-		local debugStr = string.join(", ", tostringall(...))
-		local moduleName = string.format("|cFFffff00[%s]|r: ", "Tooltip")
-		debugStr = moduleName..debugStr
-		debugf:AddMessage(debugStr)
-	end
+local function Debug(level, ...)
+    if BSYC.debugTrace and BSYC.DEBUG then BSYC.DEBUG(level, "Tooltip", ...) end
 end
 
 local function CanAccessObject(obj)
@@ -74,7 +68,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple)
 	if not unitObj.isGuild then
 	
 		--first colorize by class color
-		if bypass or showSimple or BSYC.options.enableUnitClass and RAID_CLASS_COLORS[unitObj.data.class] then
+		if bypass or showSimple or (BSYC.options.enableUnitClass and RAID_CLASS_COLORS[unitObj.data.class]) then
 			tmpTag = self:HexColor(RAID_CLASS_COLORS[unitObj.data.class], unitObj.name)
 		else
 			tmpTag = self:HexColor(BSYC.options.colors.first, unitObj.name)
@@ -176,12 +170,13 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple)
 		end
 	end
 	
+	Debug(2, "ColorizeUnit", tmpTag)
 	return tmpTag
 end
 
 function Tooltip:MoneyTooltip()
 	local tooltip = _G["BagSyncMoneyTooltip"] or nil
-	if BSYC.debugTrace then Debug("MoneyTooltip") end
+	Debug(2, "MoneyTooltip")
 	
 	if (not tooltip) then
 			tooltip = CreateFrame("GameTooltip", "BagSyncMoneyTooltip", UIParent, "GameTooltipTemplate")
@@ -316,7 +311,7 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total)
 end
 
 function Tooltip:SetTipAnchor(frame, qTip)
-	if BSYC.debugTrace then Debug("SetTipAnchor", frame, qTip) end
+	Debug(2, "SetTipAnchor", frame, qTip)
 	
     local x, y = frame:GetCenter()
 	
@@ -337,7 +332,6 @@ end
 function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if not BSYC.options.enableTooltips then return end
 	if not CanAccessObject(objTooltip) then return end
-	if BSYC.debugTrace then Debug("TallyUnits", objTooltip, link, source, isBattlePet) end
 	
 	--only show tooltips in search frame if the option is enabled
 	if BSYC.options.tooltipOnlySearch and objTooltip.GetOwner and objTooltip:GetOwner() and objTooltip:GetOwner():GetName() and not string.find(objTooltip:GetOwner():GetName(), "BagSyncSearchRow") then
@@ -362,7 +356,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		[128353] = "Admiral's Compass",
 		[141605] = "Flight Master's Whistle",
 	}
-	if shortID and permIgnore[tonumber(shortID)] or BSYC.db.blacklist[tonumber(shortID)] then
+	if shortID and (permIgnore[tonumber(shortID)] or BSYC.db.blacklist[tonumber(shortID)]) then
 		objTooltip:Show()
 		return
 	end
@@ -542,11 +536,12 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			objTooltip.qTip:Hide()
 		end
 	end
-
+	
+	Debug(2, "TallyUnits", objTooltip, link, shortID, source, isBattlePet, grandTotal)
 end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)
-	if BSYC.debugTrace then Debug("CurrencyTooltip", objTooltip, currencyName, currencyIcon, currencyID, source) end
+	Debug(2, "CurrencyTooltip", objTooltip, currencyName, currencyIcon, currencyID, source)
 	
 	currencyID = tonumber(currencyID) --make sure it's a number we are working with and not a string
 	if not currencyID then return end
@@ -600,7 +595,7 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 end
 
 function Tooltip:HookTooltip(objTooltip)
-	if BSYC.debugTrace then Debug("HookTooltip", objTooltip) end
+	Debug(2, "HookTooltip", objTooltip)
 	
 	--MORE INFO (https://wowpedia.fandom.com/wiki/Category:API_namespaces/C_TooltipInfo)
 	--(https://wowpedia.fandom.com/wiki/Patch_10.0.2/API_changes#Tooltip_Changes)
@@ -706,7 +701,7 @@ end
 
 function Tooltip:HookBattlePetTooltip(objTooltip)
 	if not BSYC.IsRetail then end
-	if BSYC.debugTrace then Debug("HookBattlePetTooltip", objTooltip) end
+	Debug(2, "HookBattlePetTooltip", objTooltip)
 	
 	--BattlePetToolTip_Show
 	if objTooltip == BattlePetTooltip then
@@ -748,7 +743,7 @@ function Tooltip:HookBattlePetTooltip(objTooltip)
 end
 
 function Tooltip:OnEnable()
-	if BSYC.debugTrace then Debug("OnEnable") end
+	Debug(2, "OnEnable")
 	
 	self:HookTooltip(GameTooltip)
 	self:HookTooltip(ItemRefTooltip)

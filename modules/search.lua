@@ -9,14 +9,8 @@ local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
 
-local debugf = tekDebug and tekDebug:GetFrame("BagSync")
-local function Debug(...)
-    if debugf then
-		local debugStr = string.join(", ", tostringall(...))
-		local moduleName = string.format("|cFFffff00[%s]|r: ", "Search")
-		debugStr = moduleName..debugStr
-		debugf:AddMessage(debugStr)
-	end
+local function Debug(level, ...)
+    if BSYC.debugTrace and BSYC.DEBUG then BSYC.DEBUG(level, "Search", ...) end
 end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
@@ -577,7 +571,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 					--bags, bank, reagents are stored in individual bags
 					if k == "bag" or k == "bank" or k == "reagents" then
 						for bagID, bagData in pairs(v) do
-							if not viewCustomList or viewCustomList == k and unitObj.name == player.name and unitObj.realm == player.realm then
+							if (not viewCustomList or viewCustomList == k) and unitObj.name == player.name and unitObj.realm == player.realm then
 								countWarning = checkData(bagData, searchStr, searchTable, tempList, countWarning, viewCustomList)
 							end
 						end
@@ -587,7 +581,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 						if k == "mailbox" and not BSYC.options.enableMailbox then passChk = false end
 						
 						if passChk then
-							if not viewCustomList or viewCustomList == k and unitObj.name == player.name and unitObj.realm == player.realm then
+							if (not viewCustomList or viewCustomList == k) and unitObj.name == player.name and unitObj.realm == player.realm then
 								countWarning = checkData(k == "auction" and v.bag or v, searchStr, searchTable, tempList, countWarning, viewCustomList)
 							end
 						end
@@ -596,7 +590,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 			end
 		else
 			if not advUnitList then
-				if not viewCustomList or viewCustomList == "guild" and unitObj.name == player.guild and unitObj.data.realmKey == player.realmKey then
+				if (not viewCustomList or viewCustomList == "guild") and unitObj.name == player.guild and unitObj.data.realmKey == player.realmKey then
 					countWarning = checkData(unitObj.data.bag, searchStr, searchTable, tempList, countWarning, viewCustomList)
 				end
 			else

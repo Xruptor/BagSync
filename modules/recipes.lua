@@ -7,14 +7,8 @@ local BSYC = select(2, ...) --grab the addon namespace
 local Recipes = BSYC:NewModule("Recipes")
 local Tooltip = BSYC:GetModule("Tooltip")
 
-local debugf = tekDebug and tekDebug:GetFrame("BagSync")
-local function Debug(...)
-    if debugf then
-		local debugStr = string.join(", ", tostringall(...))
-		local moduleName = string.format("|cFFffff00[%s]|r: ", "Recipes")
-		debugStr = moduleName..debugStr
-		debugf:AddMessage(debugStr)
-	end
+local function Debug(level, ...)
+    if BSYC.debugTrace and BSYC.DEBUG then BSYC.DEBUG(level, "Recipes", ...) end
 end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")

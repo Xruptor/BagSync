@@ -8,14 +8,8 @@ local Data = BSYC:NewModule("Data")
 local Unit = BSYC:GetModule("Unit")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
-local debugf = tekDebug and tekDebug:GetFrame("BagSync")
-local function Debug(...)
-    if debugf then
-		local debugStr = string.join(", ", tostringall(...))
-		local moduleName = string.format("|cFFffff00[%s]|r: ", "Data")
-		debugStr = moduleName..debugStr
-		debugf:AddMessage(debugStr)
-	end
+local function Debug(level, ...)
+    if BSYC.debugTrace and BSYC.DEBUG then BSYC.DEBUG(level, "Data", ...) end
 end
 
 --increment forceDBReset to reset the ENTIRE db forcefully
@@ -43,7 +37,7 @@ StaticPopupDialogs["BAGSYNC_RESETDATABASE"] = {
 ----------------------
 
 function Data:OnEnable()
-	if BSYC.debugTrace then Debug("OnEnable") end
+	Debug(2, "OnEnable")
 	
 	local ver = GetAddOnMetadata("BagSync","Version") or 0
 	
@@ -144,7 +138,7 @@ function Data:OnEnable()
 end
 
 function Data:ResetColors()
-	if BSYC.debugTrace then Debug("ResetColors") end
+	Debug(2, "ResetColors")
 	
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end
 	BSYC.options.colors.first = { r = 128/255, g = 1, b = 0 }
@@ -158,7 +152,7 @@ function Data:ResetColors()
 end
 
 function Data:CleanDB()
-	if BSYC.debugTrace then Debug("CleanDB") end
+	Debug(2, "CleanDB")
 	
 	--check for empty table table to prevent loops
 	if next(BagSyncDB) == nil then
@@ -173,7 +167,7 @@ function Data:CleanDB()
 end
 
 function Data:FixDB()
-	if BSYC.debugTrace then Debug("FixDB") end
+	Debug(2, "FixDB")
 	
     local storeUsers = {}
     local storeGuilds = {}
@@ -223,7 +217,7 @@ function Data:FixDB()
 end
 
 function Data:LoadSlashCommand()
-	if BSYC.debugTrace then Debug("LoadSlashCommand") end
+	Debug(2, "LoadSlashCommand")
 	
 	--load the keybinding locale information
 	BINDING_HEADER_BAGSYNC = "BagSync"
@@ -305,7 +299,7 @@ function Data:LoadSlashCommand()
 end
 
 function Data:CheckExpiredAuctions()
-	if BSYC.debugTrace then Debug("CheckExpiredAuctions") end
+	Debug(2, "CheckExpiredAuctions")
 	
 	for unitObj in self:IterateUnits(true) do
 		if not unitObj.isGuild and unitObj.data.auction and unitObj.data.auction.count then
@@ -347,7 +341,7 @@ function Data:CheckExpiredAuctions()
 end
 
 function Data:IterateUnits(dumpAll, filterList)
-	if BSYC.debugTrace then Debug("IterateUnits", dumpAll, filterList) end
+	Debug(2, "IterateUnits", dumpAll, filterList)
 	
 	if filterList then dumpAll = true end
 	

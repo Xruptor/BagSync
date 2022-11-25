@@ -30,13 +30,33 @@ BSYC.IsWLK_C = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
 BSYC.debugTrace = false --custom option just for me to debug stuff, do not turn this on :P, you have been warned
 
 local debugf = tekDebug and tekDebug:GetFrame("BagSync")
-local function Debug(...)
-    if debugf then
+function BSYC.DEBUG(level, sName, ...)
+    if debugf and BSYC.debugTrace then
 		local debugStr = string.join(", ", tostringall(...))
-		local moduleName = string.format("|cFFffff00[%s]|r: ", "CORE")
+		local color = "778899" -- slate gray
+
+		if level == 1 then
+			--debug
+			color = "4DD827" --fel green
+		elseif level == 2 then
+			--info
+			color = "ffff00" --yellow
+		elseif level == 3 then
+			--trace
+			color = "09DBE0" --teal blue
+		elseif level == 4 then
+			--warn
+			color = "FF3C38" --rose red
+		end
+		
+		local moduleName = string.format("|cFF"..color.."[%s]|r: ", sName)
 		debugStr = moduleName..debugStr
 		debugf:AddMessage(debugStr)
 	end
+end
+
+local function Debug(level, ...)
+    if BSYC.debugTrace and BSYC.DEBUG then BSYC.DEBUG(level, "CORE", ...) end
 end
 
 --According to https://github.com/Xruptor/BagSync/issues/196 this partciular OnEvent causes a significant delay on startup for users.
@@ -163,6 +183,7 @@ end
 
 function BSYC:CreateFakeBattlePetID(link, count, speciesID)
 	if not BSYC.IsRetail then return nil end
+	Debug(1, "CreateFakeBattlePetID", link, count, speciesID)
 	
 	--https://github.com/tomrus88/BlizzardInterfaceCode/blob/8633e552f3335b8c66b1fbcea6760a5cd8bcc06b/Interface/FrameXML/BattlePetTooltip.lua
 	

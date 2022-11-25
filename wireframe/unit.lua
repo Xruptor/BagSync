@@ -7,14 +7,8 @@
 local BSYC = select(2, ...) --grab the addon namespace
 local Unit = BSYC:NewModule("Unit", 'AceEvent-3.0')
 
-local debugf = tekDebug and tekDebug:GetFrame("BagSync")
-local function Debug(...)
-    if debugf then
-		local debugStr = string.join(", ", tostringall(...))
-		local moduleName = string.format("|cFFffff00[%s]|r: ", "Unit")
-		debugStr = moduleName..debugStr
-		debugf:AddMessage(debugStr)
-	end
+local function Debug(level, ...)
+    if BSYC.debugTrace and BSYC.DEBUG then BSYC.DEBUG(level, "Unit", ...) end
 end
 
 local REALM = GetRealmName()
@@ -123,7 +117,8 @@ function Unit:GetUnitInfo(unit)
 	unit.guild = unit.guild and (unit.guild..'©')
 	unit.name, unit.realm, unit.isguild = name, realm, isguild
 	unit.realmKey = realmKey
-
+	
+	Debug(3, "GetUnitInfo", name, realm, isguild, FACTION, unit.class, unit.race, unit.gender, unit.guild, unit.realmKey)
 	return unit
 end
 
@@ -132,6 +127,7 @@ function Unit:isConnectedRealm(realm)
 end
 
 function Unit:GetRealmKey()
+	Debug(3, "GetRealmKey", realmKey)
 	return realmKey
 end
 
