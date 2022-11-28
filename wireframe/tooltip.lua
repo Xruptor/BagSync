@@ -218,21 +218,27 @@ function Tooltip:MoneyTooltip()
 	for unitObj in Data:IterateUnits() do
 		if unitObj.data.money and unitObj.data.money > 0 then
 			if not unitObj.isGuild or (unitObj.isGuild and BSYC.options.showGuildInGoldTooltip) then
-				table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj) } )
+				table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj), count=unitObj.data.money } )
 			end
 		end
 	end
 	
 	--sort the list by our sortIndex then by realm and finally by name
-	table.sort(usrData, function(a, b)
-		if a.sortIndex  == b.sortIndex then
-			if a.unitObj.realm == b.unitObj.realm then
-				return a.unitObj.name < b.unitObj.name;
+	if not BSYC.options.sortTooltipByTotals then
+		table.sort(usrData, function(a, b)
+			if a.sortIndex  == b.sortIndex then
+				if a.unitObj.realm == b.unitObj.realm then
+					return a.unitObj.name < b.unitObj.name;
+				end
+				return a.unitObj.realm < b.unitObj.realm;
 			end
-			return a.unitObj.realm < b.unitObj.realm;
-		end
-		return a.sortIndex < b.sortIndex;
-	end)
+			return a.sortIndex < b.sortIndex;
+		end)
+	else
+		table.sort(usrData, function(a, b)
+			return a.count > b.count;
+		end)
+	end
 
 	for i=1, #usrData do
 		--use GetMoneyString and true to seperate it by thousands
@@ -288,7 +294,7 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList)
 	end
 
 	--add to list
-	table.insert(unitList, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), tallyString=tallyString, sortIndex=self:GetSortIndex(unitObj) } )
+	table.insert(unitList, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), tallyString=tallyString, sortIndex=self:GetSortIndex(unitObj), count=total } )
 
 end
 
@@ -467,23 +473,35 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	
 	--only sort items if we have something to work with
 	if #unitList > 0 then
-
-		table.sort(unitList, function(a, b)
-			if a.sortIndex  == b.sortIndex then
-				if a.unitObj.realm == b.unitObj.realm then
-					return a.unitObj.name < b.unitObj.name;
+		if not BSYC.options.sortTooltipByTotals then
+			table.sort(unitList, function(a, b)
+				if a.sortIndex  == b.sortIndex then
+					if a.unitObj.realm == b.unitObj.realm then
+						return a.unitObj.name < b.unitObj.name;
+					end
+					return a.unitObj.realm < b.unitObj.realm;
 				end
-				return a.unitObj.realm < b.unitObj.realm;
-			end
-			return a.sortIndex < b.sortIndex;
-		end)
-		
+				return a.sortIndex < b.sortIndex;
+			end)
+		else
+			table.sort(unitList, function(a, b)
+				return a.count > b.count;
+			end)
+		end
+	
 	end
 	
 	local desc, value = '', ''
 	
+	local addSeparator = false
+	
 	--add [Total] if we have more than one unit to work with
 	if BSYC.options.showTotal and grandTotal > 0 and #unitList > 1 then
+		if not addSeparator then
+			--add a separator after the character list
+			table.insert(unitList, { colorized=" ", tallyString=" "} )
+			addSeparator = true
+		end
 		desc = self:HexColor(BSYC.options.colors.total, L.TooltipTotal)
 		value = self:HexColor(BSYC.options.colors.second, comma_value(grandTotal))
 		table.insert(unitList, { colorized=desc, tallyString=value} )
@@ -496,6 +514,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		if isBattlePet then
 			desc = string.format("|cFFCA9BF7%s|r ", L.TooltipFakeID)
 		end
+		table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
 		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
 	end
 	
@@ -556,15 +575,21 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	end
 	
 	--sort the list by our sortIndex then by realm and finally by name
-	table.sort(usrData, function(a, b)
-		if a.sortIndex  == b.sortIndex then
-			if a.unitObj.realm == b.unitObj.realm then
-				return a.unitObj.name < b.unitObj.name;
+	if not BSYC.options.sortTooltipByTotals then
+		table.sort(usrData, function(a, b)
+			if a.sortIndex  == b.sortIndex then
+				if a.unitObj.realm == b.unitObj.realm then
+					return a.unitObj.name < b.unitObj.name;
+				end
+				return a.unitObj.realm < b.unitObj.realm;
 			end
-			return a.unitObj.realm < b.unitObj.realm;
-		end
-		return a.sortIndex < b.sortIndex;
-	end)
+			return a.sortIndex < b.sortIndex;
+		end)
+	else
+		table.sort(usrData, function(a, b)
+			return a.count > b.count;
+		end)
+	end
 	
 	if currencyName then
 		objTooltip:AddLine(currencyName, 64/255, 224/255, 208/255)
@@ -580,6 +605,7 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	if BSYC.options.enableTooltipItemID and currencyID then
 		desc = self:HexColor(BSYC.options.colors.itemid, L.TooltipCurrencyID)
 		value = self:HexColor(BSYC.options.colors.second, currencyID)
+		objTooltip:AddDoubleLine(" ", " ", 1, 1, 1, 1, 1, 1)
 		objTooltip:AddDoubleLine(desc, value, 1, 1, 1, 1, 1, 1)
 	end
 	

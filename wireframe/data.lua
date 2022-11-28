@@ -101,6 +101,7 @@ function Data:OnEnable()
 	if BSYC.options.focusSearchEditBox == nil then BSYC.options.focusSearchEditBox = false end
 	if BSYC.options.enableAccurateBattlePets == nil then BSYC.options.enableAccurateBattlePets = true end
 	if BSYC.options.alwaysShowAdvSearch == nil then BSYC.options.alwaysShowAdvSearch = false end
+	if BSYC.options.sortTooltipByTotals == nil then BSYC.options.sortTooltipByTotals = false end
 	
 	--setup the default colors
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end

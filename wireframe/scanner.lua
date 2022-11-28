@@ -62,7 +62,7 @@ end
 
 function Scanner:IsKeyring(bagid)
 	if not bagid then return false end
-	return bagid == KEYRING
+	return bagid == KEYRING_CONTAINER
 end
 
 function Scanner:IsBank(bagid)
@@ -141,7 +141,7 @@ end
 
 function Scanner:SaveEquipment()
 	Debug(2, "SaveEquipment")
-	
+
 	if not BSYC.db.player.equip then BSYC.db.player.equip = {} end
 	
 	local slotItems = {}
@@ -152,6 +152,28 @@ function Scanner:SaveEquipment()
 		if link then
 			table.insert(slotItems,  BSYC:ParseItemLink(link, count))
 		end
+	end
+	
+	--check for ProfessionsFrame Inventory Slots
+	if BSYC.IsRetail and C_TradeSkillUI and C_TradeSkillUI.GetProfessionInventorySlots then
+	
+		--https://github.com/tomrus88/BlizzardInterfaceCode/blob/fe4bab5c1ffc87ae2919478efc59d03b76ef6b19/Interface/AddOns/Blizzard_Tutorials/Blizzard_Tutorials_Professions.lua
+		local profInvSlots = C_TradeSkillUI.GetProfessionInventorySlots()
+
+		for _, i in ipairs(profInvSlots) do
+		
+			--this starts at tabard which is 19, you want to do +1 to start at 20
+			--https://wowpedia.fandom.com/wiki/InventorySlotId
+			local slotNumber = i + 1
+
+			local link = GetInventoryItemLink("player", slotNumber)
+			local count =  GetInventoryItemCount("player", slotNumber)
+			
+			if link and count then
+				table.insert(slotItems,  BSYC:ParseItemLink(link, count))
+			end
+		end
+		
 	end
 	
 	BSYC.db.player.equip = slotItems

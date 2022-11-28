@@ -378,6 +378,16 @@ options.args.display = {
 					disabled = function() return not BSYC.options["enableGuild"] end,
 					hidden = function() return BSYC.IsClassic end,
 				},
+				sorttooltipbytotals = {
+					order = 8,
+					type = "toggle",
+					name = L.SortTooltipByTotals,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.sortTooltipByTotals",
+				},
 			}
 		},
 		grouptags = {

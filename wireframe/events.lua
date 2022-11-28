@@ -185,7 +185,7 @@ function Events:OnEnable()
 			Events.canQueryAuctions = false --reset this
 			self:DoTimer("ScanAuction", function() Scanner:SaveAuctionHouse() end, 0.5)
 		end)
-
+		
 	else
 		--classic auction house
 		self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE", function() Scanner:SaveAuctionHouse() end)
@@ -231,11 +231,14 @@ end
 
 function Events:BAG_UPDATE_DELAYED(event)
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
-	Debug(2, "BAG_UPDATE_DELAYED", BSYC:GetHashTableLen(self.SpamBagQueue))
+	--NOTE: BSYC:GetHashTableLen(self.SpamBagQueue) may show more then is actually processed.  Example it has the banks in queue but we aren't at a bank.
+	Debug(2, "SpamBagQueue", BSYC:GetHashTableLen(self.SpamBagQueue))
+	
+	local totalProcessed = 0
 	
 	for bagid in pairs(self.SpamBagQueue) do
 		local bagname
-
+	
 		if Scanner:IsBackpack(bagid) or Scanner:IsBackpackBag(bagid) or Scanner:IsKeyring(bagid) then
 			bagname = "bag"
 		elseif Scanner:IsBank(bagid) or Scanner:IsBankBag(bagid) then
@@ -247,11 +250,14 @@ function Events:BAG_UPDATE_DELAYED(event)
 
 		if bagname then
 			Scanner:SaveBag(bagname, bagid)
+			totalProcessed = totalProcessed + 1
 		end
 		
 		--remove it
 		self.SpamBagQueue[bagid] = nil
 	end
+	
+	Debug(2, "SpamBagQueue", "totalProcessed", totalProcessed)
 	
 	--check if they crafted an item outside the bank, if so then do a parse check to update item count.
 	self:DoTimer("SaveCraftedReagents", function() Scanner:SaveCraftedReagents() end, 1)
