@@ -9,7 +9,7 @@ local Data = BSYC:GetModule("Data")
 local Unit = BSYC:GetModule("Unit")
 
 local function Debug(level, ...)
-    if BSYC.debugTrace and BSYC.DEBUG then BSYC.DEBUG(level, "Blacklist", ...) end
+    if BSYC.debugSwitch and BSYC.DEBUG then BSYC.DEBUG(level, "Blacklist", ...) end
 end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")

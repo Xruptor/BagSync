@@ -8,7 +8,7 @@ local BSYC = select(2, ...) --grab the addon namespace
 local Unit = BSYC:NewModule("Unit", 'AceEvent-3.0')
 
 local function Debug(level, ...)
-    if BSYC.debugTrace and BSYC.DEBUG then BSYC.DEBUG(level, "Unit", ...) end
+    if BSYC.debugSwitch and BSYC.DEBUG then BSYC.DEBUG(level, "Unit", ...) end
 end
 
 local REALM = GetRealmName()

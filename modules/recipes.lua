@@ -8,7 +8,7 @@ local Recipes = BSYC:NewModule("Recipes")
 local Tooltip = BSYC:GetModule("Tooltip")
 
 local function Debug(level, ...)
-    if BSYC.debugTrace and BSYC.DEBUG then BSYC.DEBUG(level, "Recipes", ...) end
+    if BSYC.debugSwitch and BSYC.DEBUG then BSYC.DEBUG(level, "Recipes", ...) end
 end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")

@@ -27,11 +27,16 @@ BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 --BSYC.IsTBC_C = WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC
 BSYC.IsWLK_C = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
 
-BSYC.debugTrace = false --custom option just for me to debug stuff, do not turn this on :P, you have been warned
+BSYC.debugSwitch = false --custom option just for me to debug stuff, do not turn this on :P, you have been warned
+BSYC.debugInfo = true
+BSYC.debugTrace = false
 
 local debugf = tekDebug and tekDebug:GetFrame("BagSync")
 function BSYC.DEBUG(level, sName, ...)
-    if debugf and BSYC.debugTrace then
+	if level == 2 and not BSYC.debugInfo then return end --only do info if we enable it
+	if level == 3 and not BSYC.debugTrace then return end --only do traces if we enable it
+	
+    if debugf and BSYC.debugSwitch then
 		local debugStr = string.join(", ", tostringall(...))
 		local color = "778899" -- slate gray
 
@@ -56,7 +61,7 @@ function BSYC.DEBUG(level, sName, ...)
 end
 
 local function Debug(level, ...)
-    if BSYC.debugTrace and BSYC.DEBUG then BSYC.DEBUG(level, "CORE", ...) end
+    if BSYC.debugSwitch and BSYC.DEBUG then BSYC.DEBUG(level, "CORE", ...) end
 end
 
 --According to https://github.com/Xruptor/BagSync/issues/196 this partciular OnEvent causes a significant delay on startup for users.
@@ -67,7 +72,7 @@ if LibStub("LibItemSearch-1.2") and LibStub("LibItemSearch-1.2").Scanner and Lib
 end
 	
 --use /framestack to debug windows and show tooltip information
---use if you press SHIFT while doing the above command it gives you a bit more information
+--if you press SHIFT while doing the above command it gives you a bit more information
 
 --this is only for hash tables that aren't indexed with 1,2,3,4 etc.. but use custom index keys
 --if you are using table.insert() or tables that are indexed with numbers then use # instead for table length.  #table as example

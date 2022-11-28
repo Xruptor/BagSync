@@ -9,7 +9,7 @@ local Unit = BSYC:GetModule("Unit")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
 local function Debug(level, ...)
-    if BSYC.debugTrace and BSYC.DEBUG then BSYC.DEBUG(level, "Data", ...) end
+    if BSYC.debugSwitch and BSYC.DEBUG then BSYC.DEBUG(level, "Data", ...) end
 end
 
 --increment forceDBReset to reset the ENTIRE db forcefully

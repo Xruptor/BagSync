@@ -11,7 +11,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local LibQTip = LibStub('LibQTip-1.0')
 
 local function Debug(level, ...)
-    if BSYC.debugTrace and BSYC.DEBUG then BSYC.DEBUG(level, "Tooltip", ...) end
+    if BSYC.debugSwitch and BSYC.DEBUG then BSYC.DEBUG(level, "Tooltip", ...) end
 end
 
 local function CanAccessObject(obj)
