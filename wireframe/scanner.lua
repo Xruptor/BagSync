@@ -50,28 +50,34 @@ function Scanner:GetBagSlots(bagType)
 end
 
 function Scanner:IsBackpack(bagid)
+	if not bagid then return false end
 	return bagid == BACKPACK_CONTAINER
 end
 
 function Scanner:IsBackpackBag(bagid)
+	if not bagid then return false end
 	local minCnt, maxCnt = self:GetBagSlots("bag")
 	return bagid >= minCnt and bagid <= maxCnt
 end
 
 function Scanner:IsKeyring(bagid)
+	if not bagid then return false end
 	return bagid == KEYRING
 end
 
 function Scanner:IsBank(bagid)
+	if not bagid then return false end
 	return bagid == BANK_CONTAINER
 end
 
 function Scanner:IsBankBag(bagid)
+	if not bagid then return false end
 	local minCnt, maxCnt = self:GetBagSlots("bank")
 	return bagid >= minCnt and bagid <= maxCnt
 end
 
 function Scanner:IsReagentBag(bagid)
+	if not bagid then return false end
 	return bagid == REAGENTBANK_CONTAINER
 end
 
@@ -523,7 +529,6 @@ function Scanner:CleanupBags()
 
 	Debug(2, "CleanupBags")
 	
-	local tmpList = {}
 	local bagtype = ""
 
 	--you want to remove the items from the table AFTER the iteration, otherwise you can open up a can of worms if you set to NIL during the table iteration
@@ -535,38 +540,33 @@ function Scanner:CleanupBags()
 	if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
 	
 	for bagID, bagData in pairs(BSYC.db.player[bagtype]) do
-		if self:IsBackpack(bagID) or self:IsBackpackBag(bagID) or self:IsKeyring(bagID) then
-			tmpList[bagID] = bagData
+		if not self:IsBackpack(bagID) and not self:IsBackpackBag(bagID) and not self:IsKeyring(bagID) then
+			BSYC.db.player[bagtype][bagID] = nil
 		end
 	end
-	BSYC.db.player[bagtype] = tmpList
-	
+
 	--BANK
 	bagtype = "bank"
-	tmpList = {}
-	
+
 	if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
 	
 	for bagID, bagData in pairs(BSYC.db.player[bagtype]) do
-		if self:IsBank(bagID) or self:IsBankBag(bagID) then
-			tmpList[bagID] = bagData
+		if not self:IsBank(bagID) and not self:IsBankBag(bagID) then
+			BSYC.db.player[bagtype][bagID] = nil
 		end
 	end
-	BSYC.db.player[bagtype] = tmpList
-	
+
 	--REAGENTS
 	bagtype = "reagents"
-	tmpList = {}
-	
+
 	if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
 	
 	for bagID, bagData in pairs(BSYC.db.player[bagtype]) do
-		if self:IsReagentBag(bagID) then
-			tmpList[bagID] = bagData
+		if not self:IsReagentBag(bagID) then
+			BSYC.db.player[bagtype][bagID] = nil
 		end
 	end
-	BSYC.db.player[bagtype] = tmpList
-	
+
 end
 
 function Scanner:SaveProfessions()
