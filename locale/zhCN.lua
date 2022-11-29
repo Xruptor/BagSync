@@ -146,6 +146,7 @@ L.DisplayFactionIcons = "显示阵营图案"
 L.DisplayGuildCurrentCharacter = "仅显示当前游戏角色的 [公会] 物品"
 L.DisplayGuildBankScanAlert = "显示公会银行扫描窗口。"
 L.DisplayAccurateBattlePets = "启用精准扫描公会银行和邮箱中的战斗宠物。|cFFDF2B2B(可能导致滞后)|r |cff3587ff[详见 BagSync FAQ]|r"
+L.SortTooltipByTotals = "BagSync 工具提示的排序是按总计而不是字母顺序。"
 L.DisplayShowUniqueItemsTotals = "启用该选项将允许物品总数量增加独特的物品,无论物品的统计信息。|cFF99CC33（推荐）|r"
 L.DisplayShowUniqueItemsTotals_2 = [[
 某些物品例如 |cffff7d0a[Legendaries]|r 可以共享相同的名字但具有不同的统计数据。由于这些物品是彼此独立处理,因此有时不计入总物品数。启用此选项将完全忽略独特的物品统计数据并一视同仁,,只要它们共享相同的物品名称。
