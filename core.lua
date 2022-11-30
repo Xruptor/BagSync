@@ -100,6 +100,9 @@ function BSYC:ParseItemLink(link, count)
 	if link then
 		if not count then count = 1 end
 		
+		--there are times link comes in as a number and breaks string matching, convert to string to fix
+		if type(link) == "number" then link = tostring(link) end
+		
 		--if we are parsing a database entry just return it, chances are it's a battlepet anyways
 		local qLink, qCount, qIdentifier = strsplit(";", link)
 		if qLink and qCount then
@@ -114,10 +117,7 @@ function BSYC:ParseItemLink(link, count)
 		if isBattlepet then
 			return BSYC:CreateFakeBattlePetID(link, count)
 		end
-	
-		--there are times link comes in as a number and breaks string matching, convert to string to fix
-		if type(link) == "number" then link = tostring(link) end
-		
+
 		local result = link:match("item:([%d:]+)")
 		local shortID = self:GetShortItemID(link)
 		
@@ -142,6 +142,8 @@ function BSYC:ParseItemLink(link, count)
 		-----------------------------
 		
 		if result then
+			--https://wowpedia.fandom.com/wiki/ItemLink
+			
 			--split everything into a table so we can count up to the bonusID portion
 			local countSplit = {strsplit(":", result)}
 			result = shortID --set this to default shortID, if we have something we will replace it below
@@ -160,16 +162,15 @@ function BSYC:ParseItemLink(link, count)
 					local newItemStr = ""
 					
 					--11th place because 13 is bonus ID, one less from 13 (12) would be technically correct, but we have to compensate for ItemID we added in front so substract another one (11).
-					--string.rep repeats a pattern.
-					newItemStr = countSplit[1]..string.rep(":", 11)
+					newItemStr = countSplit[1]..":::::::::::"
 					
 					--lets add the bonusID's, ignore the end past bonusID's
 					for i=13, (13 + bonusCount) do
 						newItemStr = newItemStr..":"..countSplit[i]
 					end
-					
+
 					--add the unknowns at the end, upgradeValue doesn't always have to be supplied.
-					result = newItemStr..":::" --replace the default shortid with our new corrected one
+					result = newItemStr.."::::::" --replace the default shortid with our new corrected one (total 19 variables in https://wowpedia.fandom.com/wiki/ItemLink)
 				end
 			end
 		end

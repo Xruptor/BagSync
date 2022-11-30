@@ -553,9 +553,6 @@ function Scanner:CleanupBags()
 	
 	local bagtype = ""
 
-	--you want to remove the items from the table AFTER the iteration, otherwise you can open up a can of worms if you set to NIL during the table iteration
-	--this is considered bad practice and should only be done if rehashing a table
-
 	--BAG
 	bagtype = "bag"
 	

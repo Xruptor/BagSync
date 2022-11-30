@@ -356,14 +356,19 @@ function Data:IterateUnits(dumpAll, filterList)
 
 			if argKey and string.match(argKey, '§*') then
 				argKey, argValue = next(BagSyncDB, argKey)
+				
 			elseif argKey then
-				k, v = next(argValue, k)
+				local isConnectedRealm = (Unit:isConnectedRealm(argKey) and true) or false
+				
+				if dumpAll or (argKey == player.realm) or (isConnectedRealm and BSYC.options.enableCrossRealmsItems) or (BSYC.options.enableBNetAccountItems) then
+					
+					--pull entries from characters until k is empty, then pull next realm entry
+					k, v = next(argValue, k)
 
-				if k then
-					if v.faction and (v.faction == BSYC.db.player.faction or BSYC.options.enableFaction) then
+					if k then
+
 						local isGuild = (k:find('©*') and true) or false
-						local isConnectedRealm = (Unit:isConnectedRealm(argKey) and true) or false
-						
+
 						--return everything regardless of user settings
 						if dumpAll then
 							local skipReturn = false
@@ -387,7 +392,7 @@ function Data:IterateUnits(dumpAll, filterList)
 								return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm}
 							end
 							
-						elseif (argKey == player.realm) or (isConnectedRealm and BSYC.options.enableCrossRealmsItems) or (BSYC.options.enableBNetAccountItems) then
+						elseif v.faction and (v.faction == BSYC.db.player.faction or BSYC.options.enableFaction) then
 							
 							local skipChk = false
 							
@@ -424,13 +429,19 @@ function Data:IterateUnits(dumpAll, filterList)
 							if not skipChk then
 								return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm}
 							end
+							
 						end
+						
+					else
+						--we have looped through all the characters and next k entry is empty, pull next entry from realms
+						argKey, argValue = next(BagSyncDB, argKey)
 					end
+					
 				else
+					--realm doesn't match our criteria, pull next entry from realms
 					argKey, argValue = next(BagSyncDB, argKey)
 				end
 				
-			--else if no next key then exit while
 			end
 		end
 	end

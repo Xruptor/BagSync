@@ -624,7 +624,7 @@ function Tooltip:HookTooltip(objTooltip)
 	Debug(2, "HookTooltip", objTooltip)
 	
 	--MORE INFO (https://wowpedia.fandom.com/wiki/Category:API_namespaces/C_TooltipInfo)
-	--(https://wowpedia.fandom.com/wiki/Patch_10.0.2/API_changes#Tooltip_Changes)
+	--https://wowpedia.fandom.com/wiki/Patch_10.0.2/API_changes#Tooltip_Changes
 	--https://github.com/tomrus88/BlizzardInterfaceCode/blob/e4385aa29a69121b3a53850a8b2fcece9553892e/Interface/SharedXML/Tooltip/TooltipDataHandler.lua
 	--https://wowpedia.fandom.com/wiki/Patch_10.0.2/API_changes
 	
