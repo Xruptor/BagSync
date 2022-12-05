@@ -9,7 +9,7 @@ local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
 
 local function Debug(level, ...)
-    if BSYC.debugSwitch and BSYC.DEBUG then BSYC.DEBUG(level, "Professions", ...) end
+    if BSYC.DEBUG then BSYC.DEBUG(level, "Professions", ...) end
 end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")

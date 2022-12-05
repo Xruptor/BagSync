@@ -10,7 +10,7 @@ local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
 
 local function Debug(level, ...)
-    if BSYC.debugSwitch and BSYC.DEBUG then BSYC.DEBUG(level, "Search", ...) end
+    if BSYC.DEBUG then BSYC.DEBUG(level, "Search", ...) end
 end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
@@ -474,6 +474,7 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 				if dName and not tempList[link] then
 					if viewCustomList or testMatch then
 						tempList[link] = dName
+						Debug(6, "FoundItem", searchStr, dName, dItemLink)
 						table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
 					end					
 				elseif not tempList[link] then
@@ -487,6 +488,7 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 end
 
 function Search:DoAdvancedSearch()
+	Debug(2, "init:DoAdvancedSearch", searchStr, advUnitList, advAllowList)
 	
 	local advUnitList = {}
 	
@@ -562,12 +564,16 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 	--overwrite the allowlist with the advance one if it isn't empty
 	allowList = advAllowList or allowList
 	
+	Debug(2, "init:DoSearch", searchStr, advUnitList, advAllowList)
+	
 	--advUnitList will force dumpAll to be true if necessary for advanced search
 	for unitObj in Data:IterateUnits(false, advUnitList) do
 	
 		if not unitObj.isGuild then
+			Debug(5, "Search-IterateUnits", "player", unitObj.name, player.realm)
 			for k, v in pairs(unitObj.data) do
 				if allowList[k] and type(v) == "table" then
+					Debug(5, k)
 					--bags, bank, reagents are stored in individual bags
 					if k == "bag" or k == "bank" or k == "reagents" then
 						for bagID, bagData in pairs(v) do
@@ -589,6 +595,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 				end
 			end
 		else
+			Debug(5, "Search-IterateUnits", "guild", unitObj.name, player.realm, unitObj.data.realmKey)
 			if not advUnitList then
 				if (not viewCustomList or viewCustomList == "guild") and unitObj.name == player.guild and unitObj.data.realmKey == player.realmKey then
 					countWarning = checkData(unitObj.data.bag, searchStr, searchTable, tempList, countWarning, viewCustomList)

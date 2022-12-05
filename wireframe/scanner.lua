@@ -8,7 +8,7 @@ local Scanner = BSYC:NewModule("Scanner")
 local Unit = BSYC:GetModule("Unit")
 
 local function Debug(level, ...)
-    if BSYC.debugSwitch and BSYC.DEBUG then BSYC.DEBUG(level, "Scanner", ...) end
+    if BSYC.DEBUG then BSYC.DEBUG(level, "Scanner", ...) end
 end
 
 --https://github.com/tomrus88/BlizzardInterfaceCode/blob/master/Interface/AddOns/Blizzard_VoidStorageUI/Blizzard_VoidStorageUI.lua
@@ -668,55 +668,59 @@ function Scanner:SaveProfessions()
 				--grab the info in a table
 				recipeData = C_TradeSkillUI.GetRecipeInfo(Scanner.recipeIDs[i])
 				
-				local categoryID = recipeData.categoryID
-				local categoryData = C_TradeSkillUI.GetCategoryInfo(categoryID)
+				if recipeData then
 
-				--grab the parent name, Engineering, Herbalism, Blacksmithing, etc...
-				if recipeData.learned and categoryData and categoryData.categoryID == categoryID and categoryData.parentCategoryID then
+					local categoryID = recipeData.categoryID
+					local categoryData = C_TradeSkillUI.GetCategoryInfo(categoryID)
 
-					--grab categories, Legion Engineering, Cateclysm Engineering, etc...
-					local subCatData = C_TradeSkillUI.GetCategoryInfo(categoryData.parentCategoryID)
+					--grab the parent name, Engineering, Herbalism, Blacksmithing, etc...
+					if recipeData.learned and categoryData and categoryData.categoryID == categoryID and categoryData.parentCategoryID then
+
+						--grab categories, Legion Engineering, Cateclysm Engineering, etc...
+						local subCatData = C_TradeSkillUI.GetCategoryInfo(categoryData.parentCategoryID)
+						
+						--make sure we have something to work with, we don't want to store stuff that doesn't have levels
+						if subCatData and subCatData.categoryID == categoryData.parentCategoryID then
+
+							if not BSYC.db.player.professions[parentSkillLineID] then
+								BSYC.db.player.professions[parentSkillLineID] = BSYC.db.player.professions[parentSkillLineID] or {}
+								BSYC.db.player.professions[parentSkillLineID].name = parentSkillLineName
+							end
+
+							local parentIDSlot = BSYC.db.player.professions[parentSkillLineID]
+							parentIDSlot.categories = parentIDSlot.categories or {}
+							
+							--store the sub category information, Legion Engineering, Cateclysm Engineering, etc...
+							parentIDSlot.categories[subCatData.categoryID] = parentIDSlot.categories[subCatData.categoryID] or {}
+							local subCatSlot = parentIDSlot.categories[subCatData.categoryID]
+
+							--always overwrite because we can have a different level or name then last time
+							subCatSlot.name = subCatData.name
+							subCatSlot.skillLineCurrentLevel = subCatData.skillLineCurrentLevel
+							subCatSlot.skillLineMaxLevel = subCatData.skillLineMaxLevel
+							
+							--cleanout the recipe list first time entering the category, otherwise it will constantly have repeats
+							if not catCleanup[subCatData.categoryID] then
+								catCleanup[subCatData.categoryID] = true
+								subCatSlot.recipes = nil
+							end
+							if not subCatSlot.orderIndex then
+								orderIndex = orderIndex + 1
+								subCatSlot.orderIndex = orderIndex
+							end
+							
+							--now store the recipe information, but make sure we don't already have the recipe stored
+							--we have to do this as sometimes the recipe is scanned multiple times.  It will get refreshed once the profession is saved again though.
+							--so technically it will always be up to date
+							if not tmpRecipe[recipeData.recipeID] then
+								subCatSlot.recipes = (subCatSlot.recipes or "").."|"..recipeData.recipeID
+								tmpRecipe[recipeData.recipeID] = true
+							end
+							
+						end
 					
-					--make sure we have something to work with, we don't want to store stuff that doesn't have levels
-					if subCatData and subCatData.categoryID == categoryData.parentCategoryID then
-
-						if not BSYC.db.player.professions[parentSkillLineID] then
-							BSYC.db.player.professions[parentSkillLineID] = BSYC.db.player.professions[parentSkillLineID] or {}
-							BSYC.db.player.professions[parentSkillLineID].name = parentSkillLineName
-						end
-
-						local parentIDSlot = BSYC.db.player.professions[parentSkillLineID]
-						parentIDSlot.categories = parentIDSlot.categories or {}
-						
-						--store the sub category information, Legion Engineering, Cateclysm Engineering, etc...
-						parentIDSlot.categories[subCatData.categoryID] = parentIDSlot.categories[subCatData.categoryID] or {}
-						local subCatSlot = parentIDSlot.categories[subCatData.categoryID]
-
-						--always overwrite because we can have a different level or name then last time
-						subCatSlot.name = subCatData.name
-						subCatSlot.skillLineCurrentLevel = subCatData.skillLineCurrentLevel
-						subCatSlot.skillLineMaxLevel = subCatData.skillLineMaxLevel
-						
-						--cleanout the recipe list first time entering the category, otherwise it will constantly have repeats
-						if not catCleanup[subCatData.categoryID] then
-							catCleanup[subCatData.categoryID] = true
-							subCatSlot.recipes = nil
-						end
-						if not subCatSlot.orderIndex then
-							orderIndex = orderIndex + 1
-							subCatSlot.orderIndex = orderIndex
-						end
-						
-						--now store the recipe information, but make sure we don't already have the recipe stored
-						--we have to do this as sometimes the recipe is scanned multiple times.  It will get refreshed once the profession is saved again though.
-						--so technically it will always be up to date
-						if not tmpRecipe[recipeData.recipeID] then
-							subCatSlot.recipes = (subCatSlot.recipes or "").."|"..recipeData.recipeID
-							tmpRecipe[recipeData.recipeID] = true
-						end
-						
 					end
-				
+
 				end
 				
 			end

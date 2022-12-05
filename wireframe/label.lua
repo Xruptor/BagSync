@@ -65,18 +65,6 @@ local methods = {
 		end
 	end,
 	
-	["SetDisabled"] = function(self,disabled)
-		self.disabled = disabled
-		if disabled then
-			self.frame:EnableMouse(false)
-			self.label:SetTextColor(0.5, 0.5, 0.5)
-		else
-			self.frame:EnableMouse(true)
-			self.label:SetTextColor(1, 1, 1)
-		end
-	end,
-	
-
 	["SetHighlight"] = function(self, ...)
 		self.highlight:SetTexture(...)
 		self.headerhighlight:SetTexture(nil) --only one active highlight at a time

@@ -8,7 +8,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local Module = BSYC:NewModule("Minimap")
 
 local function Debug(level, ...)
-    if BSYC.debugSwitch and BSYC.DEBUG then BSYC.DEBUG(level, "MiniMap", ...) end
+    if BSYC.DEBUG then BSYC.DEBUG(level, "MiniMap", ...) end
 end
 
 local bgMinimapButton = CreateFrame("Frame","BagSync_MinimapButton", Minimap)

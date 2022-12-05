@@ -45,7 +45,7 @@ L.DeleteWarning = "Wähle ein Profil zum löschen aus. INFO: Dies ist nicht umke
 L.Delete = "Löschen"
 L.Confirm = "Bestätigen"
 L.FixDBComplete = "Die Funktion FixDB wurde ausgeführt! Die Datenbank wurde optimiert!"
-L.ResetDBInfo = "BaySync:\Bist Du sicher, dass Du die Datenbank zurücksetzen möchtest?\in|cFFDF2B2B HINWEIS: Dies kann nicht rückgängig gemacht werden!|r"
+L.ResetDBInfo = "BaySync:\nBist Du sicher, dass Du die Datenbank zurücksetzen möchtest?\nin|cFFDF2B2B HINWEIS: Dies kann nicht rückgängig gemacht werden!|r"
 L.ON = "An"
 L.OFF = "Aus"
 L.LeftClickSearch = "|cffddff00Links Klick|r |cff00ff00= Suchen|r"

@@ -8,7 +8,7 @@ local LDB = LibStub:GetLibrary('LibDataBroker-1.1', true)
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
 local function Debug(level, ...)
-    if BSYC.debugSwitch and BSYC.DEBUG then BSYC.DEBUG(level, "DataBrokerPlugin", ...) end
+    if BSYC.DEBUG then BSYC.DEBUG(level, "DataBrokerPlugin", ...) end
 end
 
 local Plugin = LDB:NewDataObject("BagSyncLDB", {

@@ -9,7 +9,7 @@ local Unit = BSYC:GetModule("Unit")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
 local function Debug(level, ...)
-    if BSYC.debugSwitch and BSYC.DEBUG then BSYC.DEBUG(level, "Data", ...) end
+    if BSYC.DEBUG then BSYC.DEBUG(level, "Data", ...) end
 end
 
 --increment forceDBReset to reset the ENTIRE db forcefully
@@ -114,6 +114,16 @@ function Data:OnEnable()
 	if BSYC.options.colors.bnet == nil then BSYC.options.colors.bnet = { r = 53/255, g = 136/255, b = 1 }  end
 	if BSYC.options.colors.itemid == nil then BSYC.options.colors.itemid = { r = 82/255, g = 211/255, b = 134/255 }  end
 
+	--setup the debug values
+	if BSYC.options.debug == nil then BSYC.options.debug = {} end
+	if BSYC.options.debug.enable == nil then BSYC.options.debug.enable = false end
+	if BSYC.options.debug.DEBUG == nil then BSYC.options.debug.DEBUG = false end
+	if BSYC.options.debug.INFO == nil then BSYC.options.debug.INFO = true end
+	if BSYC.options.debug.TRACE == nil then BSYC.options.debug.TRACE = true end
+	if BSYC.options.debug.WARN == nil then BSYC.options.debug.WARN = false end
+	if BSYC.options.debug.FINE == nil then BSYC.options.debug.FINE = false end
+	if BSYC.options.debug.SUBFINE == nil then BSYC.options.debug.SUBFINE = false end
+
 	--do DB cleanup check by version number
 	if not BSYC.options.addonversion or BSYC.options.addonversion ~= ver then	
 		self:FixDB()
@@ -135,7 +145,27 @@ function Data:OnEnable()
 	if BSYC.options.enableLoginVersionInfo then
 		BSYC:Print("[v|cFF20ff20"..ver.."|r] /bgs, /bagsync")
 	end
+	if BSYC.options.debug.enable then
+		BSYC:Print(L.DebugWarning)
+		C_Timer.After(6, function() BSYC:Print(L.DebugWarning) end)
+	end
+end
 
+function Data:DebugDumpOptions()
+	Debug(1, "init-DebugDumpOptions")
+	for k, v in pairs(BSYC.options) do
+		if type(v) ~= "table" then
+			Debug(1, k, tostring(v))
+		else
+			for x, y in pairs(v) do
+				if type(y) ~= "table" then
+					Debug(1, k, tostring(x), tostring(y))
+				else
+					Debug(1, k, tostring(x), BSYC:serializeTable(y))
+				end
+			end
+		end
+	end
 end
 
 function Data:ResetColors()
@@ -271,6 +301,9 @@ function Data:LoadSlashCommand()
 				end
 				InterfaceOptionsFrame_OpenToCategory(BSYC.aboutPanel) --force the panel to show
 				return true
+			elseif cmd == L.SlashDebug then
+				BSYC:GetModule("Debug").frame:Show()
+				return true
 			else
 				--do an item search, use the full command to search
 				BSYC:GetModule("Search"):StartSearch(input)
@@ -291,6 +324,7 @@ function Data:LoadSlashCommand()
 		BSYC:Print(L.HelpFixDB)
 		BSYC:Print(L.HelpResetDB)
 		BSYC:Print(L.HelpConfigWindow)
+		BSYC:Print(L.HelpDebug)
 	end
 	
 	--/bgs and /bagsync

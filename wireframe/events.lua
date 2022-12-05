@@ -10,7 +10,7 @@ local Scanner = BSYC:GetModule("Scanner")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
 local function Debug(level, ...)
-    if BSYC.debugSwitch and BSYC.DEBUG then BSYC.DEBUG(level, "Events", ...) end
+    if BSYC.DEBUG then BSYC.DEBUG(level, "Events", ...) end
 end
 
 Events.canQueryAuctions = false

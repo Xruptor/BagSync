@@ -9,7 +9,7 @@ local config = LibStub("AceConfig-3.0")
 local configDialog = LibStub("AceConfigDialog-3.0")
 
 local function Debug(level, ...)
-    if BSYC.debugSwitch and BSYC.DEBUG then BSYC.DEBUG(level, "Config", ...) end
+    if BSYC.DEBUG then BSYC.DEBUG(level, "Config", ...) end
 end
 
 local options = {}

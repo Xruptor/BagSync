@@ -1,3 +1,4 @@
+---@diagnostic disable: need-check-nil
 --[[
 	blacklist.lua
 		A blacklist frame for BagSync items
@@ -9,7 +10,7 @@ local Data = BSYC:GetModule("Data")
 local Unit = BSYC:GetModule("Unit")
 
 local function Debug(level, ...)
-    if BSYC.debugSwitch and BSYC.DEBUG then BSYC.DEBUG(level, "Blacklist", ...) end
+    if BSYC.DEBUG then BSYC.DEBUG(level, "Blacklist", ...) end
 end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
@@ -179,7 +180,7 @@ end
 function Blacklist:AddItemID()
 	local itemid = self.editbox:GetText()
 	
-	if string.len(self.editbox:GetText()) < 1 or not tonumber(itemid) then
+	if not itemid or string.len(self.editbox:GetText()) < 1 or not tonumber(itemid) then
 		BSYC:Print(L.EnterItemID)
 		self.editbox:SetText()
 		return
