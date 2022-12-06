@@ -4,6 +4,8 @@ if not L then return end
 
 L.Yes = "Yes"
 L.No = "No"
+L.Page = "Page"
+L.Done = "Done"
 L.TooltipCrossRealmTag = "XR"
 L.TooltipBattleNetTag = "BN"
 L.TooltipBag = "Bags:"

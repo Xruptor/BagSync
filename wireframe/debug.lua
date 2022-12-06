@@ -10,9 +10,218 @@ local Debug = BSYC:NewModule("Debug")
 local AceGUI = LibStub("AceGUI-3.0")
 
 local xListLen = 400
-local xRowHeight = 14
-local xMaxScroll = 29
-local xFontHeight = 13.9
+
+local function unescape(str)
+    str = gsub(str, "|T.-|t", "") --textures in chat like currency coins and such
+	str = gsub(str, "|H.-|h(.-)|h", "%1") --links, just put the item description and chat color
+	str = gsub(str, "{.-}", "") --remove raid icons from chat
+	
+    return str
+end
+
+local function SetExportFrameText(pageNum)
+	if not Debug.exportFrame then return end
+
+	Debug.exportFrame.MLEditBox:SetText("") --clear it first in case there were previous messages
+	Debug.exportFrame.currChatIndex = chatIndex
+	
+	--the editbox of the multiline editbox (The parent of the multiline object)
+	local parentEditBox = Debug.exportFrame.MLEditBox.editBox
+	
+	--there is a hard limit of text that can be highlighted in an editbox to 500 lines.
+	local MAXLINES = 150 --150 don't use large numbers or it will cause LAG when frame opens.  EditBox was not made for large amounts of text
+	local msgCount = #Debug.scrollframe.children
+	local startPos = 0
+	local endPos = 0
+	local lineText
+	
+	--lets create the pages
+	local pages = {}
+	local pageCount = 0 --start at zero
+	for i = 1, msgCount, MAXLINES do
+	  pageCount = i-1 --the block will extend by 1 past 150, so subtract 1
+	  if pageCount <= 0 then pageCount = 1 end --this is the first page, so start at 1
+	  table.insert(pages, pageCount)
+	end
+	
+	--load past page if we don't have a pageNum
+	if not pageNum and startPos < 1 then
+		if msgCount > MAXLINES then
+			startPos = msgCount - MAXLINES
+			endPos = startPos + MAXLINES
+		else
+			startPos = 1
+			endPos = msgCount
+		end
+	--otherwise load the page number
+	elseif pageNum and pages[pageNum] then
+		if pages[pageNum] == 1 then
+			--first page
+			startPos = 1
+			endPos = MAXLINES
+		else
+			startPos = pages[pageNum]
+			endPos = pages[pageNum] + MAXLINES
+		end
+	else
+		return
+	end
+	
+	--adjust the endPos if it's greater than the total messages we have
+	if endPos > msgCount then endPos = msgCount end
+	
+	for i = startPos, endPos do
+
+		local tmpObj = Debug.scrollframe.children[i]
+
+		if tmpObj and tmpObj.label then
+			lineText = tmpObj.label:GetText()
+		else
+			break
+		end
+
+		--we add |r at the end to break any color codes that don't terminate properly and will taint the next lines
+		if (i == startPos) then
+			lineText = unescape(lineText).."|r"
+		else
+			lineText = "\n"..unescape(lineText).."|r"
+		end
+
+		parentEditBox:Insert(lineText)
+	end
+	
+	if pageNum then
+		Debug.exportFrame.currentPage = pageNum
+	else
+		Debug.exportFrame.currentPage = #pages
+	end
+
+	Debug.exportFrame.pages = pages
+	Debug.exportFrame.pageNumText:SetText(L.Page.." "..Debug.exportFrame.currentPage)
+	
+	Debug.exportFrame.handleCursorChange = true -- just in case
+	Debug.exportFrame:Show()
+end
+
+local function CreateExportFrame()
+	--check to see if we have the frame already, if we do then return it
+	if Debug.exportFrame then return Debug.exportFrame end
+
+	local exportFrame = CreateFrame("FRAME", nil, UIParent, BackdropTemplateMixin and "BackdropTemplate")
+
+	exportFrame:SetBackdrop({
+		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+		tile = true,
+		tileSize = 32,
+		edgeSize = 32,
+		insets = { left = 8, right = 8, top = 8, bottom = 8 }
+	})
+	exportFrame:SetBackdropColor(0, 0, 0, 1)
+	exportFrame:EnableMouse(true)
+	exportFrame:SetFrameStrata("DIALOG")
+	exportFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+	exportFrame:SetWidth(830)
+	exportFrame:SetHeight(490)
+
+	local group = AceGUI:Create("InlineGroup")
+	group.frame:SetParent(exportFrame)
+	group.frame:SetPoint("BOTTOMRIGHT", exportFrame, "BOTTOMRIGHT", -17, 12)
+	group.frame:SetPoint("TOPLEFT", exportFrame, "TOPLEFT", 17, -10)
+	group.frame:Hide()
+	group:SetLayout("fill")
+	group.frame:Show() --show the group so everything in it displays in the frame
+
+	local MLEditBox = AceGUI:Create("MultiLineEditBox")
+	MLEditBox:SetWidth(400)
+	MLEditBox.button:Hide()
+	MLEditBox.frame:SetClipsChildren(true)
+	MLEditBox:SetLabel(L.DebugExport)
+    MLEditBox:ClearFocus()
+	MLEditBox:SetText("")
+	group:AddChild(MLEditBox)
+	exportFrame.MLEditBox = MLEditBox
+
+	exportFrame.handleCursorChange = false --setting this to true will update the scrollbar to the cursor position
+	MLEditBox.scrollFrame:HookScript("OnUpdate", function(self, elapsed)
+		if not MLEditBox.scrollFrame:IsVisible() then return end
+		
+		self.OnUpdateCounter = (self.OnUpdateCounter or 0) + elapsed
+		if self.OnUpdateCounter < 0.1 then return end
+		self.OnUpdateCounter = 0
+		
+		local pos = math.max(string.len(MLEditBox:GetText()), MLEditBox.editBox:GetNumLetters())
+		
+		if ( exportFrame.handleCursorChange ) then
+			MLEditBox:SetFocus()
+			MLEditBox:SetCursorPosition(pos)
+			MLEditBox:ClearFocus()
+			--put the scrollbar button at the max it can go
+			local statusMin, statusMax = MLEditBox.scrollBar:GetMinMaxValues()
+			MLEditBox.scrollBar:SetValue(statusMax + 100) --extra 100 just in case (sometimes the offset is slightly off)
+			exportFrame.handleCursorChange = false
+		end
+
+	end)
+	exportFrame:HookScript("OnShow", function() exportFrame.handleCursorChange = true end)
+
+	local close = CreateFrame("Button", nil, group.frame, "UIPanelButtonTemplate")
+	close:SetScript("OnClick", function() exportFrame:Hide() end)
+	close:SetPoint("BOTTOMRIGHT", -27, 13)
+	close:SetFrameLevel(close:GetFrameLevel() + 1)
+	close:SetHeight(20)
+	close:SetWidth(100)
+	close:SetText(L.Done)
+	
+    local buttonBack = CreateFrame("Button", nil, group.frame, "UIPanelButtonTemplate")
+    buttonBack:SetText("<")
+    buttonBack:SetHeight(25)
+    buttonBack:SetWidth(25)
+    buttonBack:SetPoint("BOTTOMLEFT", 10, 13)
+	buttonBack:SetFrameLevel(buttonBack:GetFrameLevel() + 1)
+    buttonBack:SetScript("OnClick", function()
+		if exportFrame.currentPage then
+			if (exportFrame.currentPage - 1) > 0 then
+				SetExportFrameText(exportFrame.currentPage - 1)
+			end
+		end
+    end)
+    exportFrame.buttonBack = buttonBack
+    
+    local buttonForward = CreateFrame("Button", nil, group.frame, "UIPanelButtonTemplate")
+    buttonForward:SetText(">")
+    buttonForward:SetHeight(25)
+    buttonForward:SetWidth(25)
+    buttonForward:SetPoint("BOTTOMLEFT", 40, 13)
+	buttonForward:SetFrameLevel(buttonForward:GetFrameLevel() + 1)
+    buttonForward:SetScript("OnClick", function()
+		if exportFrame.currentPage and exportFrame.pages then
+			if (exportFrame.currentPage + 1) <= #exportFrame.pages then
+				SetExportFrameText(exportFrame.currentPage + 1)
+			end
+		end
+    end)
+    exportFrame.buttonForward = buttonForward
+    
+	--this is to place it above the group layer
+	local textFrame = CreateFrame("FRAME", nil, group.frame, BackdropTemplateMixin and "BackdropTemplate")
+	textFrame:SetFrameLevel(textFrame:GetFrameLevel() + 1)
+	textFrame:SetPoint("BOTTOMLEFT", 80, 18)
+	textFrame:Show()
+	
+    local pageNumText = textFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    pageNumText:SetPoint("LEFT", textFrame)
+    pageNumText:SetShadowOffset(1, -1)
+    pageNumText:SetText(L.Page.." 1")
+	textFrame:SetHeight(pageNumText:GetHeight() + 2)
+	textFrame:SetWidth(pageNumText:GetWidth() + 2)
+    exportFrame.pageNumText = pageNumText
+	
+	exportFrame:Hide()
+	
+	--store it for the future
+	Debug.exportFrame = exportFrame
+end
 
 function Debug:OnEnable()
 	--we have to do this as this module loads before Data which sets up the DB.  The reason we do this is to catch errors as earliest as possible by ensuring Debug loads first
@@ -28,7 +237,8 @@ function Debug:OnEnable()
 	DebugFrame:SetWidth(800)
 	DebugFrame:EnableResize(false)
 	DebugFrame:SetPoint("CENTER",UIParent,"CENTER",0,120)
-	
+	DebugFrame.frame:SetFrameStrata("BACKGROUND")
+
 	--scrollbar:SetMinMaxValues(0, 1000)
 	local scrollframe = AceGUI:Create("ScrollFrame");
 	scrollframe:SetFullWidth(true)
@@ -149,25 +359,39 @@ function Debug:OnEnable()
 	exportBtn:SetHeight(20)
 	exportBtn:SetWidth(exportBtn.text:GetStringWidth() + 40)
 	exportBtn:SetCallback("OnClick", function()
-		local lines = {};
-		for i=1, #self.scrollframe.children do
-			local tmpObj = self.scrollframe.children[i]
-			if tmpObj and tmpObj.label then
-				table.insert(lines, tmpObj.label:GetText())
-			end
-		end
+		-- local lines = {};
+		-- for i=1, #self.scrollframe.children do
+		-- 	local tmpObj = self.scrollframe.children[i]
+		-- 	if tmpObj and tmpObj.label then
+		-- 		table.insert(lines, tmpObj.label:GetText())
+		-- 	end
+		-- end
 		
-		local strLines = table.concat(lines, "\r\n")
+		-- local strLines = table.concat(lines, "\r\n")
+
+		SetExportFrameText()
 	end)
 	exportBtn.frame:SetParent(Debug.optionsFrame)
 	exportBtn.frame:SetPoint("TOPRIGHT",Debug.optionsFrame,"TOPRIGHT",-5,-5)
 	exportBtn.frame:Show()
 
+	--create the export frame
+	CreateExportFrame()
+
 	DebugFrame:Hide()
-	--only annoy the user if the option is enabled
+
+	--only annoy the user if the option is enabled, making sure to remind them that debugging is on.
+	--can you tell that I really don't want them to leave this on? LOL
 	if BSOpts and BSOpts.debug and BSOpts.debug.enable then
 		DebugFrame:Show()
 	end
+
+	--put warnings everywhere! Including if they hide the window WHILE debugging is enabled
+	DebugFrame.frame:SetScript("OnHide", function()
+		if BSOpts and BSOpts.debug and BSOpts.debug.enable then
+			BSYC:Print(L.DebugWarning)
+		end
+	end)
 end
 
 function Debug:AddMessage(level, sName, ...)
