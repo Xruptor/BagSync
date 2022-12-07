@@ -7,6 +7,8 @@ if not L then return end
 
 L.Yes = "Yes"
 L.No = "No"
+L.Page = "页面"
+L.Done = "完成"
 L.TooltipCrossRealmTag = "XR"
 L.TooltipBattleNetTag = "BN"
 L.TooltipBag = "背包:"
