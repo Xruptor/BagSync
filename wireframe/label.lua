@@ -30,24 +30,26 @@ local function UpdateImageAnchor(self)
 	image:ClearAllPoints()
 
 	if self.imageshown then
-		local imagewidth = image:GetWidth()
-		if (width - imagewidth) < 200 or (label:GetText() or "") == "" then
+        local imageHeight = image.height or 16
+        local imageWidth = image.width or 16
+
+		if (width - imageWidth) < 200 or (label:GetText() or "") == "" then
 			-- image goes on top centered when less than 200 width for the text, or if there is no text
 			image:SetPoint("TOP")
 			label:SetPoint("TOP", image, "BOTTOM")
 			label:SetPoint("LEFT")
 			label:SetWidth(width)
-			height = image:GetHeight() + label:GetStringHeight()
+			height = imageHeight + label:GetStringHeight()
 		else
 			-- image on the left
 			image:SetPoint("TOPLEFT")
-			if image:GetHeight() > label:GetStringHeight() then
+			if imageHeight > label:GetStringHeight() then
 				label:SetPoint("LEFT", image, "RIGHT", 4, 0)
 			else
 				label:SetPoint("TOPLEFT", image, "TOPRIGHT", 4, 0)
 			end
-			label:SetWidth(width - imagewidth - 4)
-			height = max(image:GetHeight(), label:GetStringHeight())
+			label:SetWidth(width - imageWidth - 4)
+			height = max(imageHeight, label:GetStringHeight())
 		end
 	else
 		-- no image shown
@@ -141,6 +143,9 @@ local methods = {
 
 	["SetImageSize"] = function(self, width, height)
 		self.image:SetWidth(width)
+		self.image:SetHeight(height)
+        self.image.width = width
+        self.image.height = height
 		self.image:SetHeight(height)
 		UpdateImageAnchor(self)
 	end,

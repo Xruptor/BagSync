@@ -123,7 +123,7 @@ Constructor
 -------------------------------------------------------------------------------]]
 local function Constructor()
 	-- create a Label type that we will hijack
-	local label = AceGUI:Create("Label")
+	local label = AceGUI:Create("BagSyncLabel")
 
 	local frame = label.frame
 	frame:EnableMouse(true)
