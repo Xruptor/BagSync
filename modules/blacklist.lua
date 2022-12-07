@@ -56,7 +56,7 @@ function Blacklist:OnEnable()
 	end)
 	w:AddChild(addbutton)
 	
-	local spacer = AceGUI:Create("Label")
+	local spacer = AceGUI:Create("BagSyncLabel")
     spacer:SetFullWidth(true)
 	spacer:SetText(" ")
 	BlacklistFrame:AddChild(spacer)
@@ -88,7 +88,7 @@ function Blacklist:OnEnable()
 	Blacklist.guildAddButton = guildAddButton
 	Blacklist.guildDDlist = guildDDlist
 
-	local spacer = AceGUI:Create("Label")
+	local spacer = AceGUI:Create("BagSyncLabel")
     spacer:SetFullWidth(true)
 	spacer:SetText(" ")
 	

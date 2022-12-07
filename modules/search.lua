@@ -66,7 +66,7 @@ function Search:OnEnable()
 	Search.scrollframe = scrollframe
 	SearchFrame:AddChild(scrollframe)
 	
-	local totalCountLabel = AceGUI:Create("Label")
+	local totalCountLabel = AceGUI:Create("BagSyncLabel")
 
 	totalCountLabel:SetText(L.TooltipTotal.." |cFFFFFFFF0|r")
 	totalCountLabel:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
@@ -104,14 +104,14 @@ function Search:OnEnable()
 	WarningFrame:SetLayout("Flow")
 	WarningFrame:EnableResize(false)
 
-	local warninglabel = AceGUI:Create("Label")
+	local warninglabel = AceGUI:Create("BagSyncLabel")
 	warninglabel:SetText(L.WarningItemSearch)
 	warninglabel:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
 	warninglabel:SetColor(1, 165/255, 0) --orange, red is just too much sometimes
 	warninglabel:SetFullWidth(true)
 	WarningFrame:AddChild(warninglabel)
 
-	local warninglabel2 = AceGUI:Create("Label")
+	local warninglabel2 = AceGUI:Create("BagSyncLabel")
 	warninglabel2:SetText(L.ObsoleteWarning)
 	warninglabel2:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
 	warninglabel2:SetColor(50/255, 165/255, 0)
@@ -139,7 +139,7 @@ function Search:OnEnable()
 	-------  ADVANCED SEARCH
 	
 	--Button
-	local spacer = AceGUI:Create("Label")
+	local spacer = AceGUI:Create("BagSyncLabel")
 	spacer:SetFullWidth(true)
 	spacer:SetText(" ")
 	SearchFrame:AddChild(spacer)
@@ -166,7 +166,7 @@ function Search:OnEnable()
 	
 	Search.advancedsearchframe = AdvancedSearchFrame
 	
-	local advSearchInformation = AceGUI:Create("Label")
+	local advSearchInformation = AceGUI:Create("BagSyncLabel")
 	advSearchInformation:SetText(L.AdvancedSearchInformation)
 	advSearchInformation:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
 	advSearchInformation:SetColor(1, 165/255, 0)
@@ -203,12 +203,12 @@ function Search:OnEnable()
 	end)
 	
 	--player list
-	local spacer = AceGUI:Create("Label")
+	local spacer = AceGUI:Create("BagSyncLabel")
     spacer:SetFullWidth(true)
 	spacer:SetText(" ")
 	AdvancedSearchFrame:AddChild(spacer)
 	
-	local pListInfo = AceGUI:Create("Label")
+	local pListInfo = AceGUI:Create("BagSyncLabel")
 	pListInfo:SetText(L.Units)
 	pListInfo:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
 	pListInfo:SetColor(0, 1, 0)
@@ -224,19 +224,19 @@ function Search:OnEnable()
 	AdvancedSearchFrame:AddChild(playerListScrollFrame)
 
  	--location list (bank, bags, etc..)
-	local spacer = AceGUI:Create("Label")
+	local spacer = AceGUI:Create("BagSyncLabel")
     spacer:SetFullWidth(true)
 	spacer:SetText(" ")
 	AdvancedSearchFrame:AddChild(spacer)
 	
-	local locListInfo = AceGUI:Create("Label")
+	local locListInfo = AceGUI:Create("BagSyncLabel")
 	locListInfo:SetText(L.Locations)
 	locListInfo:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
 	locListInfo:SetColor(0, 1, 0)
 	locListInfo:SetFullWidth(true)
 	AdvancedSearchFrame:AddChild(locListInfo)
 	
-	local advLocationInformation = AceGUI:Create("Label")
+	local advLocationInformation = AceGUI:Create("BagSyncLabel")
 	advLocationInformation:SetText(L.AdvancedLocationInformation)
 	advLocationInformation:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
 	advLocationInformation:SetColor(1, 165/255, 0)
@@ -255,7 +255,7 @@ function Search:OnEnable()
 		self:DisplayAdvSearchLists()
 	end)
   
-	local spacer = AceGUI:Create("Label")
+	local spacer = AceGUI:Create("BagSyncLabel")
     spacer:SetFullWidth(true)
 	spacer:SetText(" ")
 	AdvancedSearchFrame:AddChild(spacer)
@@ -324,7 +324,7 @@ end
 function Search:AddEntry(entry)
 
 	local highlightColor = {1, 0, 0}
-	local label = AceGUI:Create("InteractiveLabel")
+	local label = AceGUI:Create("BagSyncInteractiveLabel")
 
 	local name, link, rarity, texture = entry.name, entry.link, entry.rarity, entry.texture
 	local r, g, b, hex = GetItemQualityColor(rarity)
@@ -337,16 +337,16 @@ function Search:AddEntry(entry)
 	
 	--if we aren't retail then just don't add the item to the list if we have a battle pet
 	if isBattlePet and not BSYC.IsRetail then return end
-	
 	label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
 	label.highlight:SetVertexColor(0,1,0,0.3)
-				
-	label:SetText(name)
-	label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
-	label:SetFullWidth(true)
 	label:SetColor( r, g, b)
 	label:SetImage(texture)
 	label:SetImageSize(18, 18)
+	label:SetFullWidth(true)
+	label:SetText(name)
+	label:ApplyJustifyH("LEFT")
+	label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+	label:SetFullWidth(true)
 	label:SetCallback(
 		"OnClick", 
 		function (widget, sometable, button)
@@ -577,7 +577,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 					--bags, bank, reagents are stored in individual bags
 					if k == "bag" or k == "bank" or k == "reagents" then
 						for bagID, bagData in pairs(v) do
-							if (not viewCustomList or viewCustomList == k) and unitObj.name == player.name and unitObj.realm == player.realm then
+							if not viewCustomList or (viewCustomList == k and unitObj.name == player.name and unitObj.realm == player.realm) then
 								countWarning = checkData(bagData, searchStr, searchTable, tempList, countWarning, viewCustomList)
 							end
 						end
@@ -587,7 +587,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 						if k == "mailbox" and not BSYC.options.enableMailbox then passChk = false end
 						
 						if passChk then
-							if (not viewCustomList or viewCustomList == k) and unitObj.name == player.name and unitObj.realm == player.realm then
+							if not viewCustomList or (viewCustomList == k and unitObj.name == player.name and unitObj.realm == player.realm) then
 								countWarning = checkData(k == "auction" and v.bag or v, searchStr, searchTable, tempList, countWarning, viewCustomList)
 							end
 						end
@@ -597,7 +597,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 		else
 			Debug(5, "Search-IterateUnits", "guild", unitObj.name, player.realm, unitObj.data.realmKey)
 			if not advUnitList then
-				if (not viewCustomList or viewCustomList == "guild") and unitObj.name == player.guild and unitObj.data.realmKey == player.realmKey then
+				if not viewCustomList or (viewCustomList == "guild" and unitObj.name == player.guild and unitObj.data.realmKey == player.realmKey) then
 					countWarning = checkData(unitObj.data.bag, searchStr, searchTable, tempList, countWarning, viewCustomList)
 				end
 			else

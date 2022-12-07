@@ -433,7 +433,7 @@ function Debug:AddMessage(level, sName, ...)
 	debugStr = moduleName..debugStr
 	debugStr = "|cff808080["..date("%X").."]:|r "..debugStr
 
-	local label = AceGUI:Create("Label")
+	local label = AceGUI:Create("BagSyncLabel")
 
 	--if it exceeds the amount of labels then remove top most one before adding
 	if #self.scrollframe.children > xListLen then

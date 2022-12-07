@@ -31,7 +31,7 @@ function Profiles:OnEnable()
 	ProfilesFrame:SetWidth(380)
 	ProfilesFrame:EnableResize(false)
 	
-	local information = AceGUI:Create("Label")
+	local information = AceGUI:Create("BagSyncLabel")
 	information:SetText(L.DeleteWarning)
 	information:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
 	information:SetColor(1, 165/255, 0)

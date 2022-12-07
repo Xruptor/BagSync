@@ -30,7 +30,7 @@ function Professions:OnEnable()
 	ProfessionsFrame:SetWidth(380)
 	ProfessionsFrame:EnableResize(false)
 	
-	local information = AceGUI:Create("Label")
+	local information = AceGUI:Create("BagSyncLabel")
 	information:SetText(L.ProfessionInformation)
 	information:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
 	information:SetColor(1, 165/255, 0)

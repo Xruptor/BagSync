@@ -44,6 +44,7 @@ core.lua
 
 wireframe\debug.lua
 wireframe\label.lua
+wireframe\interactivelabel.lua
 wireframe\unit.lua
 wireframe\data.lua
 wireframe\scanner.lua
