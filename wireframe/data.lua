@@ -312,19 +312,19 @@ function Data:LoadSlashCommand()
 
 		end
 		
-		BSYC:Print(L.HelpSearchItemName)
-		BSYC:Print(L.HelpSearchWindow)
-		BSYC:Print(L.HelpGoldTooltip)
-		BSYC:Print(L.HelpProfilesWindow)
+		BSYC:Print("/bgs "..L.SlashItemName.." - "..L.HelpSearchItemName)
+		BSYC:Print("/bgs "..L.SlashSearch.." - "..L.HelpSearchWindow)
+		BSYC:Print("/bgs "..L.SlashGold.." - "..L.HelpGoldTooltip)
+		BSYC:Print("/bgs "..L.SlashProfiles.." - "..L.HelpProfilesWindow)
 		if BSYC.IsRetail then
-			BSYC:Print(L.HelpProfessionsWindow)
-			BSYC:Print(L.HelpCurrencyWindow)
+			BSYC:Print("/bgs "..L.SlashProfessions.." - "..L.HelpProfessionsWindow)
+			BSYC:Print("/bgs "..L.SlashCurrency.." - "..L.HelpCurrencyWindow)
 		end
-		BSYC:Print(L.HelpBlacklistWindow)
-		BSYC:Print(L.HelpFixDB)
-		BSYC:Print(L.HelpResetDB)
-		BSYC:Print(L.HelpConfigWindow)
-		BSYC:Print(L.HelpDebug)
+		BSYC:Print("/bgs "..L.SlashBlacklist.." - "..L.HelpBlacklistWindow)
+		BSYC:Print("/bgs "..L.SlashFixDB.." - "..L.HelpFixDB)
+		BSYC:Print("/bgs "..L.SlashResetDB.." - "..L.HelpResetDB)
+		BSYC:Print("/bgs "..L.SlashConfig.." - "..L.HelpConfigWindow)
+		BSYC:Print("/bgs "..L.SlashDebug.." - "..L.HelpDebug)
 	end
 	
 	--/bgs and /bagsync
