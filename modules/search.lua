@@ -597,7 +597,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 		else
 			Debug(5, "Search-IterateUnits", "guild", unitObj.name, player.realm, unitObj.data.realmKey)
 			if not advUnitList then
-				if not viewCustomList or (viewCustomList == "guild" and unitObj.name == player.guild and unitObj.data.realmKey == player.realmKey) then
+				if not viewCustomList or (viewCustomList == "guild" and unitObj.name == player.guild and unitObj.realm == player.guildrealm) then
 					countWarning = checkData(unitObj.data.bag, searchStr, searchTable, tempList, countWarning, viewCustomList)
 				end
 			else

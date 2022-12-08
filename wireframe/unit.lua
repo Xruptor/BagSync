@@ -111,6 +111,7 @@ function Unit:GetUnitInfo(unit)
 		unit.class = select(2, UnitClass('player'))
 		unit.race = select(2, UnitRace('player'))
 		unit.guild = GetGuildInfo('player')
+		unit.guildrealm = select(4, GetGuildInfo('player')) or realm
 		unit.gender = UnitSex('player')
 	end
 
@@ -118,7 +119,7 @@ function Unit:GetUnitInfo(unit)
 	unit.name, unit.realm, unit.isguild = name, realm, isguild
 	unit.realmKey = realmKey
 	
-	Debug(3, "GetUnitInfo", name, realm, isguild, FACTION, unit.class, unit.race, unit.gender, unit.guild, unit.realmKey)
+	Debug(3, "GetUnitInfo", name, realm, isguild, FACTION, unit.class, unit.race, unit.gender, unit.guild, unit.guildrealm, unit.realmKey)
 	return unit
 end
 

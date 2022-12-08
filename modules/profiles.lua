@@ -148,6 +148,7 @@ function Profiles:AddEntry(entry, isHeader)
 					GameTooltip:AddLine(PLAYER..":  "..entry.colorized)
 				else
 					GameTooltip:AddLine(GUILD..":  "..entry.colorized)
+					GameTooltip:AddLine(L.Realm.."  "..entry.unitObj.realm)
 					GameTooltip:AddLine(L.TooltipRealmKey.." "..entry.unitObj.data.realmKey)
 				end
 				GameTooltip:Show()

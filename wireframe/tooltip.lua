@@ -121,12 +121,6 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple)
 	--If we Bypass or showSimple none of the XR or BNET stuff will be shown
 	----------------
 	if bypass or showSimple then
-		--DEBUGGING: check for showRealm tag before returning, this is mostly used for DEBUGGING purposes.  We don't want to add default tags normally.
-		--for that we want to use the XREALM procedures below for tagging.
-		if showRealm then
-			realmTag = L.TooltipBattleNetTag..delimiter
-			tmpTag = self:HexColor(BSYC.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
-		end
 		--since we Bypass don't show anything else just return what we got
 		return tmpTag
 	end
@@ -421,7 +415,6 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	self.__lastLink = link
 	
 	local grandTotal = 0
-	local previousGuilds = {}
 	local unitList = {}
 	
 	for unitObj in Data:IterateUnits() do

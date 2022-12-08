@@ -102,7 +102,7 @@ function Data:OnEnable()
 	if BSYC.options.enableAccurateBattlePets == nil then BSYC.options.enableAccurateBattlePets = true end
 	if BSYC.options.alwaysShowAdvSearch == nil then BSYC.options.alwaysShowAdvSearch = false end
 	if BSYC.options.sortTooltipByTotals == nil then BSYC.options.sortTooltipByTotals = false end
-	
+
 	--setup the default colors
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end
 	if BSYC.options.colors.first == nil then BSYC.options.colors.first = { r = 128/255, g = 1, b = 0 }  end
@@ -200,7 +200,6 @@ end
 function Data:FixDB()
 	Debug(2, "FixDB")
 	
-    local storeUsers = {}
     local storeGuilds = {}
 	
 	if not BSYC.options.unitDBVersion then BSYC.options.unitDBVersion = {} end
@@ -208,9 +207,8 @@ function Data:FixDB()
 	for unitObj in self:IterateUnits(true) do
 		--store only user guild names
 		if not unitObj.isGuild then
-			storeUsers[unitObj.name] = true
-			if unitObj.data.guild then
-				storeGuilds[unitObj.data.guild] = true
+			if unitObj.data.guild and unitObj.data.guildrealm then
+				storeGuilds[unitObj.data.guild..unitObj.data.guildrealm] = true
 			end
 		end
 	end
@@ -223,7 +221,7 @@ function Data:FixDB()
 			for k, v in pairs(rd) do
 				local isGuild = (k:find('©*') and true) or false
 				if isGuild then
-					if not storeGuilds[k] then
+					if not storeGuilds[k..realm] then
 						--remove obsolete guild
 						BagSyncDB[realm][k] = nil
 					end
@@ -375,13 +373,24 @@ function Data:CheckExpiredAuctions()
 	
 end
 
+function Data:GetGuild()
+	if not IsInGuild() then return end
+	Debug(2, "GetGuild")
+	
+	local player = Unit:GetUnitInfo()
+	if not player.guild or not player.guildrealm then return end
+
+	if not BagSyncDB[player.guildrealm] then BagSyncDB[player.guildrealm] = {} end
+	if not BagSyncDB[player.guildrealm][player.guild] then BagSyncDB[player.guildrealm][player.guild] = {} end
+	return BagSyncDB[player.guildrealm][player.guild]
+end
+
 function Data:IterateUnits(dumpAll, filterList)
 	Debug(2, "IterateUnits", dumpAll, filterList)
 	
 	if filterList then dumpAll = true end
 	
 	local player = Unit:GetUnitInfo()
-	local previousGuilds = {}
 	local argKey, argValue = next(BagSyncDB)
 	local k, v
 
@@ -401,22 +410,18 @@ function Data:IterateUnits(dumpAll, filterList)
 
 					if k then
 
+						local skipReturn = false
 						local isGuild = (k:find('©*') and true) or false
 
 						--return everything regardless of user settings
 						if dumpAll then
-							local skipReturn = false
+							
+							skipReturn = false
 							
 							if filterList then
-								--check realm, name and realmkey
+								--check realm, name
 								if filterList[argKey] and filterList[argKey][k] then
-								
-									local realmKey = filterList[argKey][k].realmKey
-									
-									if realmKey and v.realmKey and realmKey ~= v.realmKey then
-										--if it has a realmkey it's because it's a guild, lets check if it doesn't match to skip
-										skipReturn = true
-									end
+									skipReturn = false
 								else
 									skipReturn = true
 								end
@@ -428,39 +433,29 @@ function Data:IterateUnits(dumpAll, filterList)
 							
 						elseif v.faction and (v.faction == BSYC.db.player.faction or BSYC.options.enableFaction) then
 							
-							local skipChk = false
+							skipReturn = false
 							
-							--check for previous listed guilds just in case, because of connected realms (can have same guild on multiple connected realms)
-							if BSYC.options.enableGuild and isGuild and v.realmKey then
-							
-								--realmKey is a concat of connected realms to determine if one guild exists on multiple realms
-								--it's also used for any XR connection matching.  See GetXRGuild and Unit module in wireframe.
-								if BSYC.options.showGuildCurrentCharacter and player.guild then
-									if v.realmKey == player.realmKey then
-										--same realm, but lets check name
-										if k ~= player.guild then
-											skipChk = true
-										end
-										--otherwise it matches so don't skip it
+							--check for guilds and if we have them merged or not
+							if BSYC.options.enableGuild and isGuild then
+								
+								--check for guilds only on current character if enabled and on their current realm
+								if BSYC.options.showGuildCurrentCharacter and player.guild and player.guildrealm then
+									--if we have the same guild realm and same guild name, then let it pass, otherwise skip it
+									if argKey == player.guildrealm and k == player.guild then
+										skipReturn = false
 									else
-										--not same realm so skip it
-										skipChk = true
+										skipReturn = true
 									end
 								end
-							
-								local XRName = k .. v.realmKey
-								if not previousGuilds[XRName] then
-									previousGuilds[XRName] = true
-								else
-									skipChk = true
-								end
+
 								--check for the guild blacklist
-								if BSYC.db.blacklist[XRName] then skipChk = true end
+								if BSYC.db.blacklist[k..argKey] then skipReturn = true end
+
 							elseif not BSYC.options.enableGuild and isGuild then
-								skipChk = true
+								skipReturn = true
 							end
 							
-							if not skipChk then
+							if not skipReturn then
 								return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm}
 							end
 							

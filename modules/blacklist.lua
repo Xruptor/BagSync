@@ -134,8 +134,8 @@ function Blacklist:OnEnable()
 		for unitObj in Data:IterateUnits() do
 			if unitObj.isGuild then
 				local guildName = select(2, Unit:GetUnitAddress(unitObj.name))
-				local key = unitObj.name..unitObj.data.realmKey --note key is different then displayed name
-				tmp[key] = guildName.."-"..unitObj.data.realmKey
+				local key = unitObj.name..unitObj.realm --note key is different then displayed name
+				tmp[key] = guildName.."-"..unitObj.realm
 			end
 		end
 		table.sort(tmp, function(a,b) return (a < b) end)

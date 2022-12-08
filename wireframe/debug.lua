@@ -345,7 +345,7 @@ function Debug:OnEnable()
 			if not unitObj.isGuild then
 				self:AddMessage(1, "Debug-IterateUnits", "player", unitObj.name, player.realm)
 			else
-				self:AddMessage(1, "Debug-IterateUnits", "guild", unitObj.name, player.realm, unitObj.data.realmKey)
+				self:AddMessage(1, "Debug-IterateUnits", "guild", unitObj.name, player.realm, unitObj.realm, unitObj.data.realmKey)
 			end
 		end
 	end)

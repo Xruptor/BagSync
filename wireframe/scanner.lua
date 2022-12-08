@@ -6,6 +6,7 @@
 local BSYC = select(2, ...) --grab the addon namespace
 local Scanner = BSYC:NewModule("Scanner")
 local Unit = BSYC:GetModule("Unit")
+local Data = BSYC:GetModule("Data")
 
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Scanner", ...) end
@@ -97,7 +98,7 @@ function Scanner:StartupScans()
 	self:CleanupBags()
 	
 	--cleanup the auction DB
-	BSYC:GetModule("Data"):CheckExpiredAuctions()
+	Data:CheckExpiredAuctions()
 	
 	--cleanup any unlearned tradeskills
 	self:CleanupProfessions()
@@ -225,26 +226,6 @@ function Scanner:SaveVoidBank()
 	BSYC.db.player.void = slotItems
 end
 
-function Scanner:GetXRGuild()
-	if not IsInGuild() then return end
-	Debug(2, "GetXRGuild")
-	
-	--only return one guild stored from a connected realm list, otherwise we will have multiple entries of the same guild on several connected realms
-	local realms = {strsplit(';', Unit:GetRealmKey())}
-	local player = Unit:GetUnitInfo()
-	
-	if #realms > 0 then
-		for i = 1, #realms do
-			if player.guild and BagSyncDB[realms[i]] and BagSyncDB[realms[i]][player.guild] then
-				return BagSyncDB[realms[i]][player.guild]
-			end
-		end
-	end
-	
-	if not BSYC.db.realm[player.guild] then BSYC.db.realm[player.guild] = {} end
-	return BSYC.db.realm[player.guild]
-end
-
 local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 	Debug(2, "findBattlePet", iconTexture, petName, typeSlot, arg1, arg2)
 	
@@ -328,7 +309,7 @@ function Scanner:SaveGuildBank()
 		end
 	end
 
-	local guildDB = self:GetXRGuild()
+	local guildDB = Data:GetGuild()
 	if guildDB then
 		guildDB.bag = slotItems
 		guildDB.money = GetGuildBankMoney()

@@ -93,7 +93,7 @@ function Events:OnEnable()
 	end)
 
 	--Force guild roster update, so we can grab guild name.  Note this is nil on login, have to check for Classic and Retail though
-	--https://wow.gamepedia.com/API_GetGuildInfo
+	--https://wowpedia.fandom.com/wiki/API_C_GuildInfo.GuildRoster
 	if C_GuildInfo and C_GuildInfo.GuildRoster then C_GuildInfo.GuildRoster() end  -- Retail
 	if GuildRoster then GuildRoster() end -- Classic
 	
@@ -214,10 +214,12 @@ end
 
 function Events:GUILD_ROSTER_UPDATE()
 	BSYC.db.player.guild = Unit:GetUnitInfo().guild
+	BSYC.db.player.guildrealm = Unit:GetUnitInfo().guildrealm
 end
 
 function Events:PLAYER_GUILD_UPDATE()
 	BSYC.db.player.guild = Unit:GetUnitInfo().guild
+	BSYC.db.player.guildrealm = Unit:GetUnitInfo().guildrealm
 end
 
 function Events:PLAYER_EQUIPMENT_CHANGED(event)
