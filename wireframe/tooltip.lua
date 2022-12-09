@@ -42,13 +42,17 @@ function Tooltip:GetSortIndex(unitObj)
 	if unitObj then
 		if not unitObj.isGuild and unitObj.realm == Unit:GetUnitInfo().realm then
 			return 1
-		elseif not unitObj.isGuild and unitObj.isConnectedRealm then
+		elseif unitObj.isGuild and unitObj.realm == Unit:GetUnitInfo().realm then
 			return 2
-		elseif not unitObj.isGuild then
+		elseif not unitObj.isGuild and unitObj.isConnectedRealm then
 			return 3
+		elseif unitObj.isGuild and unitObj.isConnectedRealm then
+			return 4
+		elseif not unitObj.isGuild then
+			return 5
 		end
 	end
-	return 4
+	return 6
 end
 
 function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple)
