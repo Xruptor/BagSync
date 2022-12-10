@@ -337,12 +337,11 @@ function Debug:OnEnable()
 	iterateUnits:SetHeight(30)
 	iterateUnits:SetWidth(iterateUnits.text:GetStringWidth() + 40)
 	iterateUnits:SetCallback("OnClick", function()
-		local player = BSYC:GetModule("Unit"):GetUnitInfo()
 		for unitObj in BSYC:GetModule("Data"):IterateUnits() do
 			if not unitObj.isGuild then
-				self:AddMessage(1, "Debug-IterateUnits", "player", unitObj.name, player.realm, unitObj.data.guild, unitObj.data.guildrealm)
+				self:AddMessage(1, "Debug-IterateUnits", "player", unitObj.name, unitObj.realm, unitObj.isConnectedRealm, unitObj.data.guild, unitObj.data.guildrealm)
 			else
-				self:AddMessage(1, "Debug-IterateUnits", "guild", unitObj.name, player.realm, unitObj.realm, unitObj.data.realmKey)
+				self:AddMessage(1, "Debug-IterateUnits", "guild", unitObj.name, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, unitObj.data.realmKey)
 			end
 		end
 	end)
@@ -393,7 +392,7 @@ end
 
 function Debug:AddMessage(level, sName, ...)
 	if not BSYC.options or not BSYC.options.debug or not BSYC.options.debug.enable then return end
-	
+
 	if level == 1 and not BSYC.options.debug.DEBUG then return end
 	if level == 2 and not BSYC.options.debug.INFO then return end
 	if level == 3 and not BSYC.options.debug.TRACE then return end
