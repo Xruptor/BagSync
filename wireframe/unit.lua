@@ -111,7 +111,9 @@ function Unit:GetUnitInfo(unit)
 		unit.class = select(2, UnitClass('player'))
 		unit.race = select(2, UnitRace('player'))
 		unit.guild = GetGuildInfo('player')
-		unit.guildrealm = select(4, GetGuildInfo('player')) or realm
+		if unit.guild then
+			unit.guildrealm = select(4, GetGuildInfo('player')) or realm
+		end
 		unit.gender = UnitSex('player')
 	end
 

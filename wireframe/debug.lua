@@ -343,7 +343,7 @@ function Debug:OnEnable()
 		local player = BSYC:GetModule("Unit"):GetUnitInfo()
 		for unitObj in BSYC:GetModule("Data"):IterateUnits() do
 			if not unitObj.isGuild then
-				self:AddMessage(1, "Debug-IterateUnits", "player", unitObj.name, player.realm)
+				self:AddMessage(1, "Debug-IterateUnits", "player", unitObj.name, player.realm, unitObj.data.guild, unitObj.data.guildrealm)
 			else
 				self:AddMessage(1, "Debug-IterateUnits", "guild", unitObj.name, player.realm, unitObj.realm, unitObj.data.realmKey)
 			end

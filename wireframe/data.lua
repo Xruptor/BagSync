@@ -402,8 +402,16 @@ function Data:IterateUnits(dumpAll, filterList)
 				
 			elseif argKey then
 				local isConnectedRealm = (Unit:isConnectedRealm(argKey) and true) or false
-				
-				if dumpAll or (argKey == player.realm) or (isConnectedRealm and BSYC.options.enableCrossRealmsItems) or (BSYC.options.enableBNetAccountItems) then
+
+				--check to see if a user joined a guild on a connected realm and doesn't have the XR or BNET options on
+				--if they have guilds enabled, then we should show it anyways, regardless of the XR and BNET options
+				--NOTE: This should ONLY be done if the guild realm is NOT the player realm.  If it's the same realms for both then it would be processed anyways.
+				local isConnectedGuild = false
+				if BSYC.options.enableGuild and player.guild and not BSYC.options.enableCrossRealmsItems and not BSYC.options.enableBNetAccountItems then
+					isConnectedGuild = (player.guildrealm and argKey == player.guildrealm and argKey ~= player.realm) or false
+				end
+
+				if dumpAll or (argKey == player.realm) or isConnectedGuild or (isConnectedRealm and BSYC.options.enableCrossRealmsItems) or (BSYC.options.enableBNetAccountItems) then
 					
 					--pull entries from characters until k is empty, then pull next realm entry
 					k, v = next(argValue, k)
@@ -439,7 +447,7 @@ function Data:IterateUnits(dumpAll, filterList)
 							if BSYC.options.enableGuild and isGuild then
 								
 								--check for guilds only on current character if enabled and on their current realm
-								if BSYC.options.showGuildCurrentCharacter and player.guild and player.guildrealm then
+								if (isConnectedGuild or BSYC.options.showGuildCurrentCharacter) and player.guild and player.guildrealm then
 									--if we have the same guild realm and same guild name, then let it pass, otherwise skip it
 									if argKey == player.guildrealm and k == player.guild then
 										skipReturn = false
@@ -447,11 +455,15 @@ function Data:IterateUnits(dumpAll, filterList)
 										skipReturn = true
 									end
 								end
-
+			
 								--check for the guild blacklist
 								if BSYC.db.blacklist[k..argKey] then skipReturn = true end
 
 							elseif not BSYC.options.enableGuild and isGuild then
+								skipReturn = true
+							
+							elseif isConnectedGuild then
+								--if this is enabled, then we only want guilds, skip all users
 								skipReturn = true
 							end
 							

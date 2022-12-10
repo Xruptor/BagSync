@@ -206,6 +206,12 @@ function Events:OnEnable()
 	self:RegisterEvent("BAG_UPDATE_DELAYED")
 	
 	self:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+
+	--if player isn't in a guild, then delete old guild data if found, sometimes this gets left behind for some reason
+	if not IsInGuild() and (BSYC.db.player.guild or BSYC.db.player.guildrealm) then
+		BSYC.db.player.guild = nil
+		BSYC.db.player.guildrealm = nil
+	end
 end
 
 function Events:PLAYER_MONEY()
