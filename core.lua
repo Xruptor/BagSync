@@ -29,9 +29,7 @@ BSYC.IsWLK_C = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
 
 local debugf = tekDebug and tekDebug:GetFrame("BagSync")
 function BSYC.DEBUG(level, sName, ...)
-	local BSOpts = BagSyncDB
-	BSOpts = BagSyncDB["options§"]
-	if not BSOpts or not BSOpts.debug or not BSOpts.debug.enable then return end
+	if not BSYC.options or not BSYC.options.debug or not BSYC.options.debug.enable then return end
 
 	--old tekDebug code just in case I want to track old debugging method
     if debugf then
@@ -257,4 +255,27 @@ function BSYC:GetShortCurrencyID(link)
         local link = link:match("currency:([%d:]+):") or link:match("currency:(%d+):") or link:match("^(%d+):") or link
         return tonumber(link)
     end
+end
+
+--create base DB entries before we load any modules
+function BSYC:OnEnable()
+
+	--initiate database
+	BagSyncDB = BagSyncDB or {}
+
+	--load the options and blacklist
+	BagSyncDB["options§"] = BagSyncDB["options§"] or {}
+	BagSyncDB["blacklist§"] = BagSyncDB["blacklist§"] or {}
+
+	--setup the debug values since Debug module loads before Data module
+	BSYC.options = BagSyncDB["options§"]
+	if BSYC.options.debug == nil then BSYC.options.debug = {} end
+	if BSYC.options.debug.enable == nil then BSYC.options.debug.enable = false end
+	if BSYC.options.debug.DEBUG == nil then BSYC.options.debug.DEBUG = false end
+	if BSYC.options.debug.INFO == nil then BSYC.options.debug.INFO = true end
+	if BSYC.options.debug.TRACE == nil then BSYC.options.debug.TRACE = true end
+	if BSYC.options.debug.WARN == nil then BSYC.options.debug.WARN = false end
+	if BSYC.options.debug.FINE == nil then BSYC.options.debug.FINE = false end
+	if BSYC.options.debug.SUBFINE == nil then BSYC.options.debug.SUBFINE = false end
+
 end

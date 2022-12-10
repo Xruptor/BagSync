@@ -44,16 +44,6 @@ function Data:OnEnable()
 	--get player information from Unit
 	local player = Unit:GetUnitInfo()
 	
-	--initiate database
-	BagSyncDB = BagSyncDB or {}
-	
-	--before we do ANYTHING with the databse, lets do a cleanup or upgrade if necessary
-	self:CleanDB()
-	
-	--load the options and blacklist
-	BagSyncDB["options§"] = BagSyncDB["options§"] or {}
-	BagSyncDB["blacklist§"] = BagSyncDB["blacklist§"] or {}
-	
 	--main DB call
 	BSYC.db = BSYC.db or {}
 	
@@ -71,7 +61,6 @@ function Data:OnEnable()
 	BSYC.db.blacklist = BagSyncDB["blacklist§"]
 	
 	--options DB
-	BSYC.options = BagSyncDB["options§"]
 	if BSYC.options.showTotal == nil then BSYC.options.showTotal = true end
 	if BSYC.options.enableGuild == nil then BSYC.options.enableGuild = true end
 	if BSYC.options.enableMailbox == nil then BSYC.options.enableMailbox = true end
@@ -113,16 +102,6 @@ function Data:OnEnable()
 	if BSYC.options.colors.cross == nil then BSYC.options.colors.cross = { r = 1, g = 125/255, b = 10/255 }  end
 	if BSYC.options.colors.bnet == nil then BSYC.options.colors.bnet = { r = 53/255, g = 136/255, b = 1 }  end
 	if BSYC.options.colors.itemid == nil then BSYC.options.colors.itemid = { r = 82/255, g = 211/255, b = 134/255 }  end
-
-	--setup the debug values
-	if BSYC.options.debug == nil then BSYC.options.debug = {} end
-	if BSYC.options.debug.enable == nil then BSYC.options.debug.enable = false end
-	if BSYC.options.debug.DEBUG == nil then BSYC.options.debug.DEBUG = false end
-	if BSYC.options.debug.INFO == nil then BSYC.options.debug.INFO = true end
-	if BSYC.options.debug.TRACE == nil then BSYC.options.debug.TRACE = true end
-	if BSYC.options.debug.WARN == nil then BSYC.options.debug.WARN = false end
-	if BSYC.options.debug.FINE == nil then BSYC.options.debug.FINE = false end
-	if BSYC.options.debug.SUBFINE == nil then BSYC.options.debug.SUBFINE = false end
 
 	--do DB cleanup check by version number
 	if not BSYC.options.addonversion or BSYC.options.addonversion ~= ver then	
@@ -406,12 +385,12 @@ function Data:IterateUnits(dumpAll, filterList)
 				--check to see if a user joined a guild on a connected realm and doesn't have the XR or BNET options on
 				--if they have guilds enabled, then we should show it anyways, regardless of the XR and BNET options
 				--NOTE: This should ONLY be done if the guild realm is NOT the player realm.  If it's the same realms for both then it would be processed anyways.
-				local isConnectedGuild = false
+				local isXRGuild = false
 				if BSYC.options.enableGuild and player.guild and not BSYC.options.enableCrossRealmsItems and not BSYC.options.enableBNetAccountItems then
-					isConnectedGuild = (player.guildrealm and argKey == player.guildrealm and argKey ~= player.realm) or false
+					isXRGuild = (player.guildrealm and argKey == player.guildrealm and argKey ~= player.realm) or false
 				end
 
-				if dumpAll or (argKey == player.realm) or isConnectedGuild or (isConnectedRealm and BSYC.options.enableCrossRealmsItems) or (BSYC.options.enableBNetAccountItems) then
+				if dumpAll or (argKey == player.realm) or isXRGuild or (isConnectedRealm and BSYC.options.enableCrossRealmsItems) or (BSYC.options.enableBNetAccountItems) then
 					
 					--pull entries from characters until k is empty, then pull next realm entry
 					k, v = next(argValue, k)
@@ -436,7 +415,7 @@ function Data:IterateUnits(dumpAll, filterList)
 							end
 						
 							if not skipReturn then
-								return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm}
+								return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm, isXRGuild=isXRGuild}
 							end
 							
 						elseif v.faction and (v.faction == BSYC.db.player.faction or BSYC.options.enableFaction) then
@@ -447,7 +426,7 @@ function Data:IterateUnits(dumpAll, filterList)
 							if BSYC.options.enableGuild and isGuild then
 								
 								--check for guilds only on current character if enabled and on their current realm
-								if (isConnectedGuild or BSYC.options.showGuildCurrentCharacter) and player.guild and player.guildrealm then
+								if (isXRGuild or BSYC.options.showGuildCurrentCharacter) and player.guild and player.guildrealm then
 									--if we have the same guild realm and same guild name, then let it pass, otherwise skip it
 									if argKey == player.guildrealm and k == player.guild then
 										skipReturn = false
@@ -462,13 +441,13 @@ function Data:IterateUnits(dumpAll, filterList)
 							elseif not BSYC.options.enableGuild and isGuild then
 								skipReturn = true
 							
-							elseif isConnectedGuild then
+							elseif isXRGuild then
 								--if this is enabled, then we only want guilds, skip all users
 								skipReturn = true
 							end
 							
 							if not skipReturn then
-								return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm}
+								return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm, isXRGuild=isXRGuild}
 							end
 							
 						end

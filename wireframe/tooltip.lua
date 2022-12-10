@@ -167,7 +167,16 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple)
 			tmpTag = self:HexColor(BSYC.options.colors.cross, "["..realmTag..realm.."]").." "..tmpTag
 		end
 	end
-	
+
+	--if it's a connected realm guild the player belongs to, then show the XR tag.  This option only true if the XR and BNET options are off.
+	if unitObj.isXRGuild then
+		realmTag = L.TooltipCrossRealmTag
+		if string.len(realm) > 0 or string.len(realmTag) > 0 then
+			--use an asterisk to denote that we are using a XRGuild Tag
+			tmpTag = self:HexColor(BSYC.options.colors.cross, "[*"..realmTag..realm.."]").." "..tmpTag
+		end
+	end
+
 	Debug(2, "ColorizeUnit", tmpTag)
 	return tmpTag
 end
