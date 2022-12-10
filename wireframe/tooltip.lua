@@ -659,8 +659,26 @@ function Tooltip:HookTooltip(objTooltip)
 			if (tooltip == GameTooltip or tooltip == EmbeddedItemTooltip or tooltip == ItemRefTooltip) then
 				if tooltip.__tooltipUpdated then return end
 				
-				local link = data.hyperlink or data.id
-				
+				local link
+
+				--data.guid is given to items that have additional bonus stats and such and basically do not return a simple itemID #
+				if data.guid then
+					link = C_Item.GetItemLinkByGUID(data.guid)
+
+				elseif data.hyperlink then
+					link = data.hyperlink
+
+					local shortID = tonumber(BSYC:GetShortItemID(link))
+					
+					if data.id and shortID and data.id ~= shortID then
+						--if the data.id doesn't match the shortID it's probably a pattern, schematic, etc.. 
+						--This is because the hyperlink is overwritten during the args process with TooltipUtil.SurfaceArgs.
+						--Pattern hyperlinks are usally args3 but get overwritten when they get to args7 that has the hyperlink of the item being crafted.
+						--Instead the pattern/recipe/schematic is returned in the data.id, because that is the only thing not overwritten
+						link = data.id
+					end
+				end
+
 				if link then
 					Tooltip:TallyUnits(tooltip, link, "OnTooltipSetItem")
 				end

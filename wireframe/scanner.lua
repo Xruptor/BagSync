@@ -125,12 +125,16 @@ function Scanner:SaveBag(bagtype, bagid)
 			if C_Container and C_Container.GetContainerItemInfo then
 				local containerInfo = xGetContainerInfo(bagid, slot)
 				if containerInfo and containerInfo.hyperlink then
-					table.insert(slotItems,  BSYC:ParseItemLink(containerInfo.hyperlink, containerInfo.stackCount or 1))
+					local tmpItem = BSYC:ParseItemLink(containerInfo.hyperlink, containerInfo.stackCount or 1)
+					Debug(5, "SaveBag", bagtype, bagid, tmpItem)
+					table.insert(slotItems,  tmpItem)
 				end
 			else
 				local _, count, _,_,_,_, link = xGetContainerInfo(bagid, slot)
 				if link then
-					table.insert(slotItems,  BSYC:ParseItemLink(link, count))
+					local tmpItem = BSYC:ParseItemLink(link, count)
+					Debug(5, "SaveBag", bagtype, bagid, tmpItem)
+					table.insert(slotItems, tmpItem)
 				end
 			end
 		end
@@ -152,7 +156,9 @@ function Scanner:SaveEquipment()
 		local link = GetInventoryItemLink("player", slot)
 		local count =  GetInventoryItemCount("player", slot)
 		if link then
-			table.insert(slotItems,  BSYC:ParseItemLink(link, count))
+			local tmpItem =  BSYC:ParseItemLink(link, count)
+			Debug(5, "SaveEquipment", tmpItem, slot)
+			table.insert(slotItems,  tmpItem)
 		end
 	end
 	
@@ -172,7 +178,9 @@ function Scanner:SaveEquipment()
 			local count =  GetInventoryItemCount("player", slotNumber)
 			
 			if link and count then
-				table.insert(slotItems,  BSYC:ParseItemLink(link, count))
+				local tmpItem =  BSYC:ParseItemLink(link, count)
+				Debug(5, "SaveEquipment", "ProfessionSlot", tmpItem, slotNumber)
+				table.insert(slotItems,  tmpItem)
 			end
 		end
 		
@@ -315,6 +323,7 @@ function Scanner:SaveGuildBank()
 
 	local guildDB = Data:GetGuild()
 	if guildDB then
+		Debug(3, "SaveGuildBank", "FoundGuild")
 		guildDB.bag = slotItems
 		guildDB.money = GetGuildBankMoney()
 		guildDB.faction = Unit:GetUnitInfo().faction
@@ -365,6 +374,7 @@ function Scanner:SaveMailbox(isShow)
 					end
 					
 					if link then
+						Debug(5, "SaveMailbox", mailIndex, i, link)
 						table.insert(slotItems, link)
 					end
 				end

@@ -312,6 +312,7 @@ function Events:GUILDBANKBAGSLOTS_CHANGED()
 		if BSYC.options.showGuildBankScanAlert then
 			showEventAlert(numTab, "GUILDBANK")
 		end
+		Debug(3, "GUILDBANKBAGSLOTS_CHANGED", numTab)
 	else
 		if self.queryGuild then
 			self.queryGuild = false
