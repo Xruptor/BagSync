@@ -2,10 +2,13 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhTW")
 if not L then return end
 
 --  zhTW client (三皈依-暗影之月@TW補齊)
---  Last update: 2022/11/25
+--  Last update: 2022/12/11
 
 L.Yes = "是"
 L.No = "否"
+L.Page = "頁面"
+L.Done = "完成"
+L.Realm = "伺服器:"
 L.TooltipCrossRealmTag = "XR"
 L.TooltipBattleNetTag = "BN"
 L.TooltipBag = "背包:"
@@ -23,7 +26,13 @@ L.TooltipCurrencyID = "[貨幣ID]:"
 L.TooltipFakeID = "[虛擬ID]:"
 L.TooltipDelimiter = ", "
 L.TooltipRealmKey = "伺服器:"
+L.DebugEnable = "啟用偵錯"
+L.DebugDumpOptions = "傾印選項 |cff3587ff[DEBUG]|r"
+L.DebugIterateUnits = "重複單位 |cff3587ff[DEBUG]|r"
+L.DebugExport = "匯出"
+L.DebugWarning = "|cFFDF2B2B警告:|R BagSync偵錯目前為啟用！ |cFFDF2B2B(可能導致LAG)|r"
 L.Search = "搜索"
+L.Debug = "偵錯"
 L.AdvSearchBtn = "搜索/刷新"
 L.Reset = "重置"
 L.Refresh = "刷新"
@@ -96,10 +105,11 @@ L.SlashMoney = "金幣"
 L.SlashConfig = "設定"
 L.SlashCurrency = "貨幣"
 L.SlashFixDB = "優化數據庫"
-L.SlashProfiles = "訊息"
+L.SlashProfiles = "設定檔"
 L.SlashProfessions = "專業"
 L.SlashBlacklist = "黑名單"
 L.SlashResetDB = "重置"
+L.SlashDebug = "偵錯"
 ------------------------
 -- ----THESE USE THE SLASH OPERATOR COMMANDS FOUND ABOVE
 L.HelpSearchItemName = "快速搜索一件物品"
@@ -112,6 +122,7 @@ L.HelpResetDB = "重置 BagSync 內的數據庫"
 L.HelpConfigWindow = "打開設定檔"
 L.HelpProfessionsWindow = "打開專業視窗"
 L.HelpBlacklistWindow = "打開黑名單視窗"
+L.HelpDebug = "打開BagSync偵錯視窗。"
 ------------------------
 L.EnableBagSyncTooltip = "啟用BagSync鼠標提示"
 L.EnableExtTooltip = "在單獨框體上顯示物品統計數據"
