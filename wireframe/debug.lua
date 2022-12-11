@@ -224,9 +224,6 @@ local function CreateExportFrame()
 end
 
 function Debug:OnEnable()
-	--we have to do this as this module loads before Data which sets up the DB.  The reason we do this is to catch errors as earliest as possible by ensuring Debug loads first
-	local BSOpts = BagSyncDB
-	BSOpts = BagSyncDB["options§"]
 
 	--lets create our widgets
 	local DebugFrame = AceGUI:Create("Window")
@@ -271,8 +268,8 @@ function Debug:OnEnable()
 	enableDebugChk.frame:SetParent(Debug.optionsFrame)
 	enableDebugChk.frame:SetPoint("TOPLEFT",Debug.optionsFrame,"TOPLEFT",10,-5)
 	enableDebugChk:SetCallback("OnValueChanged",function(self, func, checked)
-		if BSOpts and BSOpts.debug then
-			BSOpts.debug.enable = checked
+		if BSYC.options and BSYC.options.debug then
+			BSYC.options.debug.enable = checked
 		end
 	end)
 	
@@ -305,8 +302,8 @@ function Debug:OnEnable()
 		lastPoint = tmpLevel
 
 		tmpLevel:SetCallback("OnValueChanged",function(self, func, checked)
-			if BSOpts and BSOpts.debug then
-				BSOpts.debug[self.level] = checked
+			if BSYC.options and BSYC.options.debug then
+				BSYC.options.debug[self.level] = checked
 			end
 		end)
 		
@@ -314,11 +311,11 @@ function Debug:OnEnable()
 	end
 
 	Debug.optionsFrame:SetScript("OnShow", function()
-		if BSOpts and BSOpts.debug then
+		if BSYC.options and BSYC.options.debug then
 			for k=1, #Debug.debugLevels do
-				Debug.debugLevels[k]:SetValue(BSOpts.debug[Debug.debugLevels[k].level])
+				Debug.debugLevels[k]:SetValue(BSYC.options.debug[Debug.debugLevels[k].level])
 			end
-			enableDebugChk:SetValue(BSOpts.debug.enable)
+			enableDebugChk:SetValue(BSYC.options.debug.enable)
 		end
 	end)
 
@@ -340,12 +337,11 @@ function Debug:OnEnable()
 	iterateUnits:SetHeight(30)
 	iterateUnits:SetWidth(iterateUnits.text:GetStringWidth() + 40)
 	iterateUnits:SetCallback("OnClick", function()
-		local player = BSYC:GetModule("Unit"):GetUnitInfo()
 		for unitObj in BSYC:GetModule("Data"):IterateUnits() do
 			if not unitObj.isGuild then
-				self:AddMessage(1, "Debug-IterateUnits", "player", unitObj.name, player.realm, unitObj.data.guild, unitObj.data.guildrealm)
+				self:AddMessage(1, "Debug-IterateUnits", "player", unitObj.name, unitObj.realm, unitObj.isConnectedRealm, unitObj.data.guild, unitObj.data.guildrealm)
 			else
-				self:AddMessage(1, "Debug-IterateUnits", "guild", unitObj.name, player.realm, unitObj.realm, unitObj.data.realmKey)
+				self:AddMessage(1, "Debug-IterateUnits", "guild", unitObj.name, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, unitObj.data.realmKey)
 			end
 		end
 	end)
@@ -382,29 +378,27 @@ function Debug:OnEnable()
 
 	--only annoy the user if the option is enabled, making sure to remind them that debugging is on.
 	--can you tell that I really don't want them to leave this on? LOL
-	if BSOpts and BSOpts.debug and BSOpts.debug.enable then
+	if BSYC.options and BSYC.options.debug and BSYC.options.debug.enable then
 		DebugFrame:Show()
 	end
 
 	--put warnings everywhere! Including if they hide the window WHILE debugging is enabled
 	DebugFrame.frame:SetScript("OnHide", function()
-		if BSOpts and BSOpts.debug and BSOpts.debug.enable then
+		if BSYC.options and BSYC.options.debug and BSYC.options.debug.enable then
 			BSYC:Print(L.DebugWarning)
 		end
 	end)
 end
 
 function Debug:AddMessage(level, sName, ...)
-	--just in case
-	local BSOpts = BagSyncDB
-	BSOpts = BagSyncDB["options§"]
-	if not BSOpts or not BSOpts.debug or not BSOpts.debug.enable then return end
-	if level == 1 and not BSOpts.debug.DEBUG then return end
-	if level == 2 and not BSOpts.debug.INFO then return end
-	if level == 3 and not BSOpts.debug.TRACE then return end
-	if level == 4 and not BSOpts.debug.WARN then return end
-	if level == 5 and not BSOpts.debug.FINE then return end
-	if level == 6 and not BSOpts.debug.SUBFINE then return end
+	if not BSYC.options or not BSYC.options.debug or not BSYC.options.debug.enable then return end
+
+	if level == 1 and not BSYC.options.debug.DEBUG then return end
+	if level == 2 and not BSYC.options.debug.INFO then return end
+	if level == 3 and not BSYC.options.debug.TRACE then return end
+	if level == 4 and not BSYC.options.debug.WARN then return end
+	if level == 5 and not BSYC.options.debug.FINE then return end
+	if level == 6 and not BSYC.options.debug.SUBFINE then return end
 
 	local debugStr = string.join(", ", tostringall(...))
 	local color = "778899" -- slate gray
