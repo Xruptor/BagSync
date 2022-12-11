@@ -371,6 +371,18 @@ function Debug:OnEnable()
 	exportBtn.frame:SetPoint("TOPRIGHT",Debug.optionsFrame,"TOPRIGHT",-5,-5)
 	exportBtn.frame:Show()
 
+	local clearBtn = AceGUI:Create("Button")
+	clearBtn.frame:SetParent(Debug.optionsFrame)
+	clearBtn:SetText(L.Clear)
+	clearBtn:SetHeight(20)
+	clearBtn:SetWidth(clearBtn.text:GetStringWidth() + 40)
+	clearBtn:SetCallback("OnClick", function()
+		scrollframe:ReleaseChildren()
+	end)
+	clearBtn.frame:SetParent(Debug.optionsFrame)
+	clearBtn.frame:SetPoint("BOTTOMRIGHT",Debug.optionsFrame,"BOTTOMRIGHT",-5,5)
+	clearBtn.frame:Show()
+
 	--create the export frame
 	CreateExportFrame()
 

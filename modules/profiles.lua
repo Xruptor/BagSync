@@ -80,22 +80,23 @@ function Profiles:DeleteUnit(entry)
 		if entry.unitObj.name == player.name and entry.unitObj.realm == player.realm then
 			--it's the current player so we have to do a reloadui
 			BagSyncDB[entry.unitObj.realm][entry.unitObj.name] = nil
+			Data:FixDB()
 			ReloadUI()
 			return
 		else
 			BSYC:Print(L.ProfileBeenRemoved:format(entry.colorized, entry.unitObj.realm))
 			BagSyncDB[entry.unitObj.realm][entry.unitObj.name] = nil
+			Data:FixDB()
 			self:DisplayList()
 			return
 		end
 	else
 		BSYC:Print(L.GuildRemoved:format(entry.colorized))
 		BagSyncDB[entry.unitObj.realm][entry.unitObj.name] = nil
+		Data:FixDB()
 		self:DisplayList()
 		return
 	end
-	
-	BSYC:Print(L.ErrorUserNotFound)
 end
 
 function Profiles:AddEntry(entry, isHeader)

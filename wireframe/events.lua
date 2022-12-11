@@ -82,121 +82,65 @@ function Events:OnEnable()
 	self:RegisterEvent("TRADE_SKILL_LIST_UPDATE")
 	self:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
 
+	--this event is when we trigger a CheckInbox()
 	self:RegisterEvent("MAIL_INBOX_UPDATE", function()
 		self:DoTimer("MailBoxScan", function() Scanner:SaveMailbox() end, 0.3)
 	end)
 
 	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", function(event, slotID)
 		Scanner:SaveBank(true)
-		--check if they crafted an item outside the bank, if so then do a parse check to update item count.
-		self:DoTimer("SaveCraftedReagents", function() Scanner:SaveCraftedReagents() end, 1)
+		if BSYC.IsRetail then
+			--check if they crafted an item outside the bank, if so then do a parse check to update item count.
+			self:DoTimer("SaveCraftedReagents", function() Scanner:SaveCraftedReagents() end, 1)
+		end
 	end)
+
+	--register our custom Event Handlers
+	self:RegisterMessage('BAGSYNC_EVENT_MAILBOX')
+	self:RegisterMessage('BAGSYNC_EVENT_BANK')
+	self:RegisterMessage('BAGSYNC_EVENT_AUCTION')
+	self:RegisterMessage('BAGSYNC_EVENT_VOIDBANK')
+	self:RegisterMessage('BAGSYNC_EVENT_GUILDBANK')
+
+	--check to see if the ReagentBank is even enabled on server
+	if IsReagentBankUnlocked then
+		self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED", function(event, slotID)
+			Scanner:SaveReagents()
+			if BSYC.IsRetail then
+				--check if they crafted an item outside the bank, if so then do a parse check to update item count.
+				self:DoTimer("SaveCraftedReagents", function() Scanner:SaveCraftedReagents() end, 1)
+			end
+		end)
+		self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:SaveReagents() end)
+	end
+
+	--check if voidbank is even enabled on server
+	if CanUseVoidStorage then
+		--scan when transfers of any kind are done at the void storage
+		self:RegisterEvent("VOID_TRANSFER_DONE", function() Scanner:SaveVoidBank() end)
+	end
+
+	--check to see if guildbanks are even enabled on server
+	if CanGuildBankRepair then
+		self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED", function()
+			self:DoTimer("GuildBankScan", function() self:GuildBank_Changed() end, 0.2)
+		end)
+	end
+
+	--only do currency checks if the server even supports it
+	if C_CurrencyInfo then
+		self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
+	end
+
+	if BSYC.IsRetail then
+		--save any crafted item info in case they aren't at a bank
+		self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", function(event, unitTarget, castGUID, spellID) Scanner:ParseCraftedInfo(unitTarget, castGUID, spellID) end)
+	end
 
 	--Force guild roster update, so we can grab guild name.  Note this is nil on login, have to check for Classic and Retail though
 	--https://wowpedia.fandom.com/wiki/API_C_GuildInfo.GuildRoster
 	if C_GuildInfo and C_GuildInfo.GuildRoster then C_GuildInfo.GuildRoster() end  -- Retail
 	if GuildRoster then GuildRoster() end -- Classic
-	
-	--Do old calls for non-retail
-	if not BSYC.IsRetail then
-		self:RegisterEvent("MAIL_SHOW", function() Scanner:SaveMailbox(true) end)
-		self:RegisterEvent("BANKFRAME_OPENED", function() Scanner:SaveBank() end)
-		
-		--WOTLK or higher
-		if not BSYC.IsClassic then
-			self:RegisterEvent("GUILDBANKFRAME_OPENED", function() self:GuildBank_Open() end)
-			self:RegisterEvent("GUILDBANKFRAME_CLOSED", function() self:GuildBank_Close() end)
-		end
-	end
-	
-	if BSYC.IsRetail then
-		
-		--Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
-		self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", function(event, winArg)
-			winArg = tonumber(winArg) or 0
-
-			--mailbox
-			if winArg == 17 then Scanner:SaveMailbox(true) end
-			--bank
-			if winArg == 8 then Scanner:SaveBank() end
-			--void storage
-			if winArg == 26 then Scanner:SaveVoidBank() end
-			--Guildbank
-			if winArg == 10 then self:GuildBank_Open() end
-
-		end)
-		
-		--Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
-		self:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE", function(event, winArg)
-			winArg = tonumber(winArg) or 0
-			
-			--Guildbank
-			if winArg == 10 then self:GuildBank_Close() end
-		end)
-	
-		self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
-		
-		--save any crafted item info in case they aren't at a bank
-		self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", function(event, unitTarget, castGUID, spellID) Scanner:ParseCraftedInfo(unitTarget, castGUID, spellID) end)
-		
-		self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED", function(event, slotID)
-			Scanner:SaveReagents()
-			--check if they crafted an item outside the bank, if so then do a parse check to update item count.
-			self:DoTimer("SaveCraftedReagents", function() Scanner:SaveCraftedReagents() end, 1)
-		end)
-		self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:SaveReagents() end)
-		
-		self:RegisterEvent("VOID_STORAGE_UPDATE", function() Scanner:SaveVoidBank() end)
-		self:RegisterEvent("VOID_STORAGE_CONTENTS_UPDATE", function() Scanner:SaveVoidBank() end)
-		self:RegisterEvent("VOID_TRANSFER_DONE", function() Scanner:SaveVoidBank() end)
-		
-		local timerName = "QueryOwnedAuctions"
-		
-		local function doAuctionUpdate()
-            --stop the timer first, to prevent it causing conflicts with current actions being done by the Auction House
-			--each time we recreate it, it just pushes the timer forward to wait until all actions are done
-            self:StopTimer(timerName)
-			--recreate the timer
-			self:DoTimer(timerName, function()
-				if not Events.canQueryAuctions or not Unit.atAuction then
-					self:StopTimer(timerName)
-					return
-				end
-				--check to see if it's okay to query the server
-				if C_AuctionHouse.IsThrottledMessageSystemReady() then
-					C_AuctionHouse.QueryOwnedAuctions({})
-					self:StopTimer(timerName)
-					return
-				end
-			end, 0.6, true)
-		end
-		self:RegisterEvent("AUCTION_HOUSE_AUCTION_CREATED", function()
-			if not BSYC.options.enableAuction then return end
-			--the user posted an item to sell, so lets schedule an auction scan
-			Events.canQueryAuctions = true
-		end)		
-		self:RegisterEvent("COMMODITY_SEARCH_RESULTS_UPDATED", function()
-			if not BSYC.options.enableAuction then return end
-			--if we have an auction scan scheduled, then run it only if the server is ready
-			if Events.canQueryAuctions then doAuctionUpdate() end
-		end)
-		self:RegisterEvent("OWNED_AUCTIONS_UPDATED", function()
-			if not BSYC.options.enableAuction then return end
-			Events.canQueryAuctions = false --reset this
-			self:DoTimer("ScanAuction", function() Scanner:SaveAuctionHouse() end, 0.5)
-		end)
-		
-	else
-		--classic auction house
-		self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE", function() Scanner:SaveAuctionHouse() end)
-	end
-	
-	--only load certain things if NOT in classic
-	if not BSYC.IsClassic then
-		self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED", function()
-			self:DoTimer("GuildBankScan", function() self:GUILDBANKBAGSLOTS_CHANGED() end, 0.2)
-		end)
-	end
 	
 	Scanner:StartupScans() --do the login player scans
 	
@@ -211,6 +155,43 @@ function Events:OnEnable()
 	if not IsInGuild() and (BSYC.db.player.guild or BSYC.db.player.guildrealm) then
 		BSYC.db.player.guild = nil
 		BSYC.db.player.guildrealm = nil
+	end
+end
+
+function Events:BAGSYNC_EVENT_MAILBOX(event, isOpen)
+	Debug(1, "BAGSYNC_EVENT_MAILBOX", isOpen)
+	if isOpen then
+		Scanner:SaveMailbox(true)
+	end
+end
+
+function Events:BAGSYNC_EVENT_BANK(event, isOpen)
+	Debug(1, "BAGSYNC_EVENT_BANK", isOpen)
+	if isOpen then
+		Scanner:SaveBank()
+	end
+end
+
+function Events:BAGSYNC_EVENT_AUCTION(event, isOpen, isReady)
+	Debug(1, "BAGSYNC_EVENT_AUCTION", isOpen, isReady)
+	if isOpen and isReady then
+		Scanner:SaveAuctionHouse()
+	end
+end
+
+function Events:BAGSYNC_EVENT_VOIDBANK(event, isOpen)
+	Debug(1, "BAGSYNC_EVENT_VOIDBANK", isOpen)
+	if isOpen then
+		Scanner:SaveVoidBank()
+	end
+end
+
+function Events:BAGSYNC_EVENT_GUILDBANK(event, isOpen)
+	Debug(1, "BAGSYNC_EVENT_GUILDBANK", isOpen)
+	if isOpen then
+		self:GuildBank_Open()
+	else
+		self:GuildBank_Close()
 	end
 end
 
@@ -267,8 +248,10 @@ function Events:BAG_UPDATE_DELAYED(event)
 	
 	Debug(2, "SpamBagQueue", "totalProcessed", totalProcessed)
 	
-	--check if they crafted an item outside the bank, if so then do a parse check to update item count.
-	self:DoTimer("SaveCraftedReagents", function() Scanner:SaveCraftedReagents() end, 1)
+	if BSYC.IsRetail then
+		--check if they crafted an item outside the bank, if so then do a parse check to update item count.
+		self:DoTimer("SaveCraftedReagents", function() Scanner:SaveCraftedReagents() end, 1)
+	end
 end
 
 function Events:GuildBank_Open()
@@ -298,7 +281,7 @@ function Events:GuildBank_Close()
 	end
 end
 
-function Events:GUILDBANKBAGSLOTS_CHANGED()
+function Events:GuildBank_Changed()
 	if not Unit.atGuildBank then return end
 	if not BSYC.options.enableGuild then return end
 
@@ -312,7 +295,7 @@ function Events:GUILDBANKBAGSLOTS_CHANGED()
 		if BSYC.options.showGuildBankScanAlert then
 			showEventAlert(numTab, "GUILDBANK")
 		end
-		Debug(3, "GUILDBANKBAGSLOTS_CHANGED", numTab)
+		Debug(3, "GuildBank_Changed", numTab)
 	else
 		if self.queryGuild then
 			self.queryGuild = false
@@ -336,7 +319,7 @@ function Events:CURRENCY_DISPLAY_UPDATE()
 end
 
 function Events:PLAYER_REGEN_ENABLED()
-	--only run this on retail
+	--only run this if triggered by CURRENCY_DISPLAY_UPDATE and only if we are on Retail
 	if Unit:InCombatLockdown() or not BSYC.IsRetail then return end
 	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
 	self.doCurrencyUpdate = nil

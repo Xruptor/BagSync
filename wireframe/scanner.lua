@@ -13,18 +13,18 @@ local function Debug(level, ...)
 end
 
 --https://github.com/tomrus88/BlizzardInterfaceCode/blob/master/Interface/AddOns/Blizzard_VoidStorageUI/Blizzard_VoidStorageUI.lua
-local VOID_DEPOSIT_MAX = 9
-local VOID_WITHDRAW_MAX = 9
 local VOID_STORAGE_MAX = 80
 local VOID_STORAGE_PAGES = 2
+-- local VOID_DEPOSIT_MAX = 9
+-- local VOID_WITHDRAW_MAX = 9
 
 local MAX_GUILDBANK_SLOTS_PER_TAB = 98
-local NUM_SLOTS_PER_GUILDBANK_GROUP = 14
-local NUM_GUILDBANK_ICONS_SHOWN = 0
-local NUM_GUILDBANK_ICONS_PER_ROW = 10
-local NUM_GUILDBANK_ICON_ROWS = 9
-local NUM_GUILDBANK_COLUMNS = 7
-local MAX_TRANSACTIONS_SHOWN = 21
+-- local NUM_SLOTS_PER_GUILDBANK_GROUP = 14
+-- local NUM_GUILDBANK_ICONS_SHOWN = 0
+-- local NUM_GUILDBANK_ICONS_PER_ROW = 10
+-- local NUM_GUILDBANK_ICON_ROWS = 9
+-- local NUM_GUILDBANK_COLUMNS = 7
+-- local MAX_TRANSACTIONS_SHOWN = 21
 
 local FirstEquipped = INVSLOT_FIRST_EQUIPPED
 local LastEquipped = INVSLOT_LAST_EQUIPPED
@@ -190,9 +190,9 @@ function Scanner:SaveEquipment()
 end
 
 function Scanner:SaveBank(rootOnly)
+	Debug(2, "SaveBank", rootOnly, Unit.atBank)
 	if not Unit.atBank then return end
-	Debug(2, "SaveBank", rootOnly)
-	
+
 	--force scan of bank bag -1, since blizzard never sends updates for it
 	self:SaveBag("bank", BANK_CONTAINER)
 	
@@ -208,9 +208,9 @@ function Scanner:SaveBank(rootOnly)
 end
 
 function Scanner:SaveReagents()
+	Debug(2, "SaveReagents", Unit.atBank)
 	if not Unit.atBank or not BSYC.IsRetail then return end
-	Debug(2, "SaveReagents")
-		
+	
 	if IsReagentBankUnlocked() then 
 		self:SaveBag("reagents", REAGENTBANK_CONTAINER)
 	end
@@ -279,10 +279,10 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 end
 
 function Scanner:SaveGuildBank()
+	Debug(2, "SaveGuildBank", Unit.atGuildBank)
 	if not Unit.atGuildBank or BSYC.IsClassic then return end
 	if Scanner.isScanningGuild then return end
-	Debug(2, "SaveGuildBank")
-	
+
 	local numTabs = GetNumGuildBankTabs()
 	local slotItems = {}
 	Scanner.isScanningGuild = true
@@ -334,10 +334,10 @@ function Scanner:SaveGuildBank()
 end
 
 function Scanner:SaveMailbox(isShow)
+	Debug(2, "SaveMailbox", isShow, Unit.atMailbox, BSYC.options.enableMailbox, self.isCheckingMail)
 	if not Unit.atMailbox or not BSYC.options.enableMailbox then return end
 	if not BSYC.db.player.mailbox then BSYC.db.player.mailbox = {} end
-	Debug(2, "SaveMailbox", isShow)
-	
+
 	if self.isCheckingMail then return end --prevent overflow from CheckInbox()
 	self.isCheckingMail = true
 
@@ -388,15 +388,15 @@ function Scanner:SaveMailbox(isShow)
 end
 
 function Scanner:SaveAuctionHouse()
+	Debug(2, "SaveAuctionHouse", Unit.atAuction, BSYC.options.enableAuction)
 	if not Unit.atAuction or not BSYC.options.enableAuction then return end
 	if not BSYC.db.player.auction then BSYC.db.player.auction = {} end
-	Debug(2, "SaveAuctionHouse")
-	
+
 	local slotItems = {}
 	
-	if BSYC.IsRetail then
+	if C_AuctionHouse then
 		local numActiveAuctions = C_AuctionHouse.GetNumOwnedAuctions()
-			
+
 		--scan the auction house
 		if (numActiveAuctions > 0) then
 			for ahIndex = 1, numActiveAuctions do

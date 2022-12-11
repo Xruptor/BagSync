@@ -7,6 +7,7 @@ local BSYC = select(2, ...) --grab the addon namespace
 local Tooltip = BSYC:NewModule("Tooltip")
 local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
+local Scanner = BSYC:GetModule("Scanner")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local LibQTip = LibStub('LibQTip-1.0')
 
@@ -345,7 +346,8 @@ end
 function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if not BSYC.options.enableTooltips then return end
 	if not CanAccessObject(objTooltip) then return end
-	
+	if Scanner.isScanningGuild then return end --don't tally while we are scanning the Guildbank
+
 	--only show tooltips in search frame if the option is enabled
 	if BSYC.options.tooltipOnlySearch and objTooltip.GetOwner and objTooltip:GetOwner() and objTooltip:GetOwner():GetName() and not string.find(objTooltip:GetOwner():GetName(), "BagSyncSearchRow") then
 		objTooltip:Show()
@@ -750,7 +752,7 @@ function Tooltip:HookTooltip(objTooltip)
 end
 
 function Tooltip:HookBattlePetTooltip(objTooltip)
-	if not BSYC.IsRetail then end
+	if not BSYC.IsRetail then return end
 	Debug(2, "HookBattlePetTooltip", objTooltip)
 	
 	--BattlePetToolTip_Show

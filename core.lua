@@ -209,9 +209,7 @@ function BSYC:CreateFakeBattlePetID(link, count, speciesID)
 	
 	if link and not speciesID then
 		local linkType, linkOptions, name = LinkUtil.ExtractLink(link)
-		if linkType ~= "battlepet" then
-			return nil
-		end
+		if linkType ~= "battlepet" then return end
 
 		speciesID = strsplit(":", linkOptions)
 	end
@@ -242,7 +240,8 @@ function BSYC:GetShortItemID(link)
 			--create a FakeID
 			link = BSYC:CreateFakeBattlePetID(link)
 		end
-		
+		if not link then return end
+
 		return link:match("item:(%d+):") or link:match("^(%d+):") or strsplit(";", link) or link
 	end
 end
