@@ -17,7 +17,7 @@ local CreateFrame, UIParent = CreateFrame, UIParent
 ]]
 do
 	local Type = "Window"
-	local Version = 8
+	local Version = 9
 
 	local function frameOnShow(this)
 		this.obj:Fire("OnShow")
@@ -257,7 +257,17 @@ do
 		right:SetTexCoord(0.1171875, 0.2421875, 0, 1)
 
 		local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
-		close:SetPoint("TOPRIGHT", 2, 1)
+		
+		--Minor cosmetic fix until the ACE3 team fixes it, only seems to affect Retail
+		local IsRetail = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
+		if IsRetail then
+			close:SetWidth(22)
+			close:SetHeight(22)
+			close:SetPoint("TOPRIGHT", -4, -4)
+		else
+			close:SetPoint("TOPRIGHT", 2, 1)
+		end
+
 		close:SetScript("OnClick", closeOnClick)
 		self.closebutton = close
 		close.obj = self

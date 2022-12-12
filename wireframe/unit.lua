@@ -42,11 +42,21 @@ table.sort(Realms, function(a,b) return (a < b) end) --sort them alphabetically
 local realmKey = table.concat(Realms, ";") --concat them together
 
 if C_PlayerInteractionManager then
+
 	local InteractType = Enum.PlayerInteractionType
+	--honestly lets ignore all the other gossip and frames that trigger and focus on the ones we want
+	local showDebug = {
+		[InteractType.MailInfo] = true,
+		[InteractType.Banker] = true,
+		[InteractType.Auctioneer] = true,
+		[InteractType.VoidStorageBanker] = true,
+		[InteractType.GuildBanker] = true,
+	}
 
 	Unit:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", function(event, winArg)
-		Debug(1, "PLAYER_INTERACTION_MANAGER_FRAME_SHOW", winArg)
-
+		if winArg and showDebug[winArg] then
+			Debug(1, "PLAYER_INTERACTION_MANAGER_FRAME_SHOW", winArg)
+		end
 		if winArg == InteractType.MailInfo then
 			Unit.atMailbox = true
 			Unit:SendMessage('BAGSYNC_EVENT_MAILBOX', true)
@@ -67,13 +77,13 @@ if C_PlayerInteractionManager then
 			Unit.atGuildBank = true
 			Unit:SendMessage('BAGSYNC_EVENT_GUILDBANK', true)
 		end
-
 	end)
 
 	--Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
 	Unit:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE", function(event, winArg)
-		Debug(1, "PLAYER_INTERACTION_MANAGER_FRAME_HIDE", winArg)
-
+		if winArg and showDebug[winArg] then
+			Debug(1, "PLAYER_INTERACTION_MANAGER_FRAME_HIDE", winArg)
+		end
 		if winArg == InteractType.MailInfo then
 			Unit.atMailbox = false
 			Unit:SendMessage('BAGSYNC_EVENT_MAILBOX')
@@ -94,7 +104,6 @@ if C_PlayerInteractionManager then
 			Unit.atGuildBank = false
 			Unit:SendMessage('BAGSYNC_EVENT_GUILDBANK')
 		end
-
 	end)
 else
 
