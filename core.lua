@@ -110,6 +110,8 @@ function BagSync_ShowWindow(windowName)
     end
 end
 
+--This function will always return the base short itemID if no count is provided or if the count is less than 1.
+--Note: In addition to above, the base itemID is returned as an integer unless the item has bonusID, in which case the itemID with bonusID string is returned.
 function BSYC:ParseItemLink(link, count)
 	if link then
 		if not count then count = 1 end

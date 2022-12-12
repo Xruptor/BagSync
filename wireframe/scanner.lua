@@ -33,6 +33,10 @@ local scannerTooltip = CreateFrame("GameTooltip", "BagSyncScannerTooltip", UIPar
 scannerTooltip:SetOwner(UIParent, 'ANCHOR_NONE') --hide the tooltip from being visible to the player
 scannerTooltip:Hide()
 
+function Scanner:ResetTooltips()
+	if BSYC:GetModule("Tooltip") then BSYC:GetModule("Tooltip"):Reset() end
+end
+
 --https://wowpedia.fandom.com/wiki/BagID
 function Scanner:GetBagSlots(bagType)
 	if bagType == "bag" then
@@ -143,6 +147,8 @@ function Scanner:SaveBag(bagtype, bagid)
 	else
 		BSYC.db.player[bagtype][bagid] = nil
 	end
+
+	self:ResetTooltips()
 end
 
 function Scanner:SaveEquipment()
@@ -187,6 +193,8 @@ function Scanner:SaveEquipment()
 	end
 	
 	BSYC.db.player.equip = slotItems
+
+	self:ResetTooltips()
 end
 
 function Scanner:SaveBank(rootOnly)
@@ -205,6 +213,8 @@ function Scanner:SaveBank(rootOnly)
 		--scan the reagents as part of the bank scan
 		self:SaveReagents()
 	end
+
+	self:ResetTooltips()
 end
 
 function Scanner:SaveReagents()
@@ -214,6 +224,8 @@ function Scanner:SaveReagents()
 	if IsReagentBankUnlocked() then 
 		self:SaveBag("reagents", REAGENTBANK_CONTAINER)
 	end
+
+	self:ResetTooltips()
 end
 
 function Scanner:SaveVoidBank()
@@ -233,6 +245,8 @@ function Scanner:SaveVoidBank()
 	end
 	
 	BSYC.db.player.void = slotItems
+
+	self:ResetTooltips()
 end
 
 local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
@@ -331,6 +345,8 @@ function Scanner:SaveGuildBank()
 	end
 	
 	Scanner.isScanningGuild = false
+
+	self:ResetTooltips()
 end
 
 function Scanner:SaveMailbox(isShow)
@@ -385,6 +401,7 @@ function Scanner:SaveMailbox(isShow)
 	BSYC.db.player.mailbox = slotItems
 
 	self.isCheckingMail = false
+	self:ResetTooltips()
 end
 
 function Scanner:SaveAuctionHouse()
@@ -485,6 +502,8 @@ function Scanner:SaveAuctionHouse()
 	BSYC.db.player.auction.bag = slotItems
 	BSYC.db.player.auction.count = #slotItems or 0
 	BSYC.db.player.auction.lastscan = time()
+
+	self:ResetTooltips()
 end
 
 function Scanner:SaveCurrency()
@@ -537,6 +556,8 @@ function Scanner:SaveCurrency()
 	end
 	
 	BSYC.db.player.currency = slotItems
+
+	self:ResetTooltips()
 end
 
 function Scanner:CleanupBags()
@@ -939,8 +960,5 @@ function Scanner:SaveCraftedReagents()
 
 	--reset our stored reagent count so that it doesn't mess up the regular bank scans
 	Scanner.reagentCount = nil
-	
-	--set the tooltip to be refreshed so that it displays the new values
-	BSYC.refreshTooltip = true
-	
+	self:ResetTooltips()
 end
