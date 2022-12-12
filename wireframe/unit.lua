@@ -41,53 +41,140 @@ end
 table.sort(Realms, function(a,b) return (a < b) end) --sort them alphabetically
 local realmKey = table.concat(Realms, ";") --concat them together
 
-if BSYC.IsRetail then
-	--Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
+if C_PlayerInteractionManager then
+
+	local InteractType = Enum.PlayerInteractionType
+	--honestly lets ignore all the other gossip and frames that trigger and focus on the ones we want
+	local showDebug = {
+		[InteractType.MailInfo] = true,
+		[InteractType.Banker] = true,
+		[InteractType.Auctioneer] = true,
+		[InteractType.VoidStorageBanker] = true,
+		[InteractType.GuildBanker] = true,
+	}
+
 	Unit:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", function(event, winArg)
-		winArg = tonumber(winArg) or 0
+		if winArg and showDebug[winArg] then
+			Debug(1, "PLAYER_INTERACTION_MANAGER_FRAME_SHOW", winArg)
+		end
+		if winArg == InteractType.MailInfo then
+			Unit.atMailbox = true
+			Unit:SendMessage('BAGSYNC_EVENT_MAILBOX', true)
 
-		--mailbox
-		if winArg == 17 then Unit.atMailbox = true end
-		--bank
-		if winArg == 8 then Unit.atBank = true end
-		--Auction
-		if winArg == 21 then Unit.atAuction = true end
-		--void storage
-		if winArg == 26 then Unit.atVoidBank = true end
-		--Guildbank
-		if winArg == 10 then Unit.atGuildBank = true end
+		elseif winArg == InteractType.Banker then
+			Unit.atBank = true
+			Unit:SendMessage('BAGSYNC_EVENT_BANK', true)
 
+		elseif winArg == InteractType.Auctioneer then
+			Unit.atAuction = true
+			Unit:SendMessage('BAGSYNC_EVENT_AUCTION', true)
+
+		elseif winArg == InteractType.VoidStorageBanker then
+			Unit.atVoidBank = true
+			Unit:SendMessage('BAGSYNC_EVENT_VOIDBANK', true)
+
+		elseif winArg == InteractType.GuildBanker then
+			Unit.atGuildBank = true
+			Unit:SendMessage('BAGSYNC_EVENT_GUILDBANK', true)
+		end
 	end)
 
 	--Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
 	Unit:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE", function(event, winArg)
-		winArg = tonumber(winArg) or 0
+		if winArg and showDebug[winArg] then
+			Debug(1, "PLAYER_INTERACTION_MANAGER_FRAME_HIDE", winArg)
+		end
+		if winArg == InteractType.MailInfo then
+			Unit.atMailbox = false
+			Unit:SendMessage('BAGSYNC_EVENT_MAILBOX')
 
-		--mailbox
-		if winArg == 17 then Unit.atMailbox = false end
-		--bank
-		if winArg == 8 then Unit.atBank = false end
-		--Auction
-		if winArg == 21 then Unit.atAuction = false end
-		--void storage
-		if winArg == 26 then Unit.atVoidBank = false end
-		--Guildbank
-		if winArg == 10 then Unit.atGuildBank = false end
+		elseif winArg == InteractType.Banker then
+			Unit.atBank = false
+			Unit:SendMessage('BAGSYNC_EVENT_BANK')
 
+		elseif winArg == InteractType.Auctioneer then
+			Unit.atAuction = false
+			Unit:SendMessage('BAGSYNC_EVENT_AUCTION')
+
+		elseif winArg == InteractType.VoidStorageBanker then
+			Unit.atVoidBank = false
+			Unit:SendMessage('BAGSYNC_EVENT_VOIDBANK')
+
+		elseif winArg == InteractType.GuildBanker then
+			Unit.atGuildBank = false
+			Unit:SendMessage('BAGSYNC_EVENT_GUILDBANK')
+		end
 	end)
 else
-	Unit:RegisterEvent('BANKFRAME_OPENED', function() Unit.atBank = true end)
-	Unit:RegisterEvent('BANKFRAME_CLOSED', function() Unit.atBank = false end)
-	Unit:RegisterEvent('MAIL_SHOW', function() Unit.atMailbox = true end)
-	Unit:RegisterEvent('MAIL_CLOSED', function() Unit.atMailbox = false end)
-	Unit:RegisterEvent('AUCTION_HOUSE_SHOW', function() Unit.atAuction = true end)
-	Unit:RegisterEvent('AUCTION_HOUSE_CLOSED', function() Unit.atAuction = false end)
-	
-	--WOTLK or higher
-	if not BSYC.IsClassic then
-		Unit:RegisterEvent('GUILDBANKFRAME_OPENED', function() Unit.atGuildBank = true end)
-		Unit:RegisterEvent('GUILDBANKFRAME_CLOSED', function() Unit.atGuildBank = false end)
+
+	Unit:RegisterEvent('MAIL_SHOW', function()
+		Unit.atMailbox = true
+		Unit:SendMessage('BAGSYNC_EVENT_MAILBOX', true)
+	end)
+	Unit:RegisterEvent('MAIL_CLOSED', function()
+		Unit.atMailbox = false
+		Unit:SendMessage('BAGSYNC_EVENT_MAILBOX')
+	end)
+	Unit:RegisterEvent('BANKFRAME_OPENED', function()
+		Unit.atBank = true
+		Unit:SendMessage('BAGSYNC_EVENT_BANK', true)
+	end)
+	Unit:RegisterEvent('BANKFRAME_CLOSED', function()
+		Unit.atBank = false
+		Unit:SendMessage('BAGSYNC_EVENT_BANK')
+	end)
+	Unit:RegisterEvent('AUCTION_HOUSE_SHOW', function()
+		Unit.atAuction = true
+		Unit:SendMessage('BAGSYNC_EVENT_AUCTION', true)
+	end)
+	Unit:RegisterEvent('AUCTION_HOUSE_CLOSED', function()
+		Unit.atAuction = false
+		Unit:SendMessage('BAGSYNC_EVENT_AUCTION')
+	end)
+
+	if CanUseVoidStorage then
+		Unit:RegisterEvent('VOID_STORAGE_OPEN', function()
+			Unit.atVoidBank = true
+			Unit:SendMessage('BAGSYNC_EVENT_VOIDBANK', true)
+		end)
+		Unit:RegisterEvent('VOID_STORAGE_CLOSE', function()
+			Unit.atVoidBank = false
+			Unit:SendMessage('BAGSYNC_EVENT_VOIDBANK')
+		end)
 	end
+
+	if CanGuildBankRepair then
+		Unit:RegisterEvent('GUILDBANKFRAME_OPENED', function()
+			Unit.atGuildBank = true
+			Unit:SendMessage('BAGSYNC_EVENT_GUILDBANK', true)
+		end)
+		Unit:RegisterEvent('GUILDBANKFRAME_CLOSED', function()
+			Unit.atGuildBank = false
+			Unit:SendMessage('BAGSYNC_EVENT_GUILDBANK')
+		end)
+	end
+
+end
+
+--these are used to process auction house data when it's ready.  Second variable is true for ready
+if C_AuctionHouse then
+	Unit:RegisterEvent('AUCTION_HOUSE_THROTTLED_SYSTEM_READY', function()
+		--if we created an auction, then query the player owned auctions but don't push event yet
+		if Unit.auctionCreated then
+			C_AuctionHouse.QueryOwnedAuctions({})
+			Unit.auctionCreated = false
+			return
+		end
+		Unit:SendMessage('BAGSYNC_EVENT_AUCTION', Unit.atAuction, true)
+	end)
+	--they sold something on auction house, so lets trigger an owned auctions update
+	Unit:RegisterEvent('AUCTION_HOUSE_AUCTION_CREATED', function()
+		Unit.auctionCreated = true
+	end)
+else
+	Unit:RegisterEvent('AUCTION_OWNED_LIST_UPDATE', function()
+		Unit:SendMessage('BAGSYNC_EVENT_AUCTION', Unit.atAuction, true)
+	end)
 end
 
 function Unit:GetUnitAddress(unit)

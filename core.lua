@@ -110,6 +110,8 @@ function BagSync_ShowWindow(windowName)
     end
 end
 
+--This function will always return the base short itemID if no count is provided or if the count is less than 1.
+--Note: In addition to above, the base itemID is returned as an integer unless the item has bonusID, in which case the itemID with bonusID string is returned.
 function BSYC:ParseItemLink(link, count)
 	if link then
 		if not count then count = 1 end
@@ -209,9 +211,7 @@ function BSYC:CreateFakeBattlePetID(link, count, speciesID)
 	
 	if link and not speciesID then
 		local linkType, linkOptions, name = LinkUtil.ExtractLink(link)
-		if linkType ~= "battlepet" then
-			return nil
-		end
+		if linkType ~= "battlepet" then return end
 
 		speciesID = strsplit(":", linkOptions)
 	end
@@ -242,7 +242,8 @@ function BSYC:GetShortItemID(link)
 			--create a FakeID
 			link = BSYC:CreateFakeBattlePetID(link)
 		end
-		
+		if not link then return end
+
 		return link:match("item:(%d+):") or link:match("^(%d+):") or strsplit(";", link) or link
 	end
 end
