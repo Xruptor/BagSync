@@ -25,6 +25,7 @@ libs\AceConsole-3.0\AceConsole-3.0.xml
 libs\AceEvent-3.0\AceEvent-3.0.xml
 libs\AceTimer-3.0\AceTimer-3.0.xml
 libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 libs\Unfit-1.0\Unfit-1.0.lua
 libs\CustomSearch-1.0\CustomSearch-1.0.lua
 libs\LibItemSearch-1.2\LibItemSearch-1.2.lua
@@ -51,8 +52,7 @@ wireframe\scanner.lua
 wireframe\events.lua
 wireframe\tooltip.lua
 
-modules\minimap.lua
-modules\databrokerplugin.lua
+modules\databroker.lua
 modules\search.lua
 modules\currency.lua
 modules\professions.lua

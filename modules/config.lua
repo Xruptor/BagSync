@@ -7,6 +7,7 @@ local BSYC = select(2, ...) --grab the addon namespace
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local config = LibStub("AceConfig-3.0")
 local configDialog = LibStub("AceConfigDialog-3.0")
+local MinimapIcon = LibStub("LibDBIcon-1.0")
 
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Config", ...) end
@@ -66,7 +67,13 @@ local function set(info, arg1, arg2, arg3, arg4)
 		BSYC.options[c] = arg1
 
 		if p == "minimap" then
-			if arg1 then BagSync_MinimapButton:Show() else BagSync_MinimapButton:Hide() end
+			if arg1 then
+				MinimapIcon:Show("BagSync")
+				BSYC.options.minimap.hide = false
+			else
+				MinimapIcon:Hide("BagSync")
+				BSYC.options.minimap.hide = true
+			end
 		end
 	end
 end
