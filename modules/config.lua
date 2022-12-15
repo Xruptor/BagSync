@@ -74,7 +74,26 @@ local function set(info, arg1, arg2, arg3, arg4)
 				MinimapIcon:Hide("BagSync")
 				BSYC.options.minimap.hide = true
 			end
+		elseif c == "enableXR_BNETRealmNames" and arg1 then
+			BSYC.options["enableRealmAstrickName"] = false
+			BSYC.options["enableRealmShortName"] = false
+
+		elseif c == "enableRealmAstrickName" and arg1 then
+			BSYC.options["enableXR_BNETRealmNames"] = false
+			BSYC.options["enableRealmShortName"] = false
+
+		elseif c == "enableRealmShortName" and arg1 then
+			BSYC.options["enableXR_BNETRealmNames"] = false
+			BSYC.options["enableRealmAstrickName"] = false
+
+		elseif c == "sortByCustomOrder" and arg1 then
+			BSYC.options["sortTooltipByTotals"] = false
+
+		elseif c == "sortTooltipByTotals" and arg1 then
+			BSYC.options["sortByCustomOrder"] = false
+
 		end
+
 	end
 end
 
@@ -236,7 +255,7 @@ options.args.display = {
 	args = {
 		groupstorage = {
 			order = 1,
-			type = 'group',
+			type = "group",
 			name = L.DisplayTooltipStorage,
 			guiInline = true,
 			args = {
@@ -298,7 +317,7 @@ options.args.display = {
 		},
 		groupextra = {
 			order = 2,
-			type = 'group',
+			type = "group",
 			name = L.DisplayTooltipExtra,
 			guiInline = true,
 			args = {
@@ -385,8 +404,17 @@ options.args.display = {
 					disabled = function() return not BSYC.options["enableGuild"] end,
 					hidden = function() return BSYC.IsClassic end,
 				},
+			}
+		},
+		groupsorting = {
+			name = L.DisplaySorting,
+			order = 3,
+			type = "group",
+			desc = L.DisplaySortInfo,
+			guiInline = true,
+			args = {
 				sorttooltipbytotals = {
-					order = 8,
+					order = 0,
 					type = "toggle",
 					name = L.SortTooltipByTotals,
 					width = "full",
@@ -394,12 +422,33 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.sortTooltipByTotals",
+					disabled = function() return BSYC.options["sortByCustomOrder"] end,
+				},
+				sortbycustomsortorder = {
+					order = 1,
+					type = "toggle",
+					name = L.SortByCustomSortOrder,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.sortByCustomOrder",
+					disabled = function() return BSYC.options["sortTooltipByTotals"] end,
+				},
+				customsortbutton = {
+					order = 2,
+					type = "execute",
+					name = L.SortOrder,
+					func = function()
+						BSYC:GetModule("SortOrder").frame:Show()
+					end,
+					disabled = function() return BSYC.options["sortTooltipByTotals"] or not BSYC.options["sortByCustomOrder"] end,
 				},
 			}
 		},
 		grouptags = {
-			order = 3,
-			type = 'group',
+			order = 4,
+			type = "group",
 			name = L.DisplayTooltipTags,
 			guiInline = true,
 			args = {
@@ -437,8 +486,8 @@ options.args.display = {
 			}
 		},
 		groupaccountwide = {
-			order = 4,
-			type = 'group',
+			order = 5,
+			type = "group",
 			name = L.DisplayTooltipAccountWide,
 			guiInline = true,
 			args = {
@@ -462,60 +511,68 @@ options.args.display = {
 					set = set,
 					arg = "display.enableBNetAccountItems",
 				},
-				realmnames = {
+				realmtagsgroups = {
+					name = L.DisplayAccountWideTagOpts,
 					order = 2,
-					type = "toggle",
-					name = L.DisplayRealmNames,
-					width = "full",
-					descStyle = "hide",
-					get = get,
-					set = set,
-					arg = "display.enableXR_BNETRealmNames",
-					disabled = function() 
-						if not BSYC.options["enableCrossRealmsItems"] and not BSYC.options["enableBNetAccountItems"] then
-							return true
-						end
-						return BSYC.options["enableRealmAstrickName"] or BSYC.options["enableRealmShortName"]
-					end,
-				},
-				realmastrick = {
-					order = 3,
-					type = "toggle",
-					name = L.DisplayRealmAstrick,
-					width = "full",
-					descStyle = "hide",
-					get = get,
-					set = set,
-					arg = "display.enableRealmAstrickName",
-					disabled = function() 
-						if not BSYC.options["enableCrossRealmsItems"] and not BSYC.options["enableBNetAccountItems"] then
-							return true
-						end
-						return BSYC.options["enableXR_BNETRealmNames"] or BSYC.options["enableRealmShortName"]
-					end,
-				},
-				realmshortname = {
-					order = 4,
-					type = "toggle",
-					name = L.DisplayShortRealmName,
-					width = "full",
-					descStyle = "hide",
-					get = get,
-					set = set,
-					arg = "display.enableRealmShortName",
-					disabled = function() 
-						if not BSYC.options["enableCrossRealmsItems"] and not BSYC.options["enableBNetAccountItems"] then
-							return true
-						end
-						return BSYC.options["enableXR_BNETRealmNames"] or BSYC.options["enableRealmAstrickName"]
-					end,
+					type = "group",
+					guiInline = true,
+					args = {
+						realmnames = {
+							order = 0,
+							type = "toggle",
+							name = L.DisplayRealmNames,
+							width = "full",
+							descStyle = "hide",
+							get = get,
+							set = set,
+							arg = "display.enableXR_BNETRealmNames",
+							disabled = function() 
+								if not BSYC.options["enableCrossRealmsItems"] and not BSYC.options["enableBNetAccountItems"] then
+									return true
+								end
+								return BSYC.options["enableRealmAstrickName"] or BSYC.options["enableRealmShortName"]
+							end,
+						},
+						realmastrick = {
+							order = 1,
+							type = "toggle",
+							name = L.DisplayRealmAstrick,
+							width = "full",
+							descStyle = "hide",
+							get = get,
+							set = set,
+							arg = "display.enableRealmAstrickName",
+							disabled = function() 
+								if not BSYC.options["enableCrossRealmsItems"] and not BSYC.options["enableBNetAccountItems"] then
+									return true
+								end
+								return BSYC.options["enableXR_BNETRealmNames"] or BSYC.options["enableRealmShortName"]
+							end,
+						},
+						realmshortname = {
+							order = 2,
+							type = "toggle",
+							name = L.DisplayShortRealmName,
+							width = "full",
+							descStyle = "hide",
+							get = get,
+							set = set,
+							arg = "display.enableRealmShortName",
+							disabled = function() 
+								if not BSYC.options["enableCrossRealmsItems"] and not BSYC.options["enableBNetAccountItems"] then
+									return true
+								end
+								return BSYC.options["enableXR_BNETRealmNames"] or BSYC.options["enableRealmAstrickName"]
+							end,
+						},
+					}
 				},
 			}
 		},
 		showuniqueitemsgroup = {
-			order = 5,
+			order = 6,
 			name = L.DisplayShowUniqueItemsTotalsTitle,
-			type = 'group',
+			type = "group",
 			guiInline = true,
 			args = {
 				title = {
@@ -532,7 +589,7 @@ options.args.display = {
 				},
 				showuniqueitems = {
 					order = 2,
-					type = 'toggle',
+					type = "toggle",
 					name = L.DisplayShowUniqueItemsEnableText,
 					width = "full",
 					descStyle = "hide",
@@ -650,7 +707,7 @@ options.args.faq = {
 		question_1 = {
 			order = 1,
 			name = L.FAQ_Question_1,
-			type = 'group',
+			type = "group",
 			guiInline = true,
 			args = {
 				title = {
@@ -664,7 +721,7 @@ options.args.faq = {
 		question_2 = {
 			order = 2,
 			name = L.FAQ_Question_2,
-			type = 'group',
+			type = "group",
 			guiInline = true,
 			args = {
 				title = {
@@ -678,7 +735,7 @@ options.args.faq = {
 		question_3 = {
 			order = 3,
 			name = L.FAQ_Question_3,
-			type = 'group',
+			type = "group",
 			guiInline = true,
 			args = {
 				title = {
@@ -692,7 +749,7 @@ options.args.faq = {
 		question_4 = {
 			order = 4,
 			name = L.FAQ_Question_4,
-			type = 'group',
+			type = "group",
 			guiInline = true,
 			args = {
 				title = {
@@ -706,7 +763,7 @@ options.args.faq = {
 		question_5 = {
 			order = 5,
 			name = L.FAQ_Question_5,
-			type = 'group',
+			type = "group",
 			guiInline = true,
 			args = {
 				title = {
@@ -720,7 +777,7 @@ options.args.faq = {
 		question_6 = {
 			order = 6,
 			name = L.FAQ_Question_6,
-			type = 'group',
+			type = "group",
 			guiInline = true,
 			args = {
 				title = {
@@ -734,7 +791,7 @@ options.args.faq = {
 		question_7 = {
 			order = 7,
 			name = L.FAQ_Question_7,
-			type = 'group',
+			type = "group",
 			guiInline = true,
 			args = {
 				title = {

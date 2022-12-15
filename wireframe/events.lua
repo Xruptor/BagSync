@@ -216,12 +216,14 @@ end
 function Events:BAG_UPDATE(event, bagid)
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
 	self.SpamBagQueue[bagid] = true
+	self.SpamBagTotal = (self.SpamBagTotal or 0) + 1
 end
 
 function Events:BAG_UPDATE_DELAYED(event)
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
+	if not self.SpamBagTotal then self.SpamBagTotal = 0 end
 	--NOTE: BSYC:GetHashTableLen(self.SpamBagQueue) may show more then is actually processed.  Example it has the banks in queue but we aren't at a bank.
-	Debug(2, "SpamBagQueue", BSYC:GetHashTableLen(self.SpamBagQueue))
+	Debug(2, "SpamBagQueue", self.SpamBagTotal)
 	
 	local totalProcessed = 0
 	
@@ -245,6 +247,7 @@ function Events:BAG_UPDATE_DELAYED(event)
 		--remove it
 		self.SpamBagQueue[bagid] = nil
 	end
+	self.SpamBagTotal = 0
 	
 	Debug(2, "SpamBagQueue", "totalProcessed", totalProcessed)
 	

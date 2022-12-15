@@ -59,4 +59,5 @@ modules\professions.lua
 modules\recipes.lua
 modules\blacklist.lua
 modules\profiles.lua
+modules\sortorder.lua
 modules\config.lua

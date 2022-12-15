@@ -34,6 +34,28 @@ local function Label_OnClick(frame, button)
 	AceGUI:ClearFocus()
 end
 
+local function EditBox_OnEscapePressed(frame)
+	frame:ClearFocus()
+end
+
+local function EditBox_OnEnterPressed(frame)
+	local self = frame.obj
+	local value = frame:GetText()
+	local cancel = frame.obj:Fire("OnEnterPressed", value)
+	if not cancel then
+		PlaySound(856) -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON
+	end
+	frame:ClearFocus()
+end
+
+local function EditBox_OnEnter(frame)
+	frame:SetBackdropBorderColor(0.8, 0.8, 0.8, 1)
+end
+
+local function EditBox_OnLeave(frame)
+	frame:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.8)
+end
+
 --[[-----------------------------------------------------------------------------
 Methods
 -------------------------------------------------------------------------------]]
@@ -48,6 +70,9 @@ local methods = {
 		self:SetHeaderHighlightTexCoord()
 		self:ToggleHeaderHighlight()
 		self:SetDisabled(false)
+		self:SetEditBoxHeight()
+		self:SetEditBoxWidth()
+		self:ToggleEditBox()
 	end,
 
 	["GetText"] = function(self)
@@ -116,11 +141,51 @@ local methods = {
 			self.label:SetTextColor(1, 1, 1)
 		end
 	end,
+
+	["ToggleEditBox"] = function(self,toggle)
+		if toggle then
+			self.editbox:Show()
+		else
+			self.editbox:Hide()
+		end
+	end,
+
+	["SetEditBoxHeight"] = function(self,height)
+		if height then
+			self.editbox:SetHeight(height)
+		else
+			self.editbox:SetHeight(14)
+		end
+	end,
+
+	["SetEditBoxWidth"] = function(self,width)
+		if width then
+			self.editbox:SetWidth(width)
+		else
+			self.editbox:SetWidth(70)
+		end
+	end,
 }
 
 --[[-----------------------------------------------------------------------------
 Constructor
 -------------------------------------------------------------------------------]]
+
+local ManualBackdrop = {
+	bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+	edgeFile = "Interface\\ChatFrame\\ChatFrameBackground",
+	tile = true, edgeSize = 1, tileSize = 5,
+}
+
+local editBoxBackdrop = {
+	bgFile = [[Interface\Tooltips\UI-Tooltip-Background]],
+	edgeFile = [[Interface\Tooltips\UI-Tooltip-Border]],
+	tile = true,
+	tileSize = 16,
+	edgeSize = 12,
+	insets = { left = 3, right = 3, top = 3, bottom = 3 }
+}
+
 local function Constructor()
 	-- create a Label type that we will hijack
 	local label = AceGUI:Create("BagSyncLabel")
@@ -142,6 +207,25 @@ local function Constructor()
 	headerhighlight:SetBlendMode("ADD")
 	headerhighlight:Hide()
 	
+	local editbox = CreateFrame("EditBox", nil, frame, "BackdropTemplate")
+	editbox:SetAutoFocus(false)
+	editbox:SetFontObject(GameFontHighlight)
+	editbox:SetPoint("RIGHT", frame, "RIGHT")
+	editbox:SetHeight(14)
+	editbox:SetWidth(70)
+	editbox:SetJustifyH("CENTER")
+	editbox:EnableMouse(true)
+	editbox:SetBackdrop(editBoxBackdrop)
+	editbox:SetBackdropColor(0, 0, 0, 0.5)
+	editbox:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.8)
+	editbox:SetScript("OnEnter", EditBox_OnEnter)
+	editbox:SetScript("OnLeave", EditBox_OnLeave)
+	editbox:SetScript("OnEnterPressed", EditBox_OnEnterPressed)
+	editbox:SetScript("OnEscapePressed", EditBox_OnEscapePressed)
+	editbox.obj = label
+	editbox:Hide()
+
+	label.editbox = editbox
 	label.highlight = highlight
 	label.headerhighlight = headerhighlight
 	label.type = Type
