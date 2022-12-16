@@ -3,7 +3,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhCN")
 if not L then return end
 
 --  zhCN client (NGA-[男爵凯恩]补齐)
---  Last update: 2022/12/06
+--  Last update: 2022/12/16
 
 L.Yes = "Yes"
 L.No = "No"
@@ -50,6 +50,7 @@ L.AdvancedLocationInformation = "* 选择所有因为无默认"
 L.Units = "名字:"
 L.Locations = "位置:"
 L.Profiles = "信息"
+L.SortOrder = "自定义排序"
 L.Professions = "专业"
 L.Currency = "货币"
 L.Blacklist = "黑名单"
@@ -155,6 +156,7 @@ L.DisplayTooltipTags = "标识符号"
 L.DisplayTooltipStorage = "仓库"
 L.DisplayTooltipExtra = "其他统计"
 L.DisplayTooltipAccountWide = "账号信息"
+L.DisplayAccountWideTagOpts = "|cFF99CC33选项 ( |cffff7d0a[XR]|r & |cff3587ff[BNet]|r )|r"
 L.DisplayGreenCheck = "显示 %s 在当前角色名字旁边"
 L.DisplayRealmIDTags = "显示 |cffff7d0a[XR]|r 和 |cff3587ff[BNet]|r 标识符号"
 L.DisplayRealmNames = "显示服务器名字"
@@ -164,7 +166,12 @@ L.DisplayFactionIcons = "显示阵营图案"
 L.DisplayGuildCurrentCharacter = "仅显示当前游戏角色的 [公会] 物品"
 L.DisplayGuildBankScanAlert = "显示公会银行扫描窗口。"
 L.DisplayAccurateBattlePets = "启用精准扫描公会银行和邮箱中的战斗宠物。|cFFDF2B2B(可能导致滞后)|r |cff3587ff[详见 BagSync FAQ]|r"
-L.SortTooltipByTotals = "BagSync 工具提示的排序是按总计而不是字母顺序。"
+L.DisplaySorting = "鼠标提示排序"
+L.DisplaySortInfo = "默认: 鼠标提示排序是根据服务器名的字母顺序来排序然后是角色名称。"
+L.SortTooltipByTotals = "根据总数进行排序，而不是字母顺序排列"
+L.SortByCustomSortOrder = "按照自定义排序顺序排序。"
+L.CustomSortInfo = "列表使用升序排列 (1,2,3)"
+L.CustomSortInfoWarn = "|cFF99CC33注意: 仅使用数字! (-1,0,3,4)|r"
 L.DisplayShowUniqueItemsTotals = "启用该选项将允许物品总数量增加独特的物品,无论物品的统计信息。|cFF99CC33（推荐）|r"
 L.DisplayShowUniqueItemsTotals_2 = [[
 某些物品例如 |cffff7d0a[Legendaries]|r 可以共享相同的名字但具有不同的统计数据。由于这些物品是彼此独立处理,因此有时不计入总物品数。启用此选项将完全忽略独特的物品统计数据并一视同仁,,只要它们共享相同的物品名称。
