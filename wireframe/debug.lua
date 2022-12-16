@@ -231,7 +231,7 @@ function Debug:OnEnable()
 
 	DebugFrame:SetTitle("BagSync - "..L.Debug)
 	DebugFrame:SetHeight(450)
-	DebugFrame:SetWidth(800)
+	DebugFrame:SetWidth(930)
 	DebugFrame:EnableResize(false)
 	DebugFrame:SetPoint("CENTER",UIParent,"CENTER",0,120)
 	DebugFrame.frame:SetFrameStrata("BACKGROUND")
@@ -256,7 +256,7 @@ function Debug:OnEnable()
 	}
 
 	Debug.optionsFrame:SetHeight(100)
-	Debug.optionsFrame:SetWidth(800)
+	Debug.optionsFrame:SetWidth(930)
 	Debug.optionsFrame:SetBackdrop(backdrop)
 	Debug.optionsFrame:SetBackdropColor(0, 0, 0, 0.6)
 	Debug.optionsFrame:SetPoint("TOPLEFT",DebugFrame.frame,"BOTTOMLEFT",0,0)

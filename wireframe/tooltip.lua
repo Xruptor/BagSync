@@ -575,11 +575,11 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		end
 	end
 	
-	Debug(2, "TallyUnits", objTooltip, link, shortID, source, isBattlePet, grandTotal)
+	Debug(2, "TallyUnits", link, shortID, origLink, source, isBattlePet, grandTotal)
 end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)
-	Debug(2, "CurrencyTooltip", objTooltip, currencyName, currencyIcon, currencyID, source)
+	Debug(2, "CurrencyTooltip", currencyName, currencyIcon, currencyID, source)
 	
 	currencyID = tonumber(currencyID) --make sure it's a number we are working with and not a string
 	if not currencyID then return end
