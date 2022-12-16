@@ -38,7 +38,9 @@ StaticPopupDialogs["BAGSYNC_RESETDATABASE"] = {
 
 function Data:OnEnable()
 	Debug(2, "OnEnable")
-	
+	Debug(1, "RealmKey", Unit:GetRealmKey())
+	Debug(1, "RealmKey_RWS", Unit:GetRealmKey_RWS())
+
 	local ver = GetAddOnMetadata("BagSync","Version") or 0
 	
 	--get player information from Unit
@@ -91,6 +93,7 @@ function Data:OnEnable()
 	if BSYC.options.enableAccurateBattlePets == nil then BSYC.options.enableAccurateBattlePets = true end
 	if BSYC.options.alwaysShowAdvSearch == nil then BSYC.options.alwaysShowAdvSearch = false end
 	if BSYC.options.sortTooltipByTotals == nil then BSYC.options.sortTooltipByTotals = false end
+	if BSYC.options.sortByCustomOrder == nil then BSYC.options.sortByCustomOrder = false end
 
 	--setup the default colors
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end

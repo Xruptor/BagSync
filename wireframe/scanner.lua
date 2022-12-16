@@ -29,10 +29,6 @@ local MAX_GUILDBANK_SLOTS_PER_TAB = 98
 local FirstEquipped = INVSLOT_FIRST_EQUIPPED
 local LastEquipped = INVSLOT_LAST_EQUIPPED
 
-local scannerTooltip = CreateFrame("GameTooltip", "BagSyncScannerTooltip", UIParent, "GameTooltipTemplate")
-scannerTooltip:SetOwner(UIParent, 'ANCHOR_NONE') --hide the tooltip from being visible to the player
-scannerTooltip:Hide()
-
 function Scanner:ResetTooltips()
 	if BSYC:GetModule("Tooltip") then BSYC:GetModule("Tooltip"):Reset() end
 end
@@ -260,23 +256,23 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 	end
 	
 	if BSYC.options.enableAccurateBattlePets and arg1 then
+		local data
+
+		--https://github.com/tomrus88/BlizzardInterfaceCode/blob/4e7b4f5df63d240038912624218ebb9c0c8a3edf/Interface/SharedXML/Tooltip/TooltipDataRules.lua
 		if typeSlot == "guild" then
-			scannerTooltip:SetGuildBankItem(arg1, arg2)
+			data = C_TooltipInfo.GetGuildBankItem(arg1, arg2)
 		else
-			--mailbox
-			scannerTooltip:SetInboxItem(arg1)
+			data = C_TooltipInfo.GetInboxItem(arg1, arg2)
 		end
-		local tooltipData = scannerTooltip:GetTooltipData()
-		scannerTooltip:Hide()
-		
+
 		--fixes a slight issue where occasionally due to server delay, the BattlePet tooltips are still shown on the screen and overlaps the GameTooltip
 		if BattlePetTooltip then BattlePetTooltip:Hide() end
 		if FloatingBattlePetTooltip then FloatingBattlePetTooltip:Hide() end
 
-		--https://github.com/tomrus88/BlizzardInterfaceCode/blob/4e7b4f5df63d240038912624218ebb9c0c8a3edf/Interface/SharedXML/Tooltip/TooltipDataRules.lua
-
-		if tooltipData and tooltipData.battlePetSpeciesID then
-			return tooltipData.battlePetSpeciesID
+		--args[2] = battlePetSpeciesID
+		--No need to do TooltipUtil.SurfaceArgs we can just go straight to the source without another function to grab the info
+		if data and data.args and data.args[2] and data.args[2].intVal then
+			return data.args[2].intVal
 		end
 	end
 	
@@ -378,7 +374,7 @@ function Scanner:SaveMailbox(isShow)
 					--check for battle pet cages
 					if BSYC.IsRetail and itemID and itemID == 82800 then
 					
-						local speciesID = findBattlePet(itemTexture, name, "mail", mailIndex)
+						local speciesID = findBattlePet(itemTexture, name, "mail", mailIndex, i)
 
 						if speciesID then
 							link = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)

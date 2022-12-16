@@ -24,6 +24,7 @@ local BROKEN_REALMS = {
 
 local Realms = GetAutoCompleteRealms()
 local RealmsCR = {}
+local RealmsRWS = {}
 
 if not Realms or #Realms == 0 then
 	Realms = {REALM}
@@ -34,6 +35,8 @@ for i,realm in ipairs(Realms) do
 		realm = realm:gsub('(%l)(%u)', '%1 %2') -- names like Blade'sEdge to Blade's Edge
 		Realms[i] = realm
 		RealmsCR[realm] = true
+		realm = realm:gsub('[%p%c%s]', '') -- remove all punctuation characters, all control characters, and all whitespace characters 
+		RealmsRWS[realm] = true
 end
 
 --this is used to identify cross servers as a unique key.
@@ -213,12 +216,33 @@ function Unit:GetUnitInfo(unit)
 end
 
 function Unit:isConnectedRealm(realm)
+	if not realm then return false end
+
+	realm = BROKEN_REALMS[realm] or realm
+	realm = realm:gsub('(%l)(%u)', '%1 %2') -- names like Blade'sEdge to Blade's Edge
+
+	if not RealmsCR[realm] then
+		--check the stripped whitespace format Removed White Spaces or RWS
+		realm = realm:gsub('[%p%c%s]', '') -- remove all punctuation characters, all control characters, and all whitespace characters 
+		return RealmsRWS[realm]
+	end
 	return RealmsCR[realm]
 end
 
 function Unit:GetRealmKey()
-	Debug(3, "GetRealmKey", realmKey)
 	return realmKey
+end
+
+function Unit:GetRealmKey_RWS()
+	local rwsKey
+	for k, v in pairs(RealmsRWS) do
+		if not rwsKey then
+			rwsKey = k
+		else
+			rwsKey = rwsKey..";"..k
+		end
+	end
+	return rwsKey
 end
 
 function Unit:IsInBG()

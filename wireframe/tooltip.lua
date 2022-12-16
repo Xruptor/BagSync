@@ -130,26 +130,13 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple)
 		return tmpTag
 	end
 	----------------
-	
-	--Always set certain features off if it conflicts with currently enabled options.
+
 	if BSYC.options.enableXR_BNETRealmNames then
-		BSYC.options.enableRealmAstrickName = false
-		BSYC.options.enableRealmShortName = false
-	
 		realm = unitObj.realm
-	
 	elseif BSYC.options.enableRealmAstrickName then
-		BSYC.options.enableXR_BNETRealmNames = false
-		BSYC.options.enableRealmShortName = false
-		
 		realm = "*"
-	
 	elseif BSYC.options.enableRealmShortName then
-		BSYC.options.enableXR_BNETRealmNames = false
-		BSYC.options.enableRealmAstrickName = false
-		
 		realm = string.sub(unitObj.realm, 1, 5)
-	
 	else
 		realm = ""
 		delimiter = ""
@@ -178,7 +165,8 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple)
 		end
 	end
 
-	Debug(2, "ColorizeUnit", tmpTag)
+	Debug(2, "ColorizeUnit", tmpTag, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, player.realm)
+	Debug(4, "ColorizeUnit [Realm]", GetRealmName(), GetNormalizedRealmName())
 	return tmpTag
 end
 
@@ -232,7 +220,25 @@ function Tooltip:MoneyTooltip()
 	end
 	
 	--sort the list by our sortIndex then by realm and finally by name
-	if not BSYC.options.sortTooltipByTotals then
+	if BSYC.options.sortTooltipByTotals then
+		table.sort(usrData, function(a, b)
+			return a.count > b.count;
+		end)
+	elseif BSYC.options.sortByCustomOrder then
+		table.sort(usrData, function(a, b)
+			if a.unitObj.data.SortIndex and b.unitObj.data.SortIndex  then
+				return  a.unitObj.data.SortIndex < b.unitObj.data.SortIndex;
+			else
+				if a.sortIndex  == b.sortIndex then
+					if a.unitObj.realm == b.unitObj.realm then
+						return a.unitObj.name < b.unitObj.name;
+					end
+					return a.unitObj.realm < b.unitObj.realm;
+				end
+				return a.sortIndex < b.sortIndex;
+			end
+		end)
+	else
 		table.sort(usrData, function(a, b)
 			if a.sortIndex  == b.sortIndex then
 				if a.unitObj.realm == b.unitObj.realm then
@@ -241,10 +247,6 @@ function Tooltip:MoneyTooltip()
 				return a.unitObj.realm < b.unitObj.realm;
 			end
 			return a.sortIndex < b.sortIndex;
-		end)
-	else
-		table.sort(usrData, function(a, b)
-			return a.count > b.count;
 		end)
 	end
 
@@ -478,7 +480,25 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	
 	--only sort items if we have something to work with
 	if #unitList > 0 then
-		if not BSYC.options.sortTooltipByTotals then
+		if BSYC.options.sortTooltipByTotals then
+			table.sort(unitList, function(a, b)
+				return a.count > b.count;
+			end)
+		elseif BSYC.options.sortByCustomOrder then
+			table.sort(unitList, function(a, b)
+				if a.unitObj.data.SortIndex and b.unitObj.data.SortIndex  then
+					return  a.unitObj.data.SortIndex < b.unitObj.data.SortIndex;
+				else
+					if a.sortIndex  == b.sortIndex then
+						if a.unitObj.realm == b.unitObj.realm then
+							return a.unitObj.name < b.unitObj.name;
+						end
+						return a.unitObj.realm < b.unitObj.realm;
+					end
+					return a.sortIndex < b.sortIndex;
+				end
+			end)
+		else
 			table.sort(unitList, function(a, b)
 				if a.sortIndex  == b.sortIndex then
 					if a.unitObj.realm == b.unitObj.realm then
@@ -488,12 +508,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				end
 				return a.sortIndex < b.sortIndex;
 			end)
-		else
-			table.sort(unitList, function(a, b)
-				return a.count > b.count;
-			end)
 		end
-	
 	end
 	
 	local desc, value = '', ''
@@ -560,11 +575,11 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		end
 	end
 	
-	Debug(2, "TallyUnits", objTooltip, link, shortID, source, isBattlePet, grandTotal)
+	Debug(2, "TallyUnits", link, shortID, origLink, source, isBattlePet, grandTotal)
 end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)
-	Debug(2, "CurrencyTooltip", objTooltip, currencyName, currencyIcon, currencyID, source)
+	Debug(2, "CurrencyTooltip", currencyName, currencyIcon, currencyID, source)
 	
 	currencyID = tonumber(currencyID) --make sure it's a number we are working with and not a string
 	if not currencyID then return end
@@ -579,7 +594,25 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	end
 	
 	--sort the list by our sortIndex then by realm and finally by name
-	if not BSYC.options.sortTooltipByTotals then
+	if BSYC.options.sortTooltipByTotals then
+		table.sort(usrData, function(a, b)
+			return a.count > b.count;
+		end)
+	elseif BSYC.options.sortByCustomOrder then
+		table.sort(usrData, function(a, b)
+			if a.unitObj.data.SortIndex and b.unitObj.data.SortIndex  then
+				return  a.unitObj.data.SortIndex < b.unitObj.data.SortIndex;
+			else
+				if a.sortIndex  == b.sortIndex then
+					if a.unitObj.realm == b.unitObj.realm then
+						return a.unitObj.name < b.unitObj.name;
+					end
+					return a.unitObj.realm < b.unitObj.realm;
+				end
+				return a.sortIndex < b.sortIndex;
+			end
+		end)
+	else
 		table.sort(usrData, function(a, b)
 			if a.sortIndex  == b.sortIndex then
 				if a.unitObj.realm == b.unitObj.realm then
@@ -588,10 +621,6 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 				return a.unitObj.realm < b.unitObj.realm;
 			end
 			return a.sortIndex < b.sortIndex;
-		end)
-	else
-		table.sort(usrData, function(a, b)
-			return a.count > b.count;
 		end)
 	end
 	
@@ -607,15 +636,15 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	end
 	
 	if BSYC.options.enableTooltipItemID and currencyID then
-		desc = self:HexColor(BSYC.options.colors.itemid, L.TooltipCurrencyID)
-		value = self:HexColor(BSYC.options.colors.second, currencyID)
+		local desc = self:HexColor(BSYC.options.colors.itemid, L.TooltipCurrencyID)
+		local value = self:HexColor(BSYC.options.colors.second, currencyID)
 		objTooltip:AddDoubleLine(" ", " ", 1, 1, 1, 1, 1, 1)
 		objTooltip:AddDoubleLine(desc, value, 1, 1, 1, 1, 1, 1)
 	end
 	
 	if BSYC.options.enableSourceDebugInfo and source then
-		desc = self:HexColor(BSYC.options.colors.debug, L.TooltipDebug)
-		value = self:HexColor(BSYC.options.colors.second, "2;"..source..";"..tostring(currencyID or 0)..";"..tostring(currencyIcon or 0))
+		local desc = self:HexColor(BSYC.options.colors.debug, L.TooltipDebug)
+		local value = self:HexColor(BSYC.options.colors.second, "2;"..source..";"..tostring(currencyID or 0)..";"..tostring(currencyIcon or 0))
 		objTooltip:AddDoubleLine(" ", " ", 1, 1, 1, 1, 1, 1)
 		objTooltip:AddDoubleLine(desc, value, 1, 1, 1, 1, 1, 1)
 	end

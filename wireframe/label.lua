@@ -24,7 +24,7 @@ local function UpdateImageAnchor(self)
 	local width = frame.width or frame:GetWidth() or 0
 	local image = self.image
 	local label = self.label
-	local height
+	local height = self.customHeight or 0
 
 	label:ClearAllPoints()
 	image:ClearAllPoints()
@@ -64,8 +64,11 @@ local function UpdateImageAnchor(self)
 	end
 
 	self.resizing = true
-	frame:SetHeight(height)
+	if self.customHeight and self.customHeight > height then
+		height = self.customHeight
+	end
 	frame.height = height
+	frame:SetHeight(height)
 	self.resizing = nil
 end
 
@@ -85,8 +88,8 @@ local methods = {
 		self:SetFontObject()
 		self:SetJustifyH("LEFT")
 		self:SetJustifyV("TOP")
-
 		-- reset the flag
+		self.customHeight = nil
 		self.resizing = nil
 		-- run the update explicitly
 		UpdateImageAnchor(self)
@@ -156,6 +159,11 @@ local methods = {
 
 	["SetJustifyV"] = function(self, justifyV)
 		self.label:SetJustifyV(justifyV)
+	end,
+
+	["SetCustomHeight"] = function(self, height)
+		self.customHeight = height
+		UpdateImageAnchor(self)
 	end,
 }
 
