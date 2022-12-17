@@ -29,14 +29,14 @@ function Professions:OnEnable()
 	ProfessionsFrame:SetHeight(500)
 	ProfessionsFrame:SetWidth(380)
 	ProfessionsFrame:EnableResize(false)
-	
+
 	local information = AceGUI:Create("BagSyncLabel")
 	information:SetText(L.ProfessionInformation)
 	information:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
 	information:SetColor(1, 165/255, 0)
 	information:SetFullWidth(true)
 	ProfessionsFrame:AddChild(information)
-	
+
 	local scrollframe = AceGUI:Create("ScrollFrame");
 	scrollframe:SetFullWidth(true)
 	scrollframe:SetLayout("Flow")
@@ -47,9 +47,9 @@ function Professions:OnEnable()
 	hooksecurefunc(ProfessionsFrame, "Show" ,function()
 		self:DisplayList()
 	end)
-	
+
 	ProfessionsFrame:Hide()
-	
+
 end
 
 function Professions:AddEntry(entry, isHeader)
@@ -60,7 +60,7 @@ function Professions:AddEntry(entry, isHeader)
 	label:ToggleHeaderHighlight(false)
 	label.entry = entry
 	label:SetColor(1, 1, 1)
-	
+
 	if isHeader then
 		label:SetText(entry.skillData.name)
 		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
@@ -84,7 +84,7 @@ function Professions:AddEntry(entry, isHeader)
 	end
 
 	label:SetCallback(
-		"OnClick", 
+		"OnClick",
 		function (widget, sometable, button)
 			if "LeftButton" == button and label.userdata.hasRecipes then
 				BSYC:GetModule("Recipes"):ViewRecipes(label.entry)
@@ -98,9 +98,9 @@ function Professions:AddEntry(entry, isHeader)
 				--override the single tooltip use of BagSync
 				label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
 				label.highlight:SetVertexColor(0,1,0,0.3)
-				
+
 				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
-				
+
 				if not label.userdata.isHeader then
 					if label.userdata.hasRecipes then
 						GameTooltip:AddLine(label.entry.colorized..": "..L.ProfessionHasRecipes)
@@ -126,10 +126,10 @@ end
 function Professions:DisplayList()
 
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
-	
+
 	local professionsTable = {}
 	local tempList = {}
-	
+
 	for unitObj in Data:IterateUnits() do
 		if not unitObj.isGuild and unitObj.data.professions then
 			for skillID, skillData in pairs(unitObj.data.professions) do
@@ -141,7 +141,7 @@ function Professions:DisplayList()
 	end
 
 	if #professionsTable > 0 then
-	
+
 		table.sort(professionsTable, function(a, b)
 			if a.skillData.name == b.skillData.name then
 				if a.sortIndex  == b.sortIndex then
@@ -154,7 +154,7 @@ function Professions:DisplayList()
 			end
 			return a.skillData.name < b.skillData.name;
 		end)
-	
+
 		local lastHeader = ""
 		for i=1, #professionsTable do
 			if lastHeader ~= professionsTable[i].skillData.name then

@@ -42,26 +42,26 @@ function Data:OnEnable()
 	Debug(1, "RealmKey_RWS", Unit:GetRealmKey_RWS())
 
 	local ver = GetAddOnMetadata("BagSync","Version") or 0
-	
+
 	--get player information from Unit
 	local player = Unit:GetUnitInfo()
-	
+
 	--main DB call
 	BSYC.db = BSYC.db or {}
-	
+
 	--realm DB
 	BagSyncDB[player.realm] = BagSyncDB[player.realm] or {}
 	BSYC.db.realm = BagSyncDB[player.realm]
-	
+
 	--player DB
 	BSYC.db.realm[player.name] = BSYC.db.realm[player.name] or {}
 	BSYC.db.player = BSYC.db.realm[player.name]
 	BSYC.db.player.currency = BSYC.db.player.currency or {}
 	BSYC.db.player.professions = BSYC.db.player.professions or {}
-	
+
 	--blacklist DB
 	BSYC.db.blacklist = BagSyncDB["blacklist§"]
-	
+
 	--options DB
 	if BSYC.options.showTotal == nil then BSYC.options.showTotal = true end
 	if BSYC.options.enableGuild == nil then BSYC.options.enableGuild = true end
@@ -107,11 +107,11 @@ function Data:OnEnable()
 	if BSYC.options.colors.itemid == nil then BSYC.options.colors.itemid = { r = 82/255, g = 211/255, b = 134/255 }  end
 
 	--do DB cleanup check by version number
-	if not BSYC.options.addonversion or BSYC.options.addonversion ~= ver then	
+	if not BSYC.options.addonversion or BSYC.options.addonversion ~= ver then
 		self:FixDB()
 		BSYC.options.addonversion = ver
 	end
-	
+
 	--player info
 	BSYC.db.player.money = player.money
 	BSYC.db.player.class = player.class
@@ -123,7 +123,7 @@ function Data:OnEnable()
 
 	--load the slash commands
 	self:LoadSlashCommand()
-	
+
 	if BSYC.options.enableLoginVersionInfo then
 		BSYC:Print("[v|cFF20ff20"..ver.."|r] /bgs, /bagsync")
 	end
@@ -152,7 +152,7 @@ end
 
 function Data:ResetColors()
 	Debug(2, "ResetColors")
-	
+
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end
 	BSYC.options.colors.first = { r = 128/255, g = 1, b = 0 }
 	BSYC.options.colors.second = { r = 1, g = 1, b = 1 }
@@ -166,7 +166,7 @@ end
 
 function Data:CleanDB()
 	Debug(2, "CleanDB")
-	
+
 	--check for empty table table to prevent loops
 	if next(BagSyncDB) == nil then
 		BagSyncDB["forceDBReset§"] = forceDBReset
@@ -181,11 +181,11 @@ end
 
 function Data:FixDB()
 	Debug(2, "FixDB")
-	
+
     local storeGuilds = {}
-	
+
 	if not BSYC.options.unitDBVersion then BSYC.options.unitDBVersion = {} end
-	
+
 	for unitObj in self:IterateUnits(true) do
 		--store only user guild names
 		if not unitObj.isGuild then
@@ -216,20 +216,20 @@ function Data:FixDB()
 			end
 		end
 	end
-	
+
 	if BSYC.options.unitDBVersion.auction ~= unitDBVersion.auction then
 		BSYC:Print("|cFFffff00"..L.UnitDBAuctionReset.."|r")
 	end
-	
+
 	--update db unit version information
 	BSYC.options.unitDBVersion = unitDBVersion
-	
+
 	BSYC:Print("|cFFFF9900"..L.FixDBComplete.."|r")
 end
 
 function Data:LoadSlashCommand()
 	Debug(2, "LoadSlashCommand")
-	
+
 	--load the keybinding locale information
 	BINDING_HEADER_BAGSYNC = "BagSync"
 	BINDING_NAME_BAGSYNCBLACKLIST = L.KeybindBlacklist
@@ -238,9 +238,9 @@ function Data:LoadSlashCommand()
 	BINDING_NAME_BAGSYNCPROFESSIONS = L.KeybindProfessions
 	BINDING_NAME_BAGSYNCPROFILES = L.KeybindProfiles
 	BINDING_NAME_BAGSYNCSEARCH = L.KeybindSearch
-	
+
 	local function ChatCommand(input)
-	
+
 		local parts = { (" "):split(input) }
 		local cmd, args = strlower(parts[1] or ""), table.concat(parts, " ", 2)
 
@@ -291,7 +291,7 @@ function Data:LoadSlashCommand()
 			end
 
 		end
-		
+
 		BSYC:Print("/bgs "..L.SlashItemName.." - "..L.HelpSearchItemName)
 		BSYC:Print("/bgs "..L.SlashSearch.." - "..L.HelpSearchWindow)
 		BSYC:Print("/bgs "..L.SlashGold.." - "..L.HelpGoldTooltip)
@@ -306,29 +306,29 @@ function Data:LoadSlashCommand()
 		BSYC:Print("/bgs "..L.SlashConfig.." - "..L.HelpConfigWindow)
 		BSYC:Print("/bgs "..L.SlashDebug.." - "..L.HelpDebug)
 	end
-	
+
 	--/bgs and /bagsync
 	BSYC:RegisterChatCommand("bgs", ChatCommand)
 	BSYC:RegisterChatCommand("bagsync", ChatCommand)
-	
+
 end
 
 function Data:CheckExpiredAuctions()
 	Debug(2, "CheckExpiredAuctions")
-	
+
 	for unitObj in self:IterateUnits(true) do
 		if not unitObj.isGuild and unitObj.data.auction and unitObj.data.auction.count then
-			
+
 			local slotItems = {}
 
 			for x = 1, unitObj.data.auction.count do
 				if unitObj.data.auction.bag[x] then
-					
+
 					local timeleft
 					local link, count, identifier, optOne, optTwo = strsplit(";", unitObj.data.auction.bag[x])
-					
+
 					identifier = tonumber(identifier)
-					
+
 					if identifier and identifier == 1 then
 						--it's a regular auction item
 						timeleft = optOne
@@ -336,29 +336,29 @@ function Data:CheckExpiredAuctions()
 						--it's a battlepet with identifier of 2
 						timeleft = optTwo
 					end
-					
+
 					--if the timeleft is greater than current time than keep it, it's not expired
 					if link and timeleft and tonumber(timeleft) then
 						if tonumber(timeleft) > time() then
 							table.insert(slotItems, unitObj.data.auction.bag[x])
 						end
 					end
-					
+
 				end
 			end
-			
+
 			unitObj.data.auction.bag = slotItems
 			unitObj.data.auction.count = #slotItems or 0
-			
+
 		end
 	end
-	
+
 end
 
 function Data:GetGuild()
 	if not IsInGuild() then return end
 	Debug(2, "GetGuild")
-	
+
 	local player = Unit:GetUnitInfo()
 	if not player.guild or not player.guildrealm then return end
 
@@ -369,9 +369,9 @@ end
 
 function Data:IterateUnits(dumpAll, filterList)
 	Debug(2, "IterateUnits", dumpAll, filterList)
-	
+
 	if filterList then dumpAll = true end
-	
+
 	local player = Unit:GetUnitInfo()
 	local argKey, argValue = next(BagSyncDB)
 	local k, v
@@ -381,7 +381,7 @@ function Data:IterateUnits(dumpAll, filterList)
 
 			if argKey and string.match(argKey, '§*') then
 				argKey, argValue = next(BagSyncDB, argKey)
-				
+
 			elseif argKey then
 				local isConnectedRealm = (Unit:isConnectedRealm(argKey) and true) or false
 
@@ -394,7 +394,7 @@ function Data:IterateUnits(dumpAll, filterList)
 				end
 
 				if dumpAll or (argKey == player.realm) or isXRGuild or (isConnectedRealm and BSYC.options.enableCrossRealmsItems) or (BSYC.options.enableBNetAccountItems) then
-					
+
 					--pull entries from characters until k is empty, then pull next realm entry
 					k, v = next(argValue, k)
 
@@ -405,9 +405,9 @@ function Data:IterateUnits(dumpAll, filterList)
 
 						--return everything regardless of user settings
 						if dumpAll then
-							
+
 							skipReturn = false
-							
+
 							if filterList then
 								--check realm, name
 								if filterList[argKey] and filterList[argKey][k] then
@@ -416,18 +416,18 @@ function Data:IterateUnits(dumpAll, filterList)
 									skipReturn = true
 								end
 							end
-						
+
 							if not skipReturn then
 								return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm, isXRGuild=isXRGuild}
 							end
-							
+
 						elseif v.faction and (v.faction == BSYC.db.player.faction or BSYC.options.enableFaction) then
-							
+
 							skipReturn = false
-							
+
 							--check for guilds and if we have them merged or not
 							if BSYC.options.enableGuild and isGuild then
-								
+
 								--check for guilds only on current character if enabled and on their current realm
 								if (isXRGuild or BSYC.options.showGuildCurrentCharacter) and player.guild and player.guildrealm then
 									--if we have the same guild realm and same guild name, then let it pass, otherwise skip it
@@ -437,34 +437,34 @@ function Data:IterateUnits(dumpAll, filterList)
 										skipReturn = true
 									end
 								end
-			
+
 								--check for the guild blacklist
 								if BSYC.db.blacklist[k..argKey] then skipReturn = true end
 
 							elseif not BSYC.options.enableGuild and isGuild then
 								skipReturn = true
-							
+
 							elseif isXRGuild then
 								--if this is enabled, then we only want guilds, skip all users
 								skipReturn = true
 							end
-							
+
 							if not skipReturn then
 								return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm, isXRGuild=isXRGuild}
 							end
-							
+
 						end
-						
+
 					else
 						--we have looped through all the characters and next k entry is empty, pull next entry from realms
 						argKey, argValue = next(BagSyncDB, argKey)
 					end
-					
+
 				else
 					--realm doesn't match our criteria, pull next entry from realms
 					argKey, argValue = next(BagSyncDB, argKey)
 				end
-				
+
 			end
 		end
 	end

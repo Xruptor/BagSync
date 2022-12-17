@@ -37,15 +37,15 @@ function Blacklist:OnEnable()
 	editbox:SetCallback("OnEnterPressed",function(widget)
 		editbox:ClearFocus()
 	end)
-	
+
 	Blacklist.editbox = editbox
 	BlacklistFrame:AddChild(editbox)
-	
+
 	local w = AceGUI:Create("SimpleGroup")
 	w:SetLayout("List")
 	w:SetFullWidth(true)
 	BlacklistFrame:AddChild(w)
-	
+
 	local addbutton = AceGUI:Create("Button")
 	addbutton:SetText(L.AddItemID)
 	addbutton:SetWidth(160)
@@ -55,12 +55,12 @@ function Blacklist:OnEnable()
 		self:AddItemID()
 	end)
 	w:AddChild(addbutton)
-	
+
 	local spacer = AceGUI:Create("BagSyncLabel")
     spacer:SetFullWidth(true)
 	spacer:SetText(" ")
 	BlacklistFrame:AddChild(spacer)
-	
+
 	------------------------------------------
 	--Scrollframe has to be in its own group with Fill set
 	--otherwise it will always be a fixed height based on how many child elements
@@ -69,7 +69,7 @@ function Blacklist:OnEnable()
 	q:SetFullWidth(true)
 	q:SetHeight(390)
 	BlacklistFrame:AddChild(q)
-	
+
 	local scrollframe = AceGUI:Create("ScrollFrame");
 	scrollframe:SetFullWidth(true)
 	scrollframe:SetLayout("Flow")
@@ -91,7 +91,7 @@ function Blacklist:OnEnable()
 	local spacer = AceGUI:Create("BagSyncLabel")
     spacer:SetFullWidth(true)
 	spacer:SetText(" ")
-	
+
 	guildFrame:AddChild(guildDDlist)
 	guildFrame:AddChild(spacer)
 	guildFrame:AddChild(guildAddButton)
@@ -104,32 +104,32 @@ function Blacklist:OnEnable()
 	guildFrame:SetPoint("TOPLEFT", BlacklistFrame.frame, "TOPRIGHT", 0, 0)
 	guildFrame.closebutton:Hide()
 	guildFrame.closebutton = nil
-	
+
 	guildDDlist:SetWidth(300)
 	guildAddButton:SetWidth(100)
 	guildAddButton:SetText(L.AddGuild)
-	
+
 	guildAddButton:SetCallback("OnClick", function()
 		if not guildDDlist:GetValue() then return end
-		
+
 		if BSYC.db.blacklist[guildDDlist:GetValue()] then
 			BSYC:Print(L.GuildExist:format(guildDDlist.text:GetText()))
 			guildDDlist:SetValue(nil) --reset
 			return
 		end
-		
+
 		BSYC.db.blacklist[guildDDlist:GetValue()] = guildDDlist.text:GetText()
 		BSYC:Print(L.GuildAdded:format(guildDDlist.text:GetText()))
 		guildDDlist:SetValue(nil) --reset
-		
+
 		self:DisplayList()
 	end)
-	
+
 	-----------------------------------------------------
-	
+
 	hooksecurefunc(BlacklistFrame, "Show" ,function()
 		guildFrame:Show()
-	
+
 		local tmp = {}
 		for unitObj in Data:IterateUnits() do
 			if unitObj.isGuild then
@@ -140,7 +140,7 @@ function Blacklist:OnEnable()
 		end
 		table.sort(tmp, function(a,b) return (a < b) end)
 		guildDDlist:SetList(tmp)
-		
+
 		self:DisplayList()
 	end)
 	hooksecurefunc(BlacklistFrame, "Hide" ,function()
@@ -179,34 +179,34 @@ end
 
 function Blacklist:AddItemID()
 	local itemid = self.editbox:GetText()
-	
+
 	if not itemid or string.len(self.editbox:GetText()) < 1 or not tonumber(itemid) then
 		BSYC:Print(L.EnterItemID)
 		self.editbox:SetText()
 		return
 	end
-	
+
 	itemid = tonumber(itemid)
-	
+
 	if BSYC.db.blacklist[itemid] then
 		BSYC:Print(L.ItemIDExist:format(itemid))
 		self.editbox:SetText()
 		return
 	end
-	
+
 	if not GetItemInfo(itemid) then
 		BSYC:Print(L.ItemIDNotValid:format(itemid))
 		self.editbox:SetText()
 		return
 	end
-	
+
 	local dName, dItemLink = GetItemInfo(itemid)
-	
+
 	BSYC.db.blacklist[itemid] = dName
 	BSYC:Print(L.ItemIDAdded:format(itemid), dItemLink)
-	
+
 	self.editbox:SetText()
-	
+
 	self:DisplayList()
 end
 
@@ -219,7 +219,7 @@ function Blacklist:AddEntry(entry)
 	label:SetFullWidth(true)
 	label:SetColor(1, 1, 1)
 	label:SetCallback(
-		"OnClick", 
+		"OnClick",
 		function (widget, sometable, button)
 			StaticPopup_Show("BAGSYNC_BLACKLIST_REMOVE", '', '', entry) --cannot pass nil as it's expected for SetFormattedText (Interface/FrameXML/StaticPopup.lua)
 		end)
@@ -247,9 +247,9 @@ function Blacklist:AddEntry(entry)
 end
 
 function Blacklist:DisplayList()
-	
+
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
-	
+
 	local blacklistTable = {}
 
 	--loop through our blacklist
@@ -267,5 +267,5 @@ function Blacklist:DisplayList()
 	else
 		self.scrollframe.frame:Hide()
 	end
-	
+
 end

@@ -105,7 +105,7 @@ function SortOrder:AddEntry(entry, isHeader)
 	end
 
 	label:SetCallback(
-		"OnEnterPressed", 
+		"OnEnterPressed",
 		function (widget, event, value)
 			local indexNum = tonumber(value)
 
@@ -131,9 +131,9 @@ function SortOrder:AddEntry(entry, isHeader)
 				--override the single tooltip use of BagSync
 				label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
 				label.highlight:SetVertexColor(0,1,0,0.3)
-				
+
 				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
-				
+
 				if not label.entry.unitObj.isGuild then
 					GameTooltip:AddLine(PLAYER..":  "..entry.colorized)
 				else
@@ -159,7 +159,7 @@ end
 function SortOrder:DisplayList()
 
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
-	
+
 	local sortOrderTable = {}
 	local SortIndex = 0
 
@@ -168,7 +168,7 @@ function SortOrder:DisplayList()
 	end
 
 	if #sortOrderTable > 0 then
-	
+
 		table.sort(sortOrderTable, function(a, b)
 			if a.unitObj.data.SortIndex and b.unitObj.data.SortIndex  then
 				return  a.unitObj.data.SortIndex < b.unitObj.data.SortIndex;
@@ -179,9 +179,9 @@ function SortOrder:DisplayList()
 				return a.unitObj.realm < b.unitObj.realm;
 			end
 		end)
-	
+
 		local lastHeader = ""
-		
+
 		for i=1, #sortOrderTable do
 			local unitObj = sortOrderTable[i].unitObj
 			--add SortIndex if missing

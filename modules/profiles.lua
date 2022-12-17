@@ -30,14 +30,14 @@ function Profiles:OnEnable()
 	ProfilesFrame:SetHeight(500)
 	ProfilesFrame:SetWidth(380)
 	ProfilesFrame:EnableResize(false)
-	
+
 	local information = AceGUI:Create("BagSyncLabel")
 	information:SetText(L.DeleteWarning)
 	information:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
 	information:SetColor(1, 165/255, 0)
 	information:SetFullWidth(true)
 	ProfilesFrame:AddChild(information)
-	
+
 	local scrollframe = AceGUI:Create("ScrollFrame");
 	scrollframe:SetFullWidth(true)
 	scrollframe:SetLayout("Flow")
@@ -48,7 +48,7 @@ function Profiles:OnEnable()
 	hooksecurefunc(ProfilesFrame, "Show" ,function()
 		self:DisplayList()
 	end)
-	
+
 	StaticPopupDialogs["BAGSYNC_PROFILES_REMOVE"] = {
 		text = L.ProfilesRemove,
 		button1 = "Yes",
@@ -66,16 +66,16 @@ function Profiles:OnEnable()
 		end,
 		whileDead = 1,
 	}
-	
+
 	ProfilesFrame:Hide()
-	
+
 end
 
 function Profiles:DeleteUnit(entry)
 	if not entry then BSYC:Print(L.ErrorUserNotFound) return end
-	
+
 	local player = Unit:GetUnitInfo()
-	
+
 	if not entry.unitObj.isGuild then
 		if entry.unitObj.name == player.name and entry.unitObj.realm == player.realm then
 			--it's the current player so we have to do a reloadui
@@ -107,7 +107,7 @@ function Profiles:AddEntry(entry, isHeader)
 	label:ToggleHeaderHighlight(false)
 	label.entry = entry
 	label:SetColor(1, 1, 1)
-	
+
 	if isHeader then
 		label:SetText(entry.unitObj.realm)
 		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
@@ -128,7 +128,7 @@ function Profiles:AddEntry(entry, isHeader)
 	end
 
 	label:SetCallback(
-		"OnClick", 
+		"OnClick",
 		function (widget, sometable, button)
 			if "LeftButton" == button and not label.userdata.isHeader then
 				StaticPopup_Show("BAGSYNC_PROFILES_REMOVE", '', '', entry) --cannot pass nil as it's expected for SetFormattedText (Interface/FrameXML/StaticPopup.lua)
@@ -142,9 +142,9 @@ function Profiles:AddEntry(entry, isHeader)
 				--override the single tooltip use of BagSync
 				label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
 				label.highlight:SetVertexColor(0,1,0,0.3)
-				
+
 				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
-				
+
 				if not label.entry.unitObj.isGuild then
 					GameTooltip:AddLine(PLAYER..":  "..entry.colorized)
 				else
@@ -170,23 +170,23 @@ end
 function Profiles:DisplayList()
 
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
-	
+
 	local profilesTable = {}
 	local tempList = {}
-	
+
 	for unitObj in Data:IterateUnits(true) do
 		table.insert(profilesTable, { unitObj=unitObj, colorized=Tooltip:ColorizeUnit(unitObj, true) } )
 	end
 
 	if #profilesTable > 0 then
-	
+
 		table.sort(profilesTable, function(a, b)
 			if a.unitObj.realm  == b.unitObj.realm then
 				return a.unitObj.name < b.unitObj.name;
 			end
 			return a.unitObj.realm < b.unitObj.realm;
 		end)
-	
+
 		local lastHeader = ""
 		for i=1, #profilesTable do
 			if lastHeader ~= profilesTable[i].unitObj.realm then

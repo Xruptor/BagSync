@@ -86,7 +86,7 @@ local methods = {
 			self.label:SetJustifyH("LEFT")
 		end
 	end,
-	
+
 	["ApplyJustifyV"] = function(self,position)
 		if position then
 			self.label:SetJustifyV(position)
@@ -94,7 +94,7 @@ local methods = {
 			self.label:SetJustifyV("TOP")
 		end
 	end,
-	
+
 	["SetHighlight"] = function(self, ...)
 		self.highlight:SetTexture(...)
 		self.headerhighlight:SetTexture(nil) --only one active highlight at a time
@@ -108,7 +108,7 @@ local methods = {
 			self.highlight:SetTexCoord(0, 1, 0, 1)
 		end
 	end,
-	
+
 	["SetHeaderHighlight"] = function(self, ...)
 		self.headerhighlight:SetTexture(...)
 		self.highlight:SetTexture(nil) --only one active highlight at a time
@@ -122,7 +122,7 @@ local methods = {
 			self.headerhighlight:SetTexCoord(0, 1, 0, 1)
 		end
 	end,
-	
+
 	["ToggleHeaderHighlight"] = function(self,toggle)
 		if toggle then
 			self.headerhighlight:Show()
@@ -130,7 +130,7 @@ local methods = {
 			self.headerhighlight:Hide()
 		end
 	end,
-	
+
 	["SetDisabled"] = function(self,disabled)
 		self.disabled = disabled
 		if disabled then
@@ -206,7 +206,7 @@ local function Constructor()
 	headerhighlight:SetAllPoints()
 	headerhighlight:SetBlendMode("ADD")
 	headerhighlight:Hide()
-	
+
 	local editbox = CreateFrame("EditBox", nil, frame, "BackdropTemplate")
 	editbox:SetAutoFocus(false)
 	editbox:SetFontObject(GameFontHighlight)

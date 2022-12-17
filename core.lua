@@ -55,7 +55,7 @@ if LibStub("LibItemSearch-1.2") and LibStub("LibItemSearch-1.2").Scanner and Lib
 	LibStub("LibItemSearch-1.2").Scanner:UnregisterEvent("GET_ITEM_INFO_RECEIVED")
 	LibStub("LibItemSearch-1.2").Scanner:SetScript("OnEvent", nil)
 end
-	
+
 --use /framestack to debug windows and show tooltip information
 --if you press SHIFT while doing the above command it gives you a bit more information
 
@@ -115,16 +115,16 @@ end
 function BSYC:ParseItemLink(link, count)
 	if link then
 		if not count then count = 1 end
-		
+
 		--there are times link comes in as a number and breaks string matching, convert to string to fix
 		if type(link) == "number" then link = tostring(link) end
-		
+
 		--if we are parsing a database entry just return it, chances are it's a battlepet anyways
 		local qLink, qCount, qIdentifier = strsplit(";", link)
 		if qLink and qCount then
 			return link
 		end
-		
+
 		--local linkType, linkOptions, name = LinkUtil.ExtractLink(battlePetLink);
 		--if linkType ~= "battlepet" then
 		--	return false;
@@ -136,13 +136,13 @@ function BSYC:ParseItemLink(link, count)
 
 		local result = link:match("item:([%d:]+)")
 		local shortID = self:GetShortItemID(link)
-		
+
 		--sometimes the profession window has a bug for the items it parses, so lets fix it
 		-----------------------------
 		if shortID and tonumber(shortID) == 0 and TradeSkillFrame then
 			local focus = GetMouseFocus():GetName()
 
-			if focus == 'TradeSkillSkillIcon' then 
+			if focus == 'TradeSkillSkillIcon' then
 				link = C_TradeSkillUI.GetRecipeItemLink(TradeSkillFrame.selectedSkill)
 			else
 				local i = focus:match('TradeSkillReagent(%d+)')
@@ -156,30 +156,30 @@ function BSYC:ParseItemLink(link, count)
 			end
 		end
 		-----------------------------
-		
+
 		if result then
 			--https://wowpedia.fandom.com/wiki/ItemLink
-			
+
 			--split everything into a table so we can count up to the bonusID portion
 			local countSplit = {strsplit(":", result)}
 			result = shortID --set this to default shortID, if we have something we will replace it below
-			
+
 			--make sure we have a bonusID count
 			if countSplit and #countSplit > 13 then
 				local bonusCount = countSplit[13] or 0 -- do we have a bonusID number count?
 				bonusCount = bonusCount == "" and 0 or bonusCount --make sure we have a count if not default to zero
 				bonusCount = tonumber(bonusCount)
-				
+
 				--check if we have even anything to work with for the amount of bonusID's
 				--btw any numbers after the bonus ID are either upgradeValue which we don't care about or unknown use right now
 				--http://wow.gamepedia.com/ItemString
 				if bonusCount > 0 and countSplit[1] then
 					--return the string with just the bonusID's in it
 					local newItemStr = ""
-					
+
 					--11th place because 13 is bonus ID, one less from 13 (12) would be technically correct, but we have to compensate for ItemID we added in front so substract another one (11).
 					newItemStr = countSplit[1]..":::::::::::"
-					
+
 					--lets add the bonusID's, ignore the end past bonusID's
 					for i=13, (13 + bonusCount) do
 						newItemStr = newItemStr..":"..countSplit[i]
@@ -190,15 +190,15 @@ function BSYC:ParseItemLink(link, count)
 				end
 			end
 		end
-		
+
 		--grab the link results if we have it, otherwise use the shortID
 		link = result or shortID
-		
+
 		--if we have a count, then add it to the parse string
 		if count and count > 1 then
 			link = link .. ';' .. count
 		end
-		
+
 		return link
 	end
 end
@@ -206,24 +206,24 @@ end
 function BSYC:CreateFakeBattlePetID(link, count, speciesID)
 	if not BSYC.IsRetail then return nil end
 	Debug(1, "CreateFakeBattlePetID", link, count, speciesID)
-	
+
 	--https://github.com/tomrus88/BlizzardInterfaceCode/blob/8633e552f3335b8c66b1fbcea6760a5cd8bcc06b/Interface/FrameXML/BattlePetTooltip.lua
-	
+
 	if link and not speciesID then
 		local linkType, linkOptions, name = LinkUtil.ExtractLink(link)
 		if linkType ~= "battlepet" then return end
 
 		speciesID = strsplit(":", linkOptions)
 	end
-		
+
 	--either pass the link or speciesID
 	if speciesID then
-		
+
 		--we do this so as to not interfere with standard itemid's.  Example a speciesID can be 1345 but there is a real item with itemID 1345.
 		--to compensate for this we will use a ridiculous number to avoid conflicting with standard itemid's
 		local fakePetID = 10000000000
 		fakePetID = fakePetID + (speciesID * 100000)
-		
+
 		if fakePetID then
 			if not count then count = 1 end
 			--put a 2 at the end as an identifier to mark it as a battlepet
@@ -235,7 +235,7 @@ end
 function BSYC:GetShortItemID(link)
 	if link then
 		if type(link) == "number" then link = tostring(link) end
-		
+
 		--first check if we are being sent a battlepet link
 		local isBattlepet = string.match(link, ".*(battlepet):.*") == "battlepet"
 		if isBattlepet then

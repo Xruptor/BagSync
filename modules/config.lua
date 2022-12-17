@@ -35,7 +35,7 @@ options.args = {} --initiate the arguements for the options to display
 local function get(info)
 
 	local p, c = string.split(".", info.arg)
-	
+
 	if p == "color" then
 		return BSYC.options.colors[c].r, BSYC.options.colors[c].g, BSYC.options.colors[c].b
 	elseif p == "keybind" then
@@ -52,7 +52,7 @@ end
 local function set(info, arg1, arg2, arg3, arg4)
 
 	local p, c = string.split(".", info.arg)
-	
+
 	if p == "color" then
 		BSYC.options.colors[c].r = arg1
 		BSYC.options.colors[c].g = arg2
@@ -526,7 +526,7 @@ options.args.display = {
 							get = get,
 							set = set,
 							arg = "display.enableXR_BNETRealmNames",
-							disabled = function() 
+							disabled = function()
 								if not BSYC.options["enableCrossRealmsItems"] and not BSYC.options["enableBNetAccountItems"] then
 									return true
 								end
@@ -542,7 +542,7 @@ options.args.display = {
 							get = get,
 							set = set,
 							arg = "display.enableRealmAstrickName",
-							disabled = function() 
+							disabled = function()
 								if not BSYC.options["enableCrossRealmsItems"] and not BSYC.options["enableBNetAccountItems"] then
 									return true
 								end
@@ -558,7 +558,7 @@ options.args.display = {
 							get = get,
 							set = set,
 							arg = "display.enableRealmShortName",
-							disabled = function() 
+							disabled = function()
 								if not BSYC.options["enableCrossRealmsItems"] and not BSYC.options["enableBNetAccountItems"] then
 									return true
 								end
@@ -599,10 +599,10 @@ options.args.display = {
 				}
 			}
 		}
-	
+
 	},
 }
-	
+
 options.args.color = {
 	type = "group",
 	order = 4,
@@ -811,7 +811,7 @@ local function LoadAboutFrame()
 	local about = CreateFrame("Frame", "BagSyncAboutPanel", InterfaceOptionsFramePanelContainer)
 	about.name = "BagSync"
 	about:Hide()
-	
+
 	local fields = {"Version", "Author"}
 	local notes = GetAddOnMetadata("BagSync", "Notes")
 
@@ -849,7 +849,7 @@ local function LoadAboutFrame()
 			anchor = title
 		end
 	end
-	
+
 	InterfaceOptions_AddCategory(about)
 
 	return about

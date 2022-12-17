@@ -29,7 +29,7 @@ Events.alertTooltip = alertTooltip
 
 local function showEventAlert(text, alertType)
 	Debug(2, "showEventAlert", text, alertType)
-	
+
 	Events.alertTooltip.alertType = alertType
 	Events.alertTooltip:ClearAllPoints()
 	Events.alertTooltip:SetOwner(UIParent, "ANCHOR_NONE")
@@ -47,7 +47,7 @@ end
 
 function Events:DoTimer(sName, sFunc, sDelay, sRepeat)
 	Debug(3, "DoTimer", sName, sFunc, sDelay, sRepeat)
-	
+
 	if not self.timers then self.timers = {} end
 	if not sRepeat then
 		--stop and delete current timer to recreate
@@ -73,7 +73,7 @@ end
 
 function Events:OnEnable()
 	Debug(2, "OnEnable")
-	
+
 	self:RegisterEvent("PLAYER_MONEY")
 	self:RegisterEvent("GUILD_ROSTER_UPDATE")
 	self:RegisterEvent("PLAYER_GUILD_UPDATE")
@@ -141,14 +141,14 @@ function Events:OnEnable()
 	--https://wowpedia.fandom.com/wiki/API_C_GuildInfo.GuildRoster
 	if C_GuildInfo and C_GuildInfo.GuildRoster then C_GuildInfo.GuildRoster() end  -- Retail
 	if GuildRoster then GuildRoster() end -- Classic
-	
+
 	Scanner:StartupScans() --do the login player scans
-	
+
 	--BAG_UPDATE fires A LOT during login and when in between loading screens.  In general it's a very spammy event.
 	--to combat this we are going to use the DELAYED event which fires after all the BAG_UPDATE are done.  Then go through the spam queue.
 	self:RegisterEvent("BAG_UPDATE")
 	self:RegisterEvent("BAG_UPDATE_DELAYED")
-	
+
 	self:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
 
 	--if player isn't in a guild, then delete old guild data if found, sometimes this gets left behind for some reason
@@ -224,12 +224,12 @@ function Events:BAG_UPDATE_DELAYED(event)
 	if not self.SpamBagTotal then self.SpamBagTotal = 0 end
 	--NOTE: BSYC:GetHashTableLen(self.SpamBagQueue) may show more then is actually processed.  Example it has the banks in queue but we aren't at a bank.
 	Debug(2, "SpamBagQueue", self.SpamBagTotal)
-	
+
 	local totalProcessed = 0
-	
+
 	for bagid in pairs(self.SpamBagQueue) do
 		local bagname
-	
+
 		if Scanner:IsBackpack(bagid) or Scanner:IsBackpackBag(bagid) or Scanner:IsKeyring(bagid) then
 			bagname = "bag"
 		elseif Scanner:IsBank(bagid) or Scanner:IsBankBag(bagid) then
@@ -243,14 +243,14 @@ function Events:BAG_UPDATE_DELAYED(event)
 			Scanner:SaveBag(bagname, bagid)
 			totalProcessed = totalProcessed + 1
 		end
-		
+
 		--remove it
 		self.SpamBagQueue[bagid] = nil
 	end
 	self.SpamBagTotal = 0
-	
+
 	Debug(2, "SpamBagQueue", "totalProcessed", totalProcessed)
-	
+
 	if BSYC.IsRetail then
 		--check if they crafted an item outside the bank, if so then do a parse check to update item count.
 		self:DoTimer("SaveCraftedReagents", function() Scanner:SaveCraftedReagents() end, 1)
@@ -261,7 +261,7 @@ function Events:GuildBank_Open()
 	if not BSYC.options.enableGuild then return end
 	if not self.GuildTabQueryQueue then self.GuildTabQueryQueue = {} end
 	Debug(2, "GuildBank_Open")
-	
+
 	local numTabs = GetNumGuildBankTabs()
 	for tab = 1, numTabs do
 		local name, icon, isViewable, canDeposit, numWithdrawals, remainingWithdrawals = GetGuildBankTabInfo(tab)
@@ -277,7 +277,7 @@ end
 function Events:GuildBank_Close()
 	if not BSYC.options.enableGuild then return end
 	Debug(2, "GuildBank_Close")
-	
+
 	if self.queryGuild then
 		BSYC:Print(L.ScanGuildBankError)
 		self.queryGuild = false
@@ -322,8 +322,8 @@ function Events:CURRENCY_DISPLAY_UPDATE()
 end
 
 function Events:PLAYER_REGEN_ENABLED()
-	--only run this if triggered by CURRENCY_DISPLAY_UPDATE and only if we are on Retail
-	if Unit:InCombatLockdown() or not BSYC.IsRetail then return end
+	--only run this if triggered by CURRENCY_DISPLAY_UPDATE
+	if Unit:InCombatLockdown() then return end
 	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
 	self.doCurrencyUpdate = nil
 	Scanner:SaveCurrency()

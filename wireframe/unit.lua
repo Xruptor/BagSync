@@ -193,7 +193,7 @@ end
 function Unit:GetUnitInfo(unit)
 	local realm, name, isguild = self:GetUnitAddress(unit)
 	local unit = {}
-	
+
 	unit.faction = FACTION
 
 	if not isguild then
@@ -210,7 +210,7 @@ function Unit:GetUnitInfo(unit)
 	unit.guild = unit.guild and (unit.guild..'©')
 	unit.name, unit.realm, unit.isguild = name, realm, isguild
 	unit.realmKey = realmKey
-	
+
 	Debug(3, "GetUnitInfo", name, realm, isguild, FACTION, unit.class, unit.race, unit.gender, unit.guild, unit.guildrealm, unit.realmKey)
 	return unit
 end

@@ -27,16 +27,16 @@ function Recipes:OnEnable()
 	RecipesFrame:SetHeight(500)
 	RecipesFrame:SetWidth(570)
 	RecipesFrame:EnableResize(false)
-	
+
 	local information = AceGUI:Create("BagSyncInteractiveLabel")
 	information:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
 	information:SetColor(153/255,204/255,51/255)
 	information:SetFullWidth(true)
 	information:ApplyJustifyH("CENTER")
 	RecipesFrame:AddChild(information)
-	
+
 	Recipes.information = information
-	
+
 	local scrollframe = AceGUI:Create("ScrollFrame");
 	scrollframe:SetFullWidth(true)
 	scrollframe:SetLayout("Flow")
@@ -48,7 +48,7 @@ function Recipes:OnEnable()
 		--always show the recipes frame on the right of the Professions window
 		RecipesFrame:SetPoint( "TOPLEFT", BSYC:GetModule("Professions").parentFrame, "TOPRIGHT", 0, 0)
 	end)
-	
+
 	RecipesFrame:Hide()
 end
 
@@ -60,7 +60,7 @@ function Recipes:AddEntry(entry, isHeader)
 	label:ToggleHeaderHighlight(false)
 	label:SetColor(1, 1, 1)
 	label.entry = entry
-	
+
 	if isHeader then
 		label:SetText(entry.tierData.name..format("   |cFF00FF00[ %s / %s ]|r", entry.tierData.skillLineCurrentLevel, entry.tierData.skillLineMaxLevel))
 		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
@@ -77,7 +77,7 @@ function Recipes:AddEntry(entry, isHeader)
 	end
 
 	label:SetCallback(
-		"OnClick", 
+		"OnClick",
 		function (widget, sometable, button)
 			if not label.userdata.isHeader then
 				ChatEdit_InsertLink(GetSpellLink(label.entry.recipeID))
@@ -91,7 +91,7 @@ function Recipes:AddEntry(entry, isHeader)
 				--override the single tooltip use of BagSync
 				label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
 				label.highlight:SetVertexColor(0,1,0,0.3)
-				
+
 				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
 				GameTooltip:SetSpellByID(label.entry.recipeID)
 				GameTooltip:Show()
@@ -103,7 +103,7 @@ function Recipes:AddEntry(entry, isHeader)
 			label:SetColor(1, 1, 1)
 			--override the single tooltip use of BagSync
 			label.highlight:SetTexture(nil)
-			
+
 			GameTooltip:Hide()
 		end)
 
@@ -119,25 +119,25 @@ end
 function Recipes:DisplayList(data)
 	if not data then return end
 	if not data.skillData.categories then return end
-	
+
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
-	
+
 	local tierTable = {}
-	
+
 	for k, v in pairs(data.skillData.categories) do
 		if v.recipes then
 			local recipeList = {strsplit("|", v.recipes)}
-			
+
 			if #recipeList > 0 then
-			
+
 				for idx = 1, #recipeList do
 					if recipeList[idx] and string.len(recipeList[idx]) > 0 then
 						local recipe_info = _G.C_TradeSkillUI.GetRecipeInfo(recipeList[idx])
 						local recipeName = recipeList[idx]
 						local iconTexture = "Interface\\Icons\\INV_Misc_QuestionMark"
-					
+
 						local gName, gRank, gIcon = GetSpellInfo(recipeList[idx])
-						
+
 						if recipe_info and recipe_info.name then
 							recipeName = recipe_info.name
 							iconTexture = recipe_info.icon
@@ -147,11 +147,11 @@ function Recipes:DisplayList(data)
 						else
 							recipeName = L.ProfessionsFailedRequest:format(recipeList[idx])
 						end
-						
+
 						table.insert(tierTable, { tierID=k, tierData=v, tierIndex=v.orderIndex, recipeName=recipeName, recipeID=recipeList[idx], recipeIcon=iconTexture, isEmpty=false } )
 					end
 				end
-				
+
 			end
 		else
 			--we have no recipes but the tier is learned and is leveled.  So display it as a header
@@ -161,7 +161,7 @@ function Recipes:DisplayList(data)
 
 	--now do the recipes per tier
 	if #tierTable > 0 then
-		
+
 		--sort the tiers
 		table.sort(tierTable, function(a, b)
 			if a.tierIndex  == b.tierIndex then
@@ -169,7 +169,7 @@ function Recipes:DisplayList(data)
 			end
 			return a.tierIndex < b.tierIndex;
 		end)
-		
+
 		local lastHeader = ""
 		for i = 1, #tierTable do
 			if tierTable[i].isEmpty then

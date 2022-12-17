@@ -83,7 +83,7 @@ local Plugin = LDB:NewDataObject("BagSyncLDB", {
 	--icon = "Interface\\Icons\\INV_Misc_Bag_12",
 	icon = "Interface\\AddOns\\BagSync\\media\\icon",
 	label = "BagSync",
-		
+
 	OnClick = function(self, button)
 		if button == "LeftButton" then
 			if BSYC:GetModule("Search").frame:IsVisible() then

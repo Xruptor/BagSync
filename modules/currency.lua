@@ -29,7 +29,7 @@ function Currency:OnEnable()
 	CurrencyFrame:SetHeight(500)
 	CurrencyFrame:SetWidth(380)
 	CurrencyFrame:EnableResize(false)
-	
+
 	local scrollframe = AceGUI:Create("ScrollFrame");
 	scrollframe:SetFullWidth(true)
 	scrollframe:SetLayout("Flow")
@@ -40,9 +40,9 @@ function Currency:OnEnable()
 	hooksecurefunc(CurrencyFrame, "Show" ,function()
 		self:DisplayList()
 	end)
-	
+
 	CurrencyFrame:Hide()
-	
+
 end
 
 function Currency:AddEntry(entry, isHeader)
@@ -65,7 +65,7 @@ function Currency:AddEntry(entry, isHeader)
 		label.userdata.text = entry.header
 		label.userdata.icon = entry.icon
 		label.userdata.currencyID = entry.currencyID
-		
+
 		label:ToggleHeaderHighlight(true)
 	else
 		label:SetText(entry.name)
@@ -106,7 +106,7 @@ end
 function Currency:DisplayList()
 
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
-	
+
 	local usrData = {}
 	local tempList = {}
 
@@ -122,9 +122,9 @@ function Currency:DisplayList()
 			end
 		end
 	end
-	
+
 	if #usrData > 0 then
-	
+
 		--sort the list by header, name
 		table.sort(usrData, function(a, b)
 			if a.header  == b.header then
@@ -132,7 +132,7 @@ function Currency:DisplayList()
 			end
 			return a.header < b.header;
 		end)
-	
+
 		local lastHeader = ""
 		for i=1, #usrData do
 			if lastHeader ~= usrData[i].header then
@@ -147,5 +147,5 @@ function Currency:DisplayList()
 	else
 		self.scrollframe.frame:Hide()
 	end
-	
+
 end
