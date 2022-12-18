@@ -10,6 +10,8 @@ local Debug = BSYC:NewModule("Debug")
 local AceGUI = LibStub("AceGUI-3.0")
 
 local xListLen = 400
+local debugWidth = 880
+local debugHeight = 450
 
 local function unescape(str)
     str = gsub(str, "|T.-|t", "") --textures in chat like currency coins and such
@@ -230,8 +232,8 @@ function Debug:OnEnable()
 	Debug.frame = DebugFrame
 
 	DebugFrame:SetTitle("BagSync - "..L.Debug)
-	DebugFrame:SetHeight(450)
-	DebugFrame:SetWidth(930)
+	DebugFrame:SetHeight(debugHeight)
+	DebugFrame:SetWidth(debugWidth)
 	DebugFrame:EnableResize(false)
 	DebugFrame:SetPoint("CENTER",UIParent,"CENTER",0,120)
 	DebugFrame.frame:SetFrameStrata("BACKGROUND")
@@ -256,7 +258,7 @@ function Debug:OnEnable()
 	}
 
 	Debug.optionsFrame:SetHeight(100)
-	Debug.optionsFrame:SetWidth(930)
+	Debug.optionsFrame:SetWidth(debugWidth)
 	Debug.optionsFrame:SetBackdrop(backdrop)
 	Debug.optionsFrame:SetBackdropColor(0, 0, 0, 0.6)
 	Debug.optionsFrame:SetPoint("TOPLEFT",DebugFrame.frame,"BOTTOMLEFT",0,0)
