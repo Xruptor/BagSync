@@ -326,8 +326,26 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total)
 	return total
 end
 
-function Tooltip:SetTipAnchor(frame, qTip)
+function Tooltip:SetTipAnchor(frame, qTip, isBattlePet)
 	Debug(3, "SetTipAnchor", frame, qTip)
+
+	--check for "BattlePetBreedID" addon (Fixes #231)
+	if isBattlePet and (BPBID_BreedTooltip or BPBID_BreedTooltip2) then
+		qTip:ClearAllPoints()
+		qTip:SetClampedToScreen(true)
+
+		local parentTip
+		if (frame == FloatingBattlePetTooltip) then
+			parentTip = "BPBID_BreedTooltip2"
+		else
+			parentTip = "BPBID_BreedTooltip"
+		end
+
+		if parentTip then
+			qTip:SetPoint("TOP", _G[parentTip], "BOTTOM")
+			return
+		end
+	end
 
     local x, y = frame:GetCenter()
 
@@ -340,7 +358,8 @@ function Tooltip:SetTipAnchor(frame, qTip)
     end
 
     local hhalf = (x > UIParent:GetWidth() * 2 / 3) and "LEFT" or (x < UIParent:GetWidth() / 3) and "RIGHT" or ""
-    local vhalf = (y > UIParent:GetHeight() / 2) and "TOP" or "BOTTOM"
+	--adjust the 4 to make it less sensitive on the top/bottom.  The higher the number the closer to the edges it's allowed.
+    local vhalf = (y > UIParent:GetHeight() / 4) and "TOP" or "BOTTOM"
 
 	qTip:SetPoint(vhalf .. hhalf, frame, (vhalf == "TOP" and "BOTTOM" or "TOP") .. hhalf)
 end
@@ -355,17 +374,25 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if Scanner.isScanningGuild then return end --don't tally while we are scanning the Guildbank
 
 	local showQTip = false
+
 	--create the extra tooltip (qTip) only if it doesn't already exist
-	if (BSYC.options.enableExtTooltip or isBattlePet) then
-		if not objTooltip.qTip or not LibQTip:IsAcquired(objTooltip) then
-			objTooltip.qTip = LibQTip:Acquire(objTooltip, 3, "LEFT", "CENTER", "RIGHT")
+	if BSYC.options.enableExtTooltip or isBattlePet then
+		local doQTip = true
+		--only show the external tooltip if we have the option enabled, otherwise show it inside the tooltip if isBattlePet
+		if source == "ArkInventory" and not BSYC.options.enableExtTooltip then doQTip = false end
+		if doQTip then
+			if not objTooltip.qTip or not LibQTip:IsAcquired("BagSyncQTip") then
+				objTooltip.qTip = LibQTip:Acquire("BagSyncQTip", 3, "LEFT", "CENTER", "RIGHT")
+			end
+			self:SetTipAnchor(objTooltip, objTooltip.qTip, isBattlePet)
+			objTooltip.qTip:Clear()
+			showQTip = true
 		end
-		self:SetTipAnchor(objTooltip, objTooltip.qTip)
-		showQTip = true
 	end
-	if objTooltip.qTip then
-		objTooltip.qTip:Clear()
-		objTooltip.qTip:Hide()
+	--release it if we aren't using the qTip
+	if objTooltip.qTip and not showQTip then
+		LibQTip:Release(objTooltip.qTip)
+		objTooltip.qTip = nil
 	end
 
 	--only show tooltips in search frame if the option is enabled
@@ -654,6 +681,7 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 end
 
 function Tooltip:HookTooltip(objTooltip)
+	--if the tooltip doesn't exist, chances are it's the BattlePetTooltip and they are on Classic or WOTLK
 	if not objTooltip then return end
 
 	Debug(2, "HookTooltip", objTooltip)
@@ -666,7 +694,8 @@ function Tooltip:HookTooltip(objTooltip)
 	objTooltip:HookScript("OnHide", function(self)
 		self.__tooltipUpdated = false
 		if self.qTip then
-			self.qTip:Hide()
+			LibQTip:Release(self.qTip)
+			self.qTip = nil
 		end
 	end)
 	--the battlepet tooltips don't use this, so check for it
@@ -682,7 +711,7 @@ function Tooltip:HookTooltip(objTooltip)
 		end)
 	end
 
-	if BSYC.IsRetail then
+	if TooltipDataProcessor then
 
 		--Note: tooltip data type corresponds to the Enum.TooltipDataType types
 		--i.e Enum.TooltipDataType.Unit it type 2
@@ -738,29 +767,39 @@ function Tooltip:HookTooltip(objTooltip)
 		end
 		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Currency, OnTooltipSetCurrency)
 
-		--BattlePetToolTip_Show
-		if objTooltip == BattlePetTooltip then
-			hooksecurefunc("BattlePetToolTip_Show", function(speciesID)
-				if objTooltip.__tooltipUpdated then return end
-				if speciesID then
-					local fakeID = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
-					if fakeID then
-						Tooltip:TallyUnits(objTooltip, fakeID, "BattlePetToolTip_Show", true)
-					end
+		--add support for ArkInventory (Fixes #231)
+		if ArkInventory and ArkInventory.API and ArkInventory.API.CustomBattlePetTooltipReady then
+			hooksecurefunc(ArkInventory.API, "CustomBattlePetTooltipReady", function(tooltip, link)
+				if tooltip.__tooltipUpdated then return end
+				if link then
+					Tooltip:TallyUnits(tooltip, link, "ArkInventory", true)
 				end
 			end)
-		end
-		--FloatingBattlePet_Show
-		if objTooltip == FloatingBattlePetTooltip then
-			hooksecurefunc("FloatingBattlePet_Show", function(speciesID)
-				if objTooltip.__tooltipUpdated then return end
-				if speciesID then
-					local fakeID = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
-					if fakeID then
-						Tooltip:TallyUnits(objTooltip, fakeID, "FloatingBattlePet_Show", true)
+		else
+			--BattlePetToolTip_Show
+			if objTooltip == BattlePetTooltip then
+				hooksecurefunc("BattlePetToolTip_Show", function(speciesID)
+					if objTooltip.__tooltipUpdated then return end
+					if speciesID then
+						local fakeID = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
+						if fakeID then
+							Tooltip:TallyUnits(objTooltip, fakeID, "BattlePetToolTip_Show", true)
+						end
 					end
-				end
-			end)
+				end)
+			end
+			--FloatingBattlePet_Show
+			if objTooltip == FloatingBattlePetTooltip then
+				hooksecurefunc("FloatingBattlePet_Show", function(speciesID)
+					if objTooltip.__tooltipUpdated then return end
+					if speciesID then
+						local fakeID = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
+						if fakeID then
+							Tooltip:TallyUnits(objTooltip, fakeID, "FloatingBattlePet_Show", true)
+						end
+					end
+				end)
+			end
 		end
 
 	else
