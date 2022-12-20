@@ -519,10 +519,14 @@ function Scanner:SaveCurrency(showDebug)
 		whileChk = false -- turn the while loop off, it will only continue if we found an unexpanded header until all are expanded
 		exitCount = exitCount + 1 --catch all to prevent endless loop
 
-		for k=1, C_CurrencyInfo.GetCurrencyListSize() do
-			local headerCheck = C_CurrencyInfo.GetCurrencyListInfo(k)
+		for k=1, (C_CurrencyInfo.GetCurrencyListSize and C_CurrencyInfo.GetCurrencyListSize() or GetCurrencyListSize()) do
+			local headerCheck = (C_CurrencyInfo.GetCurrencyListInfo and C_CurrencyInfo.GetCurrencyListInfo(k) or GetCurrencyListInfo(k))
 			if headerCheck.isHeader and not headerCheck.isHeaderExpanded then
-				C_CurrencyInfo.ExpandCurrencyList(k, true)
+				if C_CurrencyInfo.ExpandCurrencyList then
+					C_CurrencyInfo.ExpandCurrencyList(k, true)
+				else
+					ExpandCurrencyList(k, true)
+				end
 				whileChk = true
 			end
 		end
@@ -534,9 +538,9 @@ function Scanner:SaveCurrency(showDebug)
 		end
 	end
 
-	for i=1, C_CurrencyInfo.GetCurrencyListSize() do
-		local currencyinfo = C_CurrencyInfo.GetCurrencyListInfo(i)
-		local link = C_CurrencyInfo.GetCurrencyListLink(i)
+	for i=1, (C_CurrencyInfo.GetCurrencyListSize and C_CurrencyInfo.GetCurrencyListSize() or GetCurrencyListSize()) do
+		local currencyinfo = (C_CurrencyInfo.GetCurrencyListInfo and C_CurrencyInfo.GetCurrencyListInfo(i) or GetCurrencyListInfo(i))
+		local link = (C_CurrencyInfo.GetCurrencyListLink and C_CurrencyInfo.GetCurrencyListLink(i) or GetCurrencyListLink(i))
 		local currencyID = BSYC:GetShortCurrencyID(link)
 
 		if currencyinfo.name then
