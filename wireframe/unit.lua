@@ -246,15 +246,15 @@ function Unit:GetRealmKey_RWS()
 end
 
 function Unit:IsInBG()
-	if (GetNumBattlefieldScores() > 0) then
+	if GetNumBattlefieldScores and (GetNumBattlefieldScores() > 0) then
 		return true
 	end
 	return false
 end
 
 function Unit:IsInArena()
-	if not BSYC.IsRetail then return false end
-	local a,b = IsActiveBattlefieldArena()
+	if not IsActiveBattlefieldArena then return false end
+	local a, b = IsActiveBattlefieldArena()
 	if not a then
 		return false
 	end
@@ -262,5 +262,5 @@ function Unit:IsInArena()
 end
 
 function Unit:InCombatLockdown()
-	return self:IsInBG() or self:IsInArena() or InCombatLockdown() or UnitAffectingCombat("player") or (BSYC.IsRetail and C_PetBattles.IsInBattle())
+	return self:IsInBG() or self:IsInArena() or InCombatLockdown() or UnitAffectingCombat("player") or (C_PetBattles and C_PetBattles.IsInBattle())
 end

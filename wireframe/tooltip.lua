@@ -9,7 +9,7 @@ local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
 local Scanner = BSYC:GetModule("Scanner")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
-local LibQTip = LibStub('LibQTip-1.0')
+local LibQTip = LibStub("LibQTip-1.0")
 
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Tooltip", ...) end
@@ -326,31 +326,94 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total)
 	return total
 end
 
-function Tooltip:SetTipAnchor(frame, qTip, isBattlePet)
-	Debug(3, "SetTipAnchor", frame, qTip)
+function Tooltip:GetBottomChild(frame, qTip)
+	Debug(3, "GetBottomChild", frame, qTip)
 
-	--check for "BattlePetBreedID" addon (Fixes #231)
-	if isBattlePet and (BPBID_BreedTooltip or BPBID_BreedTooltip2) then
-		qTip:ClearAllPoints()
-		qTip:SetClampedToScreen(true)
+	local cache = {}
 
-		local parentTip
-		if (frame == FloatingBattlePetTooltip) then
-			parentTip = "BPBID_BreedTooltip2"
-		else
-			parentTip = "BPBID_BreedTooltip"
-		end
-
-		if parentTip then
-			qTip:SetPoint("TOP", _G[parentTip], "BOTTOM")
-			return
+	local function getMinLoc(top, bottom)
+		if top and bottom then
+			if top < bottom then
+				return "top", top
+			else
+				return "bottom", bottom
+			end
+		elseif top then
+			return "top", top
+		elseif bottom then
+			return "bottom", bottom
 		end
 	end
 
-    local x, y = frame:GetCenter()
+	--first do TradeSkillMaster
+	if _G.IsAddOnLoaded("TradeSkillMaster") then
+        for i=1, 20 do
+            local t = _G["TSMExtraTip" .. i]
+            if t and t:IsVisible() then
+				local loc, pos = getMinLoc(t:GetTop(), t:GetBottom())
+				table.insert(cache, {name="TradeSkillMaster", frame=t, loc=loc, pos=pos})
+			elseif not t then
+				break
+            end
+        end
+    end
 
+	--check for LibExtraTip (Auctioneer, Oribos Exchange Addon, etc...)
+	if LibStub and LibStub.libs and LibStub.libs["LibExtraTip-1"] then
+		local t = LibStub("LibExtraTip-1"):GetExtraTip(frame)
+		if t and t:IsVisible() then
+			local loc, pos = getMinLoc(t:GetTop(), t:GetBottom())
+			table.insert(cache, {name="LibExtraTip-1", frame=t, loc=loc, pos=pos})
+		end
+	end
+
+	--check for BattlePetBreedID addon (Fixes #231)
+	if BPBID_BreedTooltip or BPBID_BreedTooltip2 then
+		local t = BPBID_BreedTooltip or BPBID_BreedTooltip2
+		if t and t:IsVisible() then
+			local loc, pos = getMinLoc(t:GetTop(), t:GetBottom())
+			table.insert(cache, {name="BattlePetBreedID", frame=t, loc=loc, pos=pos})
+		end
+	end
+
+	--find closest to edge (closer to 0)
+	local lastLoc
+	local lastPos
+	local lastAnchor
+
+	for i=1, #cache do
+		local data = cache[i]
+		if data and data.frame and data.loc and data.pos then
+			if not lastPos then lastPos = data.pos end
+			if not lastLoc then lastLoc = data.loc end
+			if not lastAnchor then lastAnchor = data.frame end
+
+			if data.pos <  lastPos then
+				lastPos = data.pos
+				lastLoc = data.loc
+				lastAnchor = data.frame
+			end
+		end
+	end
+
+	if lastAnchor and lastLoc and lastPos then
+		if lastLoc == "top" then
+			qTip:SetPoint("BOTTOM", lastAnchor, "TOP")
+		else
+			qTip:SetPoint("TOP", lastAnchor, "BOTTOM")
+		end
+		return
+	end
+
+	--failsafe
+	self:SetQTipAnchor(frame, qTip)
+end
+
+function Tooltip:SetQTipAnchor(frame, qTip)
+	Debug(3, "SetQTipAnchor", frame, qTip)
+
+    local x, y = frame:GetCenter()
 	qTip:ClearAllPoints()
-	qTip:SetClampedToScreen(true)
 
     if not x or not y then
         qTip:SetPoint("TOPLEFT", frame, "BOTTOMLEFT")
@@ -383,8 +446,13 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		if doQTip then
 			if not objTooltip.qTip or not LibQTip:IsAcquired("BagSyncQTip") then
 				objTooltip.qTip = LibQTip:Acquire("BagSyncQTip", 3, "LEFT", "CENTER", "RIGHT")
+				objTooltip.qTip:SetClampedToScreen(true)
+				Tooltip:GetBottomChild(objTooltip, objTooltip.qTip)
+
+				objTooltip.qTip:SetScript("OnShow", function()
+					Tooltip:GetBottomChild(objTooltip, objTooltip.qTip)
+				end)
 			end
-			self:SetTipAnchor(objTooltip, objTooltip.qTip, isBattlePet)
 			objTooltip.qTip:Clear()
 			showQTip = true
 		end

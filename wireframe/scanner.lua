@@ -515,43 +515,48 @@ function Scanner:SaveCurrency(showDebug)
 	local whileChk = true
 	local exitCount = 0
 
-	while whileChk do
-		whileChk = false -- turn the while loop off, it will only continue if we found an unexpanded header until all are expanded
-		exitCount = exitCount + 1 --catch all to prevent endless loop
+	--WOTLK still doesn't have all the correct C_CurrencyInfo functions
+	local xGetCurrencyListSize = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListSize) or GetCurrencyListSize
+	local xGetCurrencyListInfo = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListInfo) or GetCurrencyListInfo
+	local xGetCurrencyListLink = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListLink) or GetCurrencyListLink
+	local xExpandCurrencyList = (C_CurrencyInfo and C_CurrencyInfo.ExpandCurrencyList) or ExpandCurrencyList
 
-		for k=1, (C_CurrencyInfo.GetCurrencyListSize and C_CurrencyInfo.GetCurrencyListSize() or GetCurrencyListSize()) do
-			local headerCheck = (C_CurrencyInfo.GetCurrencyListInfo and C_CurrencyInfo.GetCurrencyListInfo(k) or GetCurrencyListInfo(k))
-			if headerCheck.isHeader and not headerCheck.isHeaderExpanded then
-				if C_CurrencyInfo.ExpandCurrencyList then
-					C_CurrencyInfo.ExpandCurrencyList(k, true)
-				else
-					ExpandCurrencyList(k, true)
+	--only do this if we have the functions to work with
+	if xGetCurrencyListSize then
+		while whileChk do
+			whileChk = false -- turn the while loop off, it will only continue if we found an unexpanded header until all are expanded
+			exitCount = exitCount + 1 --catch all to prevent endless loop
+
+			for k=1, xGetCurrencyListSize() do
+				local headerCheck = xGetCurrencyListInfo(k)
+				if headerCheck.isHeader and not headerCheck.isHeaderExpanded then
+					xExpandCurrencyList(k, true)
+					whileChk = true
 				end
-				whileChk = true
+			end
+
+			--this is a catch all in case something happens above and for some reason it's always true
+			if exitCount >= 50 then
+				whileChk = false --just in case
+				break
 			end
 		end
 
-		--this is a catch all in case something happens above and for some reason it's always true
-		if exitCount >= 50 then
-			whileChk = false --just in case
-			break
-		end
-	end
+		for i=1, xGetCurrencyListSize() do
+			local currencyinfo = xGetCurrencyListInfo(i)
+			local link = xGetCurrencyListLink(i)
+			local currencyID = BSYC:GetShortCurrencyID(link)
 
-	for i=1, (C_CurrencyInfo.GetCurrencyListSize and C_CurrencyInfo.GetCurrencyListSize() or GetCurrencyListSize()) do
-		local currencyinfo = (C_CurrencyInfo.GetCurrencyListInfo and C_CurrencyInfo.GetCurrencyListInfo(i) or GetCurrencyListInfo(i))
-		local link = (C_CurrencyInfo.GetCurrencyListLink and C_CurrencyInfo.GetCurrencyListLink(i) or GetCurrencyListLink(i))
-		local currencyID = BSYC:GetShortCurrencyID(link)
-
-		if currencyinfo.name then
-			if currencyinfo.isHeader then
-				lastHeader = currencyinfo.name
-			elseif not currencyinfo.isHeader and currencyID then
-				slotItems[currencyID] = slotItems[currencyID] or {}
-				slotItems[currencyID].name = currencyinfo.name
-				slotItems[currencyID].header = lastHeader
-				slotItems[currencyID].count = currencyinfo.quantity
-				slotItems[currencyID].icon = currencyinfo.iconFileID
+			if currencyinfo.name then
+				if currencyinfo.isHeader then
+					lastHeader = currencyinfo.name
+				elseif not currencyinfo.isHeader and currencyID then
+					slotItems[currencyID] = slotItems[currencyID] or {}
+					slotItems[currencyID].name = currencyinfo.name
+					slotItems[currencyID].header = lastHeader
+					slotItems[currencyID].count = currencyinfo.quantity
+					slotItems[currencyID].icon = currencyinfo.iconFileID
+				end
 			end
 		end
 	end
