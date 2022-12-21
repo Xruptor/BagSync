@@ -328,7 +328,6 @@ end
 
 function Tooltip:GetBottomChild(frame, qTip)
 	Debug(3, "GetBottomChild", frame, qTip)
-
 	local cache = {}
 
 	local function getMinLoc(top, bottom)
