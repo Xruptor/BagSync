@@ -380,8 +380,6 @@ end
 function Data:IterateUnits(dumpAll, filterList)
 	Debug(2, "IterateUnits", dumpAll, filterList)
 
-	if filterList then dumpAll = true end
-
 	local player = Unit:GetUnitInfo()
 	local argKey, argValue = next(BagSyncDB)
 	local k, v
@@ -403,7 +401,7 @@ function Data:IterateUnits(dumpAll, filterList)
 					isXRGuild = (player.guildrealm and argKey == player.guildrealm and argKey ~= player.realm) or false
 				end
 
-				if dumpAll or (argKey == player.realm) or isXRGuild or (isConnectedRealm and BSYC.options.enableCrossRealmsItems) or (BSYC.options.enableBNetAccountItems) then
+				if dumpAll or (filterList and filterList[argKey]) or (argKey == player.realm) or isXRGuild or (isConnectedRealm and BSYC.options.enableCrossRealmsItems) or (BSYC.options.enableBNetAccountItems) then
 
 					--pull entries from characters until k is empty, then pull next realm entry
 					k, v = next(argValue, k)
@@ -414,13 +412,13 @@ function Data:IterateUnits(dumpAll, filterList)
 						local isGuild = (k:find('©*') and true) or false
 
 						--return everything regardless of user settings
-						if dumpAll then
+						if dumpAll or filterList then
 
 							skipReturn = false
 
 							if filterList then
 								--check realm, name
-								if filterList[argKey] and filterList[argKey][k] then
+								if filterList[argKey][k] then
 									skipReturn = false
 								else
 									skipReturn = true
