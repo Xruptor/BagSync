@@ -56,7 +56,7 @@ function Tooltip:GetSortIndex(unitObj)
 	return 6
 end
 
-function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple)
+function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET)
 
 	if not unitObj.data then return nil end
 
@@ -68,7 +68,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple)
 
 	--showSimple: returns only colorized name no images
 	--bypass: shows colorized names, checkmark, and faction icons but no XR or BNET tags
-	--showRealm: is used for debugging purposes and adds realm tags
+	--showRealm: adds realm tags forcefully
 
 	if not unitObj.isGuild then
 
@@ -137,20 +137,22 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple)
 		realm = "*"
 	elseif BSYC.options.enableRealmShortName then
 		realm = string.sub(unitObj.realm, 1, 5)
+	elseif showRealm then
+		realm = unitObj.realm
 	else
 		realm = ""
 		delimiter = ""
 	end
 
-	if BSYC.options.enableBNetAccountItems and not unitObj.isConnectedRealm then
-		realmTag = BSYC.options.enableRealmIDTags and L.TooltipBattleNetTag..delimiter or ""
+	if (showXRBNET or BSYC.options.enableBNetAccountItems) and not unitObj.isConnectedRealm then
+		realmTag = (showXRBNET or BSYC.options.enableRealmIDTags) and L.TooltipBattleNetTag..delimiter or ""
 		if string.len(realm) > 0 or string.len(realmTag) > 0 then
 			tmpTag = self:HexColor(BSYC.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
 		end
 	end
 
-	if BSYC.options.enableCrossRealmsItems and unitObj.isConnectedRealm and unitObj.realm ~= player.realm then
-		realmTag = BSYC.options.enableRealmIDTags and L.TooltipCrossRealmTag..delimiter or ""
+	if (showXRBNET or BSYC.options.enableCrossRealmsItems) and unitObj.isConnectedRealm and unitObj.realm ~= player.realm then
+		realmTag = (showXRBNET or BSYC.options.enableRealmIDTags) and L.TooltipCrossRealmTag..delimiter or ""
 		if string.len(realm) > 0 or string.len(realmTag) > 0 then
 			tmpTag = self:HexColor(BSYC.options.colors.cross, "["..realmTag..realm.."]").." "..tmpTag
 		end
@@ -166,7 +168,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple)
 	end
 
 	Debug(2, "ColorizeUnit", tmpTag, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, player.realm)
-	Debug(4, "ColorizeUnit [Realm]", GetRealmName(), GetNormalizedRealmName())
+	Debug(7, "ColorizeUnit [Realm]", GetRealmName(), GetNormalizedRealmName())
 	return tmpTag
 end
 
@@ -264,7 +266,7 @@ function Tooltip:MoneyTooltip()
 	tooltip:Show()
 end
 
-function Tooltip:UnitTotals(unitObj, allowList, unitList)
+function Tooltip:UnitTotals(unitObj, allowList, unitList, advUnitList)
 
 	local tallyString = ""
 	local total = 0
@@ -304,7 +306,8 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList)
 	end
 
 	--add to list
-	table.insert(unitList, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), tallyString=tallyString, sortIndex=self:GetSortIndex(unitObj), count=total } )
+	local doAdv = (advUnitList and true) or false
+	table.insert(unitList, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj, false, doAdv, false, doAdv), tallyString=tallyString, sortIndex=self:GetSortIndex(unitObj), count=total } )
 
 end
 
@@ -409,7 +412,7 @@ function Tooltip:GetBottomChild(frame, qTip)
 end
 
 function Tooltip:SetQTipAnchor(frame, qTip)
-	Debug(3, "SetQTipAnchor", frame, qTip)
+	Debug(7, "SetQTipAnchor", frame, qTip)
 
     local x, y = frame:GetCenter()
 	qTip:ClearAllPoints()
@@ -430,10 +433,27 @@ function Tooltip:Reset()
 	self.__lastLink = nil
 end
 
+function Tooltip:CheckModifier()
+	if BSYC.options.tooltipModifer then
+		local modKey = BSYC.options.tooltipModifer
+		if modKey == "ALT" and not IsAltKeyDown() then
+			return false
+		elseif modKey == "CTRL" and not IsControlKeyDown() then
+			return false
+		elseif modKey == "SHIFT" and not IsShiftKeyDown() then
+			return false
+		end
+	end
+	return true
+end
+
 function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if not BSYC.options.enableTooltips then return end
 	if not CanAccessObject(objTooltip) then return end
 	if Scanner.isScanningGuild then return end --don't tally while we are scanning the Guildbank
+
+	--check for modifier option
+	if not self:CheckModifier() then return end
 
 	local showQTip = false
 
@@ -525,7 +545,11 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local grandTotal = 0
 	local unitList = {}
 
-	for unitObj in Data:IterateUnits() do
+	--the true is to set it to silent and not return an error if not found
+	local advUnitList = BSYC:GetModule("Search", true) and BSYC:GetModule("Search").advUnitList
+
+	--allow advance search matches if found, no need to set to true as advUnitList will default to dumpAll if found
+	for unitObj in Data:IterateUnits(false, advUnitList) do
 
 		local allowList = {
 			["bag"] = 0,
@@ -567,7 +591,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--only process the totals if we have something to work with
 		if grandTotal > 0 then
 			--table variables gets passed as byRef
-			self:UnitTotals(unitObj, allowList, unitList)
+			self:UnitTotals(unitObj, allowList, unitList, advUnitList)
 		end
 
 	end

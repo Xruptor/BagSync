@@ -40,6 +40,8 @@ local function get(info)
 		return BSYC.options.colors[c].r, BSYC.options.colors[c].g, BSYC.options.colors[c].b
 	elseif p == "keybind" then
 		return GetBindingKey(c)
+	elseif c == "tooltipModifer" then
+		return BSYC.options[c] or "NONE"
 	else
 		if BSYC.options[c] then --if this is nil then it will default to false
 			return BSYC.options[c]
@@ -63,6 +65,8 @@ local function set(info, arg1, arg2, arg3, arg4)
 	   if b2 then SetBinding(b2) end
 	   SetBinding(arg1, c)
 	   SaveBindings(GetCurrentBindingSet())
+	elseif c == "tooltipModifer" then
+		BSYC.options[c] = arg1
 	else
 		BSYC.options[c] = arg1
 
@@ -91,11 +95,24 @@ local function set(info, arg1, arg2, arg3, arg4)
 
 		elseif c == "sortTooltipByTotals" and arg1 then
 			BSYC.options["sortByCustomOrder"] = false
-
 		end
 
 	end
 end
+
+local modValues = {
+	["NONE"] = L.ModValue_NONE,
+	["ALT"] = L.ModValue_ALT,
+	["CTRL"] = L.ModValue_CTRL,
+	["SHIFT"] = L.ModValue_SHIFT,
+}
+
+local modSorting = {
+	[1] = "NONE",
+	[2] = "ALT",
+	[3] = "CTRL",
+	[4] = "SHIFT",
+}
 
 options.args.heading = {
 	type = "description",
@@ -121,8 +138,19 @@ options.args.main = {
 			set = set,
 			arg = "main.enableTooltips",
 		},
-		enableexternaltooltip = {
+		tooltipModifier = {
 			order = 2,
+			type = "select",
+			name = L.ShowOnModifier,
+			desc = L.ShowOnModifierDesc,
+			values = modValues,
+			sorting = modSorting,
+			get = get,
+			set = set,
+			arg = "main.tooltipModifer",
+		},
+		enableexternaltooltip = {
+			order = 3,
 			type = "toggle",
 			name = L.EnableExtTooltip,
 			width = "full",
@@ -133,7 +161,7 @@ options.args.main = {
 			disabled = function() return not BSYC.options["enableTooltips"] end,
 		},
 		enabletooltipsearchonly = {
-			order = 3,
+			order = 4,
 			type = "toggle",
 			name = L.DisplayTooltipOnlySearch,
 			width = "full",
@@ -143,7 +171,7 @@ options.args.main = {
 			arg = "main.tooltipOnlySearch",
 		},
 		focussearcheditbox = {
-			order = 4,
+			order = 5,
 			type = "toggle",
 			name = L.FocusSearchEditBox,
 			width = "full",
@@ -153,7 +181,7 @@ options.args.main = {
 			arg = "main.focusSearchEditBox",
 		},
 		alwaysshowadvsearch = {
-			order = 5,
+			order = 6,
 			type = "toggle",
 			name = L.AlwaysShowAdvSearch,
 			width = "full",
@@ -163,7 +191,7 @@ options.args.main = {
 			arg = "main.alwaysShowAdvSearch",
 		},
 		enableminimap = {
-			order = 6,
+			order = 7,
 			type = "toggle",
 			name = L.DisplayMinimap,
 			width = "full",
@@ -173,7 +201,7 @@ options.args.main = {
 			arg = "minimap.enableMinimap",
 		},
 		enableversiontext = {
-			order = 7,
+			order = 8,
 			type = "toggle",
 			name = L.EnableLoginVersionInfo,
 			width = "full",
@@ -183,7 +211,7 @@ options.args.main = {
 			arg = "main.enableLoginVersionInfo",
 		},
 		keybindblacklist = {
-			order = 8,
+			order = 9,
 			type = "keybinding",
 			name = L.KeybindBlacklist,
 			width = "full",
@@ -193,7 +221,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCBLACKLIST",
 		},
 		keybindcurrency = {
-			order = 9,
+			order = 10,
 			type = "keybinding",
 			name = L.KeybindCurrency,
 			width = "full",
@@ -204,7 +232,7 @@ options.args.main = {
 			hidden = function() return not BSYC.IsRetail end,
 		},
 		keybindgold = {
-			order = 10,
+			order = 11,
 			type = "keybinding",
 			name = L.KeybindGold,
 			width = "full",
@@ -214,7 +242,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCGOLD",
 		},
 		keybindprofessions = {
-			order = 11,
+			order = 12,
 			type = "keybinding",
 			name = L.KeybindProfessions,
 			width = "full",
@@ -225,7 +253,7 @@ options.args.main = {
 			hidden = function() return not BSYC.IsRetail end,
 		},
 		keybindprofiles = {
-			order = 12,
+			order = 13,
 			type = "keybinding",
 			name = L.KeybindProfiles,
 			width = "full",
@@ -235,7 +263,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCPROFILES",
 		},
 		keybindsearch = {
-			order = 13,
+			order = 14,
 			type = "keybinding",
 			name = L.KeybindSearch,
 			width = "full",
@@ -472,17 +500,6 @@ options.args.display = {
 					set = set,
 					arg = "display.enableFactionIcons",
 				},
-				realmidtags = {
-					order = 2,
-					type = "toggle",
-					name = L.DisplayRealmIDTags,
-					width = "full",
-					descStyle = "hide",
-					get = get,
-					set = set,
-					arg = "display.enableRealmIDTags",
-					disabled = function() return not BSYC.options["enableCrossRealmsItems"] and not BSYC.options["enableBNetAccountItems"] end,
-				},
 			}
 		},
 		groupaccountwide = {
@@ -517,8 +534,19 @@ options.args.display = {
 					type = "group",
 					guiInline = true,
 					args = {
-						realmnames = {
+						realmidtags = {
 							order = 0,
+							type = "toggle",
+							name = L.DisplayRealmIDTags,
+							width = "full",
+							descStyle = "hide",
+							get = get,
+							set = set,
+							arg = "display.enableRealmIDTags",
+							disabled = function() return not BSYC.options["enableCrossRealmsItems"] and not BSYC.options["enableBNetAccountItems"] end,
+						},
+						realmnames = {
+							order = 1,
 							type = "toggle",
 							name = L.DisplayRealmNames,
 							width = "full",
@@ -534,7 +562,7 @@ options.args.display = {
 							end,
 						},
 						realmastrick = {
-							order = 1,
+							order = 2,
 							type = "toggle",
 							name = L.DisplayRealmAstrick,
 							width = "full",
@@ -550,7 +578,7 @@ options.args.display = {
 							end,
 						},
 						realmshortname = {
-							order = 2,
+							order = 3,
 							type = "toggle",
 							name = L.DisplayShortRealmName,
 							width = "full",

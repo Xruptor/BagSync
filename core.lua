@@ -204,7 +204,7 @@ function BSYC:ParseItemLink(link, count)
 end
 
 function BSYC:CreateFakeBattlePetID(link, count, speciesID)
-	if not BSYC.IsRetail then return nil end
+	if not BattlePetTooltip then return end
 	Debug(1, "CreateFakeBattlePetID", link, count, speciesID)
 
 	--https://github.com/tomrus88/BlizzardInterfaceCode/blob/8633e552f3335b8c66b1fbcea6760a5cd8bcc06b/Interface/FrameXML/BattlePetTooltip.lua
@@ -277,6 +277,8 @@ function BSYC:OnEnable()
 	if BSYC.options.debug.TRACE == nil then BSYC.options.debug.TRACE = true end
 	if BSYC.options.debug.WARN == nil then BSYC.options.debug.WARN = false end
 	if BSYC.options.debug.FINE == nil then BSYC.options.debug.FINE = false end
-	if BSYC.options.debug.SUBFINE == nil then BSYC.options.debug.SUBFINE = false end
+	if BSYC.options.debug.SL1 == nil then BSYC.options.debug.SL1 = false end
+	if BSYC.options.debug.SL2 == nil then BSYC.options.debug.SL2 = false end
+	if BSYC.options.debug.SL3 == nil then BSYC.options.debug.SL3 = false end
 
 end

@@ -30,7 +30,8 @@ local FirstEquipped = INVSLOT_FIRST_EQUIPPED
 local LastEquipped = INVSLOT_LAST_EQUIPPED
 
 function Scanner:ResetTooltips()
-	if BSYC:GetModule("Tooltip") then BSYC:GetModule("Tooltip"):Reset() end
+	--the true is to set it to silent and not return an error if not found
+	if BSYC:GetModule("Tooltip", true) then BSYC:GetModule("Tooltip"):Reset() end
 end
 
 --https://wowpedia.fandom.com/wiki/BagID
@@ -248,7 +249,7 @@ end
 local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 	Debug(2, "findBattlePet", iconTexture, petName, typeSlot, arg1, arg2)
 
-	if petName then
+	if petName and C_PetJournal then
 		local speciesId, petGUID = C_PetJournal.FindPetIDByName(petName)
 		if speciesId then
 			return speciesId
@@ -278,7 +279,7 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 
 	--this can be totally inaccurate, but until Blizzard allows us to get more info from the GuildBank in regards to Battle Pets.  This is the fastest way without scanning in tooltips.
 	--Example:  Toxic Wasteling shares the same icon as Jade Oozeling
-	if iconTexture then
+	if iconTexture and C_PetJournal then
 		for index = 1, C_PetJournal.GetNumPets() do
 			local petID, speciesID, _, _, _, _, _, _, icon = C_PetJournal.GetPetInfoByIndex(index)
 			if icon == iconTexture then

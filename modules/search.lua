@@ -187,11 +187,13 @@ function Search:OnEnable()
 		--always show the advanced search on the left of the BagSync Search window
 		AdvancedSearchFrame.frame:ClearAllPoints()
 		AdvancedSearchFrame:SetPoint( "TOPRIGHT", SearchFrame.frame, "TOPLEFT", 0, 0)
+		Search.advUnitList = nil
 	end)
 
 	--hide the advanced search if they close the search window
 	SearchFrame:SetCallback("OnClose",function(widget)
 		AdvancedSearchFrame:Hide()
+		Search.advUnitList = nil --just in case failsafe
 	end)
 
 	advSearchBtn:SetCallback("OnClick", function()
@@ -214,6 +216,20 @@ function Search:OnEnable()
 	pListInfo:SetColor(0, 1, 0)
 	pListInfo:SetFullWidth(true)
 	AdvancedSearchFrame:AddChild(pListInfo)
+
+	local advSelectAllBtn = AceGUI:Create("Button")
+	advSelectAllBtn:SetText(L.SelectAll)
+	advSelectAllBtn:SetHeight(16)
+	advSelectAllBtn:SetAutoWidth(true)
+	advSelectAllBtn:SetCallback("OnClick", function()
+		Search:DisplayAdvSearchSelectAll()
+	end)
+	AdvancedSearchFrame.advSelectAllBtn = advSelectAllBtn
+
+	advSelectAllBtn.frame:SetParent(AdvancedSearchFrame.frame)
+	advSelectAllBtn:ClearAllPoints()
+	advSelectAllBtn:SetPoint("RIGHT", pListInfo.frame, "RIGHT", -20, 5)
+	advSelectAllBtn.frame:Show()
 
 	local playerListScrollFrame = AceGUI:Create("ScrollFrame");
 	playerListScrollFrame:SetFullWidth(true)
@@ -335,8 +351,8 @@ function Search:AddEntry(entry)
 		isBattlePet = true
 	end
 
-	--if we aren't retail then just don't add the item to the list if we have a battle pet
-	if isBattlePet and not BSYC.IsRetail then return end
+	--if its a battlepet and we don't have access to BattlePetTooltip, then don't display it
+	if isBattlePet and not BattlePetTooltip then return end
 	label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
 	label.highlight:SetVertexColor(0,1,0,0.3)
 	label:SetColor( r, g, b)
@@ -450,7 +466,7 @@ function Search:AdvancedSearchAddEntry(entry, isHeader, isUnit)
 	end
 end
 
-local function checkData(data, searchStr, searchTable, tempList, countWarning, viewCustomList)
+local function checkData(data, searchStr, searchTable, tempList, countWarning, viewCustomList, unitObj)
 
 	for i=1, #data do
 		if data[i] then
@@ -471,10 +487,15 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 					testMatch = itemScanner:Matches(dItemLink, searchStr)
 				end
 
+				--for debugging purposes only
+				if dName and (viewCustomList or testMatch) then
+					Debug(6, "FoundItem", searchStr, dName, unitObj.name, unitObj.realm)
+				end
+
+				--we only really want to grab the item once in our list, no need to add it multiple times per character
 				if dName and not tempList[link] then
 					if viewCustomList or testMatch then
 						tempList[link] = dName
-						Debug(6, "FoundItem", searchStr, dName, dItemLink)
 						table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
 					end
 				elseif not tempList[link] then
@@ -485,6 +506,16 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 		end
 	end
 	return countWarning
+end
+
+function Search:DisplayAdvSearchSelectAll()
+	for i = 1, #self.advancedsearchframe.playerlistscrollframe.children do
+		local label = self.advancedsearchframe.playerlistscrollframe.children[i] --grab the label
+		if label and not label.userdata.isHeader then
+			label.isSelected = true
+			label:SetImage("Interface\\RaidFrame\\ReadyCheck-Ready")
+		end
+	end
 end
 
 function Search:DoAdvancedSearch()
@@ -518,6 +549,9 @@ function Search:DoAdvancedSearch()
 	end
 	if count < 1 then advAllowList = nil end
 
+	--global for tooltip checks
+	self.advUnitList = advUnitList
+
 	--send it off to the regular search
 	self:DoSearch(nil, advUnitList, advAllowList)
 end
@@ -526,6 +560,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 
 	--only do if we aren't doing an advanced search
 	if not advUnitList then
+		Search.advUnitList = nil --reset just in case
 		if not searchStr then return end
 		if string.len(searchStr) < 1 then return end
 		searchStr = searchStr or self.searchbar:GetText()
@@ -566,7 +601,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 
 	Debug(2, "init:DoSearch", searchStr, advUnitList, advAllowList)
 
-	--advUnitList will force dumpAll to be true if necessary for advanced search
+	--advUnitList will force dumpAll to be true if necessary for advanced search, no need to set it to true
 	for unitObj in Data:IterateUnits(false, advUnitList) do
 
 		if not unitObj.isGuild then
@@ -578,7 +613,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 					if k == "bag" or k == "bank" or k == "reagents" then
 						for bagID, bagData in pairs(v) do
 							if not viewCustomList or (viewCustomList == k and unitObj.name == player.name and unitObj.realm == player.realm) then
-								countWarning = checkData(bagData, searchStr, searchTable, tempList, countWarning, viewCustomList)
+								countWarning = checkData(bagData, searchStr, searchTable, tempList, countWarning, viewCustomList, unitObj)
 							end
 						end
 					else
@@ -588,7 +623,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 
 						if passChk then
 							if not viewCustomList or (viewCustomList == k and unitObj.name == player.name and unitObj.realm == player.realm) then
-								countWarning = checkData(k == "auction" and v.bag or v, searchStr, searchTable, tempList, countWarning, viewCustomList)
+								countWarning = checkData(k == "auction" and v.bag or v, searchStr, searchTable, tempList, countWarning, viewCustomList, unitObj)
 							end
 						end
 					end
@@ -598,10 +633,10 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 			Debug(5, "Search-IterateUnits", "guild", unitObj.name, player.realm, unitObj.data.realmKey)
 			if not advUnitList then
 				if not viewCustomList or (viewCustomList == "guild" and unitObj.name == player.guild and unitObj.realm == player.guildrealm) then
-					countWarning = checkData(unitObj.data.bag, searchStr, searchTable, tempList, countWarning, viewCustomList)
+					countWarning = checkData(unitObj.data.bag, searchStr, searchTable, tempList, countWarning, viewCustomList, unitObj)
 				end
 			else
-				countWarning = checkData(unitObj.data.bag, searchStr, searchTable, tempList, countWarning, viewCustomList)
+				countWarning = checkData(unitObj.data.bag, searchStr, searchTable, tempList, countWarning, viewCustomList, unitObj)
 			end
 		end
 

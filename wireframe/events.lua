@@ -46,7 +46,7 @@ local function showEventAlert(text, alertType)
 end
 
 function Events:DoTimer(sName, sFunc, sDelay, sRepeat)
-	Debug(3, "DoTimer", sName, sFunc, sDelay, sRepeat)
+	Debug(8, "DoTimer", sName, sFunc, sDelay, sRepeat)
 
 	if not self.timers then self.timers = {} end
 	if not sRepeat then
@@ -68,7 +68,7 @@ function Events:StopTimer(sName)
 	if not self.timers[sName] then return end
 	self:CancelTimer(self.timers[sName])
 	self.timers[sName] = nil
-	Debug(3, "StopTimer", sName)
+	Debug(8, "StopTimer", sName)
 end
 
 function Events:OnEnable()
@@ -150,12 +150,6 @@ function Events:OnEnable()
 	self:RegisterEvent("BAG_UPDATE_DELAYED")
 
 	self:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
-
-	--if player isn't in a guild, then delete old guild data if found, sometimes this gets left behind for some reason
-	if not IsInGuild() and (BSYC.db.player.guild or BSYC.db.player.guildrealm) then
-		BSYC.db.player.guild = nil
-		BSYC.db.player.guildrealm = nil
-	end
 end
 
 function Events:BAGSYNC_EVENT_MAILBOX(event, isOpen)

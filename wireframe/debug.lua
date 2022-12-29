@@ -281,7 +281,9 @@ function Debug:OnEnable()
 		"TRACE",
 		"WARN",
 		"FINE",
-		"SUBFINE",
+		"SL1",
+		"SL2",
+		"SL3",
 	}
 
 	local lastPoint
@@ -325,7 +327,7 @@ function Debug:OnEnable()
 	dumpOptions.frame:SetParent(Debug.optionsFrame)
 	dumpOptions:SetText(L.DebugDumpOptions)
 	dumpOptions:SetHeight(30)
-	dumpOptions:SetWidth(dumpOptions.text:GetStringWidth() + 40)
+	dumpOptions:SetAutoWidth(true)
 	dumpOptions:SetCallback("OnClick", function()
 		BSYC:GetModule("Data"):DebugDumpOptions()
 	end)
@@ -337,7 +339,7 @@ function Debug:OnEnable()
 	iterateUnits.frame:SetParent(Debug.optionsFrame)
 	iterateUnits:SetText(L.DebugIterateUnits)
 	iterateUnits:SetHeight(30)
-	iterateUnits:SetWidth(iterateUnits.text:GetStringWidth() + 40)
+	iterateUnits:SetAutoWidth(true)
 	iterateUnits:SetCallback("OnClick", function()
 		for unitObj in BSYC:GetModule("Data"):IterateUnits() do
 			if not unitObj.isGuild then
@@ -351,11 +353,96 @@ function Debug:OnEnable()
 	iterateUnits.frame:SetPoint("LEFT",dumpOptions.frame,"RIGHT",10,-0)
 	iterateUnits.frame:Show()
 
+	local dumpTotals = AceGUI:Create("Button")
+	dumpTotals.frame:SetParent(Debug.optionsFrame)
+	dumpTotals:SetText(L.DebugDBTotals)
+	dumpTotals:SetHeight(30)
+	dumpTotals:SetAutoWidth(true)
+	dumpTotals:SetCallback("OnClick", function()
+		local totalUnits = 0
+		local totalGuilds = 0
+		local totalRealms = 0
+		local biggestRealmName
+		local biggestRealmCount = 0
+		local toatlItems = 0
+
+		local realmCount = 0
+		local lastRealm
+
+		local allowList = {
+			["bag"] = 0,
+			["bank"] = 0,
+			["reagents"] = 0,
+			["equip"] = 0,
+			["mailbox"] = 0,
+			["void"] = 0,
+			["auction"] = 0,
+			["guild"] = 0,
+		}
+
+		for unitObj in BSYC:GetModule("Data"):IterateUnits(true) do
+			if not biggestRealmName then
+				biggestRealmName = unitObj.realm
+				lastRealm = unitObj.realm
+				totalRealms = totalRealms + 1
+			end
+
+			--realm statistics
+			if unitObj.realm == lastRealm then
+				realmCount = realmCount + 1
+			else
+				--check to see if the realm count is larger then the one stored
+				if realmCount > biggestRealmCount then
+					biggestRealmName = lastRealm
+					biggestRealmCount = realmCount
+				end
+				lastRealm = unitObj.realm
+				totalRealms = totalRealms + 1
+				realmCount = 1
+			end
+
+			if not unitObj.isGuild then
+				totalUnits = totalUnits + 1
+
+				for k, v in pairs(unitObj.data) do
+					if allowList[k] and type(v) == "table" then
+						--bags, bank, reagents are stored in individual bags
+						if k == "bag" or k == "bank" or k == "reagents" then
+							for bagID, bagData in pairs(v) do
+								toatlItems = toatlItems + (#bagData or 0)
+							end
+						else
+							if k == "auction" then
+								toatlItems = toatlItems + (#v.bag or 0)
+							elseif k == "mailbox" then
+								toatlItems = toatlItems + (#v or 0)
+							end
+						end
+					end
+				end
+			else
+				totalGuilds = totalGuilds + 1
+				toatlItems = toatlItems + (#unitObj.data.bag or 0)
+			end
+		end
+
+		self:AddMessage(1, "Debug-DBTotals", "totalUnits", totalUnits)
+		self:AddMessage(1, "Debug-DBTotals", "totalGuilds", totalGuilds)
+		self:AddMessage(1, "Debug-DBTotals", "totalRealms", totalRealms)
+		self:AddMessage(1, "Debug-DBTotals", "biggestRealmName", biggestRealmName)
+		self:AddMessage(1, "Debug-DBTotals", "biggestRealmCount", biggestRealmCount)
+		self:AddMessage(1, "Debug-DBTotals", "toatlItems", toatlItems)
+
+	end)
+	dumpTotals.frame:SetParent(Debug.optionsFrame)
+	dumpTotals.frame:SetPoint("LEFT",iterateUnits.frame,"RIGHT",10,-0)
+	dumpTotals.frame:Show()
+
 	local exportBtn = AceGUI:Create("Button")
 	exportBtn.frame:SetParent(Debug.optionsFrame)
 	exportBtn:SetText(L.DebugExport)
 	exportBtn:SetHeight(20)
-	exportBtn:SetWidth(exportBtn.text:GetStringWidth() + 40)
+	exportBtn:SetAutoWidth(true)
 	exportBtn:SetCallback("OnClick", function()
 		-- local lines = {};
 		-- for i=1, #self.scrollframe.children do
@@ -377,7 +464,7 @@ function Debug:OnEnable()
 	clearBtn.frame:SetParent(Debug.optionsFrame)
 	clearBtn:SetText(L.Clear)
 	clearBtn:SetHeight(20)
-	clearBtn:SetWidth(clearBtn.text:GetStringWidth() + 40)
+	clearBtn:SetAutoWidth(true)
 	clearBtn:SetCallback("OnClick", function()
 		scrollframe:ReleaseChildren()
 	end)
@@ -412,7 +499,9 @@ function Debug:AddMessage(level, sName, ...)
 	if level == 3 and not BSYC.options.debug.TRACE then return end
 	if level == 4 and not BSYC.options.debug.WARN then return end
 	if level == 5 and not BSYC.options.debug.FINE then return end
-	if level == 6 and not BSYC.options.debug.SUBFINE then return end
+	if level == 6 and not BSYC.options.debug.SL1 then return end
+	if level == 7 and not BSYC.options.debug.SL2 then return end
+	if level == 8 and not BSYC.options.debug.SL3 then return end
 
 	local debugStr = string.join(", ", tostringall(...))
 	local color = "778899" -- slate gray
@@ -433,8 +522,14 @@ function Debug:AddMessage(level, sName, ...)
 		--fine
 		color = "e454fd" --dark lavender
 	elseif level == 6 then
-		--subfine
+		--SL1 (SUBLEVEL1)
 		color = "CF9FFF" --light lavender
+	elseif level == 7 then
+		--SL2 (SUBLEVEL2)
+		color = "FFD580" --light orange
+	elseif level == 8 then
+		--SL3 (SUBLEVEL3)
+		color = "d1d1d1" --light gray
 	end
 
 	local moduleName = string.format("|cFF"..color.."[%s]|r: ", sName)
