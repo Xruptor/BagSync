@@ -149,12 +149,28 @@ function Search:OnEnable()
 	advSearchBtn:SetHeight(20)
 	advSearchBtn:SetWidth(150)
 
-	SearchFrame:AddChild(advSearchBtn)
 	advSearchBtn:ClearAllPoints()
+	advSearchBtn.frame:SetParent(SearchFrame.frame)
 	advSearchBtn:SetPoint("CENTER", SearchFrame.frame, "BOTTOM", 105, 25)
+	advSearchBtn.frame:Show()
 
 	SearchFrame.advsearchbtn = advSearchBtn
 
+	local searchResetBtn = AceGUI:Create("Button")
+	searchResetBtn:SetText(L.Reset)
+	searchResetBtn:SetHeight(20)
+	searchResetBtn:SetAutoWidth(true)
+
+	searchResetBtn:ClearAllPoints()
+	searchResetBtn.frame:SetParent(SearchFrame.frame)
+	searchResetBtn:SetPoint("RIGHT", advSearchBtn.frame, "LEFT", 0, 0)
+	searchResetBtn.frame:Show()
+
+	SearchFrame.searchResetBtn = searchResetBtn
+
+	searchResetBtn:SetCallback("OnClick", function()
+		Search:DoReset()
+	end)
 	--------------------
 
 	local AdvancedSearchFrame = AceGUI:Create("Window")
@@ -187,13 +203,11 @@ function Search:OnEnable()
 		--always show the advanced search on the left of the BagSync Search window
 		AdvancedSearchFrame.frame:ClearAllPoints()
 		AdvancedSearchFrame:SetPoint( "TOPRIGHT", SearchFrame.frame, "TOPLEFT", 0, 0)
-		Search.advUnitList = nil
 	end)
 
 	--hide the advanced search if they close the search window
 	SearchFrame:SetCallback("OnClose",function(widget)
 		AdvancedSearchFrame:Hide()
-		Search.advUnitList = nil --just in case failsafe
 	end)
 
 	advSearchBtn:SetCallback("OnClick", function()
@@ -508,6 +522,15 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 	return countWarning
 end
 
+function Search:DoReset()
+	Search.advUnitList = nil
+	self.advancedsearchframe.advsearchbar:SetText(nil)
+	self.searchbar:SetText(nil)
+	self.totalCountLabel:SetText(L.TooltipTotal.." |cFFFFFFFF0|r")
+	self.scrollframe:ReleaseChildren()
+	self.scrollframe.frame:Hide()
+end
+
 function Search:DisplayAdvSearchSelectAll()
 	for i = 1, #self.advancedsearchframe.playerlistscrollframe.children do
 		local label = self.advancedsearchframe.playerlistscrollframe.children[i] --grab the label
@@ -560,7 +583,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 
 	--only do if we aren't doing an advanced search
 	if not advUnitList then
-		Search.advUnitList = nil --reset just in case
+		Search.advUnitList = nil -- we aren't doing an advanced search so lets reset this
 		if not searchStr then return end
 		if string.len(searchStr) < 1 then return end
 		searchStr = searchStr or self.searchbar:GetText()
