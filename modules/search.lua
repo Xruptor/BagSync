@@ -545,6 +545,7 @@ function Search:DoAdvancedSearch()
 	Debug(2, "init:DoAdvancedSearch", searchStr, advUnitList, advAllowList)
 
 	local advUnitList = {}
+	local unitCount = 0
 
 	--units
 	for i = 1, #self.advancedsearchframe.playerlistscrollframe.children do
@@ -556,21 +557,23 @@ function Search:DoAdvancedSearch()
 			--order of operations for filters -> realm -> name -> realmKey
 			if not advUnitList[unitObj.realm] then advUnitList[unitObj.realm] = {} end
 			advUnitList[unitObj.realm][unitObj.name] = {realmKey=unitObj.data.realmKey}
+			unitCount = unitCount + 1
 		end
 	end
+	if unitCount < 1 then advUnitList = nil end
 
 	local advAllowList = {}
-	local count = 0
+	local locCount = 0
 
 	--locations
 	for i = 1, #self.advancedsearchframe.locationlistscrollframe.children do
 		local label = self.advancedsearchframe.locationlistscrollframe.children[i] --grab the label
 		if label.isSelected then
 			advAllowList[label.entry.unitObj.name] = true --get the source name
-			count = count + 1
+			locCount = locCount + 1
 		end
 	end
-	if count < 1 then advAllowList = nil end
+	if locCount < 1 then advAllowList = nil end
 
 	--global for tooltip checks
 	self.advUnitList = advUnitList
