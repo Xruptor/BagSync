@@ -38,13 +38,16 @@ StaticPopupDialogs["BAGSYNC_RESETDATABASE"] = {
 
 function Data:OnEnable()
 	Debug(2, "OnEnable")
-	Debug(1, "RealmKey", Unit:GetRealmKey())
-	Debug(1, "RealmKey_RWS", Unit:GetRealmKey_RWS())
-
 	local ver = GetAddOnMetadata("BagSync","Version") or 0
 
 	--get player information from Unit
 	local player = Unit:GetUnitInfo()
+
+	Debug(1, "UnitInfo-1", player.name, player.realm)
+	Debug(1, "UnitInfo-2", player.class, player.race, player.gender, player.faction)
+	Debug(1, "UnitInfo-3", player.guild, player.guildrealm)
+	Debug(1, "RealmKey", Unit:GetRealmKey())
+	Debug(1, "RealmKey_RWS", Unit:GetRealmKey_RWS())
 
 	--main DB call
 	BSYC.db = BSYC.db or {}
