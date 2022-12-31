@@ -482,12 +482,13 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		objTooltip.qTip = nil
 	end
 
+	local tooltipOwner = objTooltip.GetOwner and objTooltip:GetOwner()
+	local tooltipType = tooltipOwner and tooltipOwner.obj and tooltipOwner.obj.type
+
 	--only show tooltips in search frame if the option is enabled
-	if BSYC.options.tooltipOnlySearch and objTooltip.GetOwner and objTooltip:GetOwner() and objTooltip:GetOwner():GetName() then
-		if not string.find(objTooltip:GetOwner():GetName(), "BagSyncSearchRow") then
-			objTooltip:Show()
-			return
-		end
+	if BSYC.options.tooltipOnlySearch and (not tooltipOwner or not tooltipType or tooltipType ~= "BagSyncInteractiveLabel")  then
+		objTooltip:Show()
+		return
 	end
 
 	--if we already did the item, then display the previous information, use the unparsed link to verify
@@ -546,7 +547,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local unitList = {}
 
 	--the true is to set it to silent and not return an error if not found
-	local advUnitList = BSYC:GetModule("Search", true) and BSYC:GetModule("Search").advUnitList
+	--only display advanced search results in the BagSync search window
+	local advUnitList = tooltipType and tooltipType == "BagSyncInteractiveLabel" and BSYC:GetModule("Search", true) and BSYC:GetModule("Search").advUnitList
 
 	--allow advance search matches if found, no need to set to true as advUnitList will default to dumpAll if found
 	for unitObj in Data:IterateUnits(false, advUnitList) do

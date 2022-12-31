@@ -401,7 +401,16 @@ function Data:IterateUnits(dumpAll, filterList)
 					isXRGuild = (player.guildrealm and argKey == player.guildrealm and argKey ~= player.realm) or false
 				end
 
-				if dumpAll or (filterList and filterList[argKey]) or (argKey == player.realm) or isXRGuild or (isConnectedRealm and BSYC.options.enableCrossRealmsItems) or (BSYC.options.enableBNetAccountItems) then
+				local passChk = false
+				if dumpAll or filterList then
+					if dumpAll or (filterList and filterList[argKey]) then passChk = true end
+				else
+					if argKey == player.realm or isXRGuild then passChk = true end
+					if isConnectedRealm and BSYC.options.enableCrossRealmsItems then passChk = true end
+					if BSYC.options.enableBNetAccountItem then passChk = true end
+				end
+
+				if passChk then
 
 					--pull entries from characters until k is empty, then pull next realm entry
 					k, v = next(argValue, k)
@@ -417,7 +426,6 @@ function Data:IterateUnits(dumpAll, filterList)
 							skipReturn = false
 
 							if filterList then
-								--check realm, name
 								if filterList[argKey][k] then
 									skipReturn = false
 								else
