@@ -386,13 +386,6 @@ function Tooltip:GetBottomChild(frame, qTip)
 			local loc, pos = getMinLoc(t:GetTop(), t:GetBottom())
 			table.insert(cache, {name="SortedExtendedTooltip", frame=t, loc=loc, pos=pos})
 		end
-		--Sorted tooltip occasionally has a delay which prevents repositioning, have to hook OnShow to make sure it displays properly
-		if not self.isSortedTooltipHooked then
-			t:HookScript("OnShow", function(self)
-				Tooltip:GetBottomChild(Tooltip.TT_Frame, Tooltip.TT_QTip)
-			end)
-			self.isSortedTooltipHooked = true
-		end
 	end
 
 	--find closest to edge (closer to 0)
@@ -488,15 +481,9 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				objTooltip.qTip = LibQTip:Acquire("BagSyncQTip", 3, "LEFT", "CENTER", "RIGHT")
 				objTooltip.qTip:SetClampedToScreen(true)
 
-				--these are for addons that display their tooltips about a second or so after everyone.  Need to grab the current tooltip frames and qTip
-				--to pass correctly OnShow.  Otherwise if you hard code it, it will always use the same qTip and tooltip frame in the OnShow
-				self.TT_Frame = objTooltip
-				self.TT_QTip = objTooltip.qTip
-
 				self:GetBottomChild(objTooltip, objTooltip.qTip)
 
-				--I try to use OnShow as not to SPAM and cause excessive lag using OnUpdate.  In the future if necessary I will change it to OnUpdate
-				objTooltip.qTip:SetScript("OnShow", function()
+				objTooltip.qTip:SetScript("OnUpdate", function()
 					Tooltip:GetBottomChild(objTooltip, objTooltip.qTip)
 				end)
 			end
