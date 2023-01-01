@@ -19,12 +19,12 @@ local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
 local factionString = ""
 
 if BSYC.IsRetail then
-		factionString = " ( "..[[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
-		factionString = factionString.." "..[[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]]
-		factionString = factionString.." "..[[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]..")"
+		factionString = " ( "..[[|TInterface\FriendsFrame\PlusManz-Horde:20:20|t]]
+		factionString = factionString.." "..[[|TInterface\FriendsFrame\PlusManz-Alliance:20:20|t]]
+		factionString = factionString.." "..[[|TInterface\Icons\Achievement_worldevent_brewmaster:20:20|t]]..")"
 else
-		factionString = " ( "..[[|TInterface\Icons\inv_bannerpvp_01:18|t]]
-		factionString = factionString.." "..[[|TInterface\Icons\inv_bannerpvp_02:18|t]]..")"
+		factionString = " ( "..[[|TInterface\FriendsFrame\PlusManz-Horde:20:20|t]]
+		factionString = factionString.." "..[[|TInterface\FriendsFrame\PlusManz-Alliance:20:20|t]]..")"
 end
 
 options.type = "group"

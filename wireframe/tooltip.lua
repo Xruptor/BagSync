@@ -95,18 +95,18 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET
 				local FactionIcon = ""
 
 				if BSYC.IsRetail then
-					FactionIcon = [[|TInterface\Icons\Achievement_worldevent_brewmaster:18|t]]
+					FactionIcon = [[|TInterface\Icons\Achievement_worldevent_brewmaster:20:20|t]]
 					if unitObj.data.faction == "Alliance" then
-						FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_human:18|t]]
+						FactionIcon = [[|TInterface\FriendsFrame\PlusManz-Alliance:20:20|t]]
 					elseif unitObj.data.faction == "Horde" then
-						FactionIcon = [[|TInterface\Icons\Inv_misc_tournaments_banner_orc:18|t]]
+						FactionIcon = [[|TInterface\FriendsFrame\PlusManz-Horde:20:20|t]]
 					end
 				else
 					FactionIcon = [[|TInterface\Icons\ability_seal:18|t]]
 					if unitObj.data.faction == "Alliance" then
-						FactionIcon = [[|TInterface\Icons\inv_bannerpvp_02:18|t]]
+						FactionIcon = [[|TInterface\FriendsFrame\PlusManz-Alliance:20:20|t]]
 					elseif unitObj.data.faction == "Horde" then
-						FactionIcon = [[|TInterface\Icons\inv_bannerpvp_01:18|t]]
+						FactionIcon = [[|TInterface\FriendsFrame\PlusManz-Horde:20:20|t]]
 					end
 				end
 
@@ -331,6 +331,7 @@ end
 
 function Tooltip:GetBottomChild(frame, qTip)
 	Debug(3, "GetBottomChild", frame, qTip)
+
 	local cache = {}
 
 	local function getMinLoc(top, bottom)
@@ -378,10 +379,27 @@ function Tooltip:GetBottomChild(frame, qTip)
 		end
 	end
 
+	--check for Sorted Addon
+	if SortedExtendedTooltip then
+		local t = SortedExtendedTooltip
+		if t and t:IsVisible() then
+			local loc, pos = getMinLoc(t:GetTop(), t:GetBottom())
+			table.insert(cache, {name="SortedExtendedTooltip", frame=t, loc=loc, pos=pos})
+		end
+		--Sorted tooltip occasionally has a delay which prevents repositioning, have to hook OnShow to make sure it displays properly
+		if not self.isSortedTooltipHooked then
+			t:HookScript("OnShow", function(self)
+				Tooltip:GetBottomChild(Tooltip.TT_Frame, Tooltip.TT_QTip)
+			end)
+			self.isSortedTooltipHooked = true
+		end
+	end
+
 	--find closest to edge (closer to 0)
 	local lastLoc
 	local lastPos
 	local lastAnchor
+	local lastName
 
 	for i=1, #cache do
 		local data = cache[i]
@@ -389,16 +407,19 @@ function Tooltip:GetBottomChild(frame, qTip)
 			if not lastPos then lastPos = data.pos end
 			if not lastLoc then lastLoc = data.loc end
 			if not lastAnchor then lastAnchor = data.frame end
+			if not lastName then lastName = data.name end
 
 			if data.pos <  lastPos then
 				lastPos = data.pos
 				lastLoc = data.loc
 				lastAnchor = data.frame
+				lastName = data.name
 			end
 		end
 	end
 
 	if lastAnchor and lastLoc and lastPos then
+		Debug(8, "GetBottomChild", lastAnchor, lastLoc, lastPos, lastName)
 		if lastLoc == "top" then
 			qTip:SetPoint("BOTTOM", lastAnchor, "TOP")
 		else
@@ -466,8 +487,15 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			if not objTooltip.qTip or not LibQTip:IsAcquired("BagSyncQTip") then
 				objTooltip.qTip = LibQTip:Acquire("BagSyncQTip", 3, "LEFT", "CENTER", "RIGHT")
 				objTooltip.qTip:SetClampedToScreen(true)
-				Tooltip:GetBottomChild(objTooltip, objTooltip.qTip)
 
+				--these are for addons that display their tooltips about a second or so after everyone.  Need to grab the current tooltip frames and qTip
+				--to pass correctly OnShow.  Otherwise if you hard code it, it will always use the same qTip and tooltip frame in the OnShow
+				self.TT_Frame = objTooltip
+				self.TT_QTip = objTooltip.qTip
+
+				self:GetBottomChild(objTooltip, objTooltip.qTip)
+
+				--I try to use OnShow as not to SPAM and cause excessive lag using OnUpdate.  In the future if necessary I will change it to OnUpdate
 				objTooltip.qTip:SetScript("OnShow", function()
 					Tooltip:GetBottomChild(objTooltip, objTooltip.qTip)
 				end)
