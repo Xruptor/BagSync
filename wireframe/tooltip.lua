@@ -418,8 +418,11 @@ function Tooltip:GetBottomChild(frame, qTip)
 		else
 			qTip:SetPoint("TOP", lastAnchor, "BOTTOM")
 		end
+		qTip:SetScript("OnUpdate", nil) --empty out the OnUpdate method to prevent spamming
 		return
 	end
+
+	qTip:SetScript("OnUpdate", nil) --empty out the OnUpdate method to prevent spamming
 
 	--failsafe
 	self:SetQTipAnchor(frame, qTip)
@@ -481,8 +484,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				objTooltip.qTip = LibQTip:Acquire("BagSyncQTip", 3, "LEFT", "CENTER", "RIGHT")
 				objTooltip.qTip:SetClampedToScreen(true)
 
-				self:GetBottomChild(objTooltip, objTooltip.qTip)
-
+				--we use OnUpdate as it's triggered when the tooltip is shown, it should auto adjust for other displayed tooltips if found
+				--NOTE: Unlike other addons I do not like OnUpdate spam, so after the qTip is repositioned; I empty the OnUpdate function to prevent spamming.
 				objTooltip.qTip:SetScript("OnUpdate", function()
 					Tooltip:GetBottomChild(objTooltip, objTooltip.qTip)
 				end)
