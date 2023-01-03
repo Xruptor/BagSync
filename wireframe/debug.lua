@@ -438,6 +438,21 @@ function Debug:OnEnable()
 	dumpTotals.frame:SetPoint("LEFT",iterateUnits.frame,"RIGHT",10,-0)
 	dumpTotals.frame:Show()
 
+	local addonList = AceGUI:Create("Button")
+	addonList.frame:SetParent(Debug.optionsFrame)
+	addonList:SetText(L.DebugAddonList)
+	addonList:SetHeight(30)
+	addonList:SetAutoWidth(true)
+	addonList:SetCallback("OnClick", function()
+		for i=1, GetNumAddOns() do
+			local name, title, notes, loadable, reason, security, newVersion = GetAddOnInfo(i)
+			self:AddMessage(1, "Debug-AddonList", title)
+		end
+	end)
+	addonList.frame:SetParent(Debug.optionsFrame)
+	addonList.frame:SetPoint("LEFT",dumpTotals.frame,"RIGHT",10,-0)
+	addonList.frame:Show()
+
 	local exportBtn = AceGUI:Create("Button")
 	exportBtn.frame:SetParent(Debug.optionsFrame)
 	exportBtn:SetText(L.DebugExport)
