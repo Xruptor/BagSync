@@ -6,14 +6,14 @@ if not L then return end
 
 --special thanks to annthizze at Curse for the esES translations!
 
-L.TooltipBag = "Bolsas:"
-L.TooltipBank = "Banco:"
-L.TooltipEquip = "Equipo:"
-L.TooltipGuild = "Hermandad:"
-L.TooltipMail = "Correo:"
-L.TooltipVoid = "Cofre Etéreo:"
-L.TooltipReagent = "Reagentes:"
-L.TooltipAuction = "Subasta:"
+L.Tooltip_bag = "Bolsas"
+L.Tooltip_bank = "Banco"
+L.Tooltip_equip = "Equipo"
+L.Tooltip_guild = "Hermandad"
+L.Tooltip_mailbox = "Correo"
+L.Tooltip_void = "Cofre Etéreo"
+L.Tooltip_reagents = "Reagentes"
+L.Tooltip_auction = "Subasta"
 L.Search = "Buscar"
 L.TooltipTotal = "Total:"
 L.Profiles = "Perfiles"

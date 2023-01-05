@@ -27,6 +27,24 @@ else
 		factionString = factionString.." "..[[|TInterface\FriendsFrame\PlusManz-Alliance:20:20|t]]..")"
 end
 
+local allowList = {
+	"bag",
+	"bank",
+	"reagents",
+	"equip",
+	"mailbox",
+	"void",
+	"auction",
+}
+
+local charLocations = ""
+local iconLocations = ""
+
+for i=1, #allowList do
+	charLocations = charLocations.."|cFF4DD827"..L["TooltipSmall_"..allowList[i]].."|r=|cFFFFD580"..L["Tooltip_"..allowList[i]].."|r, "
+	iconLocations = iconLocations..L["TooltipIcon_"..allowList[i]]:gsub("13:13", "16:16").."=|cFFFFD580"..L["Tooltip_"..allowList[i]].."|r, "
+end
+
 options.type = "group"
 options.name = "BagSync"
 
@@ -500,6 +518,40 @@ options.args.display = {
 					set = set,
 					arg = "display.enableFactionIcons",
 				},
+				singlecharlocs_1 = {
+					order = 2,
+					type = "toggle",
+					name = L.DisplaySingleCharLocs,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.singleCharLocations",
+					disabled = function() return BSYC.options["useIconLocations"] end,
+				},
+				singlecharlocs_2 = {
+					order = 3,
+					type = "description",
+					name = "        "..charLocations,
+					width = "full",
+				},
+				useiconlocs_1 = {
+					order = 4,
+					type = "toggle",
+					name = L.DisplayIconLocs,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.useIconLocations",
+					disabled = function() return BSYC.options["singleCharLocations"] end,
+				},
+				useiconlocs_2 = {
+					order = 5,
+					type = "description",
+					name = "        "..iconLocations,
+					width = "full",
+				},
 			}
 		},
 		groupaccountwide = {
@@ -720,7 +772,7 @@ options.args.color = {
 			name = L.DefaultColors,
 			func = function()
 				BSYC:GetModule("Data"):ResetColors()
-				InterfaceOptionsFrame:Hide()
+				if InterfaceOptionsFrame then InterfaceOptionsFrame:Hide() end
 			end,
 		},
 	},

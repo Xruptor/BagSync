@@ -274,18 +274,26 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList, advUnitList)
 
 	--order in which we want stuff displayed
 	local list = {
-		[1] = { source="bag", 		desc=L.TooltipBag },
-		[2] = { source="bank", 		desc=L.TooltipBank },
-		[3] = { source="reagents", 	desc=L.TooltipReagent },
-		[4] = { source="equip", 	desc=L.TooltipEquip },
-		[5] = { source="guild", 	desc=L.TooltipGuild },
-		[6] = { source="mailbox", 	desc=L.TooltipMail },
-		[7] = { source="void", 		desc=L.TooltipVoid },
-		[8] = { source="auction", 	desc=L.TooltipAuction },
+		[1] = { source="bag", 		desc=L.Tooltip_bag },
+		[2] = { source="bank", 		desc=L.Tooltip_bank },
+		[3] = { source="reagents", 	desc=L.Tooltip_reagents },
+		[4] = { source="equip", 	desc=L.Tooltip_equip },
+		[5] = { source="guild", 	desc=L.Tooltip_guild },
+		[6] = { source="mailbox", 	desc=L.Tooltip_mailbox },
+		[7] = { source="void", 		desc=L.Tooltip_void },
+		[8] = { source="auction", 	desc=L.Tooltip_auction },
 	}
 
 	for i = 1, #list do
 		local count, desc = allowList[list[i].source], list[i].desc
+		local listDelim = self:HexColor(BSYC.options.colors.total, ":")
+		if BSYC.options.singleCharLocations then
+			desc = L["TooltipSmall_"..list[i].source]..listDelim
+		elseif BSYC.options.useIconLocations then
+			desc = L["TooltipIcon_"..list[i].source]..listDelim
+		else
+			desc = desc..listDelim
+		end
 		if count > 0 then
 			grouped = grouped + 1
 			total = total + count

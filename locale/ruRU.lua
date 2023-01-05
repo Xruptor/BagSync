@@ -2,13 +2,13 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "ruRU")
 if not L then return end
 
-L.TooltipBag = "В сумке:"
-L.TooltipBank = "В банке:"
-L.TooltipEquip = "На персонаже:"
-L.TooltipGuild = "В гильдбанке:"
-L.TooltipMail = "На почте:"
-L.TooltipReagent = "Банк материалов:"
-L.TooltipAuction = "Аукцион:"
+L.Tooltip_bag = "В сумке"
+L.Tooltip_bank = "В банке"
+L.Tooltip_equip = "На персонаже"
+L.Tooltip_guild = "В гильдбанке"
+L.Tooltip_mailbox = "На почте"
+L.Tooltip_reagents = "Банк материалов"
+L.Tooltip_auction = "Аукцион"
 L.Search = "Поиск"
 L.TooltipTotal = "Всего:"
 L.Profiles = "Профили"

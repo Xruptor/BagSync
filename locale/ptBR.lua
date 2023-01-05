@@ -6,14 +6,14 @@ if not L then return end
 
 --special thanks to kubito from wowinterface.com
 
-L.TooltipBag = "Bolsa:"
-L.TooltipBank = "Banco:"
-L.TooltipEquip = "Equipado:"
-L.TooltipGuild = "Guilda:"
-L.TooltipMail = "Correio:"
-L.TooltipVoid = "Cofre Etéreo:"
-L.TooltipReagent = "Reagentes:"
-L.TooltipAuction = "Leilão:"	
+L.Tooltip_bag = "Bolsa"
+L.Tooltip_bank = "Banco"
+L.Tooltip_equip = "Equipado"
+L.Tooltip_guild = "Guilda"
+L.Tooltip_mailbox = "Correio"
+L.Tooltip_void = "Cofre Etéreo"
+L.Tooltip_reagents = "Reagentes"
+L.Tooltip_auction = "Leilão"
 L.Search = "Pesquisar"
 L.TooltipTotal = "Total:"
 L.Profiles = "Perfis"

@@ -98,6 +98,8 @@ function Data:OnEnable()
 	if BSYC.options.sortTooltipByTotals == nil then BSYC.options.sortTooltipByTotals = false end
 	if BSYC.options.sortByCustomOrder == nil then BSYC.options.sortByCustomOrder = false end
 	if BSYC.options.tooltipModifer == nil then BSYC.options.tooltipModifer = "NONE" end
+	if BSYC.options.singleCharLocations == nil then BSYC.options.singleCharLocations = false end
+	if BSYC.options.useIconLocations == nil then BSYC.options.useIconLocations = true end
 
 	--setup the default colors
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end

@@ -96,7 +96,7 @@ function Blacklist:OnEnable()
 	guildFrame:AddChild(spacer)
 	guildFrame:AddChild(guildAddButton)
 
-	guildFrame:SetTitle(L.TooltipGuild)
+	guildFrame:SetTitle(L.Tooltip_guild)
 	guildFrame:SetHeight(120)
 	guildFrame:SetWidth(330)
 	guildFrame:EnableResize(false)
