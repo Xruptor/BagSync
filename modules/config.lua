@@ -31,6 +31,7 @@ local allowList = {
 	"bag",
 	"bank",
 	"reagents",
+	"guild",
 	"equip",
 	"mailbox",
 	"void",
