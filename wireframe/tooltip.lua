@@ -286,26 +286,23 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList, advUnitList)
 
 	for i = 1, #list do
 		local count, desc = allowList[list[i].source], list[i].desc
-		local listDelim = self:HexColor(BSYC.options.colors.total, ":")
+
 		if BSYC.options.singleCharLocations then
-			desc = L["TooltipSmall_"..list[i].source]..listDelim
+			desc = L["TooltipSmall_"..list[i].source]
 		elseif BSYC.options.useIconLocations then
-			desc = L["TooltipIcon_"..list[i].source]..listDelim
-		else
-			desc = desc..listDelim
+			desc = L["TooltipIcon_"..list[i].source]
 		end
 		if count > 0 then
 			grouped = grouped + 1
 			total = total + count
 
-			desc = self:HexColor(BSYC.options.colors.first, desc)
+			desc = self:HexColor(BSYC.options.colors.first, desc)..":"
 			count = self:HexColor(BSYC.options.colors.second, comma_value(count))
 
-			tallyString = tallyString..L.TooltipDelimiter..desc.." "..count
+			tallyString = tallyString..((grouped > 1 and L.TooltipDelimiter) or "")..desc.." "..count
 		end
 	end
 
-	tallyString = strsub(tallyString, string.len(L.TooltipDelimiter) + 1) --remove first delimiter
 	if total < 1 or string.len(tallyString) < 1 then return end
 
 	--if it's groupped up and has more then one item then use a different color and show total
