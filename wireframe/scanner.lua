@@ -335,10 +335,12 @@ function Scanner:SaveGuildBank()
 	local guildDB = Data:GetGuild()
 	if guildDB then
 		Debug(3, "SaveGuildBank", "FoundGuild")
+		local player = Unit:GetUnitInfo()
 		guildDB.bag = slotItems
 		guildDB.money = GetGuildBankMoney()
-		guildDB.faction = Unit:GetUnitInfo().faction
-		guildDB.realmKey = Unit:GetRealmKey()
+		guildDB.faction = player.faction
+		guildDB.realmKey = player.realmKey
+		guildDB.rwsKey = player.rwsKey
 	end
 
 	Scanner.isScanningGuild = false

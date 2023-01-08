@@ -46,8 +46,8 @@ function Data:OnEnable()
 	Debug(1, "UnitInfo-1", player.name, player.realm)
 	Debug(1, "UnitInfo-2", player.class, player.race, player.gender, player.faction)
 	Debug(1, "UnitInfo-3", player.guild, player.guildrealm)
-	Debug(1, "RealmKey", Unit:GetRealmKey())
-	Debug(1, "RealmKey_RWS", Unit:GetRealmKey_RWS())
+	Debug(1, "RealmKey", player.realmKey)
+	Debug(1, "RealmKey_RWS", player.rwsKey)
 
 	--main DB call
 	BSYC.db = BSYC.db or {}
@@ -124,6 +124,9 @@ function Data:OnEnable()
 	BSYC.db.player.race = player.race
 	BSYC.db.player.gender = player.gender
 	BSYC.db.player.faction = player.faction
+	BSYC.db.player.realmKey = player.realmKey
+	BSYC.db.player.rwsKey = player.rwsKey
+
 	--we cannot store guild as on login the guild name returns nil
 	--https://wow.gamepedia.com/API_GetGuildInfo
 
@@ -149,14 +152,14 @@ function Data:DebugDumpOptions()
 	Debug(1, "init-DebugDumpOptions")
 	for k, v in pairs(BSYC.options) do
 		if type(v) ~= "table" then
-			Debug(1, k, tostring(v))
+			BSYC.DEBUG(1, "DumpOptions", k, tostring(v))
 		else
 			for x, y in pairs(v) do
 				if type(y) ~= "table" then
-					Debug(1, k, tostring(x), tostring(y))
+					BSYC.DEBUG(1, "DumpOptions", k, tostring(x), tostring(y))
 				else
 					if k == "colors" then
-						Debug(1, k, tostring(x), y.r * 255, y.g * 255, y.b * 255)
+						BSYC.DEBUG(1, "DumpOptions", k, tostring(x), y.r * 255, y.g * 255, y.b * 255)
 					end
 					--Debug(1, k, tostring(x), BSYC:serializeTable(y))
 				end
@@ -412,7 +415,7 @@ function Data:IterateUnits(dumpAll, filterList)
 				else
 					if argKey == player.realm or isXRGuild then passChk = true end
 					if isConnectedRealm and BSYC.options.enableCrossRealmsItems then passChk = true end
-					if BSYC.options.enableBNetAccountItem then passChk = true end
+					if BSYC.options.enableBNetAccountItems then passChk = true end
 				end
 
 				if passChk then

@@ -17,14 +17,18 @@ local options = {}
 local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
 
 local factionString = ""
+local factionSmall = " "
 
 if BSYC.IsRetail then
-		factionString = " ( "..[[|TInterface\FriendsFrame\PlusManz-Horde:20:20|t]]
+		factionString = [[|TInterface\FriendsFrame\PlusManz-Horde:20:20|t]]
 		factionString = factionString.." "..[[|TInterface\FriendsFrame\PlusManz-Alliance:20:20|t]]
-		factionString = factionString.." "..[[|TInterface\Icons\Achievement_worldevent_brewmaster:20:20|t]]..")"
+		factionSmall = factionString
+		factionString = factionString.." "..[[|TInterface\Icons\Achievement_worldevent_brewmaster:20:20|t]]
+
 else
-		factionString = " ( "..[[|TInterface\FriendsFrame\PlusManz-Horde:20:20|t]]
-		factionString = factionString.." "..[[|TInterface\FriendsFrame\PlusManz-Alliance:20:20|t]]..")"
+		factionString = [[|TInterface\FriendsFrame\PlusManz-Horde:20:20|t]]
+		factionString = factionString.." "..[[|TInterface\FriendsFrame\PlusManz-Alliance:20:20|t]]
+		factionSmall = factionString
 end
 
 local allowList = {
@@ -432,7 +436,7 @@ options.args.display = {
 				faction = {
 					order = 6,
 					type = "toggle",
-					name = L.DisplayFaction,
+					name = L.DisplayFaction..factionSmall,
 					width = "full",
 					descStyle = "hide",
 					get = get,

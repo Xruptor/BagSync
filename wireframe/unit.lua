@@ -210,8 +210,9 @@ function Unit:GetUnitInfo(unit)
 	unit.guild = unit.guild and (unit.guild..'©')
 	unit.name, unit.realm, unit.isguild = name, realm, isguild
 	unit.realmKey = realmKey
+	unit.rwsKey = self:GetRealmKey_RWS()
 
-	Debug(3, "GetUnitInfo", name, realm, isguild, FACTION, unit.class, unit.race, unit.gender, unit.guild, unit.guildrealm, unit.realmKey)
+	Debug(3, "GetUnitInfo", name, realm, isguild, FACTION, unit.class, unit.race, unit.gender, unit.guild, unit.guildrealm, unit.realmKey, unit.rwsKey)
 	return unit
 end
 
