@@ -749,12 +749,10 @@ function Search:DisplayAdvSearchLists()
 
 	for i = 1, #list do
 
-		local stripColon = strsub(list[i].desc, 0, string.len(list[i].desc) - 1) --remove colon at end
-
 		--make sure to return not player
 		local tmpLoc = {
 			unitObj={name=list[i].source, isGuild=false, isConnectedRealm=false},
-			colorized=Tooltip:HexColor(BSYC.options.colors.first, stripColon)
+			colorized=Tooltip:HexColor(BSYC.options.colors.first, list[i].desc)
 		}
 
 		self:AdvancedSearchAddEntry(tmpLoc, false, false) --add entry

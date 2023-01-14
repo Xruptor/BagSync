@@ -97,8 +97,6 @@ function Scanner:StartupScans()
 
 	self:SaveCurrency(true)
 
-	self:CleanupBags()
-
 	--cleanup the auction DB
 	Data:CheckExpiredAuctions()
 

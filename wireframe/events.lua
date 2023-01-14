@@ -13,8 +13,6 @@ local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Events", ...) end
 end
 
-Events.canQueryAuctions = false
-
 local alertTooltip = CreateFrame("GameTooltip", "BSYC_EventAlertTooltip", UIParent, "GameTooltipTemplate")
 alertTooltip:SetOwner(UIParent, "ANCHOR_NONE")
 alertTooltip:SetHeight(30)
@@ -240,6 +238,7 @@ function Events:BAG_UPDATE_DELAYED(event)
 
 		--remove it
 		self.SpamBagQueue[bagid] = nil
+		bagname = nil
 	end
 	self.SpamBagTotal = 0
 

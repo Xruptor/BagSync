@@ -242,6 +242,9 @@ function Data:FixDB()
 	--update db unit version information
 	BSYC.options.unitDBVersion = unitDBVersion
 
+	--cleanup any old bag issues
+	if BSYC:GetModule("Scanner", true) then BSYC:GetModule("Scanner"):CleanupBags() end
+
 	BSYC:Print("|cFFFF9900"..L.FixDBComplete.."|r")
 end
 
