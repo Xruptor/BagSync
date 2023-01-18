@@ -11,6 +11,32 @@ local Scanner = BSYC:GetModule("Scanner")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local LibQTip = LibStub("LibQTip-1.0")
 
+--https://github.com/tomrus88/BlizzardInterfaceCode/blob/classic/Interface/GlueXML/CharacterCreate.lua
+RACE_ICON_TCOORDS = {
+	["HUMAN_MALE"]		= {0, 0.25, 0, 0.25},
+	["DWARF_MALE"]		= {0.25, 0.5, 0, 0.25},
+	["GNOME_MALE"]		= {0.5, 0.75, 0, 0.25},
+	["NIGHTELF_MALE"]	= {0.75, 1.0, 0, 0.25},
+	["TAUREN_MALE"]		= {0, 0.25, 0.25, 0.5},
+	["SCOURGE_MALE"]	= {0.25, 0.5, 0.25, 0.5},
+	["TROLL_MALE"]		= {0.5, 0.75, 0.25, 0.5},
+	["ORC_MALE"]		= {0.75, 1.0, 0.25, 0.5},
+	["HUMAN_FEMALE"]	= {0, 0.25, 0.5, 0.75},
+	["DWARF_FEMALE"]	= {0.25, 0.5, 0.5, 0.75},
+	["GNOME_FEMALE"]	= {0.5, 0.75, 0.5, 0.75},
+	["NIGHTELF_FEMALE"]	= {0.75, 1.0, 0.5, 0.75},
+	["TAUREN_FEMALE"]	= {0, 0.25, 0.75, 1.0},
+	["SCOURGE_FEMALE"]	= {0.25, 0.5, 0.75, 1.0},
+	["TROLL_FEMALE"]	= {0.5, 0.75, 0.75, 1.0},
+	["ORC_FEMALE"]		= {0.75, 1.0, 0.75, 1.0},
+}
+local FIXED_RACE_ATLAS = {
+	["highmountaintauren"] = "highmountain",
+	["lightforgeddraenei"] = "lightforged",
+	["scourge"] = "undead",
+	["zandalaritroll"] = "zandalari",
+}
+
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Tooltip", ...) end
 end
@@ -56,6 +82,47 @@ function Tooltip:GetSortIndex(unitObj)
 	return 6
 end
 
+function Tooltip:GetRaceIcon(race, gender, size, xOffset, yOffset, useHiRez)
+	local raceString = ""
+	if not race or not gender then return raceString end
+
+	if BSYC.IsClassic then
+		race = race:upper()
+		local raceFile = "Interface/Glues/CharacterCreate/UI-CharacterCreate-Races"
+		local coords = RACE_ICON_TCOORDS[race.."_"..(gender == 3 and "FEMALE" or "MALE")]
+		local left, right, top, bottom = unpack(coords)
+
+		raceString = CreateTextureMarkup(raceFile, 128, 128, size, size, left, right, top, bottom, xOffset, yOffset)
+	else
+		race = race:lower()
+		race = FIXED_RACE_ATLAS[race] or race
+
+		local formatingString = useHiRez and "raceicon128-%s-%s" or "raceicon-%s-%s"
+		formatingString = formatingString:format(race, gender == 3 and "female" or "male")
+
+		raceString =  CreateAtlasMarkup(formatingString, size, size, xOffset, yOffset)
+	end
+
+	return raceString
+end
+
+function Tooltip:GetClassColor(unitObj, switch, bypass, altColor)
+	if not unitObj then return altColor or BSYC.options.colors.first end
+	if not unitObj.data or not unitObj.data.class then return altColor or BSYC.options.colors.first end
+
+	local doChk = false
+	if switch == 1 then
+		doChk = BSYC.options.enableUnitClass
+	elseif switch == 2 then
+		doChk = BSYC.options.itemTotalsByClassColor
+	end
+
+	if bypass or ( doChk and RAID_CLASS_COLORS[unitObj.data.class] ) then
+		return RAID_CLASS_COLORS[unitObj.data.class]
+	end
+	return altColor or BSYC.options.colors.first
+end
+
 function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET)
 
 	if not unitObj.data then return nil end
@@ -73,11 +140,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET
 	if not unitObj.isGuild then
 
 		--first colorize by class color
-		if bypass or showSimple or (BSYC.options.enableUnitClass and RAID_CLASS_COLORS[unitObj.data.class]) then
-			tmpTag = self:HexColor(RAID_CLASS_COLORS[unitObj.data.class], unitObj.name)
-		else
-			tmpTag = self:HexColor(BSYC.options.colors.first, unitObj.name)
-		end
+		tmpTag = self:HexColor(self:GetClassColor(unitObj, 1, (bypass or showSimple)), unitObj.name)
 
 		--ignore certain stuff if we only want to return simple colored units
 		if not showSimple then
@@ -87,6 +150,14 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET
 				if bypass or BSYC.options.enableTooltipGreenCheck then
 					local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
 					tmpTag = ReadyCheck.." "..tmpTag
+				end
+			end
+
+			--add race icons
+			if bypass or BSYC.options.showRaceIcons then
+				local raceIcon = self:GetRaceIcon(unitObj.data.race, unitObj.data.gender, 13, 0, 0)
+				if raceIcon ~= "" then
+					tmpTag = raceIcon.." "..tmpTag
 				end
 			end
 
@@ -296,7 +367,7 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList, advUnitList)
 			grouped = grouped + 1
 			total = total + count
 
-			desc = self:HexColor(BSYC.options.colors.first, desc)..":"
+			desc = self:HexColor(self:GetClassColor(unitObj, 2), desc)..":"
 			count = self:HexColor(BSYC.options.colors.second, comma_value(count))
 
 			tallyString = tallyString..((grouped > 1 and L.TooltipDelimiter) or "")..desc.." "..count
@@ -518,7 +589,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if self.__lastLink and self.__lastLink == link then
 		if self.__lastTally and #self.__lastTally > 0 then
 			for i=1, #self.__lastTally do
-				local color = BSYC.options.colors.total --this is a cover all color we are going to use
+				local color = self:GetClassColor(self.__lastTally[i].unitObj, 2, false, BSYC.options.colors.total)
 				if showQTip then
 					local lineNum = objTooltip.qTip:AddLine(self.__lastTally[i].colorized, 	string.rep(" ", 4), self.__lastTally[i].tallyString)
 					objTooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
@@ -688,14 +759,14 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
 	end
 
-	--add seperator if enabled and only if we have something to work with
-	if not showQTip and BSYC.options.enableTooltipSeperator and #unitList > 0 then
+	--add separator if enabled and only if we have something to work with
+	if not showQTip and BSYC.options.enableTooltipSeparator and #unitList > 0 then
 		table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
 	end
 
 	--finally display it
 	for i=1, #unitList do
-		local color = BSYC.options.colors.total --this is a cover all color we are going to use
+		local color = self:GetClassColor(unitList[i].unitObj, 2, false, BSYC.options.colors.total)
 		if showQTip then
 			-- Add an new line, using all columns
 			local lineNum = objTooltip.qTip:AddLine(unitList[i].colorized, string.rep(" ", 4), unitList[i].tallyString)

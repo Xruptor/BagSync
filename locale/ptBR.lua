@@ -61,4 +61,4 @@ L.DisplayFaction = "Exibir itens para ambas as facções (|cff3587ffAliança|r/|
 L.DisplayClassColor = "Exibir cor de classe para personagens"
 L.DisplayTooltipOnlySearch = "Exibir dicas de modificado APENAS na Janela de Pesquisa do BagSync"
 L.EnableBagSyncTooltip = "Ativar dicas do BagSync"
-L.DisplayLineSeperator = "Ativar um separador de linha acima na tela de dicas do BagSync"
+L.DisplayLineSeparator = "Ativar um separador de linha acima na tela de dicas do BagSync"

@@ -372,28 +372,18 @@ options.args.display = {
 			name = L.DisplayTooltipExtra,
 			guiInline = true,
 			args = {
-				seperator = {
+				separator = {
 					order = 0,
 					type = "toggle",
-					name = L.DisplayLineSeperator,
+					name = L.DisplayLineSeparator,
 					width = "full",
 					descStyle = "hide",
 					get = get,
 					set = set,
-					arg = "display.enableTooltipSeperator",
-				},
-				class = {
-					order = 1,
-					type = "toggle",
-					name = L.DisplayClassColor,
-					width = "full",
-					descStyle = "hide",
-					get = get,
-					set = set,
-					arg = "display.enableUnitClass",
+					arg = "display.enableTooltipSeparator",
 				},
 				itemid = {
-					order = 2,
+					order = 1,
 					type = "toggle",
 					name = L.DisplayItemID,
 					width = "full",
@@ -403,7 +393,7 @@ options.args.display = {
 					arg = "display.enableTooltipItemID",
 				},
 				sourcedebuginfo = {
-					order = 3,
+					order = 2,
 					type = "toggle",
 					name = L.DisplaySourceDebugInfo,
 					width = "full",
@@ -413,7 +403,7 @@ options.args.display = {
 					arg = "display.enableSourceDebugInfo",
 				},
 				total = {
-					order = 4,
+					order = 3,
 					type = "toggle",
 					name = L.DisplayTotal,
 					width = "full",
@@ -423,7 +413,7 @@ options.args.display = {
 					arg = "display.showTotal",
 				},
 				guildgoldtooltip = {
-					order = 5,
+					order = 4,
 					type = "toggle",
 					name = L.DisplayGuildGoldInGoldTooltip,
 					width = "full",
@@ -434,7 +424,7 @@ options.args.display = {
 					disabled = function() return not BSYC.options["enableGuild"] end,
 				},
 				faction = {
-					order = 6,
+					order = 5,
 					type = "toggle",
 					name = L.DisplayFaction..factionSmall,
 					width = "full",
@@ -444,7 +434,7 @@ options.args.display = {
 					arg = "display.enableFaction",
 				},
 				guildcurrentcharacter = {
-					order = 7,
+					order = 6,
 					type = "toggle",
 					name = L.DisplayGuildCurrentCharacter,
 					width = "full",
@@ -523,8 +513,18 @@ options.args.display = {
 					set = set,
 					arg = "display.enableFactionIcons",
 				},
-				singlecharlocs_1 = {
+				raceicon = {
 					order = 2,
+					type = "toggle",
+					name = L.DisplayRaceIcons,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.showRaceIcons",
+				},
+				singlecharlocs_1 = {
+					order = 3,
 					type = "toggle",
 					name = L.DisplaySingleCharLocs,
 					width = "full",
@@ -535,13 +535,13 @@ options.args.display = {
 					disabled = function() return BSYC.options["useIconLocations"] end,
 				},
 				singlecharlocs_2 = {
-					order = 3,
+					order = 4,
 					type = "description",
 					name = "        "..charLocations,
 					width = "full",
 				},
 				useiconlocs_1 = {
-					order = 4,
+					order = 5,
 					type = "toggle",
 					name = L.DisplayIconLocs,
 					width = "full",
@@ -552,7 +552,7 @@ options.args.display = {
 					disabled = function() return BSYC.options["singleCharLocations"] end,
 				},
 				useiconlocs_2 = {
-					order = 5,
+					order = 6,
 					type = "description",
 					name = "        "..iconLocations,
 					width = "full",
@@ -683,8 +683,7 @@ options.args.display = {
 					arg = "display.enableShowUniqueItemsTotals",
 				}
 			}
-		}
-
+		},
 	},
 }
 
@@ -779,6 +778,40 @@ options.args.color = {
 				BSYC:GetModule("Data"):ResetColors()
 				if InterfaceOptionsFrame then InterfaceOptionsFrame:Hide() end
 			end,
+		},
+		emptyseparator = {
+			order = 9,
+			fontSize = "medium",
+			type = "description",
+			name = " ",
+		},
+		showuniqueitemsgroup = {
+			order = 10,
+			name = L.ConfigDisplay,
+			type = "group",
+			guiInline = true,
+			args = {
+				class = {
+					order = 0,
+					type = "toggle",
+					name = L.DisplayClassColor,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.enableUnitClass",
+				},
+				totalsbyclasscolor = {
+					order = 1,
+					type = "toggle",
+					name = L.DisplayItemTotalsByClassColor,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.itemTotalsByClassColor",
+				},
+			}
 		},
 	},
 }

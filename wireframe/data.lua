@@ -76,7 +76,7 @@ function Data:OnEnable()
 	if BSYC.options.tooltipOnlySearch == nil then BSYC.options.tooltipOnlySearch = false end
 	if BSYC.options.enableTooltips == nil then BSYC.options.enableTooltips = true end
 	if BSYC.options.enableExtTooltip == nil then BSYC.options.enableExtTooltip = false end
-	if BSYC.options.enableTooltipSeperator == nil then BSYC.options.enableTooltipSeperator = true end
+	if BSYC.options.enableTooltipSeparator == nil then BSYC.options.enableTooltipSeparator = true end
 	if BSYC.options.enableCrossRealmsItems == nil then BSYC.options.enableCrossRealmsItems = true end
 	if BSYC.options.enableBNetAccountItems == nil then BSYC.options.enableBNetAccountItems = false end
 	if BSYC.options.enableTooltipItemID == nil then BSYC.options.enableTooltipItemID = false end
@@ -100,6 +100,8 @@ function Data:OnEnable()
 	if BSYC.options.tooltipModifer == nil then BSYC.options.tooltipModifer = "NONE" end
 	if BSYC.options.singleCharLocations == nil then BSYC.options.singleCharLocations = false end
 	if BSYC.options.useIconLocations == nil then BSYC.options.useIconLocations = true end
+	if BSYC.options.itemTotalsByClassColor == nil then BSYC.options.itemTotalsByClassColor = false end
+	if BSYC.options.showRaceIcons == nil then BSYC.options.showRaceIcons = true end
 
 	--setup the default colors
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end
