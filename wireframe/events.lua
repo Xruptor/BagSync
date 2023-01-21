@@ -206,12 +206,19 @@ function Events:PLAYER_EQUIPMENT_CHANGED(event)
 end
 
 function Events:BAG_UPDATE(event, bagid)
+	Debug(8, "BAG_UPDATE", bagid)
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
 	self.SpamBagQueue[bagid] = true
 	self.SpamBagTotal = (self.SpamBagTotal or 0) + 1
+
+	--on the wrath servers they messed up the BAG_UPDATE_DELAYED event, so lets compensate for this until they freaking fix it 
+	if BSYC.IsWLK_C then
+		self:DoTimer("FixWrath-BAG_UPDATE_DELAYED", function() self:BAG_UPDATE_DELAYED() end, 2)
+	end
 end
 
 function Events:BAG_UPDATE_DELAYED(event)
+	Debug(8, "BAG_UPDATE_DELAYED")
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
 	if not self.SpamBagTotal then self.SpamBagTotal = 0 end
 	--NOTE: BSYC:GetHashTableLen(self.SpamBagQueue) may show more then is actually processed.  Example it has the banks in queue but we aren't at a bank.
