@@ -213,7 +213,7 @@ function Events:BAG_UPDATE(event, bagid)
 
 	--on the wrath servers they messed up the BAG_UPDATE_DELAYED event, so lets compensate for this until they freaking fix it 
 	if BSYC.IsWLK_C then
-		self:DoTimer("FixWrath-BAG_UPDATE_DELAYED", function() self:BAG_UPDATE_DELAYED() end, 2)
+		self:DoTimer("FixWrath-BAG_UPDATE_DELAYED", function() self:BAG_UPDATE_DELAYED() end, 1)
 	end
 end
 
