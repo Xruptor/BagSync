@@ -210,11 +210,6 @@ function Events:BAG_UPDATE(event, bagid)
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
 	self.SpamBagQueue[bagid] = true
 	self.SpamBagTotal = (self.SpamBagTotal or 0) + 1
-
-	--on the wrath servers they messed up the BAG_UPDATE_DELAYED event, so lets compensate for this until they freaking fix it 
-	if BSYC.IsWLK_C then
-		self:DoTimer("FixWrath-BAG_UPDATE_DELAYED", function() self:BAG_UPDATE_DELAYED() end, 1)
-	end
 end
 
 function Events:BAG_UPDATE_DELAYED(event)
