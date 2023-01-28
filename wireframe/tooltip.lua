@@ -387,9 +387,8 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList, advUnitList)
 
 end
 
-function Tooltip:ItemCount(data, itemID, allowList, source, total)
+function Tooltip:ItemCount(data, itemID, allowList, source, total, skipTotal)
 	if #data < 1 then return total end
-
 	for i=1, #data do
 		if data[i] then
 			local link, count, identifier = strsplit(";", data[i])
@@ -397,7 +396,9 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total)
 				if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
 				if link == itemID then
 					allowList[source] = allowList[source] + (count or 1)
-					total = total + (count or 1)
+					if not skipTotal then
+						total = total + (count or 1)
+					end
 				end
 			end
 		end
@@ -639,6 +640,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	local grandTotal = 0
 	local unitList = {}
+	local tmpGuildList = {}
 
 	--the true is to set it to silent and not return an error if not found
 	--only display advanced search results in the BagSync search window
@@ -680,8 +682,13 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 					end
 				end
 			end
-			if not BSYC.options.showGuildSeparately then
-				grandTotal = self:ItemCount(unitObj.data.bag, link, allowList, "guild", grandTotal)
+			if not BSYC.options.showGuildSeparately and BSYC.options.enableGuild then
+				local guildObj = Data:GetGuild(unitObj.data)
+				if guildObj and guildObj.bag then
+					--make sure we don't add to the grand total twice for the same guild
+					grandTotal = self:ItemCount(guildObj.bag, link, allowList, "guild", grandTotal, (tmpGuildList[guildObj] and true) or false)
+					tmpGuildList[guildObj] = true
+				end
 			end
 		else
 			if BSYC.options.showGuildSeparately then

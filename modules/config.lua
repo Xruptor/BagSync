@@ -341,8 +341,19 @@ options.args.display = {
 					arg = "display.enableGuild",
 					hidden = function() return BSYC.IsClassic end,
 				},
-				guildbankscanalert = {
+				guildseparately = {
 					order = 3,
+					type = "toggle",
+					name = L.DisplayGuildSeparately,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.showGuildSeparately",
+					hidden = function() return BSYC.IsClassic end,
+				},
+				guildbankscanalert = {
+					order = 4,
 					type = "toggle",
 					name = L.DisplayGuildBankScanAlert,
 					width = "full",
@@ -354,7 +365,7 @@ options.args.display = {
 					hidden = function() return BSYC.IsClassic end,
 				},
 				accuratebattlepets = {
-					order = 4,
+					order = 5,
 					type = "toggle",
 					name = L.DisplayAccurateBattlePets,
 					width = "full",

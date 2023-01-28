@@ -408,11 +408,11 @@ function Data:CheckExpiredAuctions()
 
 end
 
-function Data:GetGuild()
-	if not IsInGuild() then return end
-	Debug(2, "GetGuild")
+function Data:GetGuild(unitObj)
+	if not unitObj and not IsInGuild() then return end
+	if not unitObj then	Debug(2, "GetGuild", unitObj) end
 
-	local player = Unit:GetUnitInfo()
+	local player = unitObj or Unit:GetUnitInfo()
 	if not player.guild or not player.guildrealm then return end
 
 	if not BagSyncDB[player.guildrealm] then BagSyncDB[player.guildrealm] = {} end
