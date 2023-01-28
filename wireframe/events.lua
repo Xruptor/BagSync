@@ -66,7 +66,6 @@ function Events:StopTimer(sName)
 	if not self.timers[sName] then return end
 	self:CancelTimer(self.timers[sName])
 	self.timers[sName] = nil
-	Debug(8, "StopTimer", sName)
 end
 
 function Events:OnEnable()
@@ -210,9 +209,14 @@ function Events:BAG_UPDATE(event, bagid)
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
 	self.SpamBagQueue[bagid] = true
 	self.SpamBagTotal = (self.SpamBagTotal or 0) + 1
+
+	--seems like Blizzard messed up the BAG_UPDATE_DELAYED event, so lets compensate for this until they freaking fix it 
+	self:DoTimer("TempFix-BAG_UPDATE_DELAYED", function() self:BAG_UPDATE_DELAYED() end, 1)
 end
 
 function Events:BAG_UPDATE_DELAYED(event)
+	self:StopTimer("TempFix-BAG_UPDATE_DELAYED") --temp fix to prevent multiple spam events if the event actually fires
+
 	Debug(8, "BAG_UPDATE_DELAYED")
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
 	if not self.SpamBagTotal then self.SpamBagTotal = 0 end
