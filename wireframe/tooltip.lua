@@ -680,8 +680,13 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 					end
 				end
 			end
+			if not BSYC.options.showGuildSeparately then
+				grandTotal = self:ItemCount(unitObj.data.bag, link, allowList, "guild", grandTotal)
+			end
 		else
-			grandTotal = self:ItemCount(unitObj.data.bag, link, allowList, "guild", grandTotal)
+			if BSYC.options.showGuildSeparately then
+				grandTotal = self:ItemCount(unitObj.data.bag, link, allowList, "guild", grandTotal)
+			end
 		end
 
 		--only process the totals if we have something to work with

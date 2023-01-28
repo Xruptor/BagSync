@@ -102,6 +102,7 @@ function Data:OnEnable()
 	if BSYC.options.useIconLocations == nil then BSYC.options.useIconLocations = true end
 	if BSYC.options.itemTotalsByClassColor == nil then BSYC.options.itemTotalsByClassColor = false end
 	if BSYC.options.showRaceIcons == nil then BSYC.options.showRaceIcons = true end
+	if BSYC.options.showGuildSeparately == nil then BSYC.options.showGuildSeparately = true end
 
 	--setup the default colors
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end
