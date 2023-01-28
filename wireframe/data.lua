@@ -250,6 +250,31 @@ function Data:FixDB()
 	BSYC:Print("|cFFFF9900"..L.FixDBComplete.."|r")
 end
 
+function Data:ResetFramePositions()
+	local moduleList = {
+		"Blacklist",
+		"Currency",
+		"Professions",
+		"Profiles",
+		"Search",
+		"SortOrder",
+		"Debug",
+	}
+
+	for i=1, #moduleList do
+		local mName = moduleList[i]
+		if BSYC:GetModule(mName, true) and BSYC:GetModule(mName).frame then
+			BSYC:GetModule(mName).frame:ClearAllPoints()
+			BSYC:GetModule(mName).frame:SetPoint("CENTER",UIParent,"CENTER",0,0)
+		end
+	end
+
+	if _G["BagSyncMoneyTooltip"] then
+		_G["BagSyncMoneyTooltip"]:ClearAllPoints()
+		_G["BagSyncMoneyTooltip"]:SetPoint("CENTER",UIParent,"CENTER",0,0)
+	end
+end
+
 function Data:LoadSlashCommand()
 	Debug(2, "LoadSlashCommand")
 
@@ -290,6 +315,9 @@ function Data:LoadSlashCommand()
 			elseif cmd == L.SlashFixDB then
 				self:FixDB()
 				return true
+			elseif cmd == L.SlashResetPOS then
+				self:ResetFramePositions()
+				return true
 			elseif cmd == L.SlashResetDB then
 				StaticPopup_Show("BAGSYNC_RESETDATABASE")
 				return true
@@ -328,6 +356,7 @@ function Data:LoadSlashCommand()
 		BSYC:Print("/bgs "..L.SlashResetDB.." - "..L.HelpResetDB)
 		BSYC:Print("/bgs "..L.SlashConfig.." - "..L.HelpConfigWindow)
 		BSYC:Print("/bgs "..L.SlashDebug.." - "..L.HelpDebug)
+		BSYC:Print("/bgs "..L.SlashResetPOS.." - "..L.HelpResetPOS)
 	end
 
 	--/bgs and /bagsync

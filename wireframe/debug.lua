@@ -110,6 +110,7 @@ local function CreateExportFrame()
 	if Debug.exportFrame then return Debug.exportFrame end
 
 	local exportFrame = CreateFrame("FRAME", nil, UIParent, BackdropTemplateMixin and "BackdropTemplate")
+	exportFrame:SetClampedToScreen(true)
 
 	exportFrame:SetBackdrop({
 		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",

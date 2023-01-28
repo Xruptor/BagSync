@@ -138,6 +138,7 @@ L.SlashProfessions = "professions"
 L.SlashBlacklist = "blacklist"
 L.SlashResetDB = "resetdb"
 L.SlashDebug = "debug"
+L.SlashResetPOS = "resetpos"
 ------------------------
 -- ----THESE USE THE SLASH OPERATOR COMMANDS FOUND ABOVE
 L.HelpSearchItemName = "Does a quick search for an item"
@@ -151,6 +152,7 @@ L.HelpConfigWindow = "Opens the BagSync Config Window"
 L.HelpProfessionsWindow = "Opens the professions window."
 L.HelpBlacklistWindow = "Opens the blacklist window."
 L.HelpDebug = "Opens the BagSync Debug window."
+L.HelpResetPOS = "Resets all frame positions for each BagSync module."
 ------------------------
 L.EnableBagSyncTooltip = "Enable BagSync Tooltips"
 L.ShowOnModifier = "BagSync tooltip modifier key:"
