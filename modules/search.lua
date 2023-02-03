@@ -360,10 +360,8 @@ function Search:AddEntry(entry)
 	local r, g, b, hex = GetItemQualityColor(rarity)
 	local isBattlePet = false
 
-	local _, _, identifier, optOne = strsplit(";", link)
-	if identifier and tonumber(identifier) == 2 and optOne then
-		isBattlePet = true
-	end
+	local _, _, qOpts = BSYC:Split(link)
+	if qOpts and qOpts.battlepet then isBattlePet = true end
 
 	--if its a battlepet and we don't have access to BattlePetTooltip, then don't display it
 	if isBattlePet and not BattlePetTooltip then return end
@@ -383,7 +381,7 @@ function Search:AddEntry(entry)
 			if not isBattlePet then
 				ChatEdit_InsertLink(link)
 			else
-				FloatingBattlePet_Toggle(tonumber(optOne), 0, 0, 0, 0, 0, nil, nil)
+				FloatingBattlePet_Toggle(tonumber(qOpts.battlepet), 0, 0, 0, 0, 0, nil, nil)
 			end
 		end)
 	label:SetCallback(
@@ -396,7 +394,7 @@ function Search:AddEntry(entry)
 				GameTooltip:Show()
 			else
 				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
-				BattlePetToolTip_Show(tonumber(optOne), 0, 0, 0, 0, 0, nil)
+				BattlePetToolTip_Show(tonumber(qOpts.battlepet), 0, 0, 0, 0, 0, nil)
 			end
 		end)
 	label:SetCallback(
@@ -484,15 +482,15 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 
 	for i=1, #data do
 		if data[i] then
-			local link, count, identifier, optOne = strsplit(";", data[i])
+			local link, count, qOpts = BSYC:Split(data[i])
 
 			if link then
 				local dName, dItemLink, dRarity, dTexture
 				local testMatch = false
 
-				--if identifier is 2 then it's a battlepet, optOne would be speciesID
-				if identifier and tonumber(identifier) == 2 and optOne then
-					dName, dTexture = C_PetJournal.GetPetInfoBySpeciesID(optOne)
+				--qOpts.battlepet would be speciesID
+				if qOpts and qOpts.battlepet then
+					dName, dTexture = C_PetJournal.GetPetInfoBySpeciesID(qOpts.battlepet)
 					dRarity = 1
 					dItemLink = data[i]
 					testMatch = customSearch:Find(searchStr or '', dName) --searchStr cannot be nil

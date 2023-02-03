@@ -391,7 +391,7 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total, skipTotal)
 	if #data < 1 then return total end
 	for i=1, #data do
 		if data[i] then
-			local link, count, identifier = strsplit(";", data[i])
+			local link, count, qOpts = BSYC:Split(data[i], true)
 			if link then
 				if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
 				if link == itemID then
@@ -616,7 +616,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		return
 	end
 
-	link = strsplit(";", link) --if we are parsing a database entry, return only the itemID portion
+	link = BSYC:Split(link, true) --if we are parsing a database entry, return only the itemID portion
 	local shortID = BSYC:GetShortItemID(link)
 
 	local permIgnore ={

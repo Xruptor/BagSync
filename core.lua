@@ -69,33 +69,68 @@ function BSYC:GetHashTableLen(tbl)
 	return count
 end
 
-function BSYC:serializeTable(val, name, skipnewlines, depth)
-    skipnewlines = skipnewlines or false
-    depth = depth or 0
+function BSYC:DecodeOpts(tblString)
+	--Example = "battlepet=245|auction=124567|foo=bar|tickle=elmo|gtab=3|test=12:3:4|forthe=horde"
+	local t = {}
+	--([^=]+) everything except '='
+	-- followed by '='
+	-- ([^|]+) = then everything except '|'
+	-- followed by an optional '|'
+	for k, v in string.gmatch(tblString, "([^=]+)=([^|]+)|*") do
+	  t[k] = v
+	end
+	return t
+end
 
-    local tmp = string.rep(" ", depth)
+function BSYC:EncodeOpts(tbl, link)
+	if not tbl then return nil end
+	local tmpStr = ""
 
-    if name then tmp = tmp .. name .. " = " end
+	if link then
+		local xLink, xCount, qOpts = self:Split(link)
 
-    if type(val) == "table" then
-        tmp = tmp .. "{" .. (not skipnewlines and "\n" or "")
+		if xLink then
+			if not xCount then xCount = 1 end
+			if qOpts then
+				for k, v in pairs(tbl) do
+					--overwrite our stored values with the newer ones
+					qOpts[k] = v
+				end
+				tbl = qOpts
+			end
 
-        for k, v in pairs(val) do
-            tmp =  tmp .. self:serializeTable(v, k, skipnewlines, depth + 1) .. "," .. (not skipnewlines and "\n" or "")
-        end
+			for k, v in pairs(tbl) do
+				tmpStr = tmpStr.."|"..k.."="..v
+			end
+			tmpStr = string.sub(tmpStr, 2)  -- remove first pipe
 
-        tmp = tmp .. string.rep(" ", depth) .. "}"
-    elseif type(val) == "number" then
-        tmp = tmp .. tostring(val)
-    elseif type(val) == "string" then
-        tmp = tmp .. string.format("%q", val)
-    elseif type(val) == "boolean" then
-        tmp = tmp .. (val and "true" or "false")
-    else
-        tmp = tmp .. "\"[inserializeable datatype:" .. type(val) .. "]\""
-    end
+			if tmpStr ~= "" then
+				return xLink..";"..xCount..";"..tmpStr
+			end
+		end
 
-    return tmp
+		--this is an invalid ParseItemLink, return empty string
+		return nil
+	end
+
+	for k, v in pairs(tbl) do
+		tmpStr = tmpStr.."|"..k.."="..v
+	end
+
+	tmpStr = string.sub(tmpStr, 2)  -- remove first pipe
+	if tmpStr ~= "" then
+		return tmpStr
+	end
+
+	return nil
+end
+
+function BSYC:Split(dataStr, skipOpts)
+	local qLink, qCount, qOpts = strsplit(";", dataStr)
+	if not skipOpts and qOpts then
+		return qLink, qCount, self:DecodeOpts(qOpts)
+	end
+	return qLink, qCount
 end
 
 function BagSync_ShowWindow(windowName)
@@ -120,7 +155,7 @@ function BSYC:ParseItemLink(link, count)
 		if type(link) == "number" then link = tostring(link) end
 
 		--if we are parsing a database entry just return it, chances are it's a battlepet anyways
-		local qLink, qCount, qIdentifier = strsplit(";", link)
+		local qLink, qCount, qOpts = BSYC:Split(link, true)
 		if qLink and qCount then
 			return link
 		end
@@ -226,8 +261,11 @@ function BSYC:CreateFakeBattlePetID(link, count, speciesID)
 
 		if fakePetID then
 			if not count then count = 1 end
-			--put a 2 at the end as an identifier to mark it as a battlepet
-			return fakePetID..';'..count..';2;'..speciesID
+
+			local encodeStr = self:EncodeOpts({battlepet=speciesID})
+			if encodeStr then
+				return fakePetID..";"..count..";"..encodeStr
+			end
 		end
 	end
 end

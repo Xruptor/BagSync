@@ -164,7 +164,6 @@ function Data:DebugDumpOptions()
 					if k == "colors" then
 						BSYC.DEBUG(1, "DumpOptions", k, tostring(x), y.r * 255, y.g * 255, y.b * 255)
 					end
-					--Debug(1, k, tostring(x), BSYC:serializeTable(y))
 				end
 			end
 		end
@@ -378,17 +377,9 @@ function Data:CheckExpiredAuctions()
 				if unitObj.data.auction.bag[x] then
 
 					local timeleft
-					local link, count, identifier, optOne, optTwo = strsplit(";", unitObj.data.auction.bag[x])
+					local link, count, qOpts = BSYC:Split(unitObj.data.auction.bag[x])
 
-					identifier = tonumber(identifier)
-
-					if identifier and identifier == 1 then
-						--it's a regular auction item
-						timeleft = optOne
-					else
-						--it's a battlepet with identifier of 2
-						timeleft = optTwo
-					end
+					timeleft = (qOpts and qOpts.auction) or nil
 
 					--if the timeleft is greater than current time than keep it, it's not expired
 					if link and timeleft and tonumber(timeleft) then

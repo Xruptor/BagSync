@@ -57,7 +57,7 @@ options.args = {} --initiate the arguements for the options to display
 
 local function get(info)
 
-	local p, c = string.split(".", info.arg)
+	local p, c = strsplit(".", info.arg)
 
 	if p == "color" then
 		return BSYC.options.colors[c].r, BSYC.options.colors[c].g, BSYC.options.colors[c].b
@@ -76,7 +76,7 @@ end
 
 local function set(info, arg1, arg2, arg3, arg4)
 
-	local p, c = string.split(".", info.arg)
+	local p, c = strsplit(".", info.arg)
 
 	if p == "color" then
 		BSYC.options.colors[c].r = arg1

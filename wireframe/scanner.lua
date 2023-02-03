@@ -323,8 +323,12 @@ function Scanner:SaveGuildBank()
 					end
 
 					if link then
-						table.insert(slotItems, link)
+						local encodeStr = BSYC:EncodeOpts({gtab=tab}, link)
+						if encodeStr then
+							table.insert(slotItems, encodeStr)
+						end
 					end
+
 				end
 			end
 		end
@@ -432,21 +436,10 @@ function Scanner:SaveAuctionHouse()
 						parseLink = BSYC:ParseItemLink(itemObj.itemKey.itemID, itemCount)
 					end
 
-					--we are going to make the third field an identifier field, so we can know what it is for future reference
-					--for now auction house will be 1, with 4th field being expTime, unless we already have another identifier in which case it would be 5th
-
-					--before we do that though, lets check for an exsisting identifier
-					local xLink, xCount, xIdentifier = strsplit(";", parseLink)
-					xIdentifier = tonumber(xIdentifier)
-
-					if not xIdentifier then
-						parseLink = parseLink..";1;"..expTime
-					else
-						--it's a battlepet or something else, so just add it to the end
-						parseLink = parseLink..";"..expTime
+					local encodeStr = BSYC:EncodeOpts({auction=expTime}, parseLink)
+					if encodeStr then
+						table.insert(slotItems, encodeStr)
 					end
-
-					table.insert(slotItems, parseLink)
 				end
 			end
 		end
@@ -475,21 +468,10 @@ function Scanner:SaveAuctionHouse()
 						local expireTime = time() + timestampChk[timeLeft]
 						local parseLink = BSYC:ParseItemLink(link, count)
 
-						--we are going to make the third field an identifier field, so we can know what it is for future reference
-						--for now auction house will be 1, with 4th field being expTime, unless we already have another identifier in which case it would be 5th
-
-						--before we do that though, lets check for an exsisting identifier
-						local xLink, xCount, xIdentifier = strsplit(";", parseLink)
-						xIdentifier = tonumber(xIdentifier)
-
-						if not xIdentifier then
-							parseLink = parseLink..";1;"..expireTime
-						else
-							--it's a battlepet or something else, so just add it to the end
-							parseLink = parseLink..";"..expireTime
+						local encodeStr = BSYC:EncodeOpts({auction=expTime}, parseLink)
+						if encodeStr then
+							table.insert(slotItems, encodeStr)
 						end
-
-						table.insert(slotItems, parseLink)
 					end
 				end
 			end
@@ -866,7 +848,7 @@ function Scanner:SaveCraftedReagents()
 		for i=1, #bagData do
 			--do we even have something to work with?
 			if bagData[i] then
-				local itemID, count, identifier = strsplit(";", bagData[i])
+				local itemID, count, qOpts = BSYC:Split(bagData[i], true)
 				itemID = tonumber(itemID)
 
 				--only save if it's not one of the reagents that was used
@@ -893,7 +875,7 @@ function Scanner:SaveCraftedReagents()
 			for i=1, #bagData do
 				--do we even have something to work with?
 				if bagData[i] then
-					local itemID, count, identifier = strsplit(";", bagData[i])
+					local itemID, count, qOpts = BSYC:Split(bagData[i], true)
 					itemID = tonumber(itemID)
 
 					--only save if it's not one of the reagents that was used
