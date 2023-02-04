@@ -54,7 +54,8 @@ function Search:OnEnable()
 	refreshbutton:SetHeight(20)
 	refreshbutton:SetCallback("OnClick", function()
 		searchbar:ClearFocus()
-		self:DoSearch(searchbar:GetText())
+		local sbText = searchbar:GetText() or ''
+		self:DoSearch((string.len(sbText) > 0 and sbText) or Search.searchStr)
 	end)
 	Search.refreshbutton = refreshbutton
 	w:AddChild(refreshbutton)
@@ -339,7 +340,6 @@ function Search:OnEnable()
 end
 
 function Search:StartSearch(searchStr)
-
 	self.frame:Show()
 
 	if not BSYC.options.alwaysShowAdvSearch then
@@ -348,7 +348,6 @@ function Search:StartSearch(searchStr)
 	else
 		self.advancedsearchframe.advsearchbar:SetText(searchStr)
 	end
-
 end
 
 function Search:AddEntry(entry)
@@ -496,7 +495,16 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 					testMatch = customSearch:Find(searchStr or '', dName) --searchStr cannot be nil
 				else
 					dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo("item:"..link)
-					testMatch = itemScanner:Matches(dItemLink, searchStr)
+					if dItemLink then
+						--if the user isn't using any filters i.e (name:, tip:, class:) then lets default to name:
+						if searchStr:find(':') then
+							--they are using filters so sent it to itemsearch
+							testMatch = itemScanner:Matches(dItemLink, searchStr)
+						else
+							--no filters are being used, default to name search only
+							testMatch = customSearch:Find(searchStr or '', dName) --searchStr cannot be nil
+						end
+					end
 				end
 
 				--for debugging purposes only
@@ -521,6 +529,7 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 end
 
 function Search:DoReset()
+	Search.searchStr = nil
 	Search.advUnitList = nil
 	self.advancedsearchframe.advsearchbar:SetText(nil)
 	self.searchbar:SetText(nil)
@@ -582,19 +591,23 @@ end
 
 function Search:DoSearch(searchStr, advUnitList, advAllowList)
 
+	local sbText = self.searchbar:GetText() or ''
+	local advsbText = self.advancedsearchframe.advsearchbar:GetText() or ''
+
 	--only do if we aren't doing an advanced search
 	if not advUnitList then
 		Search.advUnitList = nil -- we aren't doing an advanced search so lets reset this
+		searchStr = (string.len(sbText) > 0 and sbText) or Search.searchStr
 		if not searchStr then return end
 		if string.len(searchStr) < 1 then return end
-		searchStr = searchStr or self.searchbar:GetText()
 	else
-		searchStr = searchStr or self.advancedsearchframe.advsearchbar:GetText()
+		searchStr = (string.len(advsbText) > 0 and advsbText) or Search.searchStr
 		self.advancedsearchframe.advsearchbar:SetText(nil) --reset always, we only want to use searchStr
 	end
 
 	self.searchbar:SetText(nil) --reset always, we only want to use searchStr
 	searchStr = searchStr:lower() --always make sure everything is lowercase when doing searches
+	Search.searchStr = searchStr --store globally for the refresh
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
 
 	local searchTable = {}
@@ -702,7 +715,6 @@ function Search:DisplayAdvSearchLists()
 	self.advancedsearchframe.locationlistscrollframe:ReleaseChildren() --clear out the scrollframe
 
 	local playerListTable = {}
-	local tempList = {}
 
 	--show simple for ColorizeUnit
 	for unitObj in Data:IterateUnits(true) do

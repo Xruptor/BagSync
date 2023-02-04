@@ -457,14 +457,8 @@ function Data:IterateUnits(dumpAll, filterList)
 						--return everything regardless of user settings
 						if dumpAll or filterList then
 
-							skipReturn = false
-
-							if filterList then
-								if filterList[argKey][k] then
-									skipReturn = false
-								else
-									skipReturn = true
-								end
+							if filterList and not filterList[argKey][k] then
+								skipReturn = true
 							end
 
 							if not skipReturn then
@@ -472,8 +466,6 @@ function Data:IterateUnits(dumpAll, filterList)
 							end
 
 						elseif v.faction and (v.faction == BSYC.db.player.faction or BSYC.options.enableFaction) then
-
-							skipReturn = false
 
 							--check for guilds and if we have them merged or not
 							if BSYC.options.enableGuild and isGuild then

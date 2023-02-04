@@ -86,10 +86,6 @@ function Events:OnEnable()
 
 	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", function(event, slotID)
 		Scanner:SaveBank(true)
-		if BSYC.IsRetail then
-			--check if they crafted an item outside the bank, if so then do a parse check to update item count.
-			self:DoTimer("SaveCraftedReagents", function() Scanner:SaveCraftedReagents() end, 1)
-		end
 	end)
 
 	--register our custom Event Handlers
@@ -103,10 +99,6 @@ function Events:OnEnable()
 	if IsReagentBankUnlocked then
 		self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED", function(event, slotID)
 			Scanner:SaveReagents()
-			if BSYC.IsRetail then
-				--check if they crafted an item outside the bank, if so then do a parse check to update item count.
-				self:DoTimer("SaveCraftedReagents", function() Scanner:SaveCraftedReagents() end, 1)
-			end
 		end)
 		self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:SaveReagents() end)
 	end
@@ -120,6 +112,7 @@ function Events:OnEnable()
 	--check to see if guildbanks are even enabled on server
 	if CanGuildBankRepair then
 		self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED", function()
+			--due to a slight delay on the server, we have to add small timer before processing
 			self:DoTimer("GuildBankScan", function() self:GuildBank_Changed() end, 0.2)
 		end)
 	end
@@ -127,11 +120,6 @@ function Events:OnEnable()
 	--only do currency checks if the server even supports it
 	if C_CurrencyInfo then
 		self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
-	end
-
-	if BSYC.IsRetail then
-		--save any crafted item info in case they aren't at a bank
-		self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", function(event, unitTarget, castGUID, spellID) Scanner:ParseCraftedInfo(unitTarget, castGUID, spellID) end)
 	end
 
 	--Force guild roster update, so we can grab guild name.  Note this is nil on login, have to check for Classic and Retail though
@@ -209,14 +197,9 @@ function Events:BAG_UPDATE(event, bagid)
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
 	self.SpamBagQueue[bagid] = true
 	self.SpamBagTotal = (self.SpamBagTotal or 0) + 1
-
-	--seems like Blizzard messed up the BAG_UPDATE_DELAYED event, so lets compensate for this until they freaking fix it 
-	self:DoTimer("TempFix-BAG_UPDATE_DELAYED", function() self:BAG_UPDATE_DELAYED() end, 1)
 end
 
 function Events:BAG_UPDATE_DELAYED(event)
-	self:StopTimer("TempFix-BAG_UPDATE_DELAYED") --temp fix to prevent multiple spam events if the event actually fires
-
 	Debug(8, "BAG_UPDATE_DELAYED")
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
 	if not self.SpamBagTotal then self.SpamBagTotal = 0 end
@@ -249,11 +232,6 @@ function Events:BAG_UPDATE_DELAYED(event)
 	self.SpamBagTotal = 0
 
 	Debug(2, "SpamBagQueue", "totalProcessed", totalProcessed)
-
-	if BSYC.IsRetail then
-		--check if they crafted an item outside the bank, if so then do a parse check to update item count.
-		self:DoTimer("SaveCraftedReagents", function() Scanner:SaveCraftedReagents() end, 1)
-	end
 end
 
 function Events:GuildBank_Open()
