@@ -15,8 +15,8 @@ end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local AceGUI = LibStub("AceGUI-3.0")
-local itemScanner = LibStub('LibItemSearch-1.2')
-local customSearch = LibStub('CustomSearch-1.0')
+local itemScanner = LibStub("ItemSearch-1.3")
+local customSearch = LibStub("CustomSearch-1.0")
 
 function Search:OnEnable()
 

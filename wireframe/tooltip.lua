@@ -243,6 +243,42 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET
 	return tmpTag
 end
 
+function Tooltip:DoSort(tblData)
+
+	--sort the list by our sortIndex then by realm and finally by name
+	if BSYC.options.sortTooltipByTotals then
+		table.sort(tblData, function(a, b)
+			return a.count > b.count;
+		end)
+	elseif BSYC.options.sortByCustomOrder then
+		table.sort(tblData, function(a, b)
+			if a.unitObj.data.SortIndex and b.unitObj.data.SortIndex  then
+				return  a.unitObj.data.SortIndex < b.unitObj.data.SortIndex;
+			else
+				if a.sortIndex  == b.sortIndex then
+					if a.unitObj.realm == b.unitObj.realm then
+						return a.unitObj.name < b.unitObj.name;
+					end
+					return a.unitObj.realm < b.unitObj.realm;
+				end
+				return a.sortIndex < b.sortIndex;
+			end
+		end)
+	else
+		table.sort(tblData, function(a, b)
+			if a.sortIndex  == b.sortIndex then
+				if a.unitObj.realm == b.unitObj.realm then
+					return a.unitObj.name < b.unitObj.name;
+				end
+				return a.unitObj.realm < b.unitObj.realm;
+			end
+			return a.sortIndex < b.sortIndex;
+		end)
+	end
+
+	return tblData
+end
+
 function Tooltip:MoneyTooltip()
 	local tooltip = _G["BagSyncMoneyTooltip"] or nil
 	Debug(2, "MoneyTooltip")
@@ -292,36 +328,8 @@ function Tooltip:MoneyTooltip()
 		end
 	end
 
-	--sort the list by our sortIndex then by realm and finally by name
-	if BSYC.options.sortTooltipByTotals then
-		table.sort(usrData, function(a, b)
-			return a.count > b.count;
-		end)
-	elseif BSYC.options.sortByCustomOrder then
-		table.sort(usrData, function(a, b)
-			if a.unitObj.data.SortIndex and b.unitObj.data.SortIndex  then
-				return  a.unitObj.data.SortIndex < b.unitObj.data.SortIndex;
-			else
-				if a.sortIndex  == b.sortIndex then
-					if a.unitObj.realm == b.unitObj.realm then
-						return a.unitObj.name < b.unitObj.name;
-					end
-					return a.unitObj.realm < b.unitObj.realm;
-				end
-				return a.sortIndex < b.sortIndex;
-			end
-		end)
-	else
-		table.sort(usrData, function(a, b)
-			if a.sortIndex  == b.sortIndex then
-				if a.unitObj.realm == b.unitObj.realm then
-					return a.unitObj.name < b.unitObj.name;
-				end
-				return a.unitObj.realm < b.unitObj.realm;
-			end
-			return a.sortIndex < b.sortIndex;
-		end)
-	end
+	--sort
+	usrData = self:DoSort(usrData)
 
 	for i=1, #usrData do
 		--use GetMoneyString and true to seperate it by thousands
@@ -607,7 +615,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	local origLink = link --store the original unparsed link
 	--remember when no count is provided to ParseItemLink, only the itemID is returned.  Integer or a string if it has bonusID
-	local link = BSYC:ParseItemLink(link)
+	link = BSYC:ParseItemLink(link)
 
 	--make sure we have something to work with
 	--since we aren't using a count, it will return only the itemid
@@ -706,35 +714,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	--only sort items if we have something to work with
 	if #unitList > 0 then
-		if BSYC.options.sortTooltipByTotals then
-			table.sort(unitList, function(a, b)
-				return a.count > b.count;
-			end)
-		elseif BSYC.options.sortByCustomOrder then
-			table.sort(unitList, function(a, b)
-				if a.unitObj.data.SortIndex and b.unitObj.data.SortIndex  then
-					return  a.unitObj.data.SortIndex < b.unitObj.data.SortIndex;
-				else
-					if a.sortIndex  == b.sortIndex then
-						if a.unitObj.realm == b.unitObj.realm then
-							return a.unitObj.name < b.unitObj.name;
-						end
-						return a.unitObj.realm < b.unitObj.realm;
-					end
-					return a.sortIndex < b.sortIndex;
-				end
-			end)
-		else
-			table.sort(unitList, function(a, b)
-				if a.sortIndex  == b.sortIndex then
-					if a.unitObj.realm == b.unitObj.realm then
-						return a.unitObj.name < b.unitObj.name;
-					end
-					return a.unitObj.realm < b.unitObj.realm;
-				end
-				return a.sortIndex < b.sortIndex;
-			end)
-		end
+		unitList = self:DoSort(unitList)
 	end
 
 	local desc, value = '', ''
@@ -819,36 +799,8 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 		end
 	end
 
-	--sort the list by our sortIndex then by realm and finally by name
-	if BSYC.options.sortTooltipByTotals then
-		table.sort(usrData, function(a, b)
-			return a.count > b.count;
-		end)
-	elseif BSYC.options.sortByCustomOrder then
-		table.sort(usrData, function(a, b)
-			if a.unitObj.data.SortIndex and b.unitObj.data.SortIndex  then
-				return  a.unitObj.data.SortIndex < b.unitObj.data.SortIndex;
-			else
-				if a.sortIndex  == b.sortIndex then
-					if a.unitObj.realm == b.unitObj.realm then
-						return a.unitObj.name < b.unitObj.name;
-					end
-					return a.unitObj.realm < b.unitObj.realm;
-				end
-				return a.sortIndex < b.sortIndex;
-			end
-		end)
-	else
-		table.sort(usrData, function(a, b)
-			if a.sortIndex  == b.sortIndex then
-				if a.unitObj.realm == b.unitObj.realm then
-					return a.unitObj.name < b.unitObj.name;
-				end
-				return a.unitObj.realm < b.unitObj.realm;
-			end
-			return a.sortIndex < b.sortIndex;
-		end)
-	end
+	--sort
+	usrData = self:DoSort(usrData)
 
 	if currencyName then
 		objTooltip:AddLine(currencyName, 64/255, 224/255, 208/255)

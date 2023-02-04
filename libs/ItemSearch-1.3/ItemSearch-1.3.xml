@@ -1,0 +1,5 @@
+<Ui>
+	<Script file="API.lua"/>
+	<Script file="Filters.lua"/>
+	<Script file="Tests.lua"/>
+</Ui>

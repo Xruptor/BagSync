@@ -1,0 +1,4 @@
+<Ui>
+	<Script file="C_Everywhere.lua"/>
+	<Script file="Tests.lua"/>
+</Ui>

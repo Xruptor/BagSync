@@ -49,13 +49,6 @@ local function Debug(level, ...)
 	BSYC.DEBUG(level, "CORE", ...)
 end
 
---According to https://github.com/Xruptor/BagSync/issues/196 this partciular OnEvent causes a significant delay on startup for users.
---Perhaps the event is being fired WAY too much for folks?
-if LibStub("LibItemSearch-1.2") and LibStub("LibItemSearch-1.2").Scanner and LibStub("LibItemSearch-1.2").Scanner:GetScript("OnEvent") then
-	LibStub("LibItemSearch-1.2").Scanner:UnregisterEvent("GET_ITEM_INFO_RECEIVED")
-	LibStub("LibItemSearch-1.2").Scanner:SetScript("OnEvent", nil)
-end
-
 --use /framestack to debug windows and show tooltip information
 --if you press SHIFT while doing the above command it gives you a bit more information
 

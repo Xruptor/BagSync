@@ -1,5 +1,5 @@
 --[[
-Copyright 2013-2022 João Cardoso
+Copyright 2013-2023 João Cardoso
 CustomSearch is distributed under the terms of the GNU General Public License (Version 3).
 As a special exception, the copyright holders of this library give you permission to embed it
 with independent modules to produce an addon, regardless of the license terms of these
@@ -18,8 +18,9 @@ along with the library. If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
 This file is part of CustomSearch.
 --]]
 
-local Lib = LibStub:NewLibrary('CustomSearch-1.0', 9)
+local Lib = LibStub:NewLibrary('CustomSearch-1.0', 10)
 if not Lib then return end
+local None = {}
 
 
 --[[ Parsing ]]--
@@ -103,7 +104,7 @@ function Lib:Filter(tag, operator, search)
 
 	if tag then
 		for _, filter in pairs(self.filters) do
-			for _, value in pairs(filter.tags or {}) do
+			for _, value in pairs(filter.tags or None) do
 				if value:find(tag) then
 					return self:UseFilter(filter, operator, search)
 				end

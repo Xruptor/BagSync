@@ -1,5 +1,5 @@
 --[[
-Copyright 2011-2022 João Cardoso
+Copyright 2011-2023 João Cardoso
 Unfit is distributed under the terms of the GNU General Public License (Version 3).
 As a special exception, the copyright holders of this library give you permission to embed it
 with independent modules to produce an addon, regardless of the license terms of these
@@ -15,7 +15,7 @@ GNU General Public License for more details.
 This file is part of Unfit.
 --]]
 
-local Lib = LibStub:NewLibrary('Unfit-1.0', 12)
+local Lib = LibStub:NewLibrary('Unfit-1.0', 13)
 if not Lib then return end
 
 
@@ -114,9 +114,9 @@ end
 
 --[[ API ]]--
 
-function Lib:IsItemUnusable(...)
-	if ... then
-		local slot, _,_, class, subclass = select(9, GetItemInfo(...))
+function Lib:IsItemUnusable(item)
+	if item then
+		local slot, _,_, class, subclass = select(9, GetItemInfo(item))
 		return Lib:IsClassUnusable(class, subclass, slot)
 	end
 end
