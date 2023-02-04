@@ -456,6 +456,18 @@ options.args.display = {
 					disabled = function() return not BSYC.options["enableGuild"] end,
 					hidden = function() return BSYC.IsClassic end,
 				},
+				guildbanktabs = {
+					order = 7,
+					type = "toggle",
+					name = L.DisplayGuildBankTabs,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.showGuildTabs",
+					disabled = function() return not BSYC.options["enableGuild"] end,
+					hidden = function() return BSYC.IsClassic end,
+				},
 			}
 		},
 		groupsorting = {
@@ -781,8 +793,19 @@ options.args.color = {
 			set = set,
 			arg = "color.itemid",
 		},
-		resetcolors = {
+		guildtabs = {
 			order = 8,
+			type = "color",
+			name = L.ColorGuildTabs,
+			width = "full",
+			hasAlpha = false,
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "color.guildtabs",
+		},
+		resetcolors = {
+			order = 9,
 			type = "execute",
 			name = L.DefaultColors,
 			func = function()
@@ -791,13 +814,13 @@ options.args.color = {
 			end,
 		},
 		emptyseparator = {
-			order = 9,
+			order = 10,
 			fontSize = "medium",
 			type = "description",
 			name = " ",
 		},
 		showuniqueitemsgroup = {
-			order = 10,
+			order = 11,
 			name = L.ConfigDisplay,
 			type = "group",
 			guiInline = true,

@@ -350,6 +350,7 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList, advUnitList)
 	local tallyString = ""
 	local total = 0
 	local grouped = 0
+	local gTabStr = ""
 
 	--order in which we want stuff displayed
 	local list = {
@@ -362,6 +363,16 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList, advUnitList)
 		[7] = { source="void", 		desc=L.Tooltip_void },
 		[8] = { source="auction", 	desc=L.Tooltip_auction },
 	}
+
+	--check for guild tabs first only on servers that even have guild banks enabled
+	if BSYC.options.showGuildTabs and CanGuildBankRepair and BSYC:GetHashTableLen(allowList["gtab"]) > 0 then
+		for tab=1, MAX_GUILDBANK_TABS do
+			if allowList["gtab"][tab] then
+				gTabStr = gTabStr..","..tostring(allowList["gtab"][tab])
+			end
+		end
+		gTabStr = string.sub(gTabStr, 2)  -- remove comma
+	end
 
 	for i = 1, #list do
 		local count, desc = allowList[list[i].source], list[i].desc
@@ -378,7 +389,12 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList, advUnitList)
 			desc = self:HexColor(self:GetClassColor(unitObj, 2), desc)..":"
 			count = self:HexColor(BSYC.options.colors.second, comma_value(count))
 
-			tallyString = tallyString..((grouped > 1 and L.TooltipDelimiter) or "")..desc.." "..count
+			--check for guild tab
+			if string.len(gTabStr) > 0 then
+				gTabStr = self:HexColor(BSYC.options.colors.guildtabs, " ["..L.TooltipGuildTabs.." "..gTabStr.."]")
+			end
+
+			tallyString = tallyString..((grouped > 1 and L.TooltipDelimiter) or "")..desc.." "..count..gTabStr
 		end
 	end
 
@@ -399,11 +415,16 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total, skipTotal)
 	if #data < 1 then return total end
 	for i=1, #data do
 		if data[i] then
-			local link, count, qOpts = BSYC:Split(data[i], true)
+			--we only really want the qOpts for guild banks to get the guild tab tally
+			local link, count, qOpts = BSYC:Split(data[i], (source ~= "guild" and true) or (not BSYC.options.showGuildTabs))
 			if link then
 				if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
 				if link == itemID then
 					allowList[source] = allowList[source] + (count or 1)
+					--check for any guild bank tabs and store the locations found
+					if source == "guild" and qOpts and qOpts.gtab then
+						allowList["gtab"][tonumber(qOpts.gtab)] = tonumber(qOpts.gtab)
+					end
 					if not skipTotal then
 						total = total + (count or 1)
 					end
@@ -667,6 +688,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			["void"] = 0,
 			["auction"] = 0,
 			["guild"] = 0,
+			["gtab"] = {}, --guild bank tab
 		}
 
 		if not unitObj.isGuild then

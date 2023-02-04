@@ -103,6 +103,7 @@ function Data:OnEnable()
 	if BSYC.options.itemTotalsByClassColor == nil then BSYC.options.itemTotalsByClassColor = false end
 	if BSYC.options.showRaceIcons == nil then BSYC.options.showRaceIcons = true end
 	if BSYC.options.showGuildSeparately == nil then BSYC.options.showGuildSeparately = true end
+	if BSYC.options.showGuildTabs == nil then BSYC.options.showGuildTabs = false end
 
 	--setup the default colors
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end
@@ -114,6 +115,7 @@ function Data:OnEnable()
 	if BSYC.options.colors.cross == nil then BSYC.options.colors.cross = { r = 1, g = 125/255, b = 10/255 }  end
 	if BSYC.options.colors.bnet == nil then BSYC.options.colors.bnet = { r = 53/255, g = 136/255, b = 1 }  end
 	if BSYC.options.colors.itemid == nil then BSYC.options.colors.itemid = { r = 82/255, g = 211/255, b = 134/255 }  end
+	if BSYC.options.colors.guildtabs == nil then BSYC.options.colors.guildtabs = { r = 9/255, g = 219/255, b = 224/255 }  end
 
 	--do DB cleanup check by version number
 	if not BSYC.options.addonversion or BSYC.options.addonversion ~= ver then
@@ -182,6 +184,7 @@ function Data:ResetColors()
 	BSYC.options.colors.cross = { r = 1, g = 125/255, b = 10/255 }
 	BSYC.options.colors.bnet = { r = 53/255, g = 136/255, b = 1 }
 	BSYC.options.colors.itemid = { r = 82/255, g = 211/255, b = 134/255 }
+	BSYC.options.colors.itemid = { r = 9/255, g = 219/255, b = 224/255 }
 end
 
 function Data:CleanDB()
