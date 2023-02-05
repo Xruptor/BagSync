@@ -3,7 +3,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhCN")
 if not L then return end
 
 --  zhCN client (NGA-[男爵凯恩]补齐)
---  Last update: 2022/12/16
+--  Last update: 20223/2/5
 
 L.Yes = "Yes"
 L.No = "No"
@@ -21,6 +21,7 @@ L.Tooltip_void = "虚空仓库"
 L.Tooltip_reagents = "材料银行"
 L.Tooltip_auction = "拍卖"
 L.TooltipTotal = "总计:"
+L.TooltipGuildTabs = "公:"
 L.TooltipItemID = "[物品ID]:"
 L.TooltipDebug = "[Debug]:"
 L.TooltipCurrencyID = "[货币ID]:"
@@ -172,6 +173,7 @@ L.DisplayRealmNames = "显示服务器名字"
 L.DisplayRealmAstrick = "显示 [*] 而不是显示 |cffff7d0a[XR]|r 和 |cff3587ff[BNet]|r"
 L.DisplayShortRealmName = "显示短位名字 |cffff7d0a[XR]|r 和 |cff3587ff[BNet]|r"
 L.DisplayFactionIcons = "显示阵营图标"
+L.DisplayGuildBankTabs = "在工具提示中显示银行标签 [1,2,3, 等...]。"
 L.DisplayRaceIcons = "在工具提示中显示角色种族图标。"
 L.DisplaySingleCharLocs = "|cff31d54f[简写]|r 显示物品存储的位置."
 L.DisplayIconLocs = "|cff31d54f[图标]|r 显示物品存储的位置"
@@ -200,6 +202,7 @@ L.ColorGuild = "BagSync [公会] 提示颜色"
 L.ColorCrossRealm = "BagSync [服务器] 提示颜色"
 L.ColorBNET = "BagSync [战网] 提示颜色"
 L.ColorItemID = "BagSync [物品ID] 提示颜色"
+L.ColorGuildTabs = "公会标签 [1,2,3, 等...] 提示颜色"
 L.ConfigHeader = "各种 BagSync 功能的设置"
 L.ConfigDisplay = "显示"
 L.ConfigTooltipHeader = "显示的 BagSync 提示信息的设置"
