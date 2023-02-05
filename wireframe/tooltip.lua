@@ -415,14 +415,20 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total, skipTotal)
 	if #data < 1 then return total end
 	for i=1, #data do
 		if data[i] then
-			--we only really want the qOpts for guild banks to get the guild tab tally
-			local link, count, qOpts = BSYC:Split(data[i], (source ~= "guild" and true) or (not BSYC.options.showGuildTabs))
+			--we only really want the qOpts for guild banks to get the guild tab tally during the ItemCount process, otherwise it's extra processing time
+			local skipOpts = true
+			if source == "guild" and BSYC.options.showGuildTabs then
+				skipOpts = false
+			end
+
+			local link, count, qOpts = BSYC:Split(data[i], skipOpts)
+
 			if link then
 				if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
 				if link == itemID then
 					allowList[source] = allowList[source] + (count or 1)
 					--check for any guild bank tabs and store the locations found
-					if source == "guild" and qOpts and qOpts.gtab then
+					if qOpts and qOpts.gtab then
 						allowList["gtab"][tonumber(qOpts.gtab)] = tonumber(qOpts.gtab)
 					end
 					if not skipTotal then

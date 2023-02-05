@@ -62,16 +62,24 @@ function BSYC:GetHashTableLen(tbl)
 	return count
 end
 
-function BSYC:DecodeOpts(tblString)
+function BSYC:DecodeOpts(tblString, mergeOpts)
 	--Example = "battlepet=245|auction=124567|foo=bar|tickle=elmo|gtab=3|test=12:3:4|forthe=horde"
-	local t = {}
+	local t = mergeOpts or {}
+
 	--([^=]+) everything except '='
 	-- followed by '='
 	-- ([^|]+) = then everything except '|'
 	-- followed by an optional '|'
-	for k, v in string.gmatch(tblString, "([^=]+)=([^|]+)|*") do
-	  t[k] = v
+
+	if tblString and string.len(tblString) > 0 then
+		for k, v in string.gmatch(tblString, "([^=]+)=([^|]+)|*") do
+			--only overwrite if we don't have an existing value, the reason for this is because we don't want to overwrite any mergeOpts values that are newer
+			if not t[k] then
+				t[k] = v
+			end
+		end
 	end
+
 	return t
 end
 
@@ -80,19 +88,13 @@ function BSYC:EncodeOpts(tbl, link)
 	local tmpStr = ""
 
 	if link then
-		local xLink, xCount, qOpts = self:Split(link)
+		--when doing the split, make sure to merge our table
+		local xLink, xCount, xOpts = self:Split(link, false, tbl)
 
 		if xLink then
 			if not xCount then xCount = 1 end
-			if qOpts then
-				for k, v in pairs(tbl) do
-					--overwrite our stored values with the newer ones
-					qOpts[k] = v
-				end
-				tbl = qOpts
-			end
 
-			for k, v in pairs(tbl) do
+			for k, v in pairs(xOpts) do
 				tmpStr = tmpStr.."|"..k.."="..v
 			end
 			tmpStr = string.sub(tmpStr, 2)  -- remove first pipe
@@ -118,10 +120,11 @@ function BSYC:EncodeOpts(tbl, link)
 	return nil
 end
 
-function BSYC:Split(dataStr, skipOpts)
+function BSYC:Split(dataStr, skipOpts, mergeOpts)
 	local qLink, qCount, qOpts = strsplit(";", dataStr)
-	if not skipOpts and qOpts then
-		return qLink, qCount, self:DecodeOpts(qOpts)
+	--only do Opts functions if we need too, otherwise just return the link and count
+	if not skipOpts or mergeOpts then
+		return qLink, qCount, self:DecodeOpts(qOpts, mergeOpts)
 	end
 	return qLink, qCount
 end
@@ -148,7 +151,7 @@ function BSYC:ParseItemLink(link, count)
 		if type(link) == "number" then link = tostring(link) end
 
 		--if we are parsing a database entry just return it, chances are it's a battlepet anyways
-		local qLink, qCount, qOpts = BSYC:Split(link, true)
+		local qLink, qCount = BSYC:Split(link, true)
 		if qLink and qCount then
 			return link
 		end
