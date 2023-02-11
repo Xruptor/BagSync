@@ -243,8 +243,18 @@ options.args.main = {
 			set = set,
 			arg = "keybind.BAGSYNCBLACKLIST",
 		},
-		keybindcurrency = {
+		keybindwhitelist = {
 			order = 10,
+			type = "keybinding",
+			name = L.KeybindWhitelist,
+			width = "full",
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "keybind.BAGSYNCWHITELIST",
+		},
+		keybindcurrency = {
+			order = 11,
 			type = "keybinding",
 			name = L.KeybindCurrency,
 			width = "full",
@@ -255,7 +265,7 @@ options.args.main = {
 			hidden = function() return not BSYC.IsRetail end,
 		},
 		keybindgold = {
-			order = 11,
+			order = 12,
 			type = "keybinding",
 			name = L.KeybindGold,
 			width = "full",
@@ -265,7 +275,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCGOLD",
 		},
 		keybindprofessions = {
-			order = 12,
+			order = 13,
 			type = "keybinding",
 			name = L.KeybindProfessions,
 			width = "full",
@@ -276,7 +286,7 @@ options.args.main = {
 			hidden = function() return not BSYC.IsRetail end,
 		},
 		keybindprofiles = {
-			order = 13,
+			order = 14,
 			type = "keybinding",
 			name = L.KeybindProfiles,
 			width = "full",
@@ -286,7 +296,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCPROFILES",
 		},
 		keybindsearch = {
-			order = 14,
+			order = 15,
 			type = "keybinding",
 			name = L.KeybindSearch,
 			width = "full",

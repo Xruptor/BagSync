@@ -59,6 +59,7 @@ modules\currency.lua
 modules\professions.lua
 modules\recipes.lua
 modules\blacklist.lua
+modules\whitelist.lua
 modules\profiles.lua
 modules\sortorder.lua
 modules\config.lua

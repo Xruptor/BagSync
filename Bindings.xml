@@ -2,6 +2,9 @@
 	<Binding name="BAGSYNCBLACKLIST" header="BAGSYNC" category="ADDONS">
 		BagSync_ShowWindow("Blacklist");
 	</Binding>
+	<Binding name="BAGSYNCWHITELIST" category="ADDONS">
+		BagSync_ShowWindow("Whitelist");
+	</Binding>
 	<Binding name="BAGSYNCCURRENCY" category="ADDONS">
 		BagSync_ShowWindow("Currency");
 	</Binding>

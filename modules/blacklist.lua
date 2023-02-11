@@ -1,4 +1,3 @@
----@diagnostic disable: need-check-nil
 --[[
 	blacklist.lua
 		A blacklist frame for BagSync items
@@ -24,6 +23,7 @@ function Blacklist:OnEnable()
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncBlacklistFrame")
 	Blacklist.frame = BlacklistFrame
+	Blacklist.parentFrame = BlacklistFrame.frame
 
 	BlacklistFrame:SetTitle("BagSync - "..L.Blacklist)
 	BlacklistFrame:SetHeight(500)
@@ -189,7 +189,7 @@ function Blacklist:AddItemID()
 	itemid = tonumber(itemid)
 
 	if BSYC.db.blacklist[itemid] then
-		BSYC:Print(L.ItemIDExist:format(itemid))
+		BSYC:Print(L.ItemIDExistBlacklist:format(itemid))
 		self.editbox:SetText()
 		return
 	end

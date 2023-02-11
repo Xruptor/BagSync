@@ -62,8 +62,9 @@ function Data:OnEnable()
 	BSYC.db.player.currency = BSYC.db.player.currency or {}
 	BSYC.db.player.professions = BSYC.db.player.professions or {}
 
-	--blacklist DB
+	--blacklist and whitelist DB (created in core.lua)
 	BSYC.db.blacklist = BagSyncDB["blacklist§"]
+	BSYC.db.whitelist = BagSyncDB["whitelist§"]
 
 	--options DB
 	if BSYC.options.showTotal == nil then BSYC.options.showTotal = true end
@@ -104,6 +105,7 @@ function Data:OnEnable()
 	if BSYC.options.showRaceIcons == nil then BSYC.options.showRaceIcons = true end
 	if BSYC.options.showGuildSeparately == nil then BSYC.options.showGuildSeparately = true end
 	if BSYC.options.showGuildTabs == nil then BSYC.options.showGuildTabs = false end
+	if BSYC.options.enableWhitelist == nil then BSYC.options.enableWhitelist = false end
 
 	--setup the default colors
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end
@@ -256,6 +258,7 @@ end
 function Data:ResetFramePositions()
 	local moduleList = {
 		"Blacklist",
+		"Whitelist",
 		"Currency",
 		"Professions",
 		"Profiles",
@@ -284,6 +287,7 @@ function Data:LoadSlashCommand()
 	--load the keybinding locale information
 	BINDING_HEADER_BAGSYNC = "BagSync"
 	BINDING_NAME_BAGSYNCBLACKLIST = L.KeybindBlacklist
+	BINDING_NAME_BAGSYNCWHITELIST = L.KeybindWhitelist
 	BINDING_NAME_BAGSYNCCURRENCY = L.KeybindCurrency
 	BINDING_NAME_BAGSYNCGOLD = L.KeybindGold
 	BINDING_NAME_BAGSYNCPROFESSIONS = L.KeybindProfessions
@@ -314,6 +318,9 @@ function Data:LoadSlashCommand()
 				return true
 			elseif cmd == L.SlashBlacklist then
 				BSYC:GetModule("Blacklist").frame:Show()
+				return true
+			elseif cmd == L.SlashWhitelist then
+				BSYC:GetModule("Whitelist").frame:Show()
 				return true
 			elseif cmd == L.SlashFixDB then
 				self:FixDB()
@@ -355,6 +362,7 @@ function Data:LoadSlashCommand()
 			BSYC:Print("/bgs "..L.SlashCurrency.." - "..L.HelpCurrencyWindow)
 		end
 		BSYC:Print("/bgs "..L.SlashBlacklist.." - "..L.HelpBlacklistWindow)
+		BSYC:Print("/bgs "..L.SlashWhitelist.." - "..L.HelpWhitelistWindow)
 		BSYC:Print("/bgs "..L.SlashFixDB.." - "..L.HelpFixDB)
 		BSYC:Print("/bgs "..L.SlashResetDB.." - "..L.HelpResetDB)
 		BSYC:Print("/bgs "..L.SlashConfig.." - "..L.HelpConfigWindow)

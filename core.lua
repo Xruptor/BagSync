@@ -301,6 +301,7 @@ function BSYC:OnEnable()
 	--load the options and blacklist
 	BagSyncDB["options§"] = BagSyncDB["options§"] or {}
 	BagSyncDB["blacklist§"] = BagSyncDB["blacklist§"] or {}
+	BagSyncDB["whitelist§"] = BagSyncDB["whitelist§"] or {}
 
 	--setup the debug values since Debug module loads before Data module
 	BSYC.options = BagSyncDB["options§"]

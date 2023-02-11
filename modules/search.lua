@@ -26,6 +26,7 @@ function Search:OnEnable()
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncSearchFrame")
 	Search.frame = SearchFrame
+	Search.parentFrame = SearchFrame.frame
 
 	SearchFrame:SetTitle("BagSync - "..L.Search)
 	SearchFrame:SetHeight(500)

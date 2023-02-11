@@ -22,6 +22,7 @@ function Recipes:OnEnable()
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncRecipesFrame")
 	Recipes.frame = RecipesFrame
+	Recipes.parentFrame = RecipesFrame.frame
 
 	RecipesFrame:SetTitle("BagSync - "..L.Recipes)
 	RecipesFrame:SetHeight(500)

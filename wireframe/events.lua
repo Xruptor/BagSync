@@ -124,8 +124,11 @@ function Events:OnEnable()
 
 	--Force guild roster update, so we can grab guild name.  Note this is nil on login, have to check for Classic and Retail though
 	--https://wowpedia.fandom.com/wiki/API_C_GuildInfo.GuildRoster
-	if C_GuildInfo and C_GuildInfo.GuildRoster then C_GuildInfo.GuildRoster() end  -- Retail
-	if GuildRoster then GuildRoster() end -- Classic
+	if C_GuildInfo and C_GuildInfo.GuildRoster then
+		C_GuildInfo.GuildRoster() -- Retail
+	elseif GuildRoster then
+		GuildRoster() -- Classic
+	end
 
 	Scanner:StartupScans() --do the login player scans
 
