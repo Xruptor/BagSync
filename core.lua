@@ -27,6 +27,8 @@ BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 --BSYC.IsTBC_C = WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC
 BSYC.IsWLK_C = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
 
+BSYC.FakePetCode = 10000000000
+
 local debugf = tekDebug and tekDebug:GetFrame("BagSync")
 function BSYC.DEBUG(level, sName, ...)
 	if not BSYC.options or not BSYC.options.debug or not BSYC.options.debug.enable then return end
@@ -252,8 +254,7 @@ function BSYC:CreateFakeBattlePetID(link, count, speciesID)
 
 		--we do this so as to not interfere with standard itemid's.  Example a speciesID can be 1345 but there is a real item with itemID 1345.
 		--to compensate for this we will use a ridiculous number to avoid conflicting with standard itemid's
-		local fakePetID = 10000000000
-		fakePetID = fakePetID + (speciesID * 100000)
+		local fakePetID = BSYC.FakePetCode + (speciesID * 100000)
 
 		if fakePetID then
 			if not count then count = 1 end
@@ -263,6 +264,18 @@ function BSYC:CreateFakeBattlePetID(link, count, speciesID)
 				return fakePetID..";"..count..";"..encodeStr
 			end
 		end
+	end
+end
+
+function BSYC:FakeIDToBattlePetID(link)
+	if not link or not tonumber(link) then return nil end
+	link = tonumber(link)
+
+	if link >= BSYC.FakePetCode then
+		link = (link - BSYC.FakePetCode) / 100000
+		return link, "battlepet:"..tostring(link)
+	else
+		return nil
 	end
 end
 

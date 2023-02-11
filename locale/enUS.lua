@@ -188,6 +188,7 @@ L.DisplayCrossRealm = "Display Cross-Realms / |cFF99CC33[Connected Realms]|r cha
 L.DisplayBNET = "Display Battle.Net Account characters. |cff3587ff[BNet]|r |cFFDF2B2B(Not Recommended)|r"
 L.DisplayItemID = "Display ItemID in tooltip."
 L.DisplaySourceDebugInfo = "Display helpful [Debug] information in tooltip."
+L.DisplayWhiteListOnly = "Display item count in tooltip for whitelist items only."
 L.DisplayTooltipTags = "Tags"
 L.DisplayTooltipStorage = "Storage"
 L.DisplayTooltipExtra = "Extra"

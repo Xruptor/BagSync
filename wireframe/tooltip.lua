@@ -585,6 +585,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if not self:CheckModifier() then return end
 
 	local showQTip = false
+	local skipTally = false
 
 	--create the extra tooltip (qTip) only if it doesn't already exist
 	if BSYC.options.enableExtTooltip or isBattlePet then
@@ -661,10 +662,17 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		[128353] = "Admiral's Compass",
 		[141605] = "Flight Master's Whistle",
 	}
+	--check blacklist
 	if shortID and (permIgnore[tonumber(shortID)] or BSYC.db.blacklist[tonumber(shortID)]) then
-		objTooltip:Show()
-		return
+		skipTally = true
 	end
+	--check whitelist
+	if BSYC.options.enableWhitelist and not BSYC.db.whitelist[tonumber(link)] then
+		skipTally = true
+	end
+
+	--always display if we are showing tooltips in the search window of ANY kind
+	if tooltipType and tooltipType == "BagSyncInteractiveLabel" then skipTally = false end
 
 	--short the shortID and ignore all BonusID's and stats
 	if BSYC.options.enableShowUniqueItemsTotals and shortID then link = shortID end
@@ -678,119 +686,123 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local tmpGuildList = {}
 	local player = Unit:GetUnitInfo()
 
-	--the true is to set it to silent and not return an error if not found
+	--the true option for GetModule is to set it to silent and not return an error if not found
 	--only display advanced search results in the BagSync search window
-	local advUnitList = tooltipType and tooltipType == "BagSyncInteractiveLabel" and BSYC:GetModule("Search", true) and BSYC:GetModule("Search").advUnitList
+	local advUnitList = not skipTally and BSYC:GetModule("Search", true) and BSYC:GetModule("Search").advUnitList
 
-	--allow advance search matches if found, no need to set to true as advUnitList will default to dumpAll if found
-	for unitObj in Data:IterateUnits(false, advUnitList) do
+	if advUnitList or not skipTally then
 
-		local allowList = {
-			["bag"] = 0,
-			["bank"] = 0,
-			["reagents"] = 0,
-			["equip"] = 0,
-			["mailbox"] = 0,
-			["void"] = 0,
-			["auction"] = 0,
-			["guild"] = 0,
-			["gtab"] = {}, --guild bank tab
-		}
+		--allow advance search matches if found, no need to set to true as advUnitList will default to dumpAll if found
+		for unitObj in Data:IterateUnits(false, advUnitList) do
 
-		if not unitObj.isGuild then
-			--Due to crafting items being used in reagents bank, or turning in quests with items in the bank, etc..
-			--The cached item info for the current player would obviously be out of date until they returned to the bank to scan again.
-			--In order to combat this, lets just get the realtime count for the currently logged in player every single time.
-			--This is why we check for player name and realm below, the only one we really want to check is the equip status to get a accurate count.
-			--The only exception to this would be for battlepets, so every item except battlepets in realmtime.
+			local allowList = {
+				["bag"] = 0,
+				["bank"] = 0,
+				["reagents"] = 0,
+				["equip"] = 0,
+				["mailbox"] = 0,
+				["void"] = 0,
+				["auction"] = 0,
+				["guild"] = 0,
+				["gtab"] = {}, --guild bank tab
+			}
 
-			local isCurrentPlayer = ((unitObj.name == player.name and unitObj.realm == player.realm) and true) or false
+			if not unitObj.isGuild then
+				--Due to crafting items being used in reagents bank, or turning in quests with items in the bank, etc..
+				--The cached item info for the current player would obviously be out of date until they returned to the bank to scan again.
+				--In order to combat this, lets just get the realtime count for the currently logged in player every single time.
+				--This is why we check for player name and realm below, the only one we really want to check is the equip status to get a accurate count.
+				--The only exception to this would be for battlepets, so every item except battlepets in realmtime.
 
-			for k, v in pairs(unitObj.data) do
-				if allowList[k] and type(v) == "table" then
-					--bags, bank, reagents are stored in individual bags
-					if k == "bag" or k == "bank" or k == "reagents" then
-						--don't check for current player unless its a battlepet
-						if not isCurrentPlayer or isBattlePet then
-							for bagID, bagData in pairs(v) do
-								grandTotal = self:ItemCount(bagData, link, allowList, k, grandTotal)
+				local isCurrentPlayer = ((unitObj.name == player.name and unitObj.realm == player.realm) and true) or false
+
+				for k, v in pairs(unitObj.data) do
+					if allowList[k] and type(v) == "table" then
+						--bags, bank, reagents are stored in individual bags
+						if k == "bag" or k == "bank" or k == "reagents" then
+							--don't check for current player unless its a battlepet
+							if not isCurrentPlayer or isBattlePet then
+								for bagID, bagData in pairs(v) do
+									grandTotal = self:ItemCount(bagData, link, allowList, k, grandTotal)
+								end
 							end
-						end
-					else
-						--with the exception of auction, everything else is stored in a numeric list
-						--auction is stored in a numeric list but within an individual bag
-						--auction, equip, void, mailbox
-						local passChk = true
-						if k == "auction" and not BSYC.options.enableAuction then passChk = false end
-						if k == "mailbox" and not BSYC.options.enableMailbox then passChk = false end
+						else
+							--with the exception of auction, everything else is stored in a numeric list
+							--auction is stored in a numeric list but within an individual bag
+							--auction, equip, void, mailbox
+							local passChk = true
+							if k == "auction" and not BSYC.options.enableAuction then passChk = false end
+							if k == "mailbox" and not BSYC.options.enableMailbox then passChk = false end
 
-						if passChk then
-							grandTotal = self:ItemCount(k == "auction" and v.bag or v, link, allowList, k, grandTotal)
+							if passChk then
+								grandTotal = self:ItemCount(k == "auction" and v.bag or v, link, allowList, k, grandTotal)
+							end
 						end
 					end
 				end
-			end
 
-			--grab the realtime amount of the current player only if it's not a battlepet, read explanation above as to why
-			if isCurrentPlayer and not isBattlePet then
-				local equipCount = allowList["equip"] or 0
-				local carryCount, bagCount, bankCount, regCount = 0, 0, 0, 0
+				--grab the realtime amount of the current player only if it's not a battlepet, read explanation above as to why
+				if isCurrentPlayer and not isBattlePet then
+					local equipCount = allowList["equip"] or 0
+					local carryCount, bagCount, bankCount, regCount = 0, 0, 0, 0
 
-				carryCount = GetItemCount(origLink) or 0 --get the total amount the player is currently carrying (bags + equip)
-				bagCount = carryCount - equipCount -- subtract the equipment count from the carry amount to get bag count
+					carryCount = GetItemCount(origLink) or 0 --get the total amount the player is currently carrying (bags + equip)
+					bagCount = carryCount - equipCount -- subtract the equipment count from the carry amount to get bag count
 
-				if IsReagentBankUnlocked and IsReagentBankUnlocked() then
-					--GetItemCount returns the bag count + reagent regardless of parameters.  So we have to subtract bag and reagents.  This does not include bank totals
-					regCount = GetItemCount(origLink, false, false, true) or 0
-					regCount = regCount - carryCount
-					if regCount < 0 then regCount = 0 end
+					if IsReagentBankUnlocked and IsReagentBankUnlocked() then
+						--GetItemCount returns the bag count + reagent regardless of parameters.  So we have to subtract bag and reagents.  This does not include bank totals
+						regCount = GetItemCount(origLink, false, false, true) or 0
+						regCount = regCount - carryCount
+						if regCount < 0 then regCount = 0 end
+					end
+
+					--bankCount = GetItemCount returns the bag + bank count + reagent regardless of parameters.  So we have to subtract the carry and reagent totals
+					--it will always add the reagents totals regardless of whatever parameters are passed.  So we have to do some math to adjust for this
+					bankCount = GetItemCount(origLink, true, false, false) or 0
+					bankCount = (bankCount - regCount) - carryCount
+					if bankCount < 0 then bankCount = 0 end
+
+					--now assign the values
+					allowList["bag"] = bagCount
+					allowList["bank"] = bankCount
+					allowList["reagents"] = regCount
+					grandTotal = grandTotal + (bagCount + bankCount + regCount)
 				end
 
-				--bankCount = GetItemCount returns the bag + bank count + reagent regardless of parameters.  So we have to subtract the carry and reagent totals
-				--it will always add the reagents totals regardless of whatever parameters are passed.  So we have to do some math to adjust for this
-				bankCount = GetItemCount(origLink, true, false, false) or 0
-				bankCount = (bankCount - regCount) - carryCount
-				if bankCount < 0 then bankCount = 0 end
-
-				--now assign the values
-				allowList["bag"] = bagCount
-				allowList["bank"] = bankCount
-				allowList["reagents"] = regCount
-				grandTotal = grandTotal + (bagCount + bankCount + regCount)
-			end
-
-			if not BSYC.options.showGuildSeparately and BSYC.options.enableGuild then
-				local guildObj = Data:GetGuild(unitObj.data)
-				if guildObj and guildObj.bag then
-					--make sure we don't add to the grand total twice for the same guild
-					grandTotal = self:ItemCount(guildObj.bag, link, allowList, "guild", grandTotal, (tmpGuildList[guildObj] and true) or false)
-					tmpGuildList[guildObj] = true
+				if not BSYC.options.showGuildSeparately and BSYC.options.enableGuild then
+					local guildObj = Data:GetGuild(unitObj.data)
+					if guildObj and guildObj.bag then
+						--make sure we don't add to the grand total twice for the same guild
+						grandTotal = self:ItemCount(guildObj.bag, link, allowList, "guild", grandTotal, (tmpGuildList[guildObj] and true) or false)
+						tmpGuildList[guildObj] = true
+					end
+				end
+			else
+				if BSYC.options.showGuildSeparately then
+					grandTotal = self:ItemCount(unitObj.data.bag, link, allowList, "guild", grandTotal)
 				end
 			end
-		else
-			if BSYC.options.showGuildSeparately then
-				grandTotal = self:ItemCount(unitObj.data.bag, link, allowList, "guild", grandTotal)
+
+			--only process the totals if we have something to work with
+			if grandTotal > 0 then
+				--table variables gets passed as byRef
+				self:UnitTotals(unitObj, allowList, unitList, advUnitList)
 			end
+
 		end
 
-		--only process the totals if we have something to work with
-		if grandTotal > 0 then
-			--table variables gets passed as byRef
-			self:UnitTotals(unitObj, allowList, unitList, advUnitList)
+		--only sort items if we have something to work with
+		if #unitList > 0 then
+			unitList = self:DoSort(unitList)
 		end
 
-	end
-
-	--only sort items if we have something to work with
-	if #unitList > 0 then
-		unitList = self:DoSort(unitList)
 	end
 
 	local desc, value = '', ''
 	local addSeparator = false
 
 	--add [Total] if we have more than one unit to work with
-	if BSYC.options.showTotal and grandTotal > 0 and #unitList > 1 then
+	if not skipTally and BSYC.options.showTotal and grandTotal > 0 and #unitList > 1 then
 		if not addSeparator then
 			--add a separator after the character list
 			table.insert(unitList, { colorized=" ", tallyString=" "} )
@@ -843,14 +855,17 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	objTooltip:Show()
 
 	if showQTip then
-		if grandTotal > 0 then
+		if #unitList > 0 then
 			objTooltip.qTip:Show()
 		else
 			objTooltip.qTip:Hide()
 		end
 	end
 
-	Debug(2, "TallyUnits", link, shortID, origLink, source, isBattlePet, grandTotal)
+	if not skipTally then
+		local WLChk = (BSYC.options.enableWhitelist and "WL-ON") or "WL-OFF"
+		Debug(2, "TallyUnits", link, shortID, origLink, source, isBattlePet, grandTotal, WLChk)
+	end
 end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)

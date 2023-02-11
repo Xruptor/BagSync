@@ -88,10 +88,6 @@ function Whitelist:OnEnable()
 	WLInfoFrame:EnableResize(false)
 
 	local wl_infolabel = AceGUI:Create("BagSyncLabel")
-
-	local getStatus = (BSYC.options.enableWhitelist and ("|cFF99CC33"..L.ON.."|r")) or ( "|cFFDF2B2B"..L.OFF.."|r")
-	wl_infolabel:SetText(L.DisplayWhitelistStatus:format(getStatus))
-
 	wl_infolabel:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
 	wl_infolabel:SetColor(1, 165/255, 0) --orange, red is just too much sometimes
 	wl_infolabel:SetFullWidth(true)
@@ -111,6 +107,9 @@ function Whitelist:OnEnable()
 		--always show the info frame on the right of the whitelist window
 		WLInfoFrame.frame:ClearAllPoints()
 		WLInfoFrame:SetPoint( "TOPLEFT", WhitelistFrame.frame, "TOPRIGHT", 0, 0)
+
+		local getStatus = (BSYC.options.enableWhitelist and ("|cFF99CC33"..L.ON.."|r")) or ( "|cFFDF2B2B"..L.OFF.."|r")
+		wl_infolabel:SetText(L.DisplayWhitelistStatus:format(getStatus))
 	end)
 
 	--hide the info window if they close the whitelist window
@@ -172,13 +171,33 @@ function Whitelist:AddItemID()
 		return
 	end
 
-	if not GetItemInfo(itemid) then
+	local dName, dItemLink
+
+	if itemid >= BSYC.FakePetCode then
+		local fakeID, fakeLink
+
+		if C_PetJournal then
+			fakeID, fakeLink = BSYC:FakeIDToBattlePetID(itemid)
+			if fakeID and fakeLink then
+				dName = C_PetJournal.GetPetInfoBySpeciesID(fakeID)
+				dItemLink = "["..dName.."] - "..fakeLink
+			end
+		end
+
+		if not fakeID then
+			BSYC:Print(L.ItemIDNotValid:format(itemid))
+			self.editbox:SetText()
+			return
+		end
+	else
+		dName, dItemLink = GetItemInfo(itemid)
+	end
+
+	if not dName then
 		BSYC:Print(L.ItemIDNotValid:format(itemid))
 		self.editbox:SetText()
 		return
 	end
-
-	local dName, dItemLink = GetItemInfo(itemid)
 
 	BSYC.db.whitelist[itemid] = dName
 	BSYC:Print(L.ItemIDAdded:format(itemid), dItemLink)
@@ -207,10 +226,14 @@ function Whitelist:AddEntry(entry)
 			label:SetColor(1, 0, 0)
 			GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
 			if type(entry.key) == "number" then
-				GameTooltip:SetHyperlink("item:"..entry.key)
-			else
-				GameTooltip:AddLine(entry.value)
-				GameTooltip:AddLine(L.TooltipRealmKey.." "..entry.key)
+				if entry.key >= BSYC.FakePetCode then
+					local fakeID, fakeLink = BSYC:FakeIDToBattlePetID(entry.key)
+					if fakeID then
+						BattlePetToolTip_Show(fakeID, 0, 0, 0, 0, 0, nil, nil)
+					end
+				else
+					GameTooltip:SetHyperlink("item:"..entry.key)
+				end
 			end
 			GameTooltip:Show()
 		end)
@@ -218,6 +241,13 @@ function Whitelist:AddEntry(entry)
 		"OnLeave",
 		function (widget, sometable)
 			label:SetColor(1, 1, 1)
+			if type(entry.key) == "number" then
+				if entry.key >= BSYC.FakePetCode then
+					BattlePetTooltip:Hide()
+				else
+					GameTooltip:Hide()
+				end
+			end
 			GameTooltip:Hide()
 		end)
 

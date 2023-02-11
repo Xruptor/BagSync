@@ -584,7 +584,7 @@ function Search:DoAdvancedSearch()
 	if locCount < 1 then advAllowList = nil end
 
 	--global for tooltip checks
-	self.advUnitList = advUnitList
+	Search.advUnitList = advUnitList
 
 	--send it off to the regular search
 	self:DoSearch(nil, advUnitList, advAllowList)

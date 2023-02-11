@@ -478,6 +478,25 @@ options.args.display = {
 					disabled = function() return not BSYC.options["enableGuild"] end,
 					hidden = function() return BSYC.IsClassic end,
 				},
+				whitelistonly = {
+					order = 8,
+					type = "toggle",
+					name = L.DisplayWhiteListOnly,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.enableWhitelist",
+				},
+				whitelistbutton = {
+					order = 9,
+					type = "execute",
+					name = L.Whitelist,
+					func = function()
+						BSYC:GetModule("Whitelist").frame:Show()
+					end,
+					disabled = function() return not BSYC.options["enableWhitelist"] end,
+				},
 			}
 		},
 		groupsorting = {
