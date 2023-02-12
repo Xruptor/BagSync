@@ -862,7 +862,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		end
 	end
 
-	if not skipTally then
+	if not skipTally or #unitList > 0 then
 		local WLChk = (BSYC.options.enableWhitelist and "WL-ON") or "WL-OFF"
 		Debug(2, "TallyUnits", link, shortID, origLink, source, isBattlePet, grandTotal, WLChk)
 	end
