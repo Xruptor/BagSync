@@ -128,7 +128,7 @@ L.SlashBlacklist = "黑名单"
 L.SlashWhitelist = "白名单"
 L.SlashResetDB = "重置"
 L.SlashDebug = "Debug"
-L.SlashResetPOS = "重铸POS" --POS等国服上线在查看是什么功能
+L.SlashResetPOS = "重置POS" --POS等国服上线在查看是什么功能
 ------------------------
 -- ----THESE USE THE SLASH OPERATOR COMMANDS FOUND ABOVE
 L.HelpSearchItemName = "快速搜索一件物品。"
