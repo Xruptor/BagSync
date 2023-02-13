@@ -877,6 +877,11 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	--loop through our characters
 	local usrData = {}
 
+	local permIgnore ={
+		[2032] = "Trader's Tender", --shared across all characters
+	}
+	if permIgnore[currencyID] then return end
+
 	for unitObj in Data:IterateUnits() do
 		if not unitObj.isGuild and unitObj.data.currency and unitObj.data.currency[currencyID] then
 			table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj), count=unitObj.data.currency[currencyID].count} )

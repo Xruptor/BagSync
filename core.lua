@@ -267,13 +267,13 @@ function BSYC:CreateFakeBattlePetID(link, count, speciesID)
 	end
 end
 
-function BSYC:FakeIDToBattlePetID(link)
-	if not link or not tonumber(link) then return nil end
-	link = tonumber(link)
+function BSYC:FakeIDToBattlePetID(fakeID)
+	if not fakeID or not tonumber(fakeID) then return nil end
+	fakeID = tonumber(fakeID)
 
-	if link >= BSYC.FakePetCode then
-		link = (link - BSYC.FakePetCode) / 100000
-		return link, "battlepet:"..tostring(link)
+	if fakeID >= BSYC.FakePetCode then
+		fakeID = (fakeID - BSYC.FakePetCode) / 100000
+		return fakeID, "battlepet:"..tostring(fakeID)
 	else
 		return nil
 	end
