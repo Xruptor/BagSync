@@ -73,10 +73,15 @@ function Professions:AddEntry(entry, isHeader)
 		label:SetText(entry.colorized)
 		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
 		label:SetFullWidth(true)
+
 		if entry.hasRecipes then
 			label.userdata.hasRecipes = true
 		else
-			label:SetText(entry.colorized..format("   |cFFFFFFFF%s/%s|r", entry.skillData.skillLineCurrentLevel or 0, entry.skillData.skillLineMaxLevel or 0))
+			if not entry.skillData.skillLineCurrentLevel or not entry.skillData.skillLineMaxLevel then
+				label:SetText(entry.colorized.."   "..L.PleaseRescan)
+			else
+				label:SetText(entry.colorized..format("   |cFFFFFFFF%s/%s|r", entry.skillData.skillLineCurrentLevel or 0, entry.skillData.skillLineMaxLevel or 0))
+			end
 			label.userdata.hasRecipes = false
 		end
 		label:ApplyJustifyH("LEFT")
