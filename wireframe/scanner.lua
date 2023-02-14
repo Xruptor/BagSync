@@ -247,13 +247,6 @@ end
 local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 	Debug(2, "findBattlePet", iconTexture, petName, typeSlot, arg1, arg2)
 
-	if petName and C_PetJournal then
-		local speciesId, petGUID = C_PetJournal.FindPetIDByName(petName)
-		if speciesId then
-			return speciesId
-		end
-	end
-
 	if BSYC.options.enableAccurateBattlePets and arg1 then
 		local data
 
@@ -272,6 +265,13 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 		--No need to do TooltipUtil.SurfaceArgs we can just go straight to the source without another function to grab the info
 		if data and data.args and data.args[2] and data.args[2].intVal then
 			return data.args[2].intVal
+		end
+	end
+
+	if petName and C_PetJournal then
+		local speciesId, petGUID = C_PetJournal.FindPetIDByName(petName)
+		if speciesId then
+			return speciesId
 		end
 	end
 
@@ -630,21 +630,20 @@ function Scanner:SaveProfessions()
 	--info = C_TradeSkillUI.GetProfessionInfoBySkillLineID(skillLineID)
 
 	if parentSkillLineID and parentSkillLineName then
-
 		--create the categories, sometimes we have professions with no recipes.  We want to store this anyways
 		local categories = {C_TradeSkillUI.GetCategories()}
+		local categoryCount = 0
+
+		--always refresh the DB to prevent old data from remaining
+		BSYC.db.player.professions[parentSkillLineID] = {}
+		BSYC.db.player.professions[parentSkillLineID].name = parentSkillLineName
+		local parentIDSlot = BSYC.db.player.professions[parentSkillLineID]
 
 		for i, categoryID in ipairs(categories) do
 			local categoryData = C_TradeSkillUI.GetCategoryInfo(categoryID)
 
 			if categoryData and categoryData.categoryID and categoryData.skillLineCurrentLevel and categoryData.skillLineCurrentLevel > 0 then
 
-				if not BSYC.db.player.professions[parentSkillLineID] then
-					BSYC.db.player.professions[parentSkillLineID] = BSYC.db.player.professions[parentSkillLineID] or {}
-					BSYC.db.player.professions[parentSkillLineID].name = parentSkillLineName
-				end
-
-				local parentIDSlot = BSYC.db.player.professions[parentSkillLineID]
 				parentIDSlot.categories = parentIDSlot.categories or {}
 
 				--Legion Engineering, Cateclysm Engineering, etc...
@@ -657,13 +656,17 @@ function Scanner:SaveProfessions()
 				subCatSlot.skillLineMaxLevel = categoryData.skillLineMaxLevel
 
 				if not catCheck[categoryID] then
-					catCheck[categoryID] = true
 					orderIndex = orderIndex + 1
 					subCatSlot.orderIndex = orderIndex
-				end
+					catCheck[categoryID] = orderIndex
 
+					categoryCount = categoryCount + 1
+					parentIDSlot.categoryCount = categoryCount
+				end
 			end
 		end
+
+		local recipeCount = 0
 
 		--store the recipes
 		for i = 1, #Scanner.recipeIDs do
@@ -692,7 +695,6 @@ function Scanner:SaveProfessions()
 								BSYC.db.player.professions[parentSkillLineID].name = parentSkillLineName
 							end
 
-							local parentIDSlot = BSYC.db.player.professions[parentSkillLineID]
 							parentIDSlot.categories = parentIDSlot.categories or {}
 
 							--store the sub category information, Legion Engineering, Cateclysm Engineering, etc...
@@ -710,8 +712,7 @@ function Scanner:SaveProfessions()
 								subCatSlot.recipes = nil
 							end
 							if not subCatSlot.orderIndex then
-								orderIndex = orderIndex + 1
-								subCatSlot.orderIndex = orderIndex
+								subCatSlot.orderIndex = catCheck[subCatData.categoryID]
 							end
 
 							--now store the recipe information, but make sure we don't already have the recipe stored
@@ -720,6 +721,9 @@ function Scanner:SaveProfessions()
 							if not tmpRecipe[recipeData.recipeID] then
 								subCatSlot.recipes = (subCatSlot.recipes or "").."|"..recipeData.recipeID
 								tmpRecipe[recipeData.recipeID] = true
+
+								recipeCount = recipeCount + 1
+								parentIDSlot.recipeCount = recipeCount
 							end
 
 						end
@@ -740,20 +744,22 @@ function Scanner:SaveProfessions()
 
 	if archaeology then
 		local name, _, rank, maxRank, _, _, skillLine = GetProfessionInfo(archaeology)
-		BSYC.db.player.professions[skillLine] = BSYC.db.player.professions[skillLine] or {}
-		BSYC.db.player.professions[skillLine].name = name
-		BSYC.db.player.professions[skillLine].skillLineCurrentLevel = rank
-		BSYC.db.player.professions[skillLine].skillLineMaxLevel = maxRank
-		BSYC.db.player.professions[skillLine].secondary = true --mark is as a secondary profession
+		BSYC.db.player.professions[skillLine] = BSYC.db.player.professions[skillLine] or {} --use any refreshed DB from above or start a new one if not found
+
+		local parentIDSlot = BSYC.db.player.professions[skillLine]
+		parentIDSlot.name = name
+		parentIDSlot.skillLineCurrentLevel = rank
+		parentIDSlot.skillLineMaxLevel = maxRank
 	end
 
 	if fishing then
 		local name, _, rank, maxRank, _, _, skillLine = GetProfessionInfo(fishing)
-		BSYC.db.player.professions[skillLine] = BSYC.db.player.professions[skillLine] or {}
-		BSYC.db.player.professions[skillLine].name = name
-		BSYC.db.player.professions[skillLine].skillLineCurrentLevel = rank
-		BSYC.db.player.professions[skillLine].skillLineMaxLevel = maxRank
-		BSYC.db.player.professions[skillLine].secondary = true --mark is as a secondary profession
+		BSYC.db.player.professions[skillLine] = BSYC.db.player.professions[skillLine] or {} --use any refreshed DB from above or start a new one if not found
+
+		local parentIDSlot = BSYC.db.player.professions[skillLine]
+		parentIDSlot.name = name
+		parentIDSlot.skillLineCurrentLevel = rank
+		parentIDSlot.skillLineMaxLevel = maxRank
 	end
 
 	--as a precaution lets do a tradeskill cleanup just in case

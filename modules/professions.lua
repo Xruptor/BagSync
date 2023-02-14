@@ -73,10 +73,10 @@ function Professions:AddEntry(entry, isHeader)
 		label:SetText(entry.colorized)
 		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
 		label:SetFullWidth(true)
-		if not entry.skillData.secondary then
+		if entry.hasRecipes then
 			label.userdata.hasRecipes = true
 		else
-			label:SetText(entry.colorized..format("   |cFFFFFFFF%s/%s|r", entry.skillData.skillLineCurrentLevel, entry.skillData.skillLineMaxLevel))
+			label:SetText(entry.colorized..format("   |cFFFFFFFF%s/%s|r", entry.skillData.skillLineCurrentLevel or 0, entry.skillData.skillLineMaxLevel or 0))
 			label.userdata.hasRecipes = false
 		end
 		label:ApplyJustifyH("LEFT")
@@ -134,7 +134,11 @@ function Professions:DisplayList()
 		if not unitObj.isGuild and unitObj.data.professions then
 			for skillID, skillData in pairs(unitObj.data.professions) do
 				if skillData.name then
-					table.insert(professionsTable, { skillID=skillID, skillData=skillData, unitObj=unitObj, colorized=Tooltip:ColorizeUnit(unitObj), sortIndex=Tooltip:GetSortIndex(unitObj) } )
+					local hasRecipes = false
+					if (skillData.recipeCount and skillData.recipeCount > 0) or (skillData.categoryCount and skillData.categoryCount > 0) then
+						hasRecipes = true
+					end
+					table.insert(professionsTable, { skillID=skillID, skillData=skillData, unitObj=unitObj, colorized=Tooltip:ColorizeUnit(unitObj), sortIndex=Tooltip:GetSortIndex(unitObj), hasRecipes=hasRecipes } )
 				end
 			end
 		end

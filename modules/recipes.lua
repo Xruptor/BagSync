@@ -63,7 +63,7 @@ function Recipes:AddEntry(entry, isHeader)
 	label.entry = entry
 
 	if isHeader then
-		label:SetText(entry.tierData.name..format("   |cFF00FF00[ %s / %s ]|r", entry.tierData.skillLineCurrentLevel, entry.tierData.skillLineMaxLevel))
+		label:SetText(entry.tierData.name..format("   |cFF00FF00[ %s / %s ]|r", entry.tierData.skillLineCurrentLevel or 0, entry.tierData.skillLineMaxLevel or 0))
 		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
 		label:SetFullWidth(true)
 		label:ApplyJustifyH("CENTER")
