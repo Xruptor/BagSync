@@ -667,12 +667,15 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		skipTally = true
 	end
 	--check whitelist
-	if BSYC.options.enableWhitelist and not BSYC.db.whitelist[tonumber(link)] then
-		skipTally = true
+	if BSYC.options.enableWhitelist then
+		if not BSYC.db.whitelist[tonumber(link)] then
+			skipTally = true
+		end
+		--always display if we are showing tooltips in the search window of ANY kind when using whitelist
+		if tooltipType and tooltipType == "BagSyncInteractiveLabel" then
+			skipTally = false
+		end
 	end
-
-	--always display if we are showing tooltips in the search window of ANY kind
-	if tooltipType and tooltipType == "BagSyncInteractiveLabel" then skipTally = false end
 
 	--short the shortID and ignore all BonusID's and stats
 	if BSYC.options.enableShowUniqueItemsTotals and shortID then link = shortID end
