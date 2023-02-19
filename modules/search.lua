@@ -15,8 +15,9 @@ end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local AceGUI = LibStub("AceGUI-3.0")
-local itemScanner = LibStub("ItemSearch-1.3")
-local customSearch = LibStub("CustomSearch-1.0")
+local ItemScout = LibStub("LibItemScout-1.0")
+
+--ItemSearch:Find(dItemLink, searchStr)
 
 function Search:OnEnable()
 
@@ -479,6 +480,7 @@ function Search:AdvancedSearchAddEntry(entry, isHeader, isUnit)
 end
 
 local function checkData(data, searchStr, searchTable, tempList, countWarning, viewCustomList, unitObj)
+	searchStr = searchStr or ''
 
 	for i=1, #data do
 		if data[i] then
@@ -493,19 +495,14 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 					dName, dTexture = C_PetJournal.GetPetInfoBySpeciesID(qOpts.battlepet)
 					dRarity = 1
 					dItemLink = data[i]
-					testMatch = customSearch:Find(searchStr or '', dName) --searchStr cannot be nil
+					testMatch = ItemScout:Find(dItemLink, searchStr)
 				else
 					dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo("item:"..link)
-					if dItemLink then
-						--if the user isn't using any filters i.e (name:, tip:, class:) then lets default to name:
-						if searchStr:find(':') then
-							--they are using filters so sent it to itemsearch
-							testMatch = itemScanner:Matches(dItemLink, searchStr)
-						else
-							--no filters are being used, default to name search only
-							testMatch = customSearch:Find(searchStr or '', dName) --searchStr cannot be nil
-						end
-					end
+				end
+
+				--do the search if we have something to work with
+				if dItemLink then
+					testMatch = ItemScout:Find(dItemLink, searchStr)
 				end
 
 				--for debugging purposes only

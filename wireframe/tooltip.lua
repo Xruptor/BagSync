@@ -827,6 +827,20 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
 	end
 
+	--add expansion
+	if BSYC.options.enableSourceExpansion and shortID then
+		local expacID = shortID
+		desc = self:HexColor(BSYC.options.colors.expansion, L.TooltipExpansion)
+		if isBattlePet then
+			expacID = BSYC:FakeIDToBattlePetID(shortID)
+		end
+		expacID = select(15, GetItemInfo(expacID))
+		value = self:HexColor(BSYC.options.colors.second, (expacID and _G["EXPANSION_NAME"..expacID]) or "?")
+
+		table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
+		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
+	end
+
 	--add debug info
 	if BSYC.options.enableSourceDebugInfo and source then
 		desc = self:HexColor(BSYC.options.colors.debug, L.TooltipDebug)

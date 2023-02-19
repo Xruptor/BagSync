@@ -497,6 +497,17 @@ options.args.display = {
 					end,
 					disabled = function() return not BSYC.options["enableWhitelist"] end,
 				},
+				sourceexpansion = {
+					order = 10,
+					type = "toggle",
+					name = L.DisplayWSourceExpansion,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.enableSourceExpansion",
+					hidden = function() return not BSYC.IsRetail end,
+				},
 			}
 		},
 		groupsorting = {
@@ -833,8 +844,19 @@ options.args.color = {
 			set = set,
 			arg = "color.guildtabs",
 		},
-		resetcolors = {
+		expansion = {
 			order = 9,
+			type = "color",
+			name = L.ColorExpansion,
+			width = "full",
+			hasAlpha = false,
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "color.expansion",
+		},
+		resetcolors = {
+			order = 10,
 			type = "execute",
 			name = L.DefaultColors,
 			func = function()
@@ -843,13 +865,13 @@ options.args.color = {
 			end,
 		},
 		emptyseparator = {
-			order = 10,
+			order = 11,
 			fontSize = "medium",
 			type = "description",
 			name = " ",
 		},
 		showuniqueitemsgroup = {
-			order = 11,
+			order = 12,
 			name = L.ConfigDisplay,
 			type = "group",
 			guiInline = true,
