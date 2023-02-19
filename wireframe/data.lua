@@ -1,6 +1,9 @@
 --[[
 	data.lua
 		Handles all the data elements for BagSync
+
+		BagSync - All Rights Reserved - (c) 2006-2023
+		License included with addon.
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace

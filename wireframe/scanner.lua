@@ -1,6 +1,9 @@
 --[[
 	scanner.lua
 		Scanner module for BagSync, scans bags, bank, currency, etc...
+
+		BagSync - All Rights Reserved - (c) 2006-2023
+		License included with addon.
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace

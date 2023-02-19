@@ -2,6 +2,9 @@
 	BagSyncLabel
 	label.lua
 		A custom widget for Label used for BagSync frames
+
+		BagSync - All Rights Reserved - (c) 2006-2023
+		License included with addon.
 --]]
 
 local Type, Version = "BagSyncLabel", 1

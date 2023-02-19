@@ -2,6 +2,9 @@
 	unit.lua
 		Unit module for BagSync
 		Special Thanks:  This module was inspired by LibItemCache-2.0.lua credit to jaliborc
+
+		BagSync - All Rights Reserved - (c) 2006-2023
+		License included with addon.
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace

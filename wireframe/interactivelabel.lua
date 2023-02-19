@@ -2,6 +2,9 @@
 	BagSyncInteractiveLabel
 	interactivelabel.lua
 		A custom widget for InteractiveLabel used for BagSync frames
+
+		BagSync - All Rights Reserved - (c) 2006-2023
+		License included with addon.
 --]]
 
 local Type, Version = "BagSyncInteractiveLabel", 1

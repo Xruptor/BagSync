@@ -1,6 +1,9 @@
 --[[
 	core.lua
 		Initiates the BagSync addon within Ace3, very important!
+
+		BagSync - All Rights Reserved - (c) 2006-2023
+		License included with addon.
 --]]
 
 local BAGSYNC, BSYC = ... --grab the addon namespace

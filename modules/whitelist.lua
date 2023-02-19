@@ -1,6 +1,9 @@
 --[[
 	whitelist.lua
 		A whitelist frame for BagSync items
+
+		BagSync - All Rights Reserved - (c) 2006-2023
+		License included with addon.
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
