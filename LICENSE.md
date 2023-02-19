@@ -4,7 +4,7 @@ www.manaflux.com
 
 ## Exceptions:
 
-1. All previous versions of BagSync should be considered "All Rights Reserved" and any changes to any previous versions are prohibited unless the express consent of the license holder is granted.
+1. All previous versions of this addon should be considered "All Rights Reserved" and any changes to any previous versions are prohibited unless the express consent of the license holder is granted.
 2. The use of this addon in accordance with all applicable terms set by Blizzard Entertainment for addon use and game play is permitted.
 3. Modified submissions of the addon to the license holder are permitted. Modified versions of the works, derivative works, modified sections of the works are all prohibited unless the express consent of the license holder is granted.
 4. Mofications must be submitted to the addons respository located at https://github.com/Xruptor/BagSync/.  No other forms of submissions are permitted unless granted by the license holder.
