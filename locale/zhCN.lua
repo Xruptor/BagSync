@@ -241,7 +241,7 @@ L.WarningUpdatedDB = "您已更新到最新的版本!您将需要再次重新扫
 L.WarningHeader = "警告!"
 L.ConfigFAQ= " FAQ / 帮助 "
 L.ConfigFAQHeader = "BagSync 的常见问题和帮助介绍"
-L.FAQ_Question_1 = "我遇到工具提示上/卡顿/滞后"
+L.FAQ_Question_1 = "我在工具提示上遇到卡顿/滞后。"
 L.FAQ_Question_1_p1 = [[
 当数据库中有旧的和损坏的数据 BagSync 无法解读时,通常会发生此问题。当 BagSync 需要处理大量的数据时,也会出现该问题,如果您在多个数据中数千个物品,那么在一秒钟内需要处理大量数据.这可能会导致您的计算机在短时间内滞后。最后,此问题的另一个原因是您拥有一台非常旧的计算机。当 BagSync 处理数以千计的物品和角色数据时,较旧的计算机会遇到滞后/卡顿的情况。具有更快的CPU和更大的内存的计算机通常不会出现这些问题。
 
@@ -254,7 +254,7 @@ L.FAQ_Question_2_p1 = [[
 
 有一种方法可以在 |cFFDF2B2Bsingle|r |cff3587ffBattle.net|r 帐户内连接多个魔兽世界帐户,以便它们共享相同的 SavedVariables 文件夹。 这涉及创建服务器链接文件夹。我不会在这方面提供帮助。所以别问了！请访问以下指南了解更多详情。 
 ]]
-L.FAQ_Question_3 = "您可以查看来自 |cFFDF2B2B多个|r |cff3587ff战网|r 账号内的物品数据吗?"
+L.FAQ_Question_3 = "可以查看来自 |cFFDF2B2B多个|r |cff3587ff战网|r 账号内的物品数据吗?"
 L.FAQ_Question_3_p1 = "不,这不可能。我不会在这方面提供帮助。所以不要问!"
 L.FAQ_Question_4 = "我可以在|cFFDF2B2B当前登录|r的帐号查看多个魔兽世界账户的物品数据吗?"
 L.FAQ_Question_4_p1 = "目前 BagSync 不支持在多个登录的魔兽世界帐户之间传输数据。这在未来可能会改变。"
