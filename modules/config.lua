@@ -511,6 +511,16 @@ options.args.display = {
 					arg = "display.enableSourceExpansion",
 					hidden = function() return not BSYC.IsRetail end,
 				},
+				itemtypes = {
+					order = 11,
+					type = "toggle",
+					name = L.DisplayItemTypes,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.enableItemTypes",
+				},
 			}
 		},
 		groupsorting = {
@@ -858,8 +868,19 @@ options.args.color = {
 			set = set,
 			arg = "color.expansion",
 		},
-		resetcolors = {
+		itemtypes = {
 			order = 10,
+			type = "color",
+			name = L.ColorItemTypes,
+			width = "full",
+			hasAlpha = false,
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "color.itemtypes",
+		},
+		resetcolors = {
+			order = 11,
 			type = "execute",
 			name = L.DefaultColors,
 			func = function()
@@ -868,13 +889,13 @@ options.args.color = {
 			end,
 		},
 		emptyseparator = {
-			order = 11,
+			order = 12,
 			fontSize = "medium",
 			type = "description",
 			name = " ",
 		},
 		showuniqueitemsgroup = {
-			order = 12,
+			order = 13,
 			name = L.ConfigDisplay,
 			type = "group",
 			guiInline = true,

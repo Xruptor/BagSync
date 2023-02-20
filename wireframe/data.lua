@@ -35,6 +35,14 @@ StaticPopupDialogs["BAGSYNC_RESETDATABASE"] = {
 	hideOnEscape = true,
 }
 
+local function HexToRGBPerc(hex)
+	if string.len(hex) >= 8 then
+		hex = hex:sub(3) --start from 3rd character
+	end
+	local rhex, ghex, bhex = string.sub(hex, 1, 2), string.sub(hex, 3, 4), string.sub(hex, 5, 6)
+	return { r = tonumber(rhex, 16)/255, g = tonumber(ghex, 16)/255, b = tonumber(bhex, 16)/255 }
+end
+
 ----------------------
 --   DB Functions   --
 ----------------------
@@ -110,19 +118,21 @@ function Data:OnEnable()
 	if BSYC.options.showGuildTabs == nil then BSYC.options.showGuildTabs = false end
 	if BSYC.options.enableWhitelist == nil then BSYC.options.enableWhitelist = false end
 	if BSYC.options.enableSourceExpansion == nil then BSYC.options.enableSourceExpansion = true end
+	if BSYC.options.enableItemTypes == nil then BSYC.options.enableItemTypes = true end
 
 	--setup the default colors
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end
-	if BSYC.options.colors.first == nil then BSYC.options.colors.first = { r = 128/255, g = 1, b = 0 }  end
-	if BSYC.options.colors.second == nil then BSYC.options.colors.second = { r = 1, g = 1, b = 1 }  end
-	if BSYC.options.colors.total == nil then BSYC.options.colors.total = { r = 244/255, g = 164/255, b = 96/255 }  end
-	if BSYC.options.colors.guild == nil then BSYC.options.colors.guild = { r = 101/255, g = 184/255, b = 192/255 }  end --very grayish light blue
-	if BSYC.options.colors.debug == nil then BSYC.options.colors.debug = { r = 77/255, g = 216/255, b = 39/255 }  end --fel green
-	if BSYC.options.colors.cross == nil then BSYC.options.colors.cross = { r = 1, g = 125/255, b = 10/255 }  end
-	if BSYC.options.colors.bnet == nil then BSYC.options.colors.bnet = { r = 53/255, g = 136/255, b = 1 }  end
-	if BSYC.options.colors.itemid == nil then BSYC.options.colors.itemid = { r = 82/255, g = 211/255, b = 134/255 }  end
-	if BSYC.options.colors.guildtabs == nil then BSYC.options.colors.guildtabs = { r = 9/255, g = 219/255, b = 224/255 }  end
-	if BSYC.options.colors.expansion == nil then BSYC.options.colors.expansion = { r = 207/255, g = 159/255, b = 1 }  end
+	if BSYC.options.colors.first == nil then BSYC.options.colors.first = HexToRGBPerc('FF80FF00') end
+	if BSYC.options.colors.second == nil then BSYC.options.colors.second = HexToRGBPerc('FFFFFFFF') end
+	if BSYC.options.colors.total == nil then BSYC.options.colors.total = HexToRGBPerc('FFF4A460') end
+	if BSYC.options.colors.guild == nil then BSYC.options.colors.guild = HexToRGBPerc('FF65B8C0') end
+	if BSYC.options.colors.debug == nil then BSYC.options.colors.debug = HexToRGBPerc('FF4DD827') end
+	if BSYC.options.colors.cross == nil then BSYC.options.colors.cross = HexToRGBPerc('FFFF7D0A') end
+	if BSYC.options.colors.bnet == nil then BSYC.options.colors.bnet = HexToRGBPerc('FF3588FF') end
+	if BSYC.options.colors.itemid == nil then BSYC.options.colors.itemid = HexToRGBPerc('FF52D386') end
+	if BSYC.options.colors.guildtabs == nil then BSYC.options.colors.guildtabs = HexToRGBPerc('FF09DBE0') end
+	if BSYC.options.colors.expansion == nil then BSYC.options.colors.expansion = HexToRGBPerc('FFCF9FFF') end
+	if BSYC.options.colors.itemtypes == nil then BSYC.options.colors.itemtypes = HexToRGBPerc('ffcccf66') end
 
 	--do DB cleanup check by version number
 	if not BSYC.options.addonversion or BSYC.options.addonversion ~= ver then
@@ -183,16 +193,17 @@ function Data:ResetColors()
 	Debug(2, "ResetColors")
 
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end
-	BSYC.options.colors.first = { r = 128/255, g = 1, b = 0 }
-	BSYC.options.colors.second = { r = 1, g = 1, b = 1 }
-	BSYC.options.colors.total = { r = 244/255, g = 164/255, b = 96/255 }
-	BSYC.options.colors.guild = { r = 101/255, g = 184/255, b = 192/255 } --very grayish light blue
-	BSYC.options.colors.debug = { r = 77/255, g = 216/255, b = 39/255 } --fel green
-	BSYC.options.colors.cross = { r = 1, g = 125/255, b = 10/255 }
-	BSYC.options.colors.bnet = { r = 53/255, g = 136/255, b = 1 }
-	BSYC.options.colors.itemid = { r = 82/255, g = 211/255, b = 134/255 }
-	BSYC.options.colors.guildtabs = { r = 9/255, g = 219/255, b = 224/255 }
-	BSYC.options.colors.expansion = { r = 207/255, g = 159/255, b = 1 }
+	BSYC.options.colors.first = HexToRGBPerc('FF80FF00')
+	BSYC.options.colors.second = HexToRGBPerc('FFFFFFFF')
+	BSYC.options.colors.total = HexToRGBPerc('FFF4A460')
+	BSYC.options.colors.guild = HexToRGBPerc('FF65B8C0')
+	BSYC.options.colors.debug = HexToRGBPerc('FF4DD827')
+	BSYC.options.colors.cross = HexToRGBPerc('FFFF7D0A')
+	BSYC.options.colors.bnet = HexToRGBPerc('FF3588FF')
+	BSYC.options.colors.itemid = HexToRGBPerc('FF52D386')
+	BSYC.options.colors.guildtabs = HexToRGBPerc('FF09DBE0')
+	BSYC.options.colors.expansion = HexToRGBPerc('FFCF9FFF')
+	BSYC.options.colors.itemtypes = HexToRGBPerc('ffcccf66')
 end
 
 function Data:CleanDB()

@@ -535,31 +535,31 @@ function Debug:AddMessage(level, sName, ...)
 
 	if level == 1 then
 		--debug
-		color = "4DD827" --fel green
+		color = "FF4DD827" --fel green
 	elseif level == 2 then
 		--info
-		color = "ffff00" --yellow
+		color = "FFffff00" --yellow
 	elseif level == 3 then
 		--trace
-		color = "09DBE0" --teal blue
+		color = "FF09DBE0" --teal blue
 	elseif level == 4 then
 		--warn
-		color = "FF3C38" --rose red
+		color = "FFFF3C38" --rose red
 	elseif level == 5 then
 		--fine
-		color = "e454fd" --dark lavender
+		color = "FFe454fd" --dark lavender
 	elseif level == 6 then
 		--SL1 (SUBLEVEL1)
-		color = "CF9FFF" --light lavender
+		color = "FFCF9FFF" --light lavender
 	elseif level == 7 then
 		--SL2 (SUBLEVEL2)
-		color = "FFD580" --light orange
+		color = "FFFFD580" --light orange
 	elseif level == 8 then
 		--SL3 (SUBLEVEL3)
-		color = "d1d1d1" --light gray
+		color = "FFd1d1d1" --light gray
 	end
 
-	local moduleName = string.format("|cFF"..color.."[%s]|r: ", sName)
+	local moduleName = string.format("|c"..color.."[%s]|r: ", sName)
 	debugStr = moduleName..debugStr
 	debugStr = "|cff808080["..date("%X").."]:|r "..debugStr
 

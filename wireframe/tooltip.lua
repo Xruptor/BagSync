@@ -65,7 +65,45 @@ function Tooltip:HexColor(color, str)
 	if type(color) == "table" then
 		return string.format("|cff%s%s|r", RGBPercToHex(color.r, color.g, color.b), tostring(str))
 	end
-	return string.format("|cff%s%s|r", tostring(color), tostring(str))
+	if string.len(color) == 8 then
+		return string.format("|c%s%s|r", tostring(color), tostring(str))
+	else
+		return string.format("|cff%s%s|r", tostring(color), tostring(str))
+	end
+end
+
+function Tooltip:GetItemTypeString(itemType, itemSubType, classID, subclassID)
+	if not itemType or not itemSubType then return nil end
+
+	local typeString = "?"
+	typeString = itemType.." | "..itemSubType
+
+	if classID then
+		--https://wowpedia.fandom.com/wiki/ItemType
+		if classID == Enum.ItemClass.Questitem then
+			typeString = Tooltip:HexColor('ffccef66', itemType).." | "..itemSubType
+
+		elseif classID == Enum.ItemClass.Profession then
+			typeString = Tooltip:HexColor('FF51B9E9', itemType).." | "..itemSubType
+
+		elseif classID == Enum.ItemClass.Armor or classID == Enum.ItemClass.Weapon then
+			typeString = Tooltip:HexColor('ff77ffff', itemType).." | "..itemSubType
+
+		elseif classID == Enum.ItemClass.Consumable then
+			typeString = Tooltip:HexColor('FF77F077', itemType).." | "..itemSubType
+
+		elseif classID == Enum.ItemClass.Tradegoods then
+			typeString = Tooltip:HexColor('FFFFD580', itemType).." | "..itemSubType
+
+		elseif classID == Enum.ItemClass.Reagent then
+			typeString = Tooltip:HexColor('ffff7777', itemType).." | "..itemSubType
+		end
+	end
+
+	--name, isArmorType = GetItemSubClassInfo(classID, subClassID)
+	--name = GetItemClassInfo(classID)
+
+	return typeString
 end
 
 function Tooltip:GetSortIndex(unitObj)
@@ -809,11 +847,9 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	--add [Total] if we have more than one unit to work with
 	if not skipTally and BSYC.options.showTotal and grandTotal > 0 and #unitList > 1 then
-		if not addSeparator then
-			--add a separator after the character list
-			table.insert(unitList, { colorized=" ", tallyString=" "} )
-			addSeparator = true
-		end
+		--add a separator after the character list
+		table.insert(unitList, { colorized=" ", tallyString=" "} )
+
 		desc = self:HexColor(BSYC.options.colors.total, L.TooltipTotal)
 		value = self:HexColor(BSYC.options.colors.second, comma_value(grandTotal))
 		table.insert(unitList, { colorized=desc, tallyString=value} )
@@ -826,12 +862,15 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		if isBattlePet then
 			desc = string.format("|cFFCA9BF7%s|r ", L.TooltipFakeID)
 		end
-		table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
+		if not addSeparator then
+			table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
+			addSeparator = true
+		end
 		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
 	end
 
 	--add expansion
-	if BSYC.options.enableSourceExpansion and shortID then
+	if BSYC.IsRetail and BSYC.options.enableSourceExpansion and shortID then
 		local expacID = shortID
 		desc = self:HexColor(BSYC.options.colors.expansion, L.TooltipExpansion)
 		if isBattlePet then
@@ -840,8 +879,32 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		expacID = select(15, GetItemInfo(expacID))
 		value = self:HexColor(BSYC.options.colors.second, (expacID and _G["EXPANSION_NAME"..expacID]) or "?")
 
-		table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
+		if not addSeparator then
+			table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
+			addSeparator = true
+		end
 		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
+	end
+
+	--add item types
+	if BSYC.options.enableItemTypes and shortID then
+		if isBattlePet then
+			shortID = BSYC:FakeIDToBattlePetID(shortID)
+		end
+
+		local itemType, itemSubType, _, _, _, _, classID, subclassID = select(6, GetItemInfo(shortID))
+		local typeString = Tooltip:GetItemTypeString(itemType, itemSubType, classID, subclassID)
+
+		if typeString then
+			desc = self:HexColor(BSYC.options.colors.itemtypes, L.TooltipItemType)
+			value = self:HexColor(BSYC.options.colors.second, typeString)
+
+			if not addSeparator then
+				table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
+				addSeparator = true
+			end
+			table.insert(unitList, 1, { colorized=desc, tallyString=value} )
+		end
 	end
 
 	--add debug info
