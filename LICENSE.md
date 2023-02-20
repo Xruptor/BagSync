@@ -8,7 +8,7 @@ www.manaflux.com
 2. The use of this addon in accordance with all applicable terms set by Blizzard Entertainment for addon use and game play is permitted.
 3. Modified submissions of the addon to the license holder are permitted. Modified versions of the works, derivative works, modified sections of the works are all prohibited unless the express consent of the license holder is granted.
 4. Mofications must be submitted to the addons respository located at https://github.com/Xruptor/BagSync/.  No other forms of submissions are permitted unless granted by the license holder.
-5. This addons license will change to "GNU LESSER GENERAL PUBLIC LICENSE (Version 3, 29 June 2007)" upon license holders death or extended inactivity at or exceeding 3 years since last update.  This change applies to all current and previous versions of the addon.  If updates are transmitted by the license holder in any event, then the license will revert back to "All Rights Reserved" for all versions of the addon.
+5. This addons license will change to "GNU LESSER GENERAL PUBLIC LICENSE (Version 3, 29 June 2007)" upon license holders death or extended inactivity at or exceeding 3 years since last update.  This change will apply to all current and previous versions of the addon.  If updates are transmitted by the license holder at any point, then the license will revert back to "All Rights Reserved" for all versions of the addon and the inactivity period starts anew.
 
 ## Comments:
 
