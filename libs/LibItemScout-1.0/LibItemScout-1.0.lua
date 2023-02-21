@@ -1,6 +1,16 @@
 --[[
 	Updated By: Xruptor
 
+	LibItemScout-1.0 is distributed under the terms of the GNU General Public License (Version 3).
+	As a special exception, the copyright holders of this library give you permission to embed it with independent modules to produce an addon,
+	regardless of the license terms of these independent modules, and to copy and distribute the resulting software under terms of your choice, provided that you also meet,
+	for each embedded independent module, the terms and conditions of the license of that module.
+	
+	This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+	See the GNU General Public License for more details.
+
+	------------------------------
+
 	NOTE: This is an updated/continuation of Tullers original LibItemSearch-1.0 code.  Since there already is a LibItemSearch-1.2, this library was renamed in order to prevent
 	confusion from any future updates to the updated LibItemSearch-1.2 code by Jaliborc.  That way this code can be updated seperatly from LibItemSearch-1.2
 	Original source credit goes to Jaliborc (João Libório), Tuller, Yewbacca (Equipment Set Searching) for the work on the original LibItemSearch-1.0 code.
