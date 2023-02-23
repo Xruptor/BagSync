@@ -20,8 +20,6 @@ local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local AceGUI = LibStub("AceGUI-3.0")
 local ItemScout = LibStub("LibItemScout-1.0")
 
---ItemSearch:Find(dItemLink, searchStr)
-
 function Search:OnEnable()
 
 	--lets create our widgets
@@ -133,11 +131,6 @@ function Search:OnEnable()
 		WarningFrame:SetPoint( "TOPLEFT", SearchFrame.frame, "TOPRIGHT", 0, 0)
 	end)
 
-	--hide the warning window if they close the search window
-	SearchFrame:SetCallback("OnClose",function(widget)
-		WarningFrame:Hide()
-	end)
-
 	WarningFrame:Hide()
 
 	----------------------------------------------------------
@@ -209,11 +202,6 @@ function Search:OnEnable()
 		--always show the advanced search on the left of the BagSync Search window
 		AdvancedSearchFrame.frame:ClearAllPoints()
 		AdvancedSearchFrame:SetPoint( "TOPRIGHT", SearchFrame.frame, "TOPLEFT", 0, 0)
-	end)
-
-	--hide the advanced search if they close the search window
-	SearchFrame:SetCallback("OnClose",function(widget)
-		AdvancedSearchFrame:Hide()
 	end)
 
 	advSearchBtn:SetCallback("OnClick", function()
@@ -340,6 +328,11 @@ function Search:OnEnable()
 
 	----------------------------------------------------------
 	----------------------------------------------------------
+
+	SearchFrame:SetCallback("OnClose",function(widget)
+		WarningFrame:Hide()
+		AdvancedSearchFrame:Hide()
+	end)
 
 	SearchFrame:Hide()
 end
@@ -497,14 +490,10 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 				if qOpts and qOpts.battlepet then
 					dName, dTexture = C_PetJournal.GetPetInfoBySpeciesID(qOpts.battlepet)
 					dRarity = 1
-					dItemLink = data[i]
-					testMatch = ItemScout:Find(dItemLink, searchStr)
+					dItemLink = data[i] --use the whole link, not just the FakeID
+					testMatch = ItemScout:Find(dName, searchStr) --use the name instead of a link
 				else
 					dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo("item:"..link)
-				end
-
-				--do the search if we have something to work with
-				if dItemLink then
 					testMatch = ItemScout:Find(dItemLink, searchStr)
 				end
 
@@ -514,9 +503,9 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 				end
 
 				--we only really want to grab the item once in our list, no need to add it multiple times per character
-				if dName and not tempList[link] then
-					if viewCustomList or testMatch then
-						tempList[link] = dName
+				if (dName and not tempList[link]) then
+					tempList[link] = dName
+					if (viewCustomList or testMatch) then
 						table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
 					end
 				elseif not tempList[link] then
@@ -550,7 +539,7 @@ function Search:DisplayAdvSearchSelectAll()
 end
 
 function Search:DoAdvancedSearch()
-	Debug(2, "init:DoAdvancedSearch", searchStr, advUnitList, advAllowList)
+	Debug(2, "init:DoAdvancedSearch", Search.searchStr, advUnitList, advAllowList)
 
 	local advUnitList = {}
 	local unitCount = 0
@@ -602,6 +591,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 		if not searchStr then return end
 		if string.len(searchStr) < 1 then return end
 	else
+		--we are doing an advanced search
 		searchStr = (string.len(advsbText) > 0 and advsbText) or Search.searchStr
 		self.advancedsearchframe.advsearchbar:SetText(nil) --reset always, we only want to use searchStr
 	end

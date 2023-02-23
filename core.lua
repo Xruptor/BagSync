@@ -276,7 +276,7 @@ function BSYC:FakeIDToBattlePetID(fakeID)
 
 	if fakeID >= BSYC.FakePetCode then
 		fakeID = (fakeID - BSYC.FakePetCode) / 100000
-		return fakeID, "battlepet:"..tostring(fakeID)
+		return fakeID
 	else
 		return nil
 	end

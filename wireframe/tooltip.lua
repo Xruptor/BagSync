@@ -532,15 +532,6 @@ function Tooltip:GetBottomChild(frame, qTip)
 		end
 	end
 
-	--check for Sorted Addon
-	if SortedExtendedTooltip then
-		local t = SortedExtendedTooltip
-		if t and t:IsVisible() then
-			local loc, pos = getMinLoc(t:GetTop(), t:GetBottom())
-			table.insert(cache, {name="SortedExtendedTooltip", frame=t, loc=loc, pos=pos})
-		end
-	end
-
 	--find closest to edge (closer to 0)
 	local lastLoc
 	local lastPos
@@ -571,11 +562,8 @@ function Tooltip:GetBottomChild(frame, qTip)
 		else
 			qTip:SetPoint("TOP", lastAnchor, "BOTTOM")
 		end
-		qTip:SetScript("OnUpdate", nil) --empty out the OnUpdate method to prevent spamming
 		return
 	end
-
-	qTip:SetScript("OnUpdate", nil) --empty out the OnUpdate method to prevent spamming
 
 	--failsafe
 	self:SetQTipAnchor(frame, qTip)
@@ -638,9 +626,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				objTooltip.qTip = LibQTip:Acquire("BagSyncQTip", 3, "LEFT", "CENTER", "RIGHT")
 				objTooltip.qTip:SetClampedToScreen(true)
 
-				--we use OnUpdate as it's triggered when the tooltip is shown, it should auto adjust for other displayed tooltips if found
-				--NOTE: Unlike other addons I do not like OnUpdate spam, so after the qTip is repositioned; I empty the OnUpdate function to prevent spamming.
-				objTooltip.qTip:SetScript("OnUpdate", function()
+				objTooltip.qTip:SetScript("OnShow", function()
 					Tooltip:GetBottomChild(objTooltip, objTooltip.qTip)
 				end)
 			end
@@ -869,41 +855,37 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
 	end
 
-	--add expansion
-	if BSYC.IsRetail and BSYC.options.enableSourceExpansion and shortID then
-		local expacID = shortID
-		desc = self:HexColor(BSYC.options.colors.expansion, L.TooltipExpansion)
-		if isBattlePet then
-			expacID = BSYC:FakeIDToBattlePetID(shortID)
-		end
-		expacID = select(15, GetItemInfo(expacID))
-		value = self:HexColor(BSYC.options.colors.second, (expacID and _G["EXPANSION_NAME"..expacID]) or "?")
+	--don't do expansion or itemtype information for battlepets
+	if not isBattlePet then
+		--add expansion
+		if BSYC.IsRetail and BSYC.options.enableSourceExpansion and shortID then
+			desc = self:HexColor(BSYC.options.colors.expansion, L.TooltipExpansion)
 
-		if not addSeparator then
-			table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
-			addSeparator = true
-		end
-		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
-	end
-
-	--add item types
-	if BSYC.options.enableItemTypes and shortID then
-		if isBattlePet then
-			shortID = BSYC:FakeIDToBattlePetID(shortID)
-		end
-
-		local itemType, itemSubType, _, _, _, _, classID, subclassID = select(6, GetItemInfo(shortID))
-		local typeString = Tooltip:GetItemTypeString(itemType, itemSubType, classID, subclassID)
-
-		if typeString then
-			desc = self:HexColor(BSYC.options.colors.itemtypes, L.TooltipItemType)
-			value = self:HexColor(BSYC.options.colors.second, typeString)
+			local expacID = select(15, GetItemInfo(shortID))
+			value = self:HexColor(BSYC.options.colors.second, (expacID and _G["EXPANSION_NAME"..expacID]) or "?")
 
 			if not addSeparator then
 				table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
 				addSeparator = true
 			end
 			table.insert(unitList, 1, { colorized=desc, tallyString=value} )
+		end
+
+		--add item types
+		if BSYC.options.enableItemTypes and shortID then
+			local itemType, itemSubType, _, _, _, _, classID, subclassID = select(6, GetItemInfo(shortID))
+			local typeString = Tooltip:GetItemTypeString(itemType, itemSubType, classID, subclassID)
+
+			if typeString then
+				desc = self:HexColor(BSYC.options.colors.itemtypes, L.TooltipItemType)
+				value = self:HexColor(BSYC.options.colors.second, typeString)
+
+				if not addSeparator then
+					table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
+					addSeparator = true
+				end
+				table.insert(unitList, 1, { colorized=desc, tallyString=value} )
+			end
 		end
 	end
 
@@ -1038,7 +1020,7 @@ function Tooltip:HookTooltip(objTooltip)
 
 		--Note: tooltip data type corresponds to the Enum.TooltipDataType types
 		--i.e Enum.TooltipDataType.Unit it type 2
-		--see https://github.com/Ketho/wow-ui-source-df/blob/e6d3542fc217592e6144f5934bf22c5d599c1f6c/Interface/AddOns/Blizzard_APIDocumentationGenerated/TooltipInfoSharedDocumentation.lua
+		--see https://github.com/tomrus88/BlizzardInterfaceCode/blob/de20049d4dc15eb268fb959148220acf0a23694c/Interface/AddOns/Blizzard_APIDocumentationGenerated/TooltipInfoSharedDocumentation.lua
 
 		local function OnTooltipSetItem(tooltip, data)
 

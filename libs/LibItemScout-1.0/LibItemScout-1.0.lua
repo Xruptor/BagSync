@@ -227,7 +227,7 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, item, _, search)
-		local name = C_Item.GetItemNameByID(item) or item:match('%[(.+)%]')
+		local name = C_Item.GetItemNameByID(item) or item:match('%[(.+)%]') or (item and tostring(item))
 		return match(search, name)
 	end
 }

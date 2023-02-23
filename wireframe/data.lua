@@ -228,12 +228,56 @@ function Data:FixDB()
 
 	if not BSYC.options.unitDBVersion then BSYC.options.unitDBVersion = {} end
 
+	local allowList = {
+		["bag"] = true,
+		["bank"] = true,
+		["reagents"] = true,
+		["equip"] = true,
+		["mailbox"] = true,
+		["void"] = true,
+		["auction"] = true,
+		["guild"] = true,
+	}
+
+	--fix old battlepet data
+	local function fixDBEntry(data)
+		if data then
+			for i=1, #data do
+				if data[i] then
+					local link, count, qOpts = BSYC:Split(data[i], skipOpts)
+					if link and tonumber(link) and (tonumber(link) >= BSYC.FakePetCode) then
+						if not qOpts or type(qOpts) ~= "table" or not qOpts.battlepet then
+							link = (link - BSYC.FakePetCode) / 100000
+							link = BSYC:CreateFakeBattlePetID(nil, count, link)
+							data[i] = link
+						end
+					end
+				end
+			end
+		end
+	end
+
 	for unitObj in self:IterateUnits(true) do
-		--store only user guild names
 		if not unitObj.isGuild then
+			--store only user guild names
 			if unitObj.data.guild and unitObj.data.guildrealm then
 				storeGuilds[unitObj.data.guild..unitObj.data.guildrealm] = true
 			end
+
+			for k, v in pairs(unitObj.data) do
+				if allowList[k] and type(v) == "table" then
+					--bags, bank, reagents
+					if k == "bag" or k == "bank" or k == "reagents" then
+						for bagID, bagData in pairs(v) do
+							fixDBEntry(bagData)
+						end
+					else
+						fixDBEntry(k == "auction" and v.bag or v)
+					end
+				end
+			end
+		else
+			fixDBEntry(unitObj.data.bag)
 		end
 	end
 
