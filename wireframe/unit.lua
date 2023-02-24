@@ -61,7 +61,7 @@ if C_PlayerInteractionManager then
 
 	Unit:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", function(event, winArg)
 		if winArg and showDebug[winArg] then
-			Debug(1, "PLAYER_INTERACTION_MANAGER_FRAME_SHOW", winArg)
+			Debug(BSYC_DL.DEBUG, "PLAYER_INTERACTION_MANAGER_FRAME_SHOW", winArg)
 		end
 		if winArg == InteractType.MailInfo then
 			Unit.atMailbox = true
@@ -88,7 +88,7 @@ if C_PlayerInteractionManager then
 	--Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
 	Unit:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE", function(event, winArg)
 		if winArg and showDebug[winArg] then
-			Debug(1, "PLAYER_INTERACTION_MANAGER_FRAME_HIDE", winArg)
+			Debug(BSYC_DL.DEBUG, "PLAYER_INTERACTION_MANAGER_FRAME_HIDE", winArg)
 		end
 		if winArg == InteractType.MailInfo then
 			Unit.atMailbox = false
@@ -215,7 +215,7 @@ function Unit:GetUnitInfo(unit)
 	unit.realmKey = realmKey
 	unit.rwsKey = self:GetRealmKey_RWS()
 
-	Debug(3, "GetUnitInfo", name, realm, isguild, FACTION, unit.class, unit.race, unit.gender, unit.guild, unit.guildrealm, unit.realmKey, unit.rwsKey)
+	Debug(BSYC_DL.TRACE, "GetUnitInfo", name, realm, isguild, FACTION, unit.class, unit.race, unit.gender, unit.guild, unit.guildrealm, unit.realmKey, unit.rwsKey)
 	return unit
 end
 

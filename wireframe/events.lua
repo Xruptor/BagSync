@@ -29,7 +29,7 @@ alertTooltip:Hide()
 Events.alertTooltip = alertTooltip
 
 local function showEventAlert(text, alertType)
-	Debug(2, "showEventAlert", text, alertType)
+	Debug(BSYC_DL.INFO, "showEventAlert", text, alertType)
 
 	Events.alertTooltip.alertType = alertType
 	Events.alertTooltip:ClearAllPoints()
@@ -47,7 +47,7 @@ local function showEventAlert(text, alertType)
 end
 
 function Events:DoTimer(sName, sFunc, sDelay, sRepeat)
-	Debug(8, "DoTimer", sName, sFunc, sDelay, sRepeat)
+	Debug(BSYC_DL.SL3, "DoTimer", sName, sFunc, sDelay, sRepeat)
 
 	if not self.timers then self.timers = {} end
 	if not sRepeat then
@@ -72,7 +72,7 @@ function Events:StopTimer(sName)
 end
 
 function Events:OnEnable()
-	Debug(2, "OnEnable")
+	Debug(BSYC_DL.INFO, "OnEnable")
 
 	self:RegisterEvent("PLAYER_MONEY")
 	self:RegisterEvent("GUILD_ROSTER_UPDATE")
@@ -86,6 +86,12 @@ function Events:OnEnable()
 	self:RegisterEvent("MAIL_INBOX_UPDATE", function()
 		self:DoTimer("MailBoxScan", function() Scanner:SaveMailbox() end, 0.3)
 	end)
+	self:RegisterEvent("MAIL_SEND_SUCCESS", function()
+		Scanner:SendMail(nil, true)
+	end)
+    hooksecurefunc("SendMail", function(mailTo)
+		Scanner:SendMail(mailTo, false)
+    end)
 
 	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", function(event, slotID)
 		Scanner:SaveBank(true)
@@ -144,35 +150,35 @@ function Events:OnEnable()
 end
 
 function Events:BAGSYNC_EVENT_MAILBOX(event, isOpen)
-	Debug(1, "BAGSYNC_EVENT_MAILBOX", isOpen)
+	Debug(BSYC_DL.DEBUG, "BAGSYNC_EVENT_MAILBOX", isOpen)
 	if isOpen then
 		Scanner:SaveMailbox(true)
 	end
 end
 
 function Events:BAGSYNC_EVENT_BANK(event, isOpen)
-	Debug(1, "BAGSYNC_EVENT_BANK", isOpen)
+	Debug(BSYC_DL.DEBUG, "BAGSYNC_EVENT_BANK", isOpen)
 	if isOpen then
 		Scanner:SaveBank()
 	end
 end
 
 function Events:BAGSYNC_EVENT_AUCTION(event, isOpen, isReady)
-	Debug(1, "BAGSYNC_EVENT_AUCTION", isOpen, isReady)
+	Debug(BSYC_DL.DEBUG, "BAGSYNC_EVENT_AUCTION", isOpen, isReady)
 	if isOpen and isReady then
 		Scanner:SaveAuctionHouse()
 	end
 end
 
 function Events:BAGSYNC_EVENT_VOIDBANK(event, isOpen)
-	Debug(1, "BAGSYNC_EVENT_VOIDBANK", isOpen)
+	Debug(BSYC_DL.DEBUG, "BAGSYNC_EVENT_VOIDBANK", isOpen)
 	if isOpen then
 		Scanner:SaveVoidBank()
 	end
 end
 
 function Events:BAGSYNC_EVENT_GUILDBANK(event, isOpen)
-	Debug(1, "BAGSYNC_EVENT_GUILDBANK", isOpen)
+	Debug(BSYC_DL.DEBUG, "BAGSYNC_EVENT_GUILDBANK", isOpen)
 	if isOpen then
 		self:GuildBank_Open()
 	else
@@ -199,18 +205,18 @@ function Events:PLAYER_EQUIPMENT_CHANGED(event)
 end
 
 function Events:BAG_UPDATE(event, bagid)
-	Debug(8, "BAG_UPDATE", bagid)
+	Debug(BSYC_DL.SL3, "BAG_UPDATE", bagid)
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
 	self.SpamBagQueue[bagid] = true
 	self.SpamBagTotal = (self.SpamBagTotal or 0) + 1
 end
 
 function Events:BAG_UPDATE_DELAYED(event)
-	Debug(8, "BAG_UPDATE_DELAYED")
+	Debug(BSYC_DL.SL3, "BAG_UPDATE_DELAYED")
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
 	if not self.SpamBagTotal then self.SpamBagTotal = 0 end
 	--NOTE: BSYC:GetHashTableLen(self.SpamBagQueue) may show more then is actually processed.  Example it has the banks in queue but we aren't at a bank.
-	Debug(2, "SpamBagQueue", self.SpamBagTotal)
+	Debug(BSYC_DL.INFO, "SpamBagQueue", self.SpamBagTotal)
 
 	local totalProcessed = 0
 
@@ -237,13 +243,13 @@ function Events:BAG_UPDATE_DELAYED(event)
 	end
 	self.SpamBagTotal = 0
 
-	Debug(2, "SpamBagQueue", "totalProcessed", totalProcessed)
+	Debug(BSYC_DL.INFO, "SpamBagQueue", "totalProcessed", totalProcessed)
 end
 
 function Events:GuildBank_Open()
 	if not BSYC.options.enableGuild then return end
 	if not self.GuildTabQueryQueue then self.GuildTabQueryQueue = {} end
-	Debug(2, "GuildBank_Open")
+	Debug(BSYC_DL.INFO, "GuildBank_Open")
 
 	local numTabs = GetNumGuildBankTabs()
 	for tab = 1, numTabs do
@@ -259,7 +265,7 @@ end
 
 function Events:GuildBank_Close()
 	if not BSYC.options.enableGuild then return end
-	Debug(2, "GuildBank_Close")
+	Debug(BSYC_DL.INFO, "GuildBank_Close")
 
 	if self.queryGuild then
 		BSYC:Print(L.ScanGuildBankError)
@@ -281,7 +287,7 @@ function Events:GuildBank_Changed()
 		if BSYC.options.showGuildBankScanAlert then
 			showEventAlert(numTab, "GUILDBANK")
 		end
-		Debug(3, "GuildBank_Changed", numTab)
+		Debug(BSYC_DL.TRACE, "GuildBank_Changed", numTab)
 	else
 		if self.queryGuild then
 			self.queryGuild = false

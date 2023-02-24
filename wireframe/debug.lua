@@ -521,40 +521,40 @@ end
 function Debug:AddMessage(level, sName, ...)
 	if not BSYC.options or not BSYC.options.debug or not BSYC.options.debug.enable then return end
 
-	if level == 1 and not BSYC.options.debug.DEBUG then return end
-	if level == 2 and not BSYC.options.debug.INFO then return end
-	if level == 3 and not BSYC.options.debug.TRACE then return end
-	if level == 4 and not BSYC.options.debug.WARN then return end
-	if level == 5 and not BSYC.options.debug.FINE then return end
-	if level == 6 and not BSYC.options.debug.SL1 then return end
-	if level == 7 and not BSYC.options.debug.SL2 then return end
-	if level == 8 and not BSYC.options.debug.SL3 then return end
+	if level == BSYC_DL.DEBUG and not BSYC.options.debug.DEBUG then return end
+	if level == BSYC_DL.INFO and not BSYC.options.debug.INFO then return end
+	if level == BSYC_DL.TRACE and not BSYC.options.debug.TRACE then return end
+	if level == BSYC_DL.WARN and not BSYC.options.debug.WARN then return end
+	if level == BSYC_DL.FINE and not BSYC.options.debug.FINE then return end
+	if level == BSYC_DL.SL1 and not BSYC.options.debug.SL1 then return end
+	if level == BSYC_DL.SL2 and not BSYC.options.debug.SL2 then return end
+	if level == BSYC_DL.SL3 and not BSYC.options.debug.SL3 then return end
 
 	local debugStr = string.join(", ", tostringall(...))
 	local color = "778899" -- slate gray
 
-	if level == 1 then
+	if level == BSYC_DL.DEBUG then
 		--debug
 		color = "FF4DD827" --fel green
-	elseif level == 2 then
+	elseif level == BSYC_DL.INFO then
 		--info
 		color = "FFffff00" --yellow
-	elseif level == 3 then
+	elseif level == BSYC_DL.TRACE then
 		--trace
 		color = "FF09DBE0" --teal blue
-	elseif level == 4 then
+	elseif level == BSYC_DL.WARN then
 		--warn
 		color = "FFFF3C38" --rose red
-	elseif level == 5 then
+	elseif level == BSYC_DL.FINE then
 		--fine
 		color = "FFe454fd" --dark lavender
-	elseif level == 6 then
+	elseif level == BSYC_DL.SL1 then
 		--SL1 (SUBLEVEL1)
 		color = "FFCF9FFF" --light lavender
-	elseif level == 7 then
+	elseif level == BSYC_DL.SL2 then
 		--SL2 (SUBLEVEL2)
 		color = "FFFFD580" --light orange
-	elseif level == 8 then
+	elseif level == BSYC_DL.SL3 then
 		--SL3 (SUBLEVEL3)
 		color = "FFd1d1d1" --light gray
 	end

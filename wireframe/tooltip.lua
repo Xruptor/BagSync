@@ -279,8 +279,8 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET
 		end
 	end
 
-	Debug(2, "ColorizeUnit", tmpTag, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, player.realm)
-	Debug(7, "ColorizeUnit [Realm]", GetRealmName(), GetNormalizedRealmName())
+	Debug(BSYC_DL.INFO, "ColorizeUnit", tmpTag, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, player.realm)
+	Debug(BSYC_DL.SL2, "ColorizeUnit [Realm]", GetRealmName(), GetNormalizedRealmName())
 	return tmpTag
 end
 
@@ -322,7 +322,7 @@ end
 
 function Tooltip:MoneyTooltip()
 	local tooltip = _G["BagSyncMoneyTooltip"] or nil
-	Debug(2, "MoneyTooltip")
+	Debug(BSYC_DL.INFO, "MoneyTooltip")
 
 	if (not tooltip) then
 			tooltip = CreateFrame("GameTooltip", "BagSyncMoneyTooltip", UIParent, "GameTooltipTemplate")
@@ -483,7 +483,7 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total, skipTotal)
 end
 
 function Tooltip:GetBottomChild(frame, qTip)
-	Debug(3, "GetBottomChild", frame, qTip)
+	Debug(BSYC_DL.TRACE, "GetBottomChild", frame, qTip)
 
 	local cache = {}
 
@@ -556,7 +556,7 @@ function Tooltip:GetBottomChild(frame, qTip)
 	end
 
 	if lastAnchor and lastLoc and lastPos then
-		Debug(8, "GetBottomChild", lastAnchor, lastLoc, lastPos, lastName)
+		Debug(BSYC_DL.SL3, "GetBottomChild", lastAnchor, lastLoc, lastPos, lastName)
 		if lastLoc == "top" then
 			qTip:SetPoint("BOTTOM", lastAnchor, "TOP")
 		else
@@ -570,7 +570,7 @@ function Tooltip:GetBottomChild(frame, qTip)
 end
 
 function Tooltip:SetQTipAnchor(frame, qTip)
-	Debug(7, "SetQTipAnchor", frame, qTip)
+	Debug(BSYC_DL.SL2, "SetQTipAnchor", frame, qTip)
 
     local x, y = frame:GetCenter()
 	qTip:ClearAllPoints()
@@ -929,12 +929,12 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	if not skipTally or #unitList > 0 then
 		local WLChk = (BSYC.options.enableWhitelist and "WL-ON") or "WL-OFF"
-		Debug(2, "TallyUnits", link, shortID, origLink, source, isBattlePet, grandTotal, WLChk)
+		Debug(BSYC_DL.INFO, "TallyUnits", link, shortID, origLink, source, isBattlePet, grandTotal, WLChk)
 	end
 end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)
-	Debug(2, "CurrencyTooltip", currencyName, currencyIcon, currencyID, source)
+	Debug(BSYC_DL.INFO, "CurrencyTooltip", currencyName, currencyIcon, currencyID, source)
 
 	currencyID = tonumber(currencyID) --make sure it's a number we are working with and not a string
 	if not currencyID then return end
@@ -989,7 +989,7 @@ function Tooltip:HookTooltip(objTooltip)
 	--if the tooltip doesn't exist, chances are it's the BattlePetTooltip and they are on Classic or WOTLK
 	if not objTooltip then return end
 
-	Debug(2, "HookTooltip", objTooltip)
+	Debug(BSYC_DL.INFO, "HookTooltip", objTooltip)
 
 	--MORE INFO (https://wowpedia.fandom.com/wiki/Category:API_namespaces/C_TooltipInfo)
 	--https://wowpedia.fandom.com/wiki/Patch_10.0.2/API_changes#Tooltip_Changes
@@ -1153,7 +1153,7 @@ function Tooltip:HookTooltip(objTooltip)
 end
 
 function Tooltip:OnEnable()
-	Debug(2, "OnEnable")
+	Debug(BSYC_DL.INFO, "OnEnable")
 
 	self:HookTooltip(GameTooltip)
 	self:HookTooltip(ItemRefTooltip)

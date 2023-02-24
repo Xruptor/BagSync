@@ -31,23 +31,36 @@ BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 BSYC.IsWLK_C = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
 
 BSYC.FakePetCode = 10000000000
+BSYC_DL = {
+	DEBUG = 1,
+	INFO = 2,
+	TRACE = 3,
+	WARN = 4,
+	FINE = 5,
+	SL1 = 6,
+	SL2 = 7,
+	SL3 = 8,
+}
 
-local debugf = tekDebug and tekDebug:GetFrame("BagSync")
 function BSYC.DEBUG(level, sName, ...)
 	if not BSYC.options or not BSYC.options.debug or not BSYC.options.debug.enable then return end
-
-	--old tekDebug code just in case I want to track old debugging method
-    if debugf then
-		local debugStr = string.join(", ", tostringall(...))
-		local moduleName = string.format("|cFFffff00[%s]|r: ", sName)
-		debugStr = moduleName..debugStr
-		debugf:AddMessage(debugStr)
-	end
 
 	local Debug = BSYC:GetModule("Debug")
 	if not Debug then return end
 
 	Debug:AddMessage(level, sName, ...)
+end
+
+function BSYC.T_DEBUG(...)
+	local debugf = tekDebug and tekDebug:GetFrame("BagSync")
+
+	--old tekDebug code just in case I want to track old debugging method
+    if debugf then
+		local debugStr = string.join(", ", tostringall(...))
+		local moduleName = string.format("|cFFffff00[%s]|r: ", "BagSync")
+		debugStr = moduleName..debugStr
+		debugf:AddMessage(debugStr)
+	end
 end
 
 local function Debug(level, ...)
@@ -241,7 +254,7 @@ end
 
 function BSYC:CreateFakeBattlePetID(link, count, speciesID)
 	if not BattlePetTooltip then return end
-	Debug(1, "CreateFakeBattlePetID", link, count, speciesID)
+	Debug(BSYC_DL.DEBUG, "CreateFakeBattlePetID", link, count, speciesID)
 
 	--https://github.com/tomrus88/BlizzardInterfaceCode/blob/8633e552f3335b8c66b1fbcea6760a5cd8bcc06b/Interface/FrameXML/BattlePetTooltip.lua
 

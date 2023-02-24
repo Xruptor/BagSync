@@ -32,6 +32,8 @@ local MAX_GUILDBANK_SLOTS_PER_TAB = 98
 local FirstEquipped = INVSLOT_FIRST_EQUIPPED
 local LastEquipped = INVSLOT_LAST_EQUIPPED
 
+Scanner.pendingdMail = {items={}}
+
 function Scanner:ResetTooltips()
 	--the true is to set it to silent and not return an error if not found
 	if BSYC:GetModule("Tooltip", true) then BSYC:GetModule("Tooltip"):Reset() end
@@ -88,7 +90,7 @@ function Scanner:IsReagentBag(bagid)
 end
 
 function Scanner:StartupScans()
-	Debug(2, "StartupScans", BSYC.startupScanChk)
+	Debug(BSYC_DL.INFO, "StartupScans", BSYC.startupScanChk)
 	if BSYC.startupScanChk then return end --only do this once per load.  Does not include /reloadui
 
 	self:SaveEquipment()
@@ -110,7 +112,7 @@ function Scanner:StartupScans()
 end
 
 function Scanner:SaveBag(bagtype, bagid)
-	Debug(2, "SaveBag", bagtype, bagid)
+	Debug(BSYC_DL.INFO, "SaveBag", bagtype, bagid)
 
 	if not bagtype or not bagid then return end
 	if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
@@ -128,14 +130,14 @@ function Scanner:SaveBag(bagtype, bagid)
 				local containerInfo = xGetContainerInfo(bagid, slot)
 				if containerInfo and containerInfo.hyperlink then
 					local tmpItem = BSYC:ParseItemLink(containerInfo.hyperlink, containerInfo.stackCount or 1)
-					Debug(5, "SaveBag", bagtype, bagid, tmpItem)
+					Debug(BSYC_DL.FINE, "SaveBag", bagtype, bagid, tmpItem)
 					table.insert(slotItems,  tmpItem)
 				end
 			else
 				local _, count, _,_,_,_, link = xGetContainerInfo(bagid, slot)
 				if link then
 					local tmpItem = BSYC:ParseItemLink(link, count)
-					Debug(5, "SaveBag", bagtype, bagid, tmpItem)
+					Debug(BSYC_DL.FINE, "SaveBag", bagtype, bagid, tmpItem)
 					table.insert(slotItems, tmpItem)
 				end
 			end
@@ -150,7 +152,7 @@ function Scanner:SaveBag(bagtype, bagid)
 end
 
 function Scanner:SaveEquipment()
-	Debug(2, "SaveEquipment")
+	Debug(BSYC_DL.INFO, "SaveEquipment")
 
 	if not BSYC.db.player.equip then BSYC.db.player.equip = {} end
 
@@ -161,7 +163,7 @@ function Scanner:SaveEquipment()
 		local count =  GetInventoryItemCount("player", slot)
 		if link then
 			local tmpItem =  BSYC:ParseItemLink(link, count)
-			Debug(5, "SaveEquipment", tmpItem, slot)
+			Debug(BSYC_DL.FINE, "SaveEquipment", tmpItem, slot)
 			table.insert(slotItems,  tmpItem)
 		end
 	end
@@ -183,7 +185,7 @@ function Scanner:SaveEquipment()
 
 			if link and count then
 				local tmpItem =  BSYC:ParseItemLink(link, count)
-				Debug(5, "SaveEquipment", "ProfessionSlot", tmpItem, slotNumber)
+				Debug(BSYC_DL.FINE, "SaveEquipment", "ProfessionSlot", tmpItem, slotNumber)
 				table.insert(slotItems,  tmpItem)
 			end
 		end
@@ -196,7 +198,7 @@ function Scanner:SaveEquipment()
 end
 
 function Scanner:SaveBank(rootOnly)
-	Debug(2, "SaveBank", rootOnly, Unit.atBank)
+	Debug(BSYC_DL.INFO, "SaveBank", rootOnly, Unit.atBank)
 	if not Unit.atBank then return end
 
 	--force scan of bank bag -1, since blizzard never sends updates for it
@@ -216,7 +218,7 @@ function Scanner:SaveBank(rootOnly)
 end
 
 function Scanner:SaveReagents()
-	Debug(2, "SaveReagents", Unit.atBank)
+	Debug(BSYC_DL.INFO, "SaveReagents", Unit.atBank)
 	if not Unit.atBank then return end
 
 	if IsReagentBankUnlocked() then
@@ -227,7 +229,7 @@ function Scanner:SaveReagents()
 end
 
 function Scanner:SaveVoidBank()
-	Debug(2, "SaveVoidBank", Unit.atVoidBank)
+	Debug(BSYC_DL.INFO, "SaveVoidBank", Unit.atVoidBank)
 	if not Unit.atVoidBank then return end
 	if not BSYC.db.player.void then BSYC.db.player.void = {} end
 
@@ -248,7 +250,7 @@ function Scanner:SaveVoidBank()
 end
 
 local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
-	Debug(2, "findBattlePet", iconTexture, petName, typeSlot, arg1, arg2)
+	Debug(BSYC_DL.INFO, "findBattlePet", iconTexture, petName, typeSlot, arg1, arg2)
 
 	if BSYC.options.enableAccurateBattlePets and arg1 then
 		local data
@@ -291,7 +293,7 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 end
 
 function Scanner:SaveGuildBank()
-	Debug(2, "SaveGuildBank", Unit.atGuildBank)
+	Debug(BSYC_DL.INFO, "SaveGuildBank", Unit.atGuildBank)
 	if not Unit.atGuildBank then return end
 	if Scanner.isScanningGuild then return end
 
@@ -339,7 +341,7 @@ function Scanner:SaveGuildBank()
 
 	local guildDB = Data:GetGuild()
 	if guildDB then
-		Debug(3, "SaveGuildBank", "FoundGuild")
+		Debug(BSYC_DL.TRACE, "SaveGuildBank", "FoundGuild")
 		local player = Unit:GetUnitInfo()
 		guildDB.bag = slotItems
 		guildDB.money = GetGuildBankMoney()
@@ -354,7 +356,7 @@ function Scanner:SaveGuildBank()
 end
 
 function Scanner:SaveMailbox(isShow)
-	Debug(2, "SaveMailbox", isShow, Unit.atMailbox, BSYC.options.enableMailbox, self.isCheckingMail)
+	Debug(BSYC_DL.INFO, "SaveMailbox", isShow, Unit.atMailbox, BSYC.options.enableMailbox, self.isCheckingMail)
 	if not Unit.atMailbox or not BSYC.options.enableMailbox then return end
 	if not BSYC.db.player.mailbox then BSYC.db.player.mailbox = {} end
 
@@ -395,7 +397,7 @@ function Scanner:SaveMailbox(isShow)
 					end
 
 					if link then
-						Debug(5, "SaveMailbox", mailIndex, i, link)
+						Debug(BSYC_DL.FINE, "SaveMailbox", mailIndex, i, link)
 						table.insert(slotItems, link)
 					end
 				end
@@ -409,8 +411,65 @@ function Scanner:SaveMailbox(isShow)
 	self:ResetTooltips()
 end
 
+function Scanner:SendMail(mailTo, addMail)
+	Debug(BSYC_DL.INFO, "SendMail", mailTo, addMail)
+
+	if not addMail then
+		if not mailTo then return end
+		Scanner.pendingdMail = {items={}}
+		Scanner.pendingdMail.mailTo = mailTo
+
+		for i = 1, ATTACHMENTS_MAX_SEND do
+			if (_G.HasSendMailItem(i)) then
+				local name, itemID, texture, count, quality = _G.GetSendMailItem(i)
+
+				if (itemID) then
+					--we don't have to worry about BattletPets as the actual itemLink is returned instead of the PetCage
+					local sendLink = _G.GetSendMailItemLink(i)
+					local link = BSYC:ParseItemLink(sendLink, count)
+					Debug(BSYC_DL.FINE, "SendMail-Queue", mailTo, name, itemID, count, quality, link)
+
+					local slotItems = {}
+					slotItems.name = name
+					slotItems.link = link
+					slotItems.itemID = itemID
+					slotItems.texture = texture
+					slotItems.count = count
+					slotItems.quality = quality
+
+					table.insert(Scanner.pendingdMail.items, slotItems)
+				end
+			end
+		end
+	else
+		if not Scanner.pendingdMail.mailTo then return end
+		mailTo = Scanner.pendingdMail.mailTo
+		local mailItems = Scanner.pendingdMail.items
+
+		local mailRealm = GetRealmName() -- get our current realm, we will replace this if mail was sent to another realm
+		if mailTo:find("%-") then -- send a BoA item to another realm
+			mailTo, mailRealm = mailTo:match("(.+)-(.+)")
+		end
+		mailTo = strtrim(mailTo) --strip any spaces/characters just in case
+
+		--grab our DB entry for the recipient if they even exist, if they don't then ignore
+		if not BagSyncDB[mailRealm] then return end
+		if not BagSyncDB[mailRealm][mailTo] then return end
+		local unitObj = BagSyncDB[mailRealm][mailTo]
+
+		if not unitObj.mailbox then unitObj.mailbox = {} end
+
+		for i=1, #mailItems do
+			tinsert(unitObj.mailbox, mailItems[i].link)
+			Debug(BSYC_DL.FINE, "SendMail-Add", mailTo, mailRealm, mailItems[i].name, mailItems[i].itemID, mailItems[i].link)
+		end
+
+		Scanner.pendingdMail = {items={}} --reset everything
+	end
+end
+
 function Scanner:SaveAuctionHouse()
-	Debug(2, "SaveAuctionHouse", Unit.atAuction, BSYC.options.enableAuction)
+	Debug(BSYC_DL.INFO, "SaveAuctionHouse", Unit.atAuction, BSYC.options.enableAuction)
 	if not Unit.atAuction or not BSYC.options.enableAuction then return end
 	if not BSYC.db.player.auction then BSYC.db.player.auction = {} end
 
@@ -492,7 +551,7 @@ end
 function Scanner:SaveCurrency(showDebug)
 	if not C_CurrencyInfo then return end
 	if Unit:InCombatLockdown() then return end
-	if showDebug then Debug(2, "SaveCurrency") end --this function gets spammed like crazy sometimes, so only show debug when requested
+	if showDebug then Debug(BSYC_DL.INFO, "SaveCurrency") end --this function gets spammed like crazy sometimes, so only show debug when requested
 
 	local lastHeader
 	local slotItems = {}
@@ -557,7 +616,7 @@ function Scanner:CleanupBags()
 	--this function will cleanup the bags and make sure there are no orphaned bags that shouldn't be there for the player
 	--the purpose of this function is to fix the bag counts that were changed via Dragonflight
 
-	Debug(2, "CleanupBags")
+	Debug(BSYC_DL.INFO, "CleanupBags")
 
 	local bagtype = ""
 
@@ -598,7 +657,7 @@ end
 
 function Scanner:SaveProfessions()
 	if not BSYC.IsRetail then return end
-	Debug(2, "SaveProfessions")
+	Debug(BSYC_DL.INFO, "SaveProfessions")
 
 	--we don't want to do linked tradeskills, guild tradeskills, or a tradeskill from an NPC
 	if _G.C_TradeSkillUI.IsTradeSkillLinked() or _G.C_TradeSkillUI.IsTradeSkillGuild() or _G.C_TradeSkillUI.IsNPCCrafting() then return end
@@ -771,7 +830,7 @@ end
 
 function Scanner:CleanupProfessions()
 	if not BSYC.IsRetail then return end
-	Debug(2, "CleanupProfessions")
+	Debug(BSYC_DL.INFO, "CleanupProfessions")
 
 	--lets remove unlearned tradeskills
 	local tmpList = {}

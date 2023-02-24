@@ -48,17 +48,17 @@ end
 ----------------------
 
 function Data:OnEnable()
-	Debug(2, "OnEnable")
+	Debug(BSYC_DL.INFO, "OnEnable")
 	local ver = GetAddOnMetadata("BagSync","Version") or 0
 
 	--get player information from Unit
 	local player = Unit:GetUnitInfo()
 
-	Debug(1, "UnitInfo-1", player.name, player.realm)
-	Debug(1, "UnitInfo-2", player.class, player.race, player.gender, player.faction)
-	Debug(1, "UnitInfo-3", player.guild, player.guildrealm)
-	Debug(1, "RealmKey", player.realmKey)
-	Debug(1, "RealmKey_RWS", player.rwsKey)
+	Debug(BSYC_DL.DEBUG, "UnitInfo-1", player.name, player.realm)
+	Debug(BSYC_DL.DEBUG, "UnitInfo-2", player.class, player.race, player.gender, player.faction)
+	Debug(BSYC_DL.DEBUG, "UnitInfo-3", player.guild, player.guildrealm)
+	Debug(BSYC_DL.DEBUG, "RealmKey", player.realmKey)
+	Debug(BSYC_DL.DEBUG, "RealmKey_RWS", player.rwsKey)
 
 	--main DB call
 	BSYC.db = BSYC.db or {}
@@ -171,7 +171,7 @@ function Data:OnEnable()
 end
 
 function Data:DebugDumpOptions()
-	Debug(1, "init-DebugDumpOptions")
+	Debug(BSYC_DL.DEBUG, "init-DebugDumpOptions")
 	for k, v in pairs(BSYC.options) do
 		if type(v) ~= "table" then
 			BSYC.DEBUG(1, "DumpOptions", k, tostring(v))
@@ -190,7 +190,7 @@ function Data:DebugDumpOptions()
 end
 
 function Data:ResetColors()
-	Debug(2, "ResetColors")
+	Debug(BSYC_DL.INFO, "ResetColors")
 
 	if BSYC.options.colors == nil then BSYC.options.colors = {} end
 	BSYC.options.colors.first = HexToRGBPerc('FF80FF00')
@@ -207,7 +207,7 @@ function Data:ResetColors()
 end
 
 function Data:CleanDB()
-	Debug(2, "CleanDB")
+	Debug(BSYC_DL.INFO, "CleanDB")
 
 	--check for empty table table to prevent loops
 	if next(BagSyncDB) == nil then
@@ -222,7 +222,7 @@ function Data:CleanDB()
 end
 
 function Data:FixDB()
-	Debug(2, "FixDB")
+	Debug(BSYC_DL.INFO, "FixDB")
 
     local storeGuilds = {}
 
@@ -343,7 +343,7 @@ function Data:ResetFramePositions()
 end
 
 function Data:LoadSlashCommand()
-	Debug(2, "LoadSlashCommand")
+	Debug(BSYC_DL.INFO, "LoadSlashCommand")
 
 	--load the keybinding locale information
 	BINDING_HEADER_BAGSYNC = "BagSync"
@@ -438,7 +438,7 @@ function Data:LoadSlashCommand()
 end
 
 function Data:CheckExpiredAuctions()
-	Debug(2, "CheckExpiredAuctions")
+	Debug(BSYC_DL.INFO, "CheckExpiredAuctions")
 
 	for unitObj in self:IterateUnits(true) do
 		if not unitObj.isGuild and unitObj.data.auction and unitObj.data.auction.count then
@@ -473,7 +473,7 @@ end
 
 function Data:GetGuild(unitObj)
 	if not unitObj and not IsInGuild() then return end
-	if not unitObj then	Debug(2, "GetGuild", unitObj) end
+	if not unitObj then	Debug(BSYC_DL.INFO, "GetGuild", unitObj) end
 
 	local player = unitObj or Unit:GetUnitInfo()
 	if not player.guild or not player.guildrealm then return end
@@ -484,7 +484,7 @@ function Data:GetGuild(unitObj)
 end
 
 function Data:IterateUnits(dumpAll, filterList)
-	Debug(2, "IterateUnits", dumpAll, filterList)
+	Debug(BSYC_DL.INFO, "IterateUnits", dumpAll, filterList)
 
 	local player = Unit:GetUnitInfo()
 	local argKey, argValue = next(BagSyncDB)
