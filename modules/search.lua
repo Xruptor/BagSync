@@ -20,6 +20,8 @@ local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local AceGUI = LibStub("AceGUI-3.0")
 local ItemScout = LibStub("LibItemScout-1.0")
 
+Search.cacheItems = {}
+
 function Search:OnEnable()
 
 	--lets create our widgets
@@ -485,17 +487,28 @@ local function checkData(data, searchStr, searchTable, tempList, countWarning, v
 			if link then
 				local dName, dItemLink, dRarity, dTexture
 				local testMatch = false
+				local cache = {}
 
-				--qOpts.battlepet would be speciesID
-				if qOpts and qOpts.battlepet then
-					dName, dTexture = C_PetJournal.GetPetInfoBySpeciesID(qOpts.battlepet)
-					dRarity = 1
-					dItemLink = data[i] --use the whole link, not just the FakeID
-					testMatch = ItemScout:Find(dName, searchStr) --use the name instead of a link
+				--do a Cache check
+				if not Search.cacheItems[link] then
+					if qOpts and qOpts.battlepet then
+						dName, dTexture = C_PetJournal.GetPetInfoBySpeciesID(qOpts.battlepet) --qOpts.battlepet would be speciesID
+						dRarity = 1
+						dItemLink = data[i] --use the whole link, not just the FakeID
+					else
+						dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo("item:"..link)
+					end
+
+					--add to Cache if we have something to work with
+					if dName then
+						Search.cacheItems[link] = { dName=dName, dItemLink=dItemLink, dRarity=dRarity, dTexture=dTexture }
+					end
 				else
-					dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo("item:"..link)
-					testMatch = ItemScout:Find(dItemLink, searchStr)
+					cache = Search.cacheItems[link]
+					dName, dItemLink, dRarity, dTexture = cache.dName, cache.dItemLink, cache.dRarity, cache.dTexture
 				end
+
+				testMatch = ItemScout:Find( (qOpts and qOpts.battlepet and dName) or dItemLink, searchStr) --use the name for battlepets instead of link
 
 				--for debugging purposes only
 				if dName and (viewCustomList or testMatch) then
