@@ -482,10 +482,15 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total, skipTotal)
 	return total
 end
 
-function Tooltip:GetBottomChild(frame, qTip)
-	Debug(BSYC_DL.TRACE, "GetBottomChild", frame, qTip)
+function Tooltip:GetBottomChild()
+	Debug(BSYC_DL.TRACE, "GetBottomChild", Tooltip.objTooltip, Tooltip.qTip)
+
+	local frame, qTip = Tooltip.objTooltip, Tooltip.qTip
+	if not qTip then return end
 
 	local cache = {}
+
+	qTip:ClearAllPoints()
 
 	local function getMinLoc(top, bottom)
 		if top and bottom then
@@ -573,7 +578,6 @@ function Tooltip:SetQTipAnchor(frame, qTip)
 	Debug(BSYC_DL.SL2, "SetQTipAnchor", frame, qTip)
 
     local x, y = frame:GetCenter()
-	qTip:ClearAllPoints()
 
     if not x or not y then
         qTip:SetPoint("TOPLEFT", frame, "BOTTOMLEFT")
@@ -616,28 +620,30 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local showQTip = false
 	local skipTally = false
 
+	Tooltip.objTooltip = objTooltip
+
 	--create the extra tooltip (qTip) only if it doesn't already exist
 	if BSYC.options.enableExtTooltip or isBattlePet then
 		local doQTip = true
 		--only show the external tooltip if we have the option enabled, otherwise show it inside the tooltip if isBattlePet
 		if source == "ArkInventory" and not BSYC.options.enableExtTooltip then doQTip = false end
 		if doQTip then
-			if not objTooltip.qTip or not LibQTip:IsAcquired("BagSyncQTip") then
-				objTooltip.qTip = LibQTip:Acquire("BagSyncQTip", 3, "LEFT", "CENTER", "RIGHT")
-				objTooltip.qTip:SetClampedToScreen(true)
+			if not Tooltip.qTip then
+				Tooltip.qTip = LibQTip:Acquire("BagSyncQTip", 3, "LEFT", "CENTER", "RIGHT")
+				Tooltip.qTip:SetClampedToScreen(true)
 
-				objTooltip.qTip:SetScript("OnShow", function()
-					Tooltip:GetBottomChild(objTooltip, objTooltip.qTip)
+				Tooltip.qTip:SetScript("OnShow", function()
+					Tooltip:GetBottomChild()
 				end)
 			end
-			objTooltip.qTip:Clear()
+			Tooltip.qTip:Clear()
 			showQTip = true
 		end
 	end
 	--release it if we aren't using the qTip
-	if objTooltip.qTip and not showQTip then
-		LibQTip:Release(objTooltip.qTip)
-		objTooltip.qTip = nil
+	if Tooltip.qTip and not showQTip then
+		LibQTip:Release(Tooltip.qTip)
+		Tooltip.qTip = nil
 	end
 
 	local tooltipOwner = objTooltip.GetOwner and objTooltip:GetOwner()
@@ -655,14 +661,14 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			for i=1, #self.__lastTally do
 				local color = self:GetClassColor(self.__lastTally[i].unitObj, 2, false, BSYC.options.colors.total)
 				if showQTip then
-					local lineNum = objTooltip.qTip:AddLine(self.__lastTally[i].colorized, 	string.rep(" ", 4), self.__lastTally[i].tallyString)
-					objTooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
+					local lineNum = Tooltip.qTip:AddLine(self.__lastTally[i].colorized, 	string.rep(" ", 4), self.__lastTally[i].tallyString)
+					Tooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
 				else
 					objTooltip:AddDoubleLine(self.__lastTally[i].colorized, self.__lastTally[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
 				end
 			end
 			objTooltip:Show()
-			if showQTip then objTooltip.qTip:Show() end
+			if showQTip then Tooltip.qTip:Show() end
 		end
 		objTooltip.__tooltipUpdated = true
 		return
@@ -907,8 +913,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		local color = self:GetClassColor(unitList[i].unitObj, 2, false, BSYC.options.colors.total)
 		if showQTip then
 			-- Add an new line, using all columns
-			local lineNum = objTooltip.qTip:AddLine(unitList[i].colorized, string.rep(" ", 4), unitList[i].tallyString)
-			objTooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
+			local lineNum = Tooltip.qTip:AddLine(unitList[i].colorized, string.rep(" ", 4), unitList[i].tallyString)
+			Tooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
 		else
 			objTooltip:AddDoubleLine(unitList[i].colorized, unitList[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
 		end
@@ -921,9 +927,9 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	if showQTip then
 		if #unitList > 0 then
-			objTooltip.qTip:Show()
+			Tooltip.qTip:Show()
 		else
-			objTooltip.qTip:Hide()
+			Tooltip.qTip:Hide()
 		end
 	end
 
@@ -998,10 +1004,8 @@ function Tooltip:HookTooltip(objTooltip)
 
 	objTooltip:HookScript("OnHide", function(self)
 		self.__tooltipUpdated = false
-		if self.qTip then
-			LibQTip:Release(self.qTip)
-			self.qTip = nil
-		end
+		--we don't want to Release() the qTip until we aren't using it anymore because they disabled it.  Otherwise just hide it.
+		if Tooltip.qTip then Tooltip.qTip:Hide() end
 	end)
 	--the battlepet tooltips don't use this, so check for it
 	if objTooltip ~= BattlePetTooltip and objTooltip ~= FloatingBattlePetTooltip then
@@ -1023,7 +1027,6 @@ function Tooltip:HookTooltip(objTooltip)
 		--see https://github.com/tomrus88/BlizzardInterfaceCode/blob/de20049d4dc15eb268fb959148220acf0a23694c/Interface/AddOns/Blizzard_APIDocumentationGenerated/TooltipInfoSharedDocumentation.lua
 
 		local function OnTooltipSetItem(tooltip, data)
-
 			if (tooltip == GameTooltip or tooltip == EmbeddedItemTooltip or tooltip == ItemRefTooltip) then
 				if tooltip.__tooltipUpdated then return end
 
@@ -1083,10 +1086,10 @@ function Tooltip:HookTooltip(objTooltip)
 		else
 			--BattlePetToolTip_Show
 			if objTooltip == BattlePetTooltip then
-				hooksecurefunc("BattlePetToolTip_Show", function(speciesID)
+				hooksecurefunc("BattlePetToolTip_Show", function(speciesID, level, breedQuality, maxHealth, power, speed, name)
 					if objTooltip.__tooltipUpdated then return end
 					if speciesID then
-						local fakeID = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
+						local fakeID = BSYC:CreateFakeBattlePetID(nil, nil, speciesID, level, breedQuality, maxHealth, power, speed, name)
 						if fakeID then
 							Tooltip:TallyUnits(objTooltip, fakeID, "BattlePetToolTip_Show", true)
 						end
@@ -1095,10 +1098,10 @@ function Tooltip:HookTooltip(objTooltip)
 			end
 			--FloatingBattlePet_Show
 			if objTooltip == FloatingBattlePetTooltip then
-				hooksecurefunc("FloatingBattlePet_Show", function(speciesID)
+				hooksecurefunc("FloatingBattlePet_Show", function(speciesID, level, breedQuality, maxHealth, power, speed, name)
 					if objTooltip.__tooltipUpdated then return end
 					if speciesID then
-						local fakeID = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
+						local fakeID = BSYC:CreateFakeBattlePetID(nil, nil, speciesID, level, breedQuality, maxHealth, power, speed, name)
 						if fakeID then
 							Tooltip:TallyUnits(objTooltip, fakeID, "FloatingBattlePet_Show", true)
 						end

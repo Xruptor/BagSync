@@ -252,16 +252,17 @@ function BSYC:ParseItemLink(link, count)
 	end
 end
 
-function BSYC:CreateFakeBattlePetID(link, count, speciesID)
+function BSYC:CreateFakeBattlePetID(link, count, speciesID, level, breedQuality, maxHealth, power, speed, name)
 	if not BattlePetTooltip then return end
-	Debug(BSYC_DL.DEBUG, "CreateFakeBattlePetID", link, count, speciesID)
+	Debug(BSYC_DL.DEBUG, "CreateFakeBattlePetID", link, count, speciesID, level, breedQuality, maxHealth, power, speed, name)
 
 	--https://github.com/tomrus88/BlizzardInterfaceCode/blob/8633e552f3335b8c66b1fbcea6760a5cd8bcc06b/Interface/FrameXML/BattlePetTooltip.lua
 
 	if link and not speciesID then
 		local linkType, linkOptions, name = LinkUtil.ExtractLink(link)
 		if linkType ~= "battlepet" then return end
-
+		--speciesID, level, breedQuality, maxHealth, power, speed, name
+		--strjoin(":", speciesID, level, breedQuality, maxHealth, power, speed)
 		speciesID = strsplit(":", linkOptions)
 	end
 
