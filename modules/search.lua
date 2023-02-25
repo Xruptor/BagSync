@@ -21,6 +21,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 local ItemScout = LibStub("LibItemScout-1.0")
 
 Search.cacheItems = {}
+Search.warningAutoScan = 0
 
 function Search:OnEnable()
 
@@ -334,6 +335,7 @@ function Search:OnEnable()
 	SearchFrame:SetCallback("OnClose",function(widget)
 		WarningFrame:Hide()
 		AdvancedSearchFrame:Hide()
+		Search.warningAutoScan = 0
 	end)
 
 	SearchFrame:Hide()
@@ -694,6 +696,17 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 		end
 
 		self.warningframe:Show()
+
+		--lets not do TOO many refreshes
+		if Search.warningAutoScan <= 5 then
+			C_Timer.After(0.5, function()
+				self.searchbar:ClearFocus()
+				local sbText = self.searchbar:GetText() or ''
+				self:DoSearch((string.len(sbText) > 0 and sbText) or Search.searchStr)
+			end)
+			Search.warningAutoScan = Search.warningAutoScan + 1
+		end
+
 	else
 		self.warningframe:Hide()
 	end
