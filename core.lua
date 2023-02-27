@@ -81,7 +81,7 @@ function BSYC:GetHashTableLen(tbl)
 end
 
 function BSYC:DecodeOpts(tblString, mergeOpts)
-	--Example = "battlepet=245|auction=124567|foo=bar|tickle=elmo|gtab=3|test=12:3:4|forthe=horde"
+	--Example = "battlepet=245|auction=124567|foo=bar|tickle=elmo|test=12:3:4|forthe=horde"
 	local t = mergeOpts or {}
 
 	--([^=]+) everything except '='
@@ -253,22 +253,25 @@ function BSYC:ParseItemLink(link, count)
 end
 
 function BSYC:CreateFakeBattlePetID(link, count, speciesID, level, breedQuality, maxHealth, power, speed, name)
-	if not BattlePetTooltip then return end
+	if not BattlePetTooltip then return nil end
 	Debug(BSYC_DL.DEBUG, "CreateFakeBattlePetID", link, count, speciesID, level, breedQuality, maxHealth, power, speed, name)
-
 	--https://github.com/tomrus88/BlizzardInterfaceCode/blob/8633e552f3335b8c66b1fbcea6760a5cd8bcc06b/Interface/FrameXML/BattlePetTooltip.lua
 
+	local petData
+
 	if link and not speciesID then
-		local linkType, linkOptions, name = LinkUtil.ExtractLink(link)
+		local linkType, linkOptions, petName = LinkUtil.ExtractLink(link)
 		if linkType ~= "battlepet" then return end
 		--speciesID, level, breedQuality, maxHealth, power, speed, name
-		--strjoin(":", speciesID, level, breedQuality, maxHealth, power, speed)
-		speciesID = strsplit(":", linkOptions)
+		speciesID = linkOptions:match("(%d+):")
+		petData = linkOptions:match("%d+:%d+:%d+:%d+:%d+:%d+")
 	end
 
 	--either pass the link or speciesID
 	if speciesID then
-
+		if not petData and (level and breedQuality) then
+			petData = strjoin(":", speciesID, level, breedQuality, maxHealth, power, speed)
+		end
 		--we do this so as to not interfere with standard itemid's.  Example a speciesID can be 1345 but there is a real item with itemID 1345.
 		--to compensate for this we will use a ridiculous number to avoid conflicting with standard itemid's
 		local fakePetID = BSYC.FakePetCode + (speciesID * 100000)
@@ -276,12 +279,14 @@ function BSYC:CreateFakeBattlePetID(link, count, speciesID, level, breedQuality,
 		if fakePetID then
 			if not count then count = 1 end
 
-			local encodeStr = self:EncodeOpts({battlepet=speciesID})
+			local encodeStr = self:EncodeOpts({battlepet=speciesID, petdata=petData})
 			if encodeStr then
 				return fakePetID..";"..count..";"..encodeStr
 			end
 		end
 	end
+
+	return nil
 end
 
 function BSYC:FakeIDToBattlePetID(fakeID)

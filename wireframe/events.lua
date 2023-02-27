@@ -16,36 +16,6 @@ local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Events", ...) end
 end
 
-local alertTooltip = CreateFrame("GameTooltip", "BSYC_EventAlertTooltip", UIParent, "GameTooltipTemplate")
-alertTooltip:SetOwner(UIParent, "ANCHOR_NONE")
-alertTooltip:SetHeight(30)
-alertTooltip:SetClampedToScreen(true)
-alertTooltip:SetFrameStrata("FULLSCREEN_DIALOG")
-alertTooltip:SetFrameLevel(1000)
-alertTooltip:SetToplevel(true)
-alertTooltip:ClearAllPoints()
-alertTooltip:SetPoint("CENTER", UIParent, "CENTER")
-alertTooltip:Hide()
-Events.alertTooltip = alertTooltip
-
-local function showEventAlert(text, alertType)
-	Debug(BSYC_DL.INFO, "showEventAlert", text, alertType)
-
-	Events.alertTooltip.alertType = alertType
-	Events.alertTooltip:ClearAllPoints()
-	Events.alertTooltip:SetOwner(UIParent, "ANCHOR_NONE")
-	Events.alertTooltip:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-	Events.alertTooltip:ClearLines()
-	Events.alertTooltip:AddLine("|cffff6600BagSync|r")
-	Events.alertTooltip:AddLine("|cffddff00"..text.."|r")
-	Events.alertTooltip:HookScript("OnUpdate", function(self, elapse)
-		if self.alertType == "GUILDBANK" and not Unit.atGuildBank then
-			self:Hide()
-		end
-	end)
-	Events.alertTooltip:Show()
-end
-
 function Events:DoTimer(sName, sFunc, sDelay, sRepeat)
 	Debug(BSYC_DL.SL3, "DoTimer", sName, sFunc, sDelay, sRepeat)
 
@@ -121,8 +91,9 @@ function Events:OnEnable()
 	--check to see if guildbanks are even enabled on server
 	if CanGuildBankRepair then
 		self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED", function()
-			--due to a slight delay on the server, we have to add small timer before processing
-			self:DoTimer("GuildBankScan", function() self:GuildBank_Changed() end, 0.2)
+			--queue the current tab we are on if we changed anything
+			if not self.GuildTabQueryQueue then self.GuildTabQueryQueue = {} end
+			self.GuildTabQueryQueue[GetCurrentGuildBankTab()] = true
 		end)
 	end
 
@@ -179,9 +150,7 @@ end
 
 function Events:BAGSYNC_EVENT_GUILDBANK(event, isOpen)
 	Debug(BSYC_DL.DEBUG, "BAGSYNC_EVENT_GUILDBANK", isOpen)
-	if isOpen then
-		self:GuildBank_Open()
-	else
+	if not isOpen then
 		self:GuildBank_Close()
 	end
 end
@@ -246,57 +215,13 @@ function Events:BAG_UPDATE_DELAYED(event)
 	Debug(BSYC_DL.INFO, "SpamBagQueue", "totalProcessed", totalProcessed)
 end
 
-function Events:GuildBank_Open()
-	if not BSYC.options.enableGuild then return end
-	if not self.GuildTabQueryQueue then self.GuildTabQueryQueue = {} end
-	Debug(BSYC_DL.INFO, "GuildBank_Open")
-
-	local numTabs = GetNumGuildBankTabs()
-	for tab = 1, numTabs do
-		local name, icon, isViewable, canDeposit, numWithdrawals, remainingWithdrawals = GetGuildBankTabInfo(tab)
-		if isViewable then
-			self.GuildTabQueryQueue[tab] = true
-			if not self.queryGuild then
-				self.queryGuild  = true
-			end
-		end
-	end
-end
-
 function Events:GuildBank_Close()
 	if not BSYC.options.enableGuild then return end
 	Debug(BSYC_DL.INFO, "GuildBank_Close")
 
-	if self.queryGuild then
-		BSYC:Print(L.ScanGuildBankError)
-		self.queryGuild = false
-	end
-end
-
-function Events:GuildBank_Changed()
-	if not Unit.atGuildBank then return end
-	if not BSYC.options.enableGuild then return end
-
-	-- check if we need to process the queue
-	local tab = next(self.GuildTabQueryQueue)
-	if tab then
-		QueryGuildBankTab(tab)
-		self.GuildTabQueryQueue[tab] = nil
-		--show the alert
-		local numTab = string.format(L.ScanGuildBankScanInfo, tab or 0, GetNumGuildBankTabs() or 0)
-		if BSYC.options.showGuildBankScanAlert then
-			showEventAlert(numTab, "GUILDBANK")
-		end
-		Debug(BSYC_DL.TRACE, "GuildBank_Changed", numTab)
-	else
-		if self.queryGuild then
-			self.queryGuild = false
-			BSYC:Print(L.ScanGuildBankDone)
-			Events.alertTooltip:Hide()
-		end
-		-- the bank is ready for reading
-		Scanner:SaveGuildBank()
-	end
+	Scanner:SaveGuildBank(self.GuildTabQueryQueue)
+	BSYC:Print(L.ScanGuildBankDone)
+	self.GuildTabQueryQueue = nil --reset
 end
 
 function Events:CURRENCY_DISPLAY_UPDATE()

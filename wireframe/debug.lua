@@ -434,7 +434,9 @@ function Debug:OnEnable()
 				end
 			else
 				totalGuilds = totalGuilds + 1
-				toatlItems = toatlItems + (#unitObj.data.bag or 0)
+				for tabID, tabData in pairs(unitObj.data.tabs) do
+					toatlItems = toatlItems + (#tabData or 0)
+				end
 			end
 		end
 

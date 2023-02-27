@@ -386,91 +386,20 @@ function Tooltip:MoneyTooltip()
 	tooltip:Show()
 end
 
-function Tooltip:UnitTotals(unitObj, allowList, unitList, advUnitList)
-
-	local tallyString = ""
-	local total = 0
-	local grouped = 0
-	local gTabStr = ""
-
-	--order in which we want stuff displayed
-	local list = {
-		[1] = { source="bag", 		desc=L.Tooltip_bag },
-		[2] = { source="bank", 		desc=L.Tooltip_bank },
-		[3] = { source="reagents", 	desc=L.Tooltip_reagents },
-		[4] = { source="equip", 	desc=L.Tooltip_equip },
-		[5] = { source="guild", 	desc=L.Tooltip_guild },
-		[6] = { source="mailbox", 	desc=L.Tooltip_mailbox },
-		[7] = { source="void", 		desc=L.Tooltip_void },
-		[8] = { source="auction", 	desc=L.Tooltip_auction },
-	}
-
-	--check for guild tabs first only on servers that even have guild banks enabled
-	if BSYC.options.showGuildTabs and CanGuildBankRepair and BSYC:GetHashTableLen(allowList["gtab"]) > 0 then
-		for tab=1, MAX_GUILDBANK_TABS do
-			if allowList["gtab"][tab] then
-				gTabStr = gTabStr..","..tostring(allowList["gtab"][tab])
-			end
-		end
-		gTabStr = string.sub(gTabStr, 2)  -- remove comma
-	end
-
-	for i = 1, #list do
-		local count, desc = allowList[list[i].source], list[i].desc
-
-		if BSYC.options.singleCharLocations then
-			desc = L["TooltipSmall_"..list[i].source]
-		elseif BSYC.options.useIconLocations then
-			desc = L["TooltipIcon_"..list[i].source]
-		end
-		if count > 0 then
-			grouped = grouped + 1
-			total = total + count
-
-			desc = self:HexColor(self:GetClassColor(unitObj, 2), desc)..":"
-			count = self:HexColor(BSYC.options.colors.second, comma_value(count))
-
-			--check for guild tab
-			if string.len(gTabStr) > 0 then
-				gTabStr = self:HexColor(BSYC.options.colors.guildtabs, " ["..L.TooltipGuildTabs.." "..gTabStr.."]")
-			end
-
-			tallyString = tallyString..((grouped > 1 and L.TooltipDelimiter) or "")..desc.." "..count..gTabStr
-		end
-	end
-
-	if total < 1 or string.len(tallyString) < 1 then return end
-
-	--if it's groupped up and has more then one item then use a different color and show total
-	if grouped > 1 then
-		tallyString = self:HexColor(BSYC.options.colors.second, comma_value(total)).." ("..tallyString..")"
-	end
-
-	--add to list
-	local doAdv = (advUnitList and true) or false
-	table.insert(unitList, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj, false, doAdv, false, doAdv), tallyString=tallyString, sortIndex=self:GetSortIndex(unitObj), count=total } )
-
-end
-
-function Tooltip:ItemCount(data, itemID, allowList, source, total, skipTotal)
+function Tooltip:UnitTally(data, itemID, allowList, source, total, skipTotal, keyID)
 	if #data < 1 then return total end
 	for i=1, #data do
 		if data[i] then
-			--we only really want the qOpts for guild banks to get the guild tab tally during the ItemCount process, otherwise it's extra processing time
-			local skipOpts = true
-			if source == "guild" and BSYC.options.showGuildTabs then
-				skipOpts = false
-			end
-
-			local link, count, qOpts = BSYC:Split(data[i], skipOpts)
+			local link, count, qOpts = BSYC:Split(data[i], true)
 
 			if link then
 				if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
 				if link == itemID then
 					allowList[source] = allowList[source] + (count or 1)
 					--check for any guild bank tabs and store the locations found
-					if qOpts and qOpts.gtab then
-						allowList["gtab"][tonumber(qOpts.gtab)] = tonumber(qOpts.gtab)
+					if BSYC.options.showGuildTabs and source == "guild" and keyID then
+						keyID = tonumber(keyID)
+						allowList["gtab"][keyID] = keyID
 					end
 					if not skipTotal then
 						total = total + (count or 1)
@@ -480,6 +409,96 @@ function Tooltip:ItemCount(data, itemID, allowList, source, total, skipTotal)
 		end
 	end
 	return total
+end
+
+function Tooltip:AddToTotals(colorType, dispType, srcType, srcCount, addStr)
+	local desc = self:HexColor(colorType, L[dispType..srcType])
+	local count = self:HexColor(BSYC.options.colors.second, comma_value(srcCount))
+	local tmp = string.format("%s: %s", desc, count)..(addStr or "")
+	return tmp
+end
+
+function Tooltip:UnitTotals(unitObj, allowList, unitList, advUnitList)
+	local total = 0
+	local tallyCount = {}
+	local dispType = ""
+	local colorType = self:GetClassColor(unitObj, 2)
+
+	if BSYC.options.singleCharLocations then
+		dispType = "TooltipSmall_"
+	elseif BSYC.options.useIconLocations then
+		dispType = "TooltipIcon_"
+	else
+		dispType = "Tooltip_"
+	end
+
+	if ((allowList["bag"] or 0) > 0) then
+		total = total + allowList["bag"]
+		table.insert(tallyCount, self:AddToTotals(colorType, dispType, "bag", allowList["bag"]))
+	end
+	if ((allowList["bank"] or 0) > 0) then
+		total = total + allowList["bank"]
+		table.insert(tallyCount, self:AddToTotals(colorType, dispType, "bank", allowList["bank"]))
+	end
+	if ((allowList["reagents"] or 0) > 0) then
+		total = total + allowList["reagents"]
+		table.insert(tallyCount, self:AddToTotals(colorType, dispType, "reagents", allowList["reagents"]))
+	end
+	if ((allowList["equip"] or 0) > 0) then
+		total = total + allowList["equip"]
+		table.insert(tallyCount, self:AddToTotals(colorType, dispType, "equip", allowList["equip"]))
+	end
+	if ((allowList["mailbox"] or 0) > 0) then
+		total = total + allowList["mailbox"]
+		table.insert(tallyCount, self:AddToTotals(colorType, dispType, "mailbox", allowList["mailbox"]))
+	end
+	if ((allowList["void"] or 0) > 0) then
+		total = total + allowList["void"]
+		table.insert(tallyCount, self:AddToTotals(colorType, dispType, "void", allowList["void"]))
+	end
+	if ((allowList["auction"] or 0) > 0) then
+		total = total + allowList["auction"]
+		table.insert(tallyCount, self:AddToTotals(colorType, dispType, "auction", allowList["auction"]))
+	end
+	if ((allowList["guild"] or 0) > 0) then
+		total = total + allowList["guild"]
+		local gTabStr = ""
+
+		--check for guild tabs first only on servers that even have guild banks enabled
+		if BSYC.options.showGuildTabs and CanGuildBankRepair then
+			table.sort(allowList["gtab"], function(a, b) return a < b end)
+
+			for k, v in pairs(allowList["gtab"]) do
+				gTabStr = gTabStr..","..tostring(v)
+			end
+			gTabStr = string.sub(gTabStr, 2)  -- remove comma
+
+			--check for guild tab
+			if string.len(gTabStr) > 0 then
+				gTabStr = self:HexColor(BSYC.options.colors.guildtabs, " ["..L.TooltipGuildTabs.." "..gTabStr.."]")
+			end
+		end
+
+		table.insert(tallyCount, self:AddToTotals(colorType, dispType, "guild", allowList["guild"], gTabStr))
+	end
+
+	if total < 1 then return end
+	local tallyString = ""
+
+    if (#tallyCount > 0) then
+		--if we only have one entry, then display that and no need to sort or concat
+		if #tallyCount == 1 then
+			tallyString = tallyCount[1]
+		else
+			table.sort(tallyCount)
+			tallyString = self:HexColor(BSYC.options.colors.second, comma_value(total)).." ("..table.concat(tallyCount, L.TooltipDelimiter.." ")..")"
+		end
+    end
+	if #tallyCount <= 0 or string.len(tallyString) < 1 then return end
+
+	--add to list
+	local doAdv = (advUnitList and true) or false
+	table.insert(unitList, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj, false, doAdv, false, doAdv), tallyString=tallyString, sortIndex=self:GetSortIndex(unitObj), count=total } )
 end
 
 function Tooltip:GetBottomChild()
@@ -661,7 +680,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			for i=1, #self.__lastTally do
 				local color = self:GetClassColor(self.__lastTally[i].unitObj, 2, false, BSYC.options.colors.total)
 				if showQTip then
-					local lineNum = Tooltip.qTip:AddLine(self.__lastTally[i].colorized, 	string.rep(" ", 4), self.__lastTally[i].tallyString)
+					local lineNum = Tooltip.qTip:AddLine(self.__lastTally[i].colorized, string.rep(" ", 4), self.__lastTally[i].tallyString)
 					Tooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
 				else
 					objTooltip:AddDoubleLine(self.__lastTally[i].colorized, self.__lastTally[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
@@ -759,7 +778,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 							--don't check for current player unless its a battlepet
 							if not isCurrentPlayer or isBattlePet then
 								for bagID, bagData in pairs(v) do
-									grandTotal = self:ItemCount(bagData, link, allowList, k, grandTotal)
+									grandTotal = self:UnitTally(bagData, link, allowList, k, grandTotal, false, bagID)
 								end
 							end
 						else
@@ -771,7 +790,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 							if k == "mailbox" and not BSYC.options.enableMailbox then passChk = false end
 
 							if passChk then
-								grandTotal = self:ItemCount(k == "auction" and v.bag or v, link, allowList, k, grandTotal)
+								grandTotal = self:UnitTally(k == "auction" and v.bag or v, link, allowList, k, grandTotal)
 							end
 						end
 					end
@@ -807,15 +826,19 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 				if not BSYC.options.showGuildSeparately and BSYC.options.enableGuild then
 					local guildObj = Data:GetGuild(unitObj.data)
-					if guildObj and guildObj.bag then
+					if guildObj and guildObj.tabs then
+						for tabID, tabData in pairs(unitObj.data.tabs) do
+							grandTotal = self:UnitTally(tabData, link, allowList, "guild", grandTotal, (tmpGuildList[guildObj] and true) or false, tabID)
+						end
 						--make sure we don't add to the grand total twice for the same guild
-						grandTotal = self:ItemCount(guildObj.bag, link, allowList, "guild", grandTotal, (tmpGuildList[guildObj] and true) or false)
 						tmpGuildList[guildObj] = true
 					end
 				end
 			else
 				if BSYC.options.showGuildSeparately then
-					grandTotal = self:ItemCount(unitObj.data.bag, link, allowList, "guild", grandTotal)
+					for tabID, tabData in pairs(unitObj.data.tabs) do
+						grandTotal = self:UnitTally(tabData, link, allowList, "guild", grandTotal, false, tabID)
+					end
 				end
 			end
 

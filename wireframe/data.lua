@@ -103,7 +103,6 @@ function Data:OnEnable()
 	if BSYC.options.enableXR_BNETRealmNames == nil then BSYC.options.enableXR_BNETRealmNames = true end
 	if BSYC.options.showGuildInGoldTooltip == nil then BSYC.options.showGuildInGoldTooltip = true end
 	if BSYC.options.showGuildCurrentCharacter == nil then BSYC.options.showGuildCurrentCharacter = false end
-	if BSYC.options.showGuildBankScanAlert == nil then BSYC.options.showGuildBankScanAlert = true end
 	if BSYC.options.focusSearchEditBox == nil then BSYC.options.focusSearchEditBox = false end
 	if BSYC.options.enableAccurateBattlePets == nil then BSYC.options.enableAccurateBattlePets = true end
 	if BSYC.options.alwaysShowAdvSearch == nil then BSYC.options.alwaysShowAdvSearch = false end
@@ -277,7 +276,8 @@ function Data:FixDB()
 				end
 			end
 		else
-			fixDBEntry(unitObj.data.bag)
+			if unitObj.data.bag then unitObj.data.bag = nil end --remove old guild bank storage method
+			fixDBEntry(unitObj.data.tabs)
 		end
 	end
 
@@ -465,17 +465,16 @@ function Data:CheckExpiredAuctions()
 
 			unitObj.data.auction.bag = slotItems
 			unitObj.data.auction.count = #slotItems or 0
-
 		end
 	end
-
 end
 
 function Data:GetGuild(unitObj)
 	if not unitObj and not IsInGuild() then return end
-	if not unitObj then	Debug(BSYC_DL.INFO, "GetGuild", unitObj) end
 
 	local player = unitObj or Unit:GetUnitInfo()
+	Debug(BSYC_DL.INFO, "GetGuild", player)
+
 	if not player.guild or not player.guildrealm then return end
 
 	if not BagSyncDB[player.guildrealm] then BagSyncDB[player.guildrealm] = {} end

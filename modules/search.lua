@@ -381,8 +381,6 @@ function Search:AddEntry(entry)
 		function (widget, sometable, button)
 			if not isBattlePet then
 				ChatEdit_InsertLink(link)
-			else
-				FloatingBattlePet_Toggle(tonumber(qOpts.battlepet), 0, 0, 0, 0, 0, nil, nil)
 			end
 		end)
 	label:SetCallback(
@@ -590,26 +588,21 @@ function Search:DoAdvancedSearch()
 	--global for tooltip checks
 	Search.advUnitList = advUnitList
 
+	--we are doing an advanced search
+	local advsbText = self.advancedsearchframe.advsearchbar:GetText() or ''
+	local searchStr = (string.len(advsbText) > 0 and advsbText) or Search.searchStr
+
 	--send it off to the regular search
-	self:DoSearch(nil, advUnitList, advAllowList)
+	self:DoSearch(searchStr, advUnitList, advAllowList)
 end
 
 function Search:DoSearch(searchStr, advUnitList, advAllowList)
 
 	local sbText = self.searchbar:GetText() or ''
-	local advsbText = self.advancedsearchframe.advsearchbar:GetText() or ''
+	Search.advUnitList = advUnitList
 
-	--only do if we aren't doing an advanced search
-	if not advUnitList then
-		Search.advUnitList = nil -- we aren't doing an advanced search so lets reset this
-		searchStr = (string.len(sbText) > 0 and sbText) or Search.searchStr
-		if not searchStr then return end
-		if string.len(searchStr) < 1 then return end
-	else
-		--we are doing an advanced search
-		searchStr = (string.len(advsbText) > 0 and advsbText) or Search.searchStr
-		self.advancedsearchframe.advsearchbar:SetText(nil) --reset always, we only want to use searchStr
-	end
+	searchStr = searchStr or (string.len(sbText) > 0 and sbText) or Search.searchStr
+	if not searchStr or string.len(searchStr) < 1 then return end
 
 	self.searchbar:SetText(nil) --reset always, we only want to use searchStr
 	searchStr = searchStr:lower() --always make sure everything is lowercase when doing searches
@@ -635,8 +628,8 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 
 	--This is used when a player is requesting to view a custom list, such as @bank, @auction, @bag etc...
 	--only do if we aren't using an advance search
-	if not advUnitList and string.len(searchStr) > 1 and string.find(searchStr, "@") and allowList[string.sub(searchStr, 2)] ~= nil then
-		viewCustomList = string.sub(searchStr, 2)
+	if not advUnitList and string.len(searchStr) > 1 then
+		viewCustomList = searchStr:match("@(.+)")
 	end
 
 	--overwrite the allowlist with the advance one if it isn't empty
@@ -646,7 +639,6 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 
 	--advUnitList will force dumpAll to be true if necessary for advanced search, no need to set it to true
 	for unitObj in Data:IterateUnits(false, advUnitList) do
-
 		if not unitObj.isGuild then
 			Debug(BSYC_DL.FINE, "Search-IterateUnits", "player", unitObj.name, player.realm)
 			for k, v in pairs(unitObj.data) do
@@ -674,15 +666,12 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 			end
 		else
 			Debug(BSYC_DL.FINE, "Search-IterateUnits", "guild", unitObj.name, player.realm, unitObj.data.realmKey)
-			if not advUnitList then
+			for tabID, tabData in pairs(unitObj.data.tabs) do
 				if not viewCustomList or (viewCustomList == "guild" and unitObj.name == player.guild and unitObj.realm == player.guildrealm) then
-					countWarning = checkData(unitObj.data.bag, searchStr, searchTable, tempList, countWarning, viewCustomList, unitObj)
+					countWarning = checkData(tabData, searchStr, searchTable, tempList, countWarning, viewCustomList, unitObj)
 				end
-			else
-				countWarning = checkData(unitObj.data.bag, searchStr, searchTable, tempList, countWarning, viewCustomList, unitObj)
 			end
 		end
-
 	end
 
 	--show warning window if the server hasn't queried all the items yet

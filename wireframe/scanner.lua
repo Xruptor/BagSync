@@ -266,10 +266,20 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 		if BattlePetTooltip then BattlePetTooltip:Hide() end
 		if FloatingBattlePetTooltip then FloatingBattlePetTooltip:Hide() end
 
-		--args[2] = battlePetSpeciesID
-		--No need to do TooltipUtil.SurfaceArgs we can just go straight to the source without another function to grab the info
-		if data and data.args and data.args[2] and data.args[2].intVal then
-			return data.args[2].intVal
+		TooltipUtil.SurfaceArgs(data)
+
+		if (data and data.battlePetSpeciesID) then
+			local speciesID, level, breedQuality, maxHealth, power, speed
+
+			speciesID = data.battlePetSpeciesID
+			level = data.battlePetLevel
+			breedQuality = data.battlePetBreedQuality
+			maxHealth = data.battlePetMaxHealth
+			power = data.battlePetPower
+			speed = data.battlePetSpeed
+			petName = data.battlePetName
+
+			return speciesID, level, breedQuality, maxHealth, power, speed, petName
 		end
 	end
 
@@ -292,66 +302,75 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 	end
 end
 
-function Scanner:SaveGuildBank()
+function Scanner:SaveGuildBank(queueList)
 	Debug(BSYC_DL.INFO, "SaveGuildBank", Unit.atGuildBank)
-	if not Unit.atGuildBank then return end
 	if Scanner.isScanningGuild then return end
 
-	local numTabs = GetNumGuildBankTabs()
-	local slotItems = {}
+	local guildDB = Data:GetGuild()
+	if not guildDB then
+		--we don't have a guild object to work with
+		Scanner.isScanningGuild = false
+		self:ResetTooltips()
+		return
+	else
+		Debug(BSYC_DL.TRACE, "SaveGuildBank", "FoundGuild")
+	end
+
 	Scanner.isScanningGuild = true
+	if not guildDB.tabs then guildDB.tabs = {} end
 
-	for tab = 1, numTabs do
-		local name, icon, isViewable, canDeposit, numWithdrawals, remainingWithdrawals = GetGuildBankTabInfo(tab)
-		--if we don't check for isViewable we get a weirdo permissions error for the player when they attempt it
-		if isViewable then
-			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
-				local link = GetGuildBankItemLink(tab, slot)
+	if queueList then
+        for tab in pairs(queueList) do
 
-				if link then
-					local shortID = BSYC:GetShortItemID(link)
-					local iconTexture, count = GetGuildBankItemInfo(tab, slot)
+			local slotItems = {}
+			local _, _, isViewable = GetGuildBankTabInfo(tab)
 
-					--check if it's a battle pet cage or something, pet cage is 82800.  This is the placeholder for battle pets
-					--if it's a battlepet link it will be parsed anyways in ParseItemLink
-
-					if shortID and tonumber(shortID) == 82800 then
-						local speciesID = findBattlePet(iconTexture, nil, "guild", tab, slot)
-
-						if speciesID then
-							link = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
-						else
-							link = nil
-						end
-					else
-						link = BSYC:ParseItemLink(link, count)
-					end
+			--if we don't check for isViewable we get a weirdo permissions error for the player when they attempt it
+			if isViewable then
+				for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
+					local link = GetGuildBankItemLink(tab, slot)
 
 					if link then
-						local encodeStr = BSYC:EncodeOpts({gtab=tab}, link)
-						if encodeStr then
-							table.insert(slotItems, encodeStr)
+						local shortID = BSYC:GetShortItemID(link)
+						local iconTexture, count = GetGuildBankItemInfo(tab, slot)
+
+						--check if it's a battle pet cage or something, pet cage is 82800.  This is the placeholder for battle pets
+						--if it's a battlepet link it will be parsed anyways in ParseItemLink
+
+						if shortID and tonumber(shortID) == 82800 then
+							link = BSYC:CreateFakeBattlePetID(nil, nil, findBattlePet(iconTexture, nil, "guild", tab, slot))
+						else
+							link = BSYC:ParseItemLink(link, count)
+						end
+
+						if link then
+							table.insert(slotItems, link)
 						end
 					end
-
 				end
 			end
+
+			guildDB.tabs[tab] = slotItems
+        end
+    end
+
+	queueList = nil
+
+	--remove invalid or unviewable tabs due to permissions
+    for i = 1, MAX_GUILDBANK_TABS do
+		local _, _, isViewable = GetGuildBankTabInfo(i)
+		if not isViewable and guildDB.tabs and guildDB.tabs[i] then
+			guildDB.tabs[i] = nil
 		end
 	end
 
-	local guildDB = Data:GetGuild()
-	if guildDB then
-		Debug(BSYC_DL.TRACE, "SaveGuildBank", "FoundGuild")
-		local player = Unit:GetUnitInfo()
-		guildDB.bag = slotItems
-		guildDB.money = GetGuildBankMoney()
-		guildDB.faction = player.faction
-		guildDB.realmKey = player.realmKey
-		guildDB.rwsKey = player.rwsKey
-	end
+	local player = Unit:GetUnitInfo()
+	guildDB.money = GetGuildBankMoney()
+	guildDB.faction = player.faction
+	guildDB.realmKey = player.realmKey
+	guildDB.rwsKey = player.rwsKey
 
 	Scanner.isScanningGuild = false
-
 	self:ResetTooltips()
 end
 
@@ -384,14 +403,7 @@ function Scanner:SaveMailbox(isShow)
 
 					--check for battle pet cages
 					if itemID and itemID == 82800 then
-
-						local speciesID = findBattlePet(itemTexture, name, "mail", mailIndex, i)
-
-						if speciesID then
-							link = BSYC:CreateFakeBattlePetID(nil, nil, speciesID)
-						else
-							link = nil
-						end
+						link = BSYC:CreateFakeBattlePetID(nil, nil, findBattlePet(itemTexture, name, "mail", mailIndex, i))
 					else
 						link = BSYC:ParseItemLink(link, count)
 					end
@@ -466,6 +478,8 @@ function Scanner:SendMail(mailTo, addMail)
 
 		Scanner.pendingdMail = {items={}} --reset everything
 	end
+
+	self:ResetTooltips()
 end
 
 function Scanner:SaveAuctionHouse()
