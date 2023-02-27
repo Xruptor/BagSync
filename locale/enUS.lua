@@ -252,6 +252,64 @@ L.ConfigSearchHeader = "Settings for the search window"
 L.WarningItemSearch = "WARNING: A total of [|cFFFFFFFF%s|r] items were not searched!\n\nBagSync is still waiting for the server/cache to respond.\n\nPress Search or Refresh button."
 L.WarningUpdatedDB = "You have been updated to latest database version!  You will need to rescan all your characters again!|r"
 L.WarningHeader = "Warning!"
+---------------------------------------
+--Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  Example: class:<name of class in your locale>
+--This includes name searches like name:<name in your locale>
+---------------------------------------
+L.SearchHelpHeader = "Search Help"
+L.SearchHelp = [[
+|cffff7d0aSearch Options|r:
+|cFFDF2B2B(NOTE: All commands are English only!)|r
+
+|cFF99CC33Character items by location|r:
+@bag
+@bank
+@reagents
+@equip
+@mailbox
+@void
+@auction
+@guild
+
+|cffff7d0aAdvanced Search|r (|cFF99CC33commands|r | |cFFFFD580example|r):
+
+|cff00ffff<item name>|r = |cFF99CC33n|r ; |cFF99CC33name|r | |cFFFFD580n:<text>|r ; |cFFFFD580name:<text>|r (n:ore ; name:ore)
+
+|cff00ffff<item bind>|r = |cFF99CC33bind|r | |cFFFFD580bind:<type>|r ; types (boe, bop, bou, boq) i.e boe = bind on equip
+
+|cff00ffff<quality>|r = |cFF99CC33q|r ; |cFF99CC33quality|r | |cFFFFD580q<op><text>|r ; |cFFFFD580q<op><digit>|r (q:rare ; q:>2 ; q:>=3)
+
+|cff00ffff<ilvl>|r = |cFF99CC33l|r ; |cFF99CC33level|r ; |cFF99CC33lvl|r ; |cFF99CC33ilvl|r | |cFFFFD580ilvl<op><number>|r ; |cFFFFD580lvl<op><number>|r (lvl:>5 ; lvl:>=20)
+
+|cff00ffff<required ilvl>|r = |cFF99CC33r|r ; |cFF99CC33req|r ; |cFF99CC33rl|r ; |cFF99CC33reql|r ; |cFF99CC33reqlvl|r | |cFFFFD580req<op><number>|r ; |cFFFFD580req<op><number>|r (req:>5 ; req:>=20)
+
+|cff00ffff<type / slot>|r = |cFF99CC33t|r ; |cFF99CC33type|r ; |cFF99CC33slot|r | |cFFFFD580t:<text>|r (slot:head)
+
+|cff00ffff<tooltip>|r = |cFF99CC33tt|r ; |cFF99CC33tip|r ; |cFF99CC33tooltip|r | |cFFFFD580tt:<text>|r (tt:summon)
+
+|cff00ffff<item set>|r = |cFF99CC33s|r ; |cFF99CC33set|r | |cFFFFD580s:<setname>|r (setname can be * for all sets)
+
+|cff00ffff<expansion>|r = |cFF99CC33x|r ; |cFF99CC33xpac|r ; |cFF99CC33expansion|r | |cFFFFD580x:<expacID>|r ; |cFFFFD580x:<expansion name>|r ; |cFFFFD580xpac:<expansion name>|r (xpac:shadow)
+
+|cff00ffff<keyword>|r = |cFF99CC33k|r ; |cFF99CC33key|r ; |cFF99CC33keyword|r | |cFFFFD580k:<keyword>|r (key:quest) (keywords: soulbound, bound, boe, bop, bou, boa, quest, unique, toy, reagent, crafting, naval, follower, follow, power, apperance)
+
+|cff00ffff<class>|r = |cFF99CC33c|r ; |cFF99CC33class|r | |cFFFFD580c:<classname>|r ; |cFFFFD580class:<classname>|r (class:shaman)
+
+|cffff7d0aOperators <op>|r:
+|cFF99CC33:|r | |cFF99CC33=|r | |cFF99CC33==|r | |cFF99CC33!=|r | |cFF99CC33~=|r | |cFF99CC33<|r | |cFF99CC33>|r | |cFF99CC33<=|r | |cFF99CC33>=|r
+
+
+|cffff7d0aNegate Commands|r:
+Example: |cFF99CC33!|r|cFFFFD580bind:boe|r (not boe)
+Example: |cFF99CC33!|r|cFFFFD580bind:boe|r |cFF99CC33&|r |cFFFFD580lvl:>20|r (not boe and item level greater than 20)
+
+|cffff7d0aUnion Searches (and searches):|r
+Example: |cFFFFD580bind:boe|r |cFF99CC33&|r |cFFFFD580lvl:>20|r
+
+|cffff7d0aIntersect Searches (or searches):|r
+Example: |cFFFFD580bind:boe|r |cFF99CC33|||r |cFFFFD580lvl:>20|r
+
+]]
 L.ConfigFAQ= "FAQ / Help"
 L.ConfigFAQHeader = "Frequently asked questions and help section for BagSync."
 L.FAQ_Question_1 = "I'm experiencing hitching/stuttering/lagging with tooltips."

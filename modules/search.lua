@@ -56,7 +56,7 @@ function Search:OnEnable()
 
 	local refreshbutton = AceGUI:Create("Button")
 	refreshbutton:SetText(L.Refresh)
-	refreshbutton:SetWidth(100)
+	refreshbutton:SetWidth(80)
 	refreshbutton:SetHeight(20)
 	refreshbutton:SetCallback("OnClick", function()
 		searchbar:ClearFocus()
@@ -65,6 +65,20 @@ function Search:OnEnable()
 	end)
 	Search.refreshbutton = refreshbutton
 	w:AddChild(refreshbutton)
+
+	local helpButton = AceGUI:Create("Button")
+	helpButton:SetText("?")
+	helpButton:SetWidth(20)
+	helpButton:SetHeight(20)
+	helpButton:SetCallback("OnClick", function()
+		if Search.helpframe:IsVisible() then
+			Search.helpframe:Hide()
+		else
+			Search.helpframe:Show()
+		end
+	end)
+	Search.helpButton = helpButton
+	w:AddChild(helpButton)
 
 	local scrollframe = AceGUI:Create("ScrollFrame");
 	scrollframe:SetFullWidth(true)
@@ -135,6 +149,42 @@ function Search:OnEnable()
 	end)
 
 	WarningFrame:Hide()
+
+	----------------------------------------------------------
+	----------------------------------------------------------
+	-------  HELP FRAME
+
+	local HelpFrame = AceGUI:Create("Window")
+	HelpFrame:SetTitle(L.SearchHelpHeader)
+	HelpFrame:SetWidth(500)
+	HelpFrame:SetHeight(280)
+	HelpFrame.frame:SetParent(SearchFrame.frame)
+	HelpFrame:SetLayout("Flow")
+	HelpFrame:EnableResize(false)
+
+	local helpbox = AceGUI:Create("MultiLineEditBox")
+	helpbox:SetWidth(470)
+	helpbox:SetNumLines(15)
+	helpbox:SetDisabled(true) --prevent editing
+	helpbox.editBox:SetTextColor(1, 1, 1) --set default to white
+	helpbox.button:Hide()
+	helpbox.frame:SetClipsChildren(true)
+	helpbox:SetLabel(L.ConfigSearch)
+	helpbox:SetText(L.SearchHelp)
+    helpbox:ClearFocus()
+	HelpFrame:AddChild(helpbox)
+
+	Search.helpframe = HelpFrame
+	Search.helpbox = helpbox
+
+	hooksecurefunc(HelpFrame, "Show" ,function()
+		--always show the warning frame on the right of the BagSync Search window
+		WarningFrame:Hide()
+		HelpFrame.frame:ClearAllPoints()
+		HelpFrame:SetPoint( "TOPLEFT", SearchFrame.frame, "TOPRIGHT", 0, 0)
+	end)
+
+	HelpFrame:Hide()
 
 	----------------------------------------------------------
 	----------------------------------------------------------
@@ -334,6 +384,7 @@ function Search:OnEnable()
 
 	SearchFrame:SetCallback("OnClose",function(widget)
 		WarningFrame:Hide()
+		HelpFrame:Hide()
 		AdvancedSearchFrame:Hide()
 		Search.warningAutoScan = 0
 	end)

@@ -31,9 +31,12 @@
 	<ilvl search>			:=	l ; level ; lvl ; ilvl | ilvl<op><number> ; lvl<op><number> (lvl:>5 ; lvl:>=20)
 	<required ilvl search>	:=	r ; req ; rl ; reql ; reqlvl | req<op><number> ; req<op><number> (req:>5 ; req:>=20)
 	<type / slot search>	:=	t ; type ; slot | t:<text>
+	<tooltip search>		:=	tt ; tip; tooltip | tt:<text>
 	<text search>			:=	<text>
-	<item set search>		:=	s:<setname> (setname can be * for all sets)
+	<item set search>		:=	s ; set | s:<setname> (setname can be * for all sets)
 	<expansion search>		:=	x ; xpac ; expansion | x:<expacID> ; x:<expansion name> ; xpac:<expansion name> ; expansion:<expansion name>
+	<keyword search>		:=	k ; key ; keyword | k:<keyword> ; (keywords: soulbound, bound, boe, bop, bou, boa, quest, unique, toy, reagent, crafting, naval, follower, follow, power, apperance)
+	<class search>			:=	c ; class | c:<classname> ; class:<classname>
 	<op>					:=  : | = | == | != | ~= | < | > | <= | >=
 --]]
 
