@@ -3,7 +3,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhCN")
 if not L then return end
 
 --  zhCN client (NGA-[男爵凯恩]补齐)
---  Last update: 20223/2/21
+--  Last update: 2023/2/28
 
 L.Yes = "Yes"
 L.No = "No"
@@ -242,6 +242,45 @@ L.ConfigSearchHeader = "搜索窗口的设置"
 L.WarningItemSearch = "警告：共有 [|cFFFFFFFF%s|r] 个物品未被搜索！\n\nBagSync 仍在等待服务器/数据库响应\n\n按“搜索”或“刷新”按钮。"
 L.WarningUpdatedDB = "您已更新到最新的版本!您将需要再次重新扫描所有角色!|r "
 L.WarningHeader = "警告!"
+---------------------------------------
+--Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  Example: class:<name of class in your locale>
+--This includes name searches like name:<name in your locale>
+---------------------------------------
+L.SearchHelpHeader = "搜索帮助"
+L.SearchHelp = [[
+|cffff7d0a搜索选项|r:
+|cFFDF2B2B(注意: 所有命令只能是英文!)|r
+|cFF99CC33物品在角色位置的顺序|r:
+@bag
+@bank
+@reagents
+@equip
+@mailbox
+@void
+@auction
+@guild
+|cffff7d0a高级搜索|r (|cFF99CC33命令|r | |cFFFFD580示例|r):
+|cff00ffff<item name>|r = |cFF99CC33n|r ; |cFF99CC33name|r | |cFFFFD580n:<text>|r ; |cFFFFD580name:<text>|r (n:ore ; name:ore)
+|cff00ffff<item bind>|r = |cFF99CC33bind|r | |cFFFFD580bind:<type>|r ; types (boe, bop, bou, boq) i.e boe = bind on equip
+|cff00ffff<quality>|r = |cFF99CC33q|r ; |cFF99CC33quality|r | |cFFFFD580q<op><text>|r ; |cFFFFD580q<op><digit>|r (q:rare ; q:>2 ; q:>=3)
+|cff00ffff<ilvl>|r = |cFF99CC33l|r ; |cFF99CC33level|r ; |cFF99CC33lvl|r ; |cFF99CC33ilvl|r | |cFFFFD580ilvl<op><number>|r ; |cFFFFD580lvl<op><number>|r (lvl:>5 ; lvl:>=20)
+|cff00ffff<required ilvl>|r = |cFF99CC33r|r ; |cFF99CC33req|r ; |cFF99CC33rl|r ; |cFF99CC33reql|r ; |cFF99CC33reqlvl|r | |cFFFFD580req<op><number>|r ; |cFFFFD580req<op><number>|r (req:>5 ; req:>=20)
+|cff00ffff<type / slot>|r = |cFF99CC33t|r ; |cFF99CC33type|r ; |cFF99CC33slot|r | |cFFFFD580t:<text>|r (slot:head)
+|cff00ffff<tooltip>|r = |cFF99CC33tt|r ; |cFF99CC33tip|r ; |cFF99CC33tooltip|r | |cFFFFD580tt:<text>|r (tt:summon)
+|cff00ffff<item set>|r = |cFF99CC33s|r ; |cFF99CC33set|r | |cFFFFD580s:<setname>|r (setname can be * for all sets)
+|cff00ffff<expansion>|r = |cFF99CC33x|r ; |cFF99CC33xpac|r ; |cFF99CC33expansion|r | |cFFFFD580x:<expacID>|r ; |cFFFFD580x:<expansion name>|r ; |cFFFFD580xpac:<expansion name>|r (xpac:shadow)
+|cff00ffff<keyword>|r = |cFF99CC33k|r ; |cFF99CC33key|r ; |cFF99CC33keyword|r | |cFFFFD580k:<keyword>|r (key:quest) (keywords: soulbound, bound, boe, bop, bou, boa, quest, unique, toy, reagent, crafting, naval, follower, follow, power, apperance)
+|cff00ffff<class>|r = |cFF99CC33c|r ; |cFF99CC33class|r | |cFFFFD580c:<classname>|r ; |cFFFFD580class:<classname>|r (class:shaman)
+|cffff7d0aOperators <op>|r:
+|cFF99CC33:|r | |cFF99CC33=|r | |cFF99CC33==|r | |cFF99CC33!=|r | |cFF99CC33~=|r | |cFF99CC33<|r | |cFF99CC33>|r | |cFF99CC33<=|r | |cFF99CC33>=|r
+|cffff7d0a等级搜索|r:
+示例: |cFF99CC33!|r|cFFFFD580bind:boe|r (not boe)
+示例: |cFF99CC33!|r|cFFFFD580bind:boe|r |cFF99CC33&|r |cFFFFD580lvl:>20|r (专业装备和配饰的物品等级大于20)
+|cffff7d0a公会搜索 (和搜索):|r
+示例: |cFFFFD580bind:boe|r |cFF99CC33&|r |cFFFFD580lvl:>20|r
+|cffff7d0a交叉搜索 (或搜索):|r
+示例: |cFFFFD580bind:boe|r |cFF99CC33|||r |cFFFFD580lvl:>20|r
+]]
 L.ConfigFAQ= " FAQ / 帮助 "
 L.ConfigFAQHeader = "BagSync 的常见问题和帮助介绍。"
 L.FAQ_Question_1 = "我在鼠标提示上遇到卡顿/滞后。"
