@@ -43,6 +43,63 @@ local function HexToRGBPerc(hex)
 	return { r = tonumber(rhex, 16)/255, g = tonumber(ghex, 16)/255, b = tonumber(bhex, 16)/255 }
 end
 
+local optionsDefaults = {
+	showTotal = true,
+	enableGuild = true,
+	enableMailbox = true,
+	enableUnitClass = true,
+	enableMinimap = true,
+	enableFaction = true,
+	enableAuction = true,
+	tooltipOnlySearch = false,
+	enableTooltips = true,
+	enableExtTooltip = false,
+	enableTooltipSeparator = true,
+	enableCrossRealmsItems = true,
+	enableBNetAccountItems = false,
+	enableTooltipItemID = false,
+	enableSourceDebugInfo = false,
+	enableTooltipGreenCheck = true,
+	enableRealmIDTags = true,
+	enableRealmAstrickName = false,
+	enableRealmShortName = false,
+	enableLoginVersionInfo = true,
+	enableFactionIcons = false,
+	enableShowUniqueItemsTotals = true,
+	enableXR_BNETRealmNames = true,
+	showGuildInGoldTooltip = true,
+	showGuildCurrentCharacter = false,
+	focusSearchEditBox = false,
+	enableAccurateBattlePets = true,
+	alwaysShowAdvSearch = false,
+	sortTooltipByTotals = false,
+	sortByCustomOrder = false,
+	tooltipModifer = "NONE",
+	singleCharLocations = false,
+	useIconLocations = true,
+	itemTotalsByClassColor = false,
+	showRaceIcons = true,
+	showGuildSeparately = true,
+	showGuildTabs = false,
+	enableWhitelist = false,
+	enableSourceExpansion = true,
+	enableItemTypes = true,
+}
+
+local colorsDefaults = {
+	first = HexToRGBPerc('FF80FF00'),
+	second = HexToRGBPerc('FFFFFFFF'),
+	total = HexToRGBPerc('FFF4A460'),
+	guild = HexToRGBPerc('FF65B8C0'),
+	debug = HexToRGBPerc('FF4DD827'),
+	cross = HexToRGBPerc('FFFF7D0A'),
+	bnet = HexToRGBPerc('FF3588FF'),
+	itemid = HexToRGBPerc('FF52D386'),
+	guildtabs = HexToRGBPerc('FF09DBE0'),
+	expansion = HexToRGBPerc('FFCF9FFF'),
+	itemtypes = HexToRGBPerc('ffcccf66'),
+}
+
 ----------------------
 --   DB Functions   --
 ----------------------
@@ -60,9 +117,6 @@ function Data:OnEnable()
 	Debug(BSYC_DL.DEBUG, "RealmKey", player.realmKey)
 	Debug(BSYC_DL.DEBUG, "RealmKey_RWS", player.rwsKey)
 
-	--main DB call
-	BSYC.db = BSYC.db or {}
-
 	--realm DB
 	BagSyncDB[player.realm] = BagSyncDB[player.realm] or {}
 	BSYC.db.realm = BagSyncDB[player.realm]
@@ -73,65 +127,11 @@ function Data:OnEnable()
 	BSYC.db.player.currency = BSYC.db.player.currency or {}
 	BSYC.db.player.professions = BSYC.db.player.professions or {}
 
-	--blacklist and whitelist DB (created in core.lua)
-	BSYC.db.blacklist = BagSyncDB["blacklist§"]
-	BSYC.db.whitelist = BagSyncDB["whitelist§"]
-
 	--options DB
-	if BSYC.options.showTotal == nil then BSYC.options.showTotal = true end
-	if BSYC.options.enableGuild == nil then BSYC.options.enableGuild = true end
-	if BSYC.options.enableMailbox == nil then BSYC.options.enableMailbox = true end
-	if BSYC.options.enableUnitClass == nil then BSYC.options.enableUnitClass = true end
-	if BSYC.options.enableMinimap == nil then BSYC.options.enableMinimap = true end
-	if BSYC.options.enableFaction == nil then BSYC.options.enableFaction = true end
-	if BSYC.options.enableAuction == nil then BSYC.options.enableAuction = true end
-	if BSYC.options.tooltipOnlySearch == nil then BSYC.options.tooltipOnlySearch = false end
-	if BSYC.options.enableTooltips == nil then BSYC.options.enableTooltips = true end
-	if BSYC.options.enableExtTooltip == nil then BSYC.options.enableExtTooltip = false end
-	if BSYC.options.enableTooltipSeparator == nil then BSYC.options.enableTooltipSeparator = true end
-	if BSYC.options.enableCrossRealmsItems == nil then BSYC.options.enableCrossRealmsItems = true end
-	if BSYC.options.enableBNetAccountItems == nil then BSYC.options.enableBNetAccountItems = false end
-	if BSYC.options.enableTooltipItemID == nil then BSYC.options.enableTooltipItemID = false end
-	if BSYC.options.enableSourceDebugInfo == nil then BSYC.options.enableSourceDebugInfo = false end
-	if BSYC.options.enableTooltipGreenCheck == nil then BSYC.options.enableTooltipGreenCheck = true end
-	if BSYC.options.enableRealmIDTags == nil then BSYC.options.enableRealmIDTags = true end
-	if BSYC.options.enableRealmAstrickName == nil then BSYC.options.enableRealmAstrickName = false end
-	if BSYC.options.enableRealmShortName == nil then BSYC.options.enableRealmShortName = false end
-	if BSYC.options.enableLoginVersionInfo == nil then BSYC.options.enableLoginVersionInfo = true end
-	if BSYC.options.enableFactionIcons == nil then BSYC.options.enableFactionIcons = false end
-	if BSYC.options.enableShowUniqueItemsTotals == nil then BSYC.options.enableShowUniqueItemsTotals = true end
-	if BSYC.options.enableXR_BNETRealmNames == nil then BSYC.options.enableXR_BNETRealmNames = true end
-	if BSYC.options.showGuildInGoldTooltip == nil then BSYC.options.showGuildInGoldTooltip = true end
-	if BSYC.options.showGuildCurrentCharacter == nil then BSYC.options.showGuildCurrentCharacter = false end
-	if BSYC.options.focusSearchEditBox == nil then BSYC.options.focusSearchEditBox = false end
-	if BSYC.options.enableAccurateBattlePets == nil then BSYC.options.enableAccurateBattlePets = true end
-	if BSYC.options.alwaysShowAdvSearch == nil then BSYC.options.alwaysShowAdvSearch = false end
-	if BSYC.options.sortTooltipByTotals == nil then BSYC.options.sortTooltipByTotals = false end
-	if BSYC.options.sortByCustomOrder == nil then BSYC.options.sortByCustomOrder = false end
-	if BSYC.options.tooltipModifer == nil then BSYC.options.tooltipModifer = "NONE" end
-	if BSYC.options.singleCharLocations == nil then BSYC.options.singleCharLocations = false end
-	if BSYC.options.useIconLocations == nil then BSYC.options.useIconLocations = true end
-	if BSYC.options.itemTotalsByClassColor == nil then BSYC.options.itemTotalsByClassColor = false end
-	if BSYC.options.showRaceIcons == nil then BSYC.options.showRaceIcons = true end
-	if BSYC.options.showGuildSeparately == nil then BSYC.options.showGuildSeparately = true end
-	if BSYC.options.showGuildTabs == nil then BSYC.options.showGuildTabs = false end
-	if BSYC.options.enableWhitelist == nil then BSYC.options.enableWhitelist = false end
-	if BSYC.options.enableSourceExpansion == nil then BSYC.options.enableSourceExpansion = true end
-	if BSYC.options.enableItemTypes == nil then BSYC.options.enableItemTypes = true end
+	BSYC:SetDefaults(nil, optionsDefaults)
 
 	--setup the default colors
-	if BSYC.options.colors == nil then BSYC.options.colors = {} end
-	if BSYC.options.colors.first == nil then BSYC.options.colors.first = HexToRGBPerc('FF80FF00') end
-	if BSYC.options.colors.second == nil then BSYC.options.colors.second = HexToRGBPerc('FFFFFFFF') end
-	if BSYC.options.colors.total == nil then BSYC.options.colors.total = HexToRGBPerc('FFF4A460') end
-	if BSYC.options.colors.guild == nil then BSYC.options.colors.guild = HexToRGBPerc('FF65B8C0') end
-	if BSYC.options.colors.debug == nil then BSYC.options.colors.debug = HexToRGBPerc('FF4DD827') end
-	if BSYC.options.colors.cross == nil then BSYC.options.colors.cross = HexToRGBPerc('FFFF7D0A') end
-	if BSYC.options.colors.bnet == nil then BSYC.options.colors.bnet = HexToRGBPerc('FF3588FF') end
-	if BSYC.options.colors.itemid == nil then BSYC.options.colors.itemid = HexToRGBPerc('FF52D386') end
-	if BSYC.options.colors.guildtabs == nil then BSYC.options.colors.guildtabs = HexToRGBPerc('FF09DBE0') end
-	if BSYC.options.colors.expansion == nil then BSYC.options.colors.expansion = HexToRGBPerc('FFCF9FFF') end
-	if BSYC.options.colors.itemtypes == nil then BSYC.options.colors.itemtypes = HexToRGBPerc('ffcccf66') end
+	BSYC:SetDefaults("colors", colorsDefaults)
 
 	--do DB cleanup check by version number
 	if not BSYC.options.addonversion or BSYC.options.addonversion ~= ver then
@@ -190,19 +190,8 @@ end
 
 function Data:ResetColors()
 	Debug(BSYC_DL.INFO, "ResetColors")
-
-	if BSYC.options.colors == nil then BSYC.options.colors = {} end
-	BSYC.options.colors.first = HexToRGBPerc('FF80FF00')
-	BSYC.options.colors.second = HexToRGBPerc('FFFFFFFF')
-	BSYC.options.colors.total = HexToRGBPerc('FFF4A460')
-	BSYC.options.colors.guild = HexToRGBPerc('FF65B8C0')
-	BSYC.options.colors.debug = HexToRGBPerc('FF4DD827')
-	BSYC.options.colors.cross = HexToRGBPerc('FFFF7D0A')
-	BSYC.options.colors.bnet = HexToRGBPerc('FF3588FF')
-	BSYC.options.colors.itemid = HexToRGBPerc('FF52D386')
-	BSYC.options.colors.guildtabs = HexToRGBPerc('FF09DBE0')
-	BSYC.options.colors.expansion = HexToRGBPerc('FFCF9FFF')
-	BSYC.options.colors.itemtypes = HexToRGBPerc('ffcccf66')
+	BSYC.options.colors = nil
+	BSYC:SetDefaults("colors", colorsDefaults)
 end
 
 function Data:CleanDB()
@@ -243,7 +232,7 @@ function Data:FixDB()
 		if data then
 			for i=1, #data do
 				if data[i] then
-					local link, count, qOpts = BSYC:Split(data[i], skipOpts)
+					local link, count, qOpts = BSYC:Split(data[i], false)
 					if link and tonumber(link) and (tonumber(link) >= BSYC.FakePetCode) then
 						if not qOpts or type(qOpts) ~= "table" or not qOpts.battlepet then
 							link = (link - BSYC.FakePetCode) / 100000
@@ -251,6 +240,10 @@ function Data:FixDB()
 							data[i] = link
 						end
 					end
+					--old gtab qOpts
+					-- if qOpts.gtab then
+					-- 	data[i] = BSYC:EncodeOpts(qOpts, data[i], {gtab=true})
+					-- end
 				end
 			end
 		end
@@ -277,6 +270,7 @@ function Data:FixDB()
 			end
 		else
 			if unitObj.data.bag then unitObj.data.bag = nil end --remove old guild bank storage method
+			if not unitObj.data.tabs then unitObj.data.tabs = {} end --remove old guild bank storage method
 			fixDBEntry(unitObj.data.tabs)
 		end
 	end

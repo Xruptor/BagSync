@@ -42,6 +42,18 @@ BSYC_DL = {
 	SL3 = 8,
 }
 
+local debugDefaults = {
+	enable = false,
+	DEBUG = false,
+	INFO = true,
+	TRACE = true,
+	WARN = false,
+	FINE = false,
+	SL1 = false,
+	SL2 = false,
+	SL3 = false,
+}
+
 function BSYC.DEBUG(level, sName, ...)
 	if not BSYC.options or not BSYC.options.debug or not BSYC.options.debug.enable then return end
 
@@ -101,7 +113,7 @@ function BSYC:DecodeOpts(tblString, mergeOpts)
 	return t
 end
 
-function BSYC:EncodeOpts(tbl, link)
+function BSYC:EncodeOpts(tbl, link, removeOpts)
 	if not tbl then return nil end
 	local tmpStr = ""
 
@@ -113,13 +125,13 @@ function BSYC:EncodeOpts(tbl, link)
 			if not xCount then xCount = 1 end
 
 			for k, v in pairs(xOpts) do
-				tmpStr = tmpStr.."|"..k.."="..v
+				if not removeOpts or (type(removeOpts) == "table" and not removeOpts[k]) then
+					tmpStr = tmpStr.."|"..k.."="..v
+				end
 			end
 			tmpStr = string.sub(tmpStr, 2)  -- remove first pipe
 
-			if tmpStr ~= "" then
-				return xLink..";"..xCount..";"..tmpStr
-			end
+			return xLink..";"..xCount..( (string.len(tmpStr) > 0 and ";"..tmpStr) or "")
 		end
 
 		--this is an invalid ParseItemLink, return empty string
@@ -327,6 +339,19 @@ function BSYC:GetShortCurrencyID(link)
     end
 end
 
+function BSYC:SetDefaults(category, defaults)
+	local dbObj = BagSyncDB["options§"]
+	if category and dbObj[category] == nil then dbObj[category] = {} end
+
+	for k, v in pairs(defaults) do
+		if category and dbObj[category][k] == nil then
+			dbObj[category][k] = v
+		elseif not category and dbObj[k] == nil then
+			dbObj[k] = v
+		end
+	end
+end
+
 --create base DB entries before we load any modules
 function BSYC:OnEnable()
 
@@ -338,17 +363,13 @@ function BSYC:OnEnable()
 	BagSyncDB["blacklist§"] = BagSyncDB["blacklist§"] or {}
 	BagSyncDB["whitelist§"] = BagSyncDB["whitelist§"] or {}
 
+	--main DB table
+	BSYC.db = BSYC.db or {}
+	BSYC.db.blacklist = BagSyncDB["blacklist§"]
+	BSYC.db.whitelist = BagSyncDB["whitelist§"]
+
 	--setup the debug values since Debug module loads before Data module
 	BSYC.options = BagSyncDB["options§"]
-	if BSYC.options.debug == nil then BSYC.options.debug = {} end
-	if BSYC.options.debug.enable == nil then BSYC.options.debug.enable = false end
-	if BSYC.options.debug.DEBUG == nil then BSYC.options.debug.DEBUG = false end
-	if BSYC.options.debug.INFO == nil then BSYC.options.debug.INFO = true end
-	if BSYC.options.debug.TRACE == nil then BSYC.options.debug.TRACE = true end
-	if BSYC.options.debug.WARN == nil then BSYC.options.debug.WARN = false end
-	if BSYC.options.debug.FINE == nil then BSYC.options.debug.FINE = false end
-	if BSYC.options.debug.SL1 == nil then BSYC.options.debug.SL1 = false end
-	if BSYC.options.debug.SL2 == nil then BSYC.options.debug.SL2 = false end
-	if BSYC.options.debug.SL3 == nil then BSYC.options.debug.SL3 = false end
 
+	BSYC:SetDefaults("debug", debugDefaults)
 end
