@@ -14,6 +14,8 @@ local Scanner = BSYC:GetModule("Scanner")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local LibQTip = LibStub("LibQTip-1.0")
 
+Tooltip.__cache = {}
+
 --https://github.com/tomrus88/BlizzardInterfaceCode/blob/classic/Interface/GlueXML/CharacterCreate.lua
 RACE_ICON_TCOORDS = {
 	["HUMAN_MALE"]		= {0, 0.25, 0, 0.25},
@@ -611,7 +613,7 @@ function Tooltip:SetQTipAnchor(frame, qTip)
 end
 
 function Tooltip:Reset()
-	self.__lastLink = nil
+	Tooltip.__cache = {}
 end
 
 function Tooltip:CheckModifier()
@@ -675,20 +677,20 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	end
 
 	--if we already did the item, then display the previous information, use the unparsed link to verify
-	if self.__lastLink and self.__lastLink == link then
-		if self.__lastTally and #self.__lastTally > 0 then
-			for i=1, #self.__lastTally do
-				local color = self:GetClassColor(self.__lastTally[i].unitObj, 2, false, BSYC.options.colors.total)
-				if showQTip then
-					local lineNum = Tooltip.qTip:AddLine(self.__lastTally[i].colorized, string.rep(" ", 4), self.__lastTally[i].tallyString)
-					Tooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
-				else
-					objTooltip:AddDoubleLine(self.__lastTally[i].colorized, self.__lastTally[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
-				end
+	if Tooltip.__cache[link] and #Tooltip.__cache[link] > 0 then
+		local cacheObj = Tooltip.__cache[link]
+		for i=1, #cacheObj do
+			local color = self:GetClassColor(cacheObj[i].unitObj, 2, false, BSYC.options.colors.total)
+			if showQTip then
+				local lineNum = Tooltip.qTip:AddLine(cacheObj[i].colorized, string.rep(" ", 4), cacheObj[i].tallyString)
+				Tooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
+			else
+				objTooltip:AddDoubleLine(cacheObj[i].colorized, cacheObj[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
 			end
-			objTooltip:Show()
-			if showQTip then Tooltip.qTip:Show() end
 		end
+
+		objTooltip:Show()
+		if showQTip then Tooltip.qTip:Show() end
 		objTooltip.__tooltipUpdated = true
 		return
 	end
@@ -731,10 +733,6 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	--short the shortID and ignore all BonusID's and stats
 	if BSYC.options.enableShowUniqueItemsTotals and shortID then link = shortID end
-
-	--store these in the addon itself not in the tooltip
-	self.__lastTally = {}
-	self.__lastLink = origLink
 
 	local grandTotal = 0
 	local unitList = {}
@@ -827,7 +825,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				if not BSYC.options.showGuildSeparately and BSYC.options.enableGuild then
 					local guildObj = Data:GetGuild(unitObj.data)
 					if guildObj and guildObj.tabs then
-						for tabID, tabData in pairs(unitObj.data.tabs) do
+						for tabID, tabData in pairs(guildObj.tabs) do
 							grandTotal = self:UnitTally(tabData, link, allowList, "guild", grandTotal, (tmpGuildList[guildObj] and true) or false, tabID)
 						end
 						--make sure we don't add to the grand total twice for the same guild
@@ -943,7 +941,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		end
 	end
 
-	self.__lastTally = unitList
+	--add to cache until wipe
+	Tooltip.__cache[origLink] = unitList
 
 	objTooltip.__tooltipUpdated = true
 	objTooltip:Show()
@@ -1033,7 +1032,7 @@ function Tooltip:HookTooltip(objTooltip)
 	--the battlepet tooltips don't use this, so check for it
 	if objTooltip ~= BattlePetTooltip and objTooltip ~= FloatingBattlePetTooltip then
 		objTooltip:HookScript("OnTooltipCleared", function(self)
-			--this gets called repeatedly on some occasions. Do not reset Tooltip.__lastLink here
+			--this gets called repeatedly on some occasions. Do not reset Tooltip cache here at all
 			self.__tooltipUpdated = false
 		end)
 	else
