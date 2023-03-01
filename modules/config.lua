@@ -124,6 +124,9 @@ local function set(info, arg1, arg2, arg3, arg4)
 		end
 
 	end
+
+	--reset tooltips just in case we changed any options related to it
+	if BSYC:GetModule("Tooltip", true) then BSYC:GetModule("Tooltip"):Reset() end
 end
 
 local modValues = {

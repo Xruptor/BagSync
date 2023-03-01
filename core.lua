@@ -281,8 +281,8 @@ function BSYC:CreateFakeBattlePetID(link, count, speciesID, level, breedQuality,
 
 	--either pass the link or speciesID
 	if speciesID then
-		if not petData and (level and breedQuality) then
-			petData = strjoin(":", speciesID, level, breedQuality, maxHealth, power, speed)
+		if not petData then
+			petData = strjoin(":", speciesID, level or 0, breedQuality or 0, maxHealth or 0, power or 0, speed or 0)
 		end
 		--we do this so as to not interfere with standard itemid's.  Example a speciesID can be 1345 but there is a real item with itemID 1345.
 		--to compensate for this we will use a ridiculous number to avoid conflicting with standard itemid's

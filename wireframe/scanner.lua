@@ -458,9 +458,9 @@ function Scanner:SendMail(mailTo, addMail)
 		mailTo = Scanner.pendingdMail.mailTo
 		local mailItems = Scanner.pendingdMail.items
 
-		local mailRealm = GetRealmName() -- get our current realm, we will replace this if mail was sent to another realm
-		if mailTo:find("%-") then -- send a BoA item to another realm
-			mailTo, mailRealm = mailTo:match("(.+)-(.+)")
+		local mailRealm = GetRealmName() --get current realm, we will replace if sending to another realm
+		if mailTo:find("%-") then --check for another realm
+			mailTo, mailRealm = mailTo:match("(.+)-(.+)") --strip the realm
 		end
 		mailTo = strtrim(mailTo) --strip any spaces/characters just in case
 
