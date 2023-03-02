@@ -79,7 +79,6 @@ local optionsDefaults = {
 	useIconLocations = true,
 	itemTotalsByClassColor = false,
 	showRaceIcons = true,
-	showGuildSeparately = true,
 	showGuildTabs = false,
 	enableWhitelist = false,
 	enableSourceExpansion = true,
@@ -99,6 +98,8 @@ local colorsDefaults = {
 	expansion = HexToRGBPerc('FFCF9FFF'),
 	itemtypes = HexToRGBPerc('ffcccf66'),
 }
+
+Data.__cache = {}
 
 ----------------------
 --   DB Functions   --
@@ -271,7 +272,9 @@ function Data:FixDB()
 		else
 			if unitObj.data.bag then unitObj.data.bag = nil end --remove old guild bank storage method
 			if not unitObj.data.tabs then unitObj.data.tabs = {} end --remove old guild bank storage method
-			fixDBEntry(unitObj.data.tabs)
+			for tabID, tabData in pairs(unitObj.data.tabs) do
+				fixDBEntry(tabData)
+			end
 		end
 	end
 
@@ -474,6 +477,12 @@ function Data:GetGuild(unitObj)
 	if not BagSyncDB[player.guildrealm] then BagSyncDB[player.guildrealm] = {} end
 	if not BagSyncDB[player.guildrealm][player.guild] then BagSyncDB[player.guildrealm][player.guild] = {} end
 	return BagSyncDB[player.guildrealm][player.guild]
+end
+
+function Data:GetCurrentPlayer()
+	local player = Unit:GetUnitInfo(true)
+	local isConnectedRealm = (Unit:isConnectedRealm(player.realm) and true) or false
+	return {realm=player.realm, name=player.name, data=BSYC.db.player, isGuild=false, isConnectedRealm=isConnectedRealm, isXRGuild=false}
 end
 
 function Data:IterateUnits(dumpAll, filterList)

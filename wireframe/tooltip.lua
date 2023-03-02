@@ -14,8 +14,6 @@ local Scanner = BSYC:GetModule("Scanner")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local LibQTip = LibStub("LibQTip-1.0")
 
-Tooltip.__cache = {}
-
 --https://github.com/tomrus88/BlizzardInterfaceCode/blob/classic/Interface/GlueXML/CharacterCreate.lua
 RACE_ICON_TCOORDS = {
 	["HUMAN_MALE"]		= {0, 0.25, 0, 0.25},
@@ -110,9 +108,9 @@ end
 
 function Tooltip:GetSortIndex(unitObj)
 	if unitObj then
-		if not unitObj.isGuild and unitObj.realm == Unit:GetUnitInfo().realm then
+		if not unitObj.isGuild and unitObj.realm == Unit:GetUnitInfo(true).realm then
 			return 1
-		elseif unitObj.isGuild and unitObj.realm == Unit:GetUnitInfo().realm then
+		elseif unitObj.isGuild and unitObj.realm == Unit:GetUnitInfo(true).realm then
 			return 2
 		elseif not unitObj.isGuild and unitObj.isConnectedRealm then
 			return 3
@@ -170,7 +168,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET
 
 	if not unitObj.data then return nil end
 
-	local player = Unit:GetUnitInfo()
+	local player = Unit:GetUnitInfo(true)
 	local tmpTag = ""
 	local realm = unitObj.realm
 	local realmTag = ""
@@ -204,36 +202,36 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET
 				end
 			end
 
-			--add faction icons
-			if bypass or BSYC.options.enableFactionIcons then
-				local FactionIcon = ""
-
-				if BSYC.IsRetail then
-					FactionIcon = [[|TInterface\Icons\Achievement_worldevent_brewmaster:20:20|t]]
-					if unitObj.data.faction == "Alliance" then
-						FactionIcon = [[|TInterface\FriendsFrame\PlusManz-Alliance:20:20|t]]
-					elseif unitObj.data.faction == "Horde" then
-						FactionIcon = [[|TInterface\FriendsFrame\PlusManz-Horde:20:20|t]]
-					end
-				else
-					FactionIcon = [[|TInterface\Icons\ability_seal:18|t]]
-					if unitObj.data.faction == "Alliance" then
-						FactionIcon = [[|TInterface\FriendsFrame\PlusManz-Alliance:20:20|t]]
-					elseif unitObj.data.faction == "Horde" then
-						FactionIcon = [[|TInterface\FriendsFrame\PlusManz-Horde:20:20|t]]
-					end
-				end
-
-				if FactionIcon ~= "" then
-					tmpTag = FactionIcon.." "..tmpTag
-				end
-			end
-
 		end
 
 	else
 		--is guild
 		tmpTag = self:HexColor(BSYC.options.colors.guild, select(2, Unit:GetUnitAddress(unitObj.name)) )
+	end
+
+	--add faction icons
+	if bypass or unitObj.isGuild or BSYC.options.enableFactionIcons then
+		local FactionIcon = ""
+
+		if BSYC.IsRetail then
+			FactionIcon = [[|TInterface\Icons\Achievement_worldevent_brewmaster:13:13|t]]
+			if unitObj.data.faction == "Alliance" then
+				FactionIcon = [[|TInterface\FriendsFrame\PlusManz-Alliance:13:13|t]]
+			elseif unitObj.data.faction == "Horde" then
+				FactionIcon = [[|TInterface\FriendsFrame\PlusManz-Horde:13:13|t]]
+			end
+		else
+			FactionIcon = [[|TInterface\Icons\ability_seal:18|t]]
+			if unitObj.data.faction == "Alliance" then
+				FactionIcon = [[|TInterface\FriendsFrame\PlusManz-Alliance:13:13|t]]
+			elseif unitObj.data.faction == "Horde" then
+				FactionIcon = [[|TInterface\FriendsFrame\PlusManz-Horde:13:13|t]]
+			end
+		end
+
+		if FactionIcon ~= "" then
+			tmpTag = FactionIcon.." "..tmpTag
+		end
 	end
 
 	----------------
@@ -388,39 +386,64 @@ function Tooltip:MoneyTooltip()
 	tooltip:Show()
 end
 
-function Tooltip:UnitTally(data, itemID, allowList, source, total, skipTotal, keyID)
-	if #data < 1 then return total end
-	for i=1, #data do
-		if data[i] then
-			local link, count, qOpts = BSYC:Split(data[i], true)
+function Tooltip:AddItem(unitObj, itemID, target, countList)
+	local total = 0
+	if not unitObj or not itemID or not target or not countList then return total end
 
-			if link then
-				if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
-				if link == itemID then
-					allowList[source] = allowList[source] + (count or 1)
-					--check for any guild bank tabs and store the locations found
-					if BSYC.options.showGuildTabs and source == "guild" and keyID then
-						keyID = tonumber(keyID)
-						allowList["gtab"][keyID] = keyID
-					end
-					if not skipTotal then
-						total = total + (count or 1)
+	local function getTotal(data)
+		local iCount = 0
+		for i=1, #data do
+			if data[i] then
+				local link, count, qOpts = BSYC:Split(data[i], true)
+				if link then
+					if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
+					if link == itemID then
+						iCount = iCount + 1
 					end
 				end
 			end
 		end
+		return iCount
 	end
+
+	if target == "bag" or target == "bank" or target == "reagents" then
+		for bagID, bagData in pairs(unitObj.data[target] or {}) do
+			total = total + getTotal(bagData)
+		end
+
+	elseif target == "auction" and BSYC.options.enableAuction then
+		total = getTotal((unitObj.data[target] and unitObj.data[target].bag) or {})
+
+	elseif target == "mailbox" and BSYC.options.enableMailbox then
+		total = getTotal(unitObj.data[target] or {})
+
+	elseif target == "equip" or target == "void" then
+		total = getTotal(unitObj.data[target] or {})
+
+	elseif target == "guild" and BSYC.options.enableGuild then
+		if not countList.gtab then countList.gtab = {} end
+		for tabID, tabData in pairs(unitObj.tabs or (unitObj.data and unitObj.data.tabs) or {}) do
+			local tabCount = getTotal(tabData)
+			if tabCount > 0 then
+				countList.gtab[tabID] = tabID
+			end
+			total = total + tabCount
+		end
+	end
+
+	countList[target] = total
+
 	return total
 end
 
-function Tooltip:AddToTotals(colorType, dispType, srcType, srcCount, addStr)
+function Tooltip:GetCountString(colorType, dispType, srcType, srcCount, addStr)
 	local desc = self:HexColor(colorType, L[dispType..srcType])
 	local count = self:HexColor(BSYC.options.colors.second, comma_value(srcCount))
 	local tmp = string.format("%s: %s", desc, count)..(addStr or "")
 	return tmp
 end
 
-function Tooltip:UnitTotals(unitObj, allowList, unitList, advUnitList)
+function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 	local total = 0
 	local tallyCount = {}
 	local dispType = ""
@@ -434,43 +457,43 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList, advUnitList)
 		dispType = "Tooltip_"
 	end
 
-	if ((allowList["bag"] or 0) > 0) then
-		total = total + allowList["bag"]
-		table.insert(tallyCount, self:AddToTotals(colorType, dispType, "bag", allowList["bag"]))
+	if ((countList["bag"] or 0) > 0) then
+		total = total + countList["bag"]
+		table.insert(tallyCount, self:GetCountString(colorType, dispType, "bag", countList["bag"]))
 	end
-	if ((allowList["bank"] or 0) > 0) then
-		total = total + allowList["bank"]
-		table.insert(tallyCount, self:AddToTotals(colorType, dispType, "bank", allowList["bank"]))
+	if ((countList["bank"] or 0) > 0) then
+		total = total + countList["bank"]
+		table.insert(tallyCount, self:GetCountString(colorType, dispType, "bank", countList["bank"]))
 	end
-	if ((allowList["reagents"] or 0) > 0) then
-		total = total + allowList["reagents"]
-		table.insert(tallyCount, self:AddToTotals(colorType, dispType, "reagents", allowList["reagents"]))
+	if ((countList["reagents"] or 0) > 0) then
+		total = total + countList["reagents"]
+		table.insert(tallyCount, self:GetCountString(colorType, dispType, "reagents", countList["reagents"]))
 	end
-	if ((allowList["equip"] or 0) > 0) then
-		total = total + allowList["equip"]
-		table.insert(tallyCount, self:AddToTotals(colorType, dispType, "equip", allowList["equip"]))
+	if ((countList["equip"] or 0) > 0) then
+		total = total + countList["equip"]
+		table.insert(tallyCount, self:GetCountString(colorType, dispType, "equip", countList["equip"]))
 	end
-	if ((allowList["mailbox"] or 0) > 0) then
-		total = total + allowList["mailbox"]
-		table.insert(tallyCount, self:AddToTotals(colorType, dispType, "mailbox", allowList["mailbox"]))
+	if ((countList["mailbox"] or 0) > 0) then
+		total = total + countList["mailbox"]
+		table.insert(tallyCount, self:GetCountString(colorType, dispType, "mailbox", countList["mailbox"]))
 	end
-	if ((allowList["void"] or 0) > 0) then
-		total = total + allowList["void"]
-		table.insert(tallyCount, self:AddToTotals(colorType, dispType, "void", allowList["void"]))
+	if ((countList["void"] or 0) > 0) then
+		total = total + countList["void"]
+		table.insert(tallyCount, self:GetCountString(colorType, dispType, "void", countList["void"]))
 	end
-	if ((allowList["auction"] or 0) > 0) then
-		total = total + allowList["auction"]
-		table.insert(tallyCount, self:AddToTotals(colorType, dispType, "auction", allowList["auction"]))
+	if ((countList["auction"] or 0) > 0) then
+		total = total + countList["auction"]
+		table.insert(tallyCount, self:GetCountString(colorType, dispType, "auction", countList["auction"]))
 	end
-	if ((allowList["guild"] or 0) > 0) then
-		total = total + allowList["guild"]
+	if ((countList["guild"] or 0) > 0) then
+		total = total + countList["guild"]
 		local gTabStr = ""
 
 		--check for guild tabs first only on servers that even have guild banks enabled
 		if BSYC.options.showGuildTabs and CanGuildBankRepair then
-			table.sort(allowList["gtab"], function(a, b) return a < b end)
+			table.sort(countList["gtab"], function(a, b) return a < b end)
 
-			for k, v in pairs(allowList["gtab"]) do
+			for k, v in pairs(countList["gtab"]) do
 				gTabStr = gTabStr..","..tostring(v)
 			end
 			gTabStr = string.sub(gTabStr, 2)  -- remove comma
@@ -481,7 +504,7 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList, advUnitList)
 			end
 		end
 
-		table.insert(tallyCount, self:AddToTotals(colorType, dispType, "guild", allowList["guild"], gTabStr))
+		table.insert(tallyCount, self:GetCountString(colorType, dispType, "guild", countList["guild"], gTabStr))
 	end
 
 	if total < 1 then return end
@@ -500,7 +523,9 @@ function Tooltip:UnitTotals(unitObj, allowList, unitList, advUnitList)
 
 	--add to list
 	local doAdv = (advUnitList and true) or false
-	table.insert(unitList, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj, false, doAdv, false, doAdv), tallyString=tallyString, sortIndex=self:GetSortIndex(unitObj), count=total } )
+	local unitData = { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj, false, doAdv, false, doAdv), tallyString=tallyString, sortIndex=self:GetSortIndex(unitObj), count=total }
+	table.insert(unitList, unitData)
+	return unitData
 end
 
 function Tooltip:GetBottomChild()
@@ -613,7 +638,9 @@ function Tooltip:SetQTipAnchor(frame, qTip)
 end
 
 function Tooltip:Reset()
-	Tooltip.__cache = {}
+	if Data.__cache and Data.__cache.tooltip then
+		Data.__cache.tooltip = {}
+	end
 end
 
 function Tooltip:CheckModifier()
@@ -631,6 +658,7 @@ function Tooltip:CheckModifier()
 end
 
 function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
+	if Data.__cache and not Data.__cache.tooltip then Data.__cache.tooltip = {} end
 	if not BSYC.options.enableTooltips then return end
 	if not CanAccessObject(objTooltip) then return end
 	if Scanner.isScanningGuild then return end --don't tally while we are scanning the Guildbank
@@ -676,25 +704,6 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		return
 	end
 
-	--if we already did the item, then display the previous information, use the unparsed link to verify
-	if Tooltip.__cache[link] and #Tooltip.__cache[link] > 0 then
-		local cacheObj = Tooltip.__cache[link]
-		for i=1, #cacheObj do
-			local color = self:GetClassColor(cacheObj[i].unitObj, 2, false, BSYC.options.colors.total)
-			if showQTip then
-				local lineNum = Tooltip.qTip:AddLine(cacheObj[i].colorized, string.rep(" ", 4), cacheObj[i].tallyString)
-				Tooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
-			else
-				objTooltip:AddDoubleLine(cacheObj[i].colorized, cacheObj[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
-			end
-		end
-
-		objTooltip:Show()
-		if showQTip then Tooltip.qTip:Show() end
-		objTooltip.__tooltipUpdated = true
-		return
-	end
-
 	local origLink = link --store the original unparsed link
 	--remember when no count is provided to ParseItemLink, only the itemID is returned.  Integer or a string if it has bonusID
 	link = BSYC:ParseItemLink(link)
@@ -736,125 +745,130 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	local grandTotal = 0
 	local unitList = {}
-	local tmpGuildList = {}
-	local player = Unit:GetUnitInfo()
+	local countList = {}
+	local player = Unit:GetUnitInfo(true)
+	local allowList = {
+		"bag",
+		"bank",
+		"reagents",
+		"equip",
+		"mailbox",
+		"void",
+		"auction",
+	}
 
 	--the true option for GetModule is to set it to silent and not return an error if not found
 	--only display advanced search results in the BagSync search window
 	local advUnitList = not skipTally and BSYC:GetModule("Search", true) and BSYC:GetModule("Search").advUnitList
 
+	--DB TOOLTIP COUNTS
+	-------------------
 	if advUnitList or not skipTally then
 
-		--allow advance search matches if found, no need to set to true as advUnitList will default to dumpAll if found
-		for unitObj in Data:IterateUnits(false, advUnitList) do
+		--check cache first, if we already have it then don't do it again, duh
+		if not Data.__cache.tooltip[origLink] then
 
-			local allowList = {
-				["bag"] = 0,
-				["bank"] = 0,
-				["reagents"] = 0,
-				["equip"] = 0,
-				["mailbox"] = 0,
-				["void"] = 0,
-				["auction"] = 0,
-				["guild"] = 0,
-				["gtab"] = {}, --guild bank tab
-			}
+			--allow advance search matches if found, no need to set to true as advUnitList will default to dumpAll if found
+			for unitObj in Data:IterateUnits(false, advUnitList) do
 
-			if not unitObj.isGuild then
-				--Due to crafting items being used in reagents bank, or turning in quests with items in the bank, etc..
-				--The cached item info for the current player would obviously be out of date until they returned to the bank to scan again.
-				--In order to combat this, lets just get the realtime count for the currently logged in player every single time.
-				--This is why we check for player name and realm below, the only one we really want to check is the equip status to get a accurate count.
-				--The only exception to this would be for battlepets, so every item except battlepets in realmtime.
+				countList = {}
 
-				local isCurrentPlayer = ((unitObj.name == player.name and unitObj.realm == player.realm) and true) or false
+				if not unitObj.isGuild then
+					--Due to crafting items being used in reagents bank, or turning in quests with items in the bank, etc..
+					--The cached item info for the current player would obviously be out of date until they returned to the bank to scan again.
+					--In order to combat this, lets just get the realtime count for the currently logged in player every single time.
+					--This is why we check for player name and realm below, we don't want to do anything in regards to the current player when the Database.
 
-				for k, v in pairs(unitObj.data) do
-					if allowList[k] and type(v) == "table" then
-						--bags, bank, reagents are stored in individual bags
-						if k == "bag" or k == "bank" or k == "reagents" then
-							--don't check for current player unless its a battlepet
-							if not isCurrentPlayer or isBattlePet then
-								for bagID, bagData in pairs(v) do
-									grandTotal = self:UnitTally(bagData, link, allowList, k, grandTotal, false, bagID)
-								end
-							end
-						else
-							--with the exception of auction, everything else is stored in a numeric list
-							--auction is stored in a numeric list but within an individual bag
-							--auction, equip, void, mailbox
-							local passChk = true
-							if k == "auction" and not BSYC.options.enableAuction then passChk = false end
-							if k == "mailbox" and not BSYC.options.enableMailbox then passChk = false end
-
-							if passChk then
-								grandTotal = self:UnitTally(k == "auction" and v.bag or v, link, allowList, k, grandTotal)
-							end
+					local isCurrentPlayer = ((unitObj.name == player.name and unitObj.realm == player.realm) and true) or false
+					if not isCurrentPlayer then
+						for i=1, #allowList do
+							grandTotal = grandTotal + self:AddItem(unitObj, link, allowList[i], countList)
 						end
 					end
+				else
+					grandTotal = grandTotal + self:AddItem(unitObj, link, "guild", countList)
 				end
 
-				--grab the realtime amount of the current player only if it's not a battlepet, read explanation above as to why
-				if isCurrentPlayer and not isBattlePet then
-					local equipCount = allowList["equip"] or 0
-					local carryCount, bagCount, bankCount, regCount = 0, 0, 0, 0
-
-					carryCount = GetItemCount(origLink) or 0 --get the total amount the player is currently carrying (bags + equip)
-					bagCount = carryCount - equipCount -- subtract the equipment count from the carry amount to get bag count
-
-					if IsReagentBankUnlocked and IsReagentBankUnlocked() then
-						--GetItemCount returns the bag count + reagent regardless of parameters.  So we have to subtract bag and reagents.  This does not include bank totals
-						regCount = GetItemCount(origLink, false, false, true) or 0
-						regCount = regCount - carryCount
-						if regCount < 0 then regCount = 0 end
-					end
-
-					--bankCount = GetItemCount returns the bag + bank count + reagent regardless of parameters.  So we have to subtract the carry and reagent totals
-					--it will always add the reagents totals regardless of whatever parameters are passed.  So we have to do some math to adjust for this
-					bankCount = GetItemCount(origLink, true, false, false) or 0
-					bankCount = (bankCount - regCount) - carryCount
-					if bankCount < 0 then bankCount = 0 end
-
-					--now assign the values
-					allowList["bag"] = bagCount
-					allowList["bank"] = bankCount
-					allowList["reagents"] = regCount
-					grandTotal = grandTotal + (bagCount + bankCount + regCount)
-				end
-
-				if not BSYC.options.showGuildSeparately and BSYC.options.enableGuild then
-					local guildObj = Data:GetGuild(unitObj.data)
-					if guildObj and guildObj.tabs then
-						for tabID, tabData in pairs(guildObj.tabs) do
-							grandTotal = self:UnitTally(tabData, link, allowList, "guild", grandTotal, (tmpGuildList[guildObj] and true) or false, tabID)
-						end
-						--make sure we don't add to the grand total twice for the same guild
-						tmpGuildList[guildObj] = true
-					end
-				end
-			else
-				if BSYC.options.showGuildSeparately then
-					for tabID, tabData in pairs(unitObj.data.tabs) do
-						grandTotal = self:UnitTally(tabData, link, allowList, "guild", grandTotal, false, tabID)
-					end
+				--only process the totals if we have something to work with
+				if grandTotal > 0 then
+					--table variables gets passed as byRef
+					self:UnitTotals(unitObj, countList, unitList, advUnitList)
 				end
 			end
 
-			--only process the totals if we have something to work with
+			--store it in the cache, copy the tables don't reference them
+			Data.__cache.tooltip[origLink] = Data.__cache.tooltip[origLink] or {}
+			Data.__cache.tooltip[origLink].unitList = CopyTable(unitList)
+			Data.__cache.tooltip[origLink].grandTotal = grandTotal
+
+		else
+			--use the cached results from previous DB searches, copy the table don't reference it
+			unitList = CopyTable(Data.__cache.tooltip[origLink].unitList)
+			grandTotal = Data.__cache.tooltip[origLink].grandTotal
+		end
+
+		--CURRENT PLAYER
+		-----------------
+
+		--first check the advUnitList search results
+		if not advUnitList or (advUnitList and advUnitList[player.realm] and advUnitList[player.realm][player.name]) then
+
+			countList = {}
+			local playerObj = Data:GetCurrentPlayer()
+
+			grandTotal = grandTotal + self:AddItem(playerObj, link, "equip", countList)
+			--GetItemCount does not work in the auction, void bank or mailbox, grab manually
+			grandTotal = grandTotal + self:AddItem(playerObj, link, "auction", countList)
+			grandTotal = grandTotal + self:AddItem(playerObj, link, "void", countList)
+			grandTotal = grandTotal + self:AddItem(playerObj, link, "mailbox", countList)
+
+			--GetItemCount does not work on battlepet links
+			if isBattlePet then
+				grandTotal = grandTotal + self:AddItem(playerObj, link, "bag", countList)
+				grandTotal = grandTotal + self:AddItem(playerObj, link, "bank", countList)
+				grandTotal = grandTotal + self:AddItem(playerObj, link, "reagents", countList)
+
+			elseif not isBattlePet then
+				local equipCount = countList["equip"] or 0
+				local carryCount, bagCount, bankCount, regCount = 0, 0, 0, 0
+
+				carryCount = GetItemCount(origLink) or 0 --get the total amount the player is currently carrying (bags + equip)
+				bagCount = carryCount - equipCount -- subtract the equipment count from the carry amount to get bag count
+
+				if IsReagentBankUnlocked and IsReagentBankUnlocked() then
+					--GetItemCount returns the bag count + reagent regardless of parameters.  So we have to subtract bag and reagents.  This does not include bank totals
+					regCount = GetItemCount(origLink, false, false, true) or 0
+					regCount = regCount - carryCount
+					if regCount < 0 then regCount = 0 end
+				end
+
+				--bankCount = GetItemCount returns the bag + bank count + reagent regardless of parameters.  So we have to subtract the carry and reagent totals
+				--it will always add the reagents totals regardless of whatever parameters are passed.  So we have to do some math to adjust for this
+				bankCount = GetItemCount(origLink, true, false, false) or 0
+				bankCount = (bankCount - regCount) - carryCount
+				if bankCount < 0 then bankCount = 0 end
+
+				-- --now assign the values
+				countList.bag = bagCount
+				countList.bank = bankCount
+				countList.reagents = regCount
+				grandTotal = grandTotal + (bagCount + bankCount + regCount)
+			end
+
 			if grandTotal > 0 then
 				--table variables gets passed as byRef
-				self:UnitTotals(unitObj, allowList, unitList, advUnitList)
+				self:UnitTotals(playerObj, countList, unitList, advUnitList)
 			end
-
 		end
 
 		--only sort items if we have something to work with
 		if #unitList > 0 then
 			unitList = self:DoSort(unitList)
 		end
-
 	end
 
+	--EXTRA OPTIONAL DISPLAYS
+	-------------------------
 	local desc, value = '', ''
 	local addSeparator = false
 
@@ -940,9 +954,6 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			objTooltip:AddDoubleLine(unitList[i].colorized, unitList[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
 		end
 	end
-
-	--add to cache until wipe
-	Tooltip.__cache[origLink] = unitList
 
 	objTooltip.__tooltipUpdated = true
 	objTooltip:Show()
