@@ -100,6 +100,8 @@ local colorsDefaults = {
 }
 
 Data.__cache = {}
+Data.__cache.items = {}
+Data.__cache.tooltip = {}
 
 ----------------------
 --   DB Functions   --
@@ -218,14 +220,14 @@ function Data:FixDB()
 	if not BSYC.options.unitDBVersion then BSYC.options.unitDBVersion = {} end
 
 	local allowList = {
-		["bag"] = true,
-		["bank"] = true,
-		["reagents"] = true,
-		["equip"] = true,
-		["mailbox"] = true,
-		["void"] = true,
-		["auction"] = true,
-		["guild"] = true,
+		bag = true,
+		bank = true,
+		reagents = true,
+		equip = true,
+		mailbox = true,
+		void = true,
+		auction = true,
+		guild = true,
 	}
 
 	--fix old battlepet data
@@ -448,7 +450,7 @@ function Data:CheckExpiredAuctions()
 					local timeleft
 					local link, count, qOpts = BSYC:Split(unitObj.data.auction.bag[x])
 
-					timeleft = (qOpts and qOpts.auction) or nil
+					timeleft = qOpts.auction or nil
 
 					--if the timeleft is greater than current time than keep it, it's not expired
 					if link and timeleft and tonumber(timeleft) then

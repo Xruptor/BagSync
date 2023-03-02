@@ -382,14 +382,14 @@ function Debug:OnEnable()
 		local lastRealm
 
 		local allowList = {
-			["bag"] = 0,
-			["bank"] = 0,
-			["reagents"] = 0,
-			["equip"] = 0,
-			["mailbox"] = 0,
-			["void"] = 0,
-			["auction"] = 0,
-			["guild"] = 0,
+			bag = 0,
+			bank = 0,
+			reagents = 0,
+			equip = 0,
+			mailbox = 0,
+			void = 0,
+			auction = 0,
+			guild = 0,
 		}
 
 		for unitObj in BSYC:GetModule("Data"):IterateUnits(true) do

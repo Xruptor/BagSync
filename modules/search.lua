@@ -80,7 +80,7 @@ function Search:OnEnable()
 	Search.helpButton = helpButton
 	w:AddChild(helpButton)
 
-	local scrollframe = AceGUI:Create("ScrollFrame");
+	local scrollframe = AceGUI:Create("ScrollFrame")
 	scrollframe:SetFullWidth(true)
 	scrollframe:SetLayout("Flow")
 
@@ -96,7 +96,7 @@ function Search:OnEnable()
 
 	totalCountLabel:ClearAllPoints()
 	totalCountLabel.frame:SetParent(SearchFrame.frame)
-	totalCountLabel:SetPoint("CENTER", SearchFrame.frame, "BOTTOM", -75, 25)
+	totalCountLabel:SetPoint("LEFT", SearchFrame.frame, "BOTTOMLEFT", 15, 25)
 	totalCountLabel.frame:Show()
 	Search.totalCountLabel = totalCountLabel
 
@@ -113,6 +113,76 @@ function Search:OnEnable()
 		end
 	end)
 
+
+	----------------------------------------------------------
+	----------------------------------------------------------
+	-------  SUMMARY FRAME
+
+	local SummaryFrame = AceGUI:Create("Window")
+	Search.summaryframe = SummaryFrame
+
+	SummaryFrame:SetTitle("BagSync - "..L.Search)
+	SummaryFrame:SetHeight(530)
+	SummaryFrame:SetWidth(630)
+	SummaryFrame.frame:SetParent(SearchFrame.frame)
+	SummaryFrame.frame:SetFrameStrata("TOOLTIP")
+	SummaryFrame:EnableResize(false)
+
+	local sumFrameScroll = AceGUI:Create("ScrollFrame")
+	sumFrameScroll:SetFullWidth(true)
+	sumFrameScroll:SetHeight(450)
+	sumFrameScroll:SetLayout("Flow")
+	SummaryFrame.scrollframe = sumFrameScroll
+	SummaryFrame:AddChild(sumFrameScroll)
+
+	for i=1, 50 do
+		local buttonGroup = AceGUI:Create("InlineGroup")
+		buttonGroup:SetLayout("Flow")
+		buttonGroup:SetFullWidth(true)
+		buttonGroup:SetTitle("Poop-Famfrit")
+
+		local label = AceGUI:Create("BagSyncInteractiveLabel")
+		label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+		label.highlight:SetVertexColor(0,1,0,0.3)
+		label:SetColor( 1, 1, 1)
+		label:SetImage("Interface\\RaidFrame\\ReadyCheck-NotReady")
+		label:SetImageSize(18, 18)
+		label:SetWidth(380)
+		label:SetText(("Bottomless Stonecrust Ore Satchel of the Monkey"):sub(1,45))
+		label:ApplyJustifyH("LEFT")
+		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+		label.label:SetWordWrap(false)
+		buttonGroup:AddChild(label)
+
+		local itemLoc = AceGUI:Create("BagSyncLabel")
+		itemLoc:SetWidth(170)
+		itemLoc.label:SetWordWrap(false)
+		itemLoc:SetText(("Guild Banksdfsdfjsdfsdfsdfsd"):sub(1,20))
+		itemLoc:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+		buttonGroup:AddChild(itemLoc)
+
+		sumFrameScroll:AddChild(buttonGroup)
+	end
+
+	local sumCountLabel = AceGUI:Create("BagSyncLabel")
+	sumCountLabel:SetText(L.TooltipTotal.." |cFFFFFFFF0|r")
+	sumCountLabel:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
+	sumCountLabel:SetColor(1, 165/255, 0)
+	sumCountLabel:SetFullWidth(true)
+
+	sumCountLabel:ClearAllPoints()
+	sumCountLabel.frame:SetParent(SummaryFrame.frame)
+	sumCountLabel:SetPoint("LEFT", SummaryFrame.frame, "BOTTOMLEFT", 15, 25)
+	sumCountLabel.frame:Show()
+	SummaryFrame.sumCountLabel = sumCountLabel
+
+	hooksecurefunc(SummaryFrame, "Show" ,function()
+		--always show the warning frame on the right of the BagSync Search window
+		SummaryFrame.frame:ClearAllPoints()
+		SummaryFrame:SetPoint( "CENTER", UIParent, "CENTER", 0, 0)
+	end)
+
+	SummaryFrame:Hide()
 	----------------------------------------------------------
 	----------------------------------------------------------
 	-------  WARNING FRAME
@@ -230,6 +300,7 @@ function Search:OnEnable()
 	AdvancedSearchFrame:SetHeight(550)
 	AdvancedSearchFrame:SetWidth(380)
 	AdvancedSearchFrame.frame:SetParent(SearchFrame.frame)
+	AdvancedSearchFrame.frame:SetFrameStrata("DIALOG")
 	AdvancedSearchFrame:EnableResize(false)
 
 	Search.advancedsearchframe = AdvancedSearchFrame
@@ -292,7 +363,7 @@ function Search:OnEnable()
 	advSelectAllBtn:SetPoint("RIGHT", pListInfo.frame, "RIGHT", -20, 5)
 	advSelectAllBtn.frame:Show()
 
-	local playerListScrollFrame = AceGUI:Create("ScrollFrame");
+	local playerListScrollFrame = AceGUI:Create("ScrollFrame")
 	playerListScrollFrame:SetFullWidth(true)
 	playerListScrollFrame:SetLayout("Flow")
 	playerListScrollFrame:SetHeight(240)
@@ -320,7 +391,7 @@ function Search:OnEnable()
 	advLocationInformation:SetFullWidth(true)
 	AdvancedSearchFrame:AddChild(advLocationInformation)
 
-	local locationListScrollFrame = AceGUI:Create("ScrollFrame");
+	local locationListScrollFrame = AceGUI:Create("ScrollFrame")
 	locationListScrollFrame:SetFullWidth(true)
 	locationListScrollFrame:SetLayout("Flow")
 	locationListScrollFrame:SetHeight(140)
@@ -408,12 +479,8 @@ function Search:AddEntry(entry)
 	local highlightColor = {1, 0, 0}
 	local label = AceGUI:Create("BagSyncInteractiveLabel")
 
-	local name, link, rarity, texture = entry.name, entry.link, entry.rarity, entry.texture
+	local name, link, rarity, texture, isBattlePet = entry.name, entry.link, entry.rarity, entry.texture, entry.isBattlepet
 	local r, g, b, hex = GetItemQualityColor(rarity)
-	local isBattlePet = false
-
-	local _, _, qOpts = BSYC:Split(link)
-	if qOpts and qOpts.battlepet then isBattlePet = true end
 
 	--if its a battlepet and we don't have access to BattlePetTooltip, then don't display it
 	if isBattlePet and not BattlePetTooltip then return end
@@ -422,42 +489,39 @@ function Search:AddEntry(entry)
 	label:SetColor( r, g, b)
 	label:SetImage(texture)
 	label:SetImageSize(18, 18)
-	label:SetFullWidth(true)
 	label:SetText(name)
 	label:ApplyJustifyH("LEFT")
 	label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
 	label:SetFullWidth(true)
-	label:SetCallback(
-		"OnClick",
-		function (widget, sometable, button)
+	label:SetCallback("OnClick", function (widget, sometable, button)
+		if IsControlKeyDown() then
 			if not isBattlePet then
 				ChatEdit_InsertLink(link)
 			end
-		end)
-	label:SetCallback(
-		"OnEnter",
-		function (widget, sometable)
-			label:SetColor(unpack(highlightColor))
-			if not isBattlePet then
-				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
-				GameTooltip:SetHyperlink(link)
-				GameTooltip:Show()
-			else
-				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
-				BattlePetToolTip_Show(tonumber(qOpts.battlepet), 0, 0, 0, 0, 0, nil)
-			end
-		end)
-	label:SetCallback(
-		"OnLeave",
-		function (widget, sometable)
-			label:SetColor(r, g, b)
+		elseif IsShiftKeyDown() then
+			--do something
+		end
+	end)
+	label:SetCallback("OnEnter", function (widget, sometable)
+		label:SetColor(unpack(highlightColor))
+		if not isBattlePet then
+			GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
+			GameTooltip:SetHyperlink(link)
+			GameTooltip:Show()
+		else
+			GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
+			BattlePetToolTip_Show(tonumber(qOpts.battlepet), 0, 0, 0, 0, 0, nil)
+		end
+	end)
+	label:SetCallback("OnLeave", function (widget, sometable)
+		label:SetColor(r, g, b)
+		GameTooltip:Hide()
+		if not isBattlePet then
 			GameTooltip:Hide()
-			if not isBattlePet then
-				GameTooltip:Hide()
-			else
-				BattlePetTooltip:Hide()
-			end
-		end)
+		else
+			BattlePetTooltip:Hide()
+		end
+	end)
 
 	self.scrollframe:AddChild(label)
 end
@@ -494,92 +558,32 @@ function Search:AdvancedSearchAddEntry(entry, isHeader, isUnit)
 		label.isSelected = false
 	end
 
-	label:SetCallback(
-		"OnClick",
-		function (widget, sometable, button)
-			if label.isSelected then
-				label:SetImage("Interface\\RaidFrame\\ReadyCheck-NotReady")
-				label.isSelected = false
-			else
-				label.isSelected = true
-				label:SetImage("Interface\\RaidFrame\\ReadyCheck-Ready")
-			end
-		end)
-	label:SetCallback(
-		"OnEnter",
-		function (widget, sometable)
-			if not label.userdata.isHeader then
-				--override the single tooltip use of BagSync
-				label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-				label.highlight:SetVertexColor(0,1,0,0.3)
-			end
-		end)
-	label:SetCallback(
-		"OnLeave",
-		function (widget, sometable)
+	label:SetCallback("OnClick", function (widget, sometable, button)
+		if label.isSelected then
+			label:SetImage("Interface\\RaidFrame\\ReadyCheck-NotReady")
+			label.isSelected = false
+		else
+			label.isSelected = true
+			label:SetImage("Interface\\RaidFrame\\ReadyCheck-Ready")
+		end
+	end)
+	label:SetCallback("OnEnter", function (widget, sometable)
+		if not label.userdata.isHeader then
 			--override the single tooltip use of BagSync
-			label.highlight:SetTexture(nil)
-		end)
+			label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+			label.highlight:SetVertexColor(0,1,0,0.3)
+		end
+	end)
+	label:SetCallback("OnLeave", function (widget, sometable)
+		--override the single tooltip use of BagSync
+		label.highlight:SetTexture(nil)
+	end)
 
 	if isUnit then
 		self.advancedsearchframe.playerlistscrollframe:AddChild(label)
 	else
 		self.advancedsearchframe.locationlistscrollframe:AddChild(label)
 	end
-end
-
-local function checkData(data, searchStr, searchTable, tempList, countWarning, viewCustomList, unitObj)
-	searchStr = searchStr or ''
-
-	for i=1, #data do
-		if data[i] then
-			local link, count, qOpts = BSYC:Split(data[i])
-
-			if link then
-				local dName, dItemLink, dRarity, dTexture
-				local testMatch = false
-				local cache = {}
-
-				--do a Cache check
-				if not Search.cacheItems[link] then
-					if qOpts and qOpts.battlepet then
-						dName, dTexture = C_PetJournal.GetPetInfoBySpeciesID(qOpts.battlepet) --qOpts.battlepet would be speciesID
-						dRarity = 1
-						dItemLink = data[i] --use the whole link, not just the FakeID
-					else
-						dName, dItemLink, dRarity, _, _, _, _, _, _, dTexture = GetItemInfo("item:"..link)
-					end
-
-					--add to Cache if we have something to work with
-					if dName then
-						Search.cacheItems[link] = { dName=dName, dItemLink=dItemLink, dRarity=dRarity, dTexture=dTexture }
-					end
-				else
-					cache = Search.cacheItems[link]
-					dName, dItemLink, dRarity, dTexture = cache.dName, cache.dItemLink, cache.dRarity, cache.dTexture
-				end
-
-				testMatch = ItemScout:Find( (qOpts and qOpts.battlepet and dName) or dItemLink, searchStr) --use the name for battlepets instead of link
-
-				--for debugging purposes only
-				if dName and (viewCustomList or testMatch) then
-					Debug(BSYC_DL.SL1, "FoundItem", searchStr, dName, unitObj.name, unitObj.realm)
-				end
-
-				--we only really want to grab the item once in our list, no need to add it multiple times per character
-				if (dName and not tempList[link]) then
-					tempList[link] = dName
-					if (viewCustomList or testMatch) then
-						table.insert(searchTable, { name=dName, link=dItemLink, rarity=dRarity, texture=dTexture } )
-					end
-				elseif not tempList[link] then
-					--only show a warning if we haven't already processed that item
-					countWarning = countWarning + 1
-				end
-			end
-		end
-	end
-	return countWarning
 end
 
 function Search:DoReset()
@@ -630,7 +634,7 @@ function Search:DoAdvancedSearch()
 	for i = 1, #self.advancedsearchframe.locationlistscrollframe.children do
 		local label = self.advancedsearchframe.locationlistscrollframe.children[i] --grab the label
 		if label.isSelected then
-			advAllowList[label.entry.unitObj.name] = true --get the source name
+			advAllowList[label.entry.unitObj.name] = true
 			locCount = locCount + 1
 		end
 	end
@@ -647,6 +651,124 @@ function Search:DoAdvancedSearch()
 	self:DoSearch(searchStr, advUnitList, advAllowList)
 end
 
+function Search:CacheLink(dbEntry, parseLink, qOpts)
+	local itemObj = {}
+	if not Data.__cache.items[parseLink] then
+		if qOpts.battlepet then
+			itemObj.itemQuality = 1
+			itemObj.itemLink = dbEntry --use the whole link, not just the FakeID, this is to grab qOpts in future uses
+
+			--https://wowpedia.fandom.com/wiki/API_C_PetJournal.GetPetInfoBySpeciesID
+			itemObj.speciesName,
+			itemObj.speciesIcon,
+			itemObj.petType,
+			itemObj.companionID,
+			itemObj.tooltipSource,
+			itemObj.tooltipDescription,
+			itemObj.isWild,
+			itemObj.canBattle,
+			itemObj.isTradeable,
+			itemObj.isUnique,
+			itemObj.obtainable,
+			itemObj.creatureDisplayID = C_PetJournal.GetPetInfoBySpeciesID(qOpts.battlepet)
+		else
+			--https://wowpedia.fandom.com/wiki/API_GetItemInfo
+			itemObj.itemName,
+			itemObj.itemLink,
+			itemObj.itemQuality,
+			itemObj.itemLevel,
+			itemObj.itemMinLevel,
+			itemObj.itemType,
+			itemObj.itemSubType,
+			itemObj.itemStackCount,
+			itemObj.itemEquipLoc,
+			itemObj.itemTexture,
+			itemObj.sellPrice,
+			itemObj.classID,
+			itemObj.subclassID,
+			itemObj.bindType,
+			itemObj.expacID,
+			itemObj.setID,
+			itemObj.isCraftingReagent = GetItemInfo("item:"..parseLink)
+		end
+		--add to Cache if we have something to work with
+		if itemObj.speciesName or itemObj.itemName then
+			Data.__cache.items[parseLink] = itemObj
+		end
+	else
+		itemObj = Data.__cache.items[parseLink]
+	end
+	return itemObj
+end
+
+function Search:CheckItem(searchStr, unitObj, target, searchList, checkList, onlyPlayer)
+	local total = 0
+	if not unitObj or not target then return total end
+	searchStr = searchStr or ''
+
+	local function parseItems(data)
+		local iCount = 0
+		for i=1, #data do
+			if data[i] then
+				local link, count, qOpts = BSYC:Split(data[i])
+				if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
+
+				--we only really want to grab and search the item only once
+				if link and not checkList[link] then
+					--do cache grab
+					local cacheObj = Search:CacheLink(data[i], link, qOpts)
+					local entry = cacheObj.speciesName or cacheObj.itemLink --GetItemInfo does not support battlepet links, use speciesName instead
+					local texture = cacheObj.speciesIcon or cacheObj.itemTexture
+					local itemName = cacheObj.speciesName or cacheObj.itemName
+
+					--we only really want to grab and search the item only once
+					if entry then
+						--perform item search
+						local testMatch = ItemScout:Find(entry, searchStr, cacheObj)
+
+						--for debugging purposes only
+						if entry and (testMatch or onlyPlayer) then
+							Debug(BSYC_DL.SL1, "FoundItem", searchStr, entry, unitObj.name, unitObj.realm)
+						end
+
+						checkList[link] = entry
+						if testMatch or onlyPlayer then
+							table.insert(searchList, { name=itemName, link=cacheObj.itemLink, rarity=cacheObj.itemQuality, texture=texture, isBattlePet=qOpts.battlepet } )
+						end
+					else
+						--add to warning count total if we haven't processed that item
+						iCount = iCount + 1
+					end
+				end
+			end
+		end
+		return iCount
+	end
+
+	if target == "bag" or target == "bank" or target == "reagents" then
+		for bagID, bagData in pairs(unitObj.data[target] or {}) do
+			total = total + parseItems(bagData)
+		end
+
+	elseif target == "auction" and BSYC.options.enableAuction then
+		total = parseItems((unitObj.data[target] and unitObj.data[target].bag) or {})
+
+	elseif target == "mailbox" and BSYC.options.enableMailbox then
+		total = parseItems(unitObj.data[target] or {})
+
+	elseif target == "equip" or target == "void" then
+		total = parseItems(unitObj.data[target] or {})
+
+	elseif target == "guild" and BSYC.options.enableGuild then
+		for tabID, tabData in pairs(unitObj.tabs or (unitObj.data and unitObj.data.tabs) or {}) do
+			local tabCount = parseItems(tabData)
+			total = total + tabCount
+		end
+	end
+
+	return total
+end
+
 function Search:DoSearch(searchStr, advUnitList, advAllowList)
 
 	local sbText = self.searchbar:GetText() or ''
@@ -660,66 +782,60 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 	Search.searchStr = searchStr --store globally for the refresh
 	self.scrollframe:ReleaseChildren() --clear out the scrollframe
 
-	local searchTable = {}
-	local tempList = {}
+	local searchList = {}
+	local checkList = {}
 	local countWarning = 0
-	local viewCustomList
-	local player = Unit:GetUnitInfo()
+	local atUserLoc
 
 	--items aren't counted into this array, it's just for allowing the search to pass through
 	local allowList = {
-		["bag"] = true,
-		["bank"] = true,
-		["reagents"] = true,
-		["equip"] = true,
-		["mailbox"] = true,
-		["void"] = true,
-		["auction"] = true,
+		bag = true,
+		bank = true,
+		reagents = true,
+		equip = true,
+		mailbox = true,
+		void = true,
+		auction = true,
 	}
 
 	--This is used when a player is requesting to view a custom list, such as @bank, @auction, @bag etc...
-	--only do if we aren't using an advance search
 	if not advUnitList and string.len(searchStr) > 1 then
-		viewCustomList = searchStr:match("@(.+)")
+		atUserLoc = searchStr:match("@(.+)")
+		--check it to verify it's a valid command
+		if atUserLoc and string.len(atUserLoc) > 0 and (atUserLoc ~= "guild" and not allowList[atUserLoc]) then atUserLoc = nil end
 	end
 
 	--overwrite the allowlist with the advance one if it isn't empty
 	allowList = advAllowList or allowList
-
 	Debug(BSYC_DL.INFO, "init:DoSearch", searchStr, advUnitList, advAllowList)
 
-	--advUnitList will force dumpAll to be true if necessary for advanced search, no need to set it to true
-	for unitObj in Data:IterateUnits(false, advUnitList) do
-		if not unitObj.isGuild then
-			Debug(BSYC_DL.FINE, "Search-IterateUnits", "player", unitObj.name, player.realm)
-			for k, v in pairs(unitObj.data) do
-				if allowList[k] and type(v) == "table" then
+	if not atUserLoc then
+		for unitObj in Data:IterateUnits(false, advUnitList) do
+			if not unitObj.isGuild then
+				Debug(BSYC_DL.FINE, "Search-IterateUnits", "player", unitObj.name, unitObj.realm)
+				for k, v in pairs(allowList) do
 					Debug(BSYC_DL.FINE, k)
-					--bags, bank, reagents are stored in individual bags
-					if k == "bag" or k == "bank" or k == "reagents" then
-						for bagID, bagData in pairs(v) do
-							if not viewCustomList or (viewCustomList == k and unitObj.name == player.name and unitObj.realm == player.realm) then
-								countWarning = checkData(bagData, searchStr, searchTable, tempList, countWarning, viewCustomList, unitObj)
-							end
-						end
-					else
-						local passChk = true
-						if k == "auction" and not BSYC.options.enableAuction then passChk = false end
-						if k == "mailbox" and not BSYC.options.enableMailbox then passChk = false end
-
-						if passChk then
-							if not viewCustomList or (viewCustomList == k and unitObj.name == player.name and unitObj.realm == player.realm) then
-								countWarning = checkData(k == "auction" and v.bag or v, searchStr, searchTable, tempList, countWarning, viewCustomList, unitObj)
-							end
-						end
-					end
+					countWarning = countWarning + self:CheckItem(searchStr, unitObj, k, searchList, checkList)
 				end
+			else
+				Debug(BSYC_DL.FINE, "Search-IterateUnits", "guild", unitObj.name, unitObj.realm)
+				countWarning = countWarning + self:CheckItem(searchStr, unitObj, "guild", searchList, checkList)
 			end
+		end
+	else
+		--player using an @location, so lets only search their database and not IterateUnits
+		local playerObj = Data:GetCurrentPlayer()
+		Debug(BSYC_DL.FINE, "Search-atUserLoc", "player", playerObj.name, playerObj.realm, atUserLoc)
+
+		if atUserLoc ~= "guild" then
+			Debug(BSYC_DL.FINE, atUserLoc)
+			countWarning = countWarning + self:CheckItem(searchStr, playerObj, atUserLoc, searchList, checkList, true)
 		else
-			Debug(BSYC_DL.FINE, "Search-IterateUnits", "guild", unitObj.name, player.realm, unitObj.data.realmKey)
-			for tabID, tabData in pairs(unitObj.data.tabs) do
-				if not viewCustomList or (viewCustomList == "guild" and unitObj.name == player.guild and unitObj.realm == player.guildrealm) then
-					countWarning = checkData(tabData, searchStr, searchTable, tempList, countWarning, viewCustomList, unitObj)
+			if playerObj.data.guild then
+				local guildObj = Data:GetGuild(playerObj.data)
+				if guildObj then
+					Debug(BSYC_DL.FINE, "guild")
+					countWarning = countWarning + self:CheckItem(searchStr, guildObj, atUserLoc, searchList, checkList, true)
 				end
 			end
 		end
@@ -751,13 +867,13 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 		self.warningframe:Hide()
 	end
 
-	if #searchTable > 0 then
-		table.sort(searchTable, function(a,b) return (a.name < b.name) end)
-		for i=1, #searchTable do
-			self:AddEntry(searchTable[i])
+	if #searchList > 0 then
+		table.sort(searchList, function(a,b) return (a.name < b.name) end)
+		for i=1, #searchList do
+			self:AddEntry(searchList[i])
 		end
 		self.scrollframe.frame:Show()
-		self.totalCountLabel:SetText(L.TooltipTotal.." |cFFFFFFFF"..tostring(#searchTable).."|r")
+		self.totalCountLabel:SetText(L.TooltipTotal.." |cFFFFFFFF"..tostring(#searchList).."|r")
 	else
 		self.totalCountLabel:SetText(L.TooltipTotal.." |cFFFFFFFF0|r")
 		self.scrollframe.frame:Hide()
@@ -829,5 +945,4 @@ function Search:DisplayAdvSearchLists()
 	self.totalCountLabel:SetText(L.TooltipTotal.." |cFFFFFFFF0|r")
 
 	self.advancedsearchframe.locationlistscrollframe.frame:Show()
-
 end

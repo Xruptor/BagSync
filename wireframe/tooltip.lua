@@ -658,7 +658,6 @@ function Tooltip:CheckModifier()
 end
 
 function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
-	if Data.__cache and not Data.__cache.tooltip then Data.__cache.tooltip = {} end
 	if not BSYC.options.enableTooltips then return end
 	if not CanAccessObject(objTooltip) then return end
 	if Scanner.isScanningGuild then return end --don't tally while we are scanning the Guildbank
@@ -747,14 +746,15 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local unitList = {}
 	local countList = {}
 	local player = Unit:GetUnitInfo(true)
+
 	local allowList = {
-		"bag",
-		"bank",
-		"reagents",
-		"equip",
-		"mailbox",
-		"void",
-		"auction",
+		bag = true,
+		bank = true,
+		reagents = true,
+		equip = true,
+		mailbox = true,
+		void = true,
+		auction = true,
 	}
 
 	--the true option for GetModule is to set it to silent and not return an error if not found
@@ -781,8 +781,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 					local isCurrentPlayer = ((unitObj.name == player.name and unitObj.realm == player.realm) and true) or false
 					if not isCurrentPlayer then
-						for i=1, #allowList do
-							grandTotal = grandTotal + self:AddItem(unitObj, link, allowList[i], countList)
+						for k, v in pairs(allowList) do
+							grandTotal = grandTotal + self:AddItem(unitObj, link, k, countList)
 						end
 					end
 				else

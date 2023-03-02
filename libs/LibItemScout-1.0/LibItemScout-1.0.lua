@@ -50,6 +50,7 @@ end
 --[[ Locals ]]--
 
 local tonumber, select, split = tonumber, select, strsplit
+local cache = {}
 local function useful(a) -- check if the search has a decent size
 	return a and #a >= 1
 end
@@ -86,8 +87,9 @@ end
 
 
 --[[ User API ]]--
-
-function Lib:Find(itemLink, search)
+--cache object must use same variable names as --https://wowpedia.fandom.com/wiki/API_GetItemInfo
+--Table Example: {itemName=<name>, itemLink=<link>, itemQuality=<quality>}
+function Lib:Find(itemLink, search, cacheObj)
 	if not useful(search) then
 		return true
 	end
@@ -96,6 +98,9 @@ function Lib:Find(itemLink, search)
 		return false
 	end
 
+	if cacheObj then
+		cache = cacheObj
+	end
 	return self:FindUnionSearch(itemLink, split('\124', search:lower()))
 end
 
@@ -230,7 +235,7 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, item, _, search)
-		local name = C_Item.GetItemNameByID(item) or item:match('%[(.+)%]') or (item and tostring(item))
+		local name = cache.itemName or C_Item.GetItemNameByID(item) or item:match('%[(.+)%]') or (item and tostring(item))
 		return match(search, name)
 	end
 }
@@ -238,13 +243,14 @@ Lib:RegisterTypedSearch{
 Lib:RegisterTypedSearch{
 	id = 'itemBind',
 	tags = {'bind'},
+	onlyTags = true,
 
 	canSearch = function(self, operator, search)
 		return not operator and self.keywords[search]
 	end,
 
 	findItem = function(self, item, _, search)
-		return search == select(14, GetItemInfo(item))
+		return search == (cache.bindType or select(14, GetItemInfo(item)))
 	end,
 
 	keywords = {
@@ -266,7 +272,7 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, item, _, search)
-		local expacID = select(15, GetItemInfo(item))
+		local expacID = (cache.expacID or select(15, GetItemInfo(item)))
 		local xPacName = expacID and _G["EXPANSION_NAME"..expacID]
 		return match(search, expacID and tostring(expacID), xPacName)
 	end
@@ -277,13 +283,19 @@ Lib:RegisterTypedSearch{
 Lib:RegisterTypedSearch{
 	id = 'itemType',
 	tags = {'t', 'type', 'slot'},
+	onlyTags = true,
 
 	canSearch = function(self, operator, search)
 		return not operator and search
 	end,
 
 	findItem = function(self, item, _, search)
-		local type, subType, _, equipSlot = select(6, GetItemInfo(item))
+		local type, subType, _, equipSlot
+		if cache.itemType then
+			type, subType, equipSlot = cache.itemType, cache.itemSubType, cache.itemEquipLoc
+		else
+			type, subType, _, equipSlot = select(6, GetItemInfo(item))
+		end
 		return match(search, type, subType, _G[equipSlot])
 	end
 }
@@ -299,6 +311,7 @@ end
 Lib:RegisterTypedSearch{
 	id = 'itemQuality',
 	tags = {'q', 'quality'},
+	onlyTags = true,
 
 	canSearch = function(self, _, search)
 		for i, name in pairs(qualities) do
@@ -309,7 +322,7 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, link, operator, num)
-		local quality = select(3, GetItemInfo(link))
+		local quality = (cache.itemQuality or select(3, GetItemInfo(link)))
 		return compare(operator, quality, num)
 	end,
 }
@@ -320,13 +333,14 @@ Lib:RegisterTypedSearch{
 Lib:RegisterTypedSearch{
 	id = 'itemLevel',
 	tags = {'l', 'level', 'lvl', 'ilvl'},
+	onlyTags = true,
 
 	canSearch = function(self, _, search)
 		return tonumber(search)
 	end,
 
 	findItem = function(self, link, operator, num)
-		local lvl = select(4, GetItemInfo(link))
+		local lvl = (cache.itemLevel or select(4, GetItemInfo(link)))
 		if lvl then
 			return compare(operator, lvl, num)
 		end
@@ -338,13 +352,14 @@ Lib:RegisterTypedSearch{
 Lib:RegisterTypedSearch{
 	id = 'reqItemLevel',
 	tags = {'r', 'req', 'rl', 'reql', 'reqlvl'},
+	onlyTags = true,
 
 	canSearch = function(self, _, search)
 		return tonumber(search)
 	end,
 
 	findItem = function(self, link, operator, num)
-		local lvl = select(5, GetItemInfo(link))
+		local lvl = (cache.itemMinLevel or select(5, GetItemInfo(link)))
 		if lvl then
 			return compare(operator, lvl, num)
 		end
@@ -560,6 +575,7 @@ end
 Lib:RegisterTypedSearch{
 	id = 'equipmentSet',
 	tags = {'s', 'set'},
+	onlyTags = true,
 
 	canSearch = function(self, operator, search)
 		return not operator and search

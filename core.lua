@@ -63,8 +63,8 @@ function BSYC.DEBUG(level, sName, ...)
 	Debug:AddMessage(level, sName, ...)
 end
 
+local debugf = tekDebug and tekDebug:GetFrame("BagSync")
 function BSYC.T_DEBUG(...)
-	local debugf = tekDebug and tekDebug:GetFrame("BagSync")
 
 	--old tekDebug code just in case I want to track old debugging method
     if debugf then
@@ -154,9 +154,9 @@ function BSYC:Split(dataStr, skipOpts, mergeOpts)
 	local qLink, qCount, qOpts = strsplit(";", dataStr)
 	--only do Opts functions if we need too, otherwise just return the link and count
 	if not skipOpts or mergeOpts then
-		return qLink, qCount, self:DecodeOpts(qOpts, mergeOpts)
+		return qLink, qCount, self:DecodeOpts(qOpts, mergeOpts) or {}
 	end
-	return qLink, qCount
+	return qLink, qCount, {}
 end
 
 function BagSync_ShowWindow(windowName)
