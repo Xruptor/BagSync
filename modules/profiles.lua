@@ -77,7 +77,7 @@ end
 function Profiles:DeleteUnit(entry)
 	if not entry then BSYC:Print(L.ErrorUserNotFound) return end
 
-	local player = Unit:GetUnitInfo()
+	local player = Unit:GetUnitInfo(true)
 
 	if not entry.unitObj.isGuild then
 		if entry.unitObj.name == player.name and entry.unitObj.realm == player.realm then

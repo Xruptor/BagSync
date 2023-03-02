@@ -426,7 +426,7 @@ function Debug:OnEnable()
 						else
 							if k == "auction" then
 								toatlItems = toatlItems + (#v.bag or 0)
-							elseif k == "mailbox" then
+							else
 								toatlItems = toatlItems + (#v or 0)
 							end
 						end

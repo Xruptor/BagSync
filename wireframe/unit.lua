@@ -193,11 +193,16 @@ function Unit:GetUnitAddress(unit)
 	return realm or REALM, guildName or unit, guildName and true
 end
 
-function Unit:GetUnitInfo(unit)
+function Unit:GetUnitInfo(shallow)
 	local realm, name, isguild = self:GetUnitAddress(unit)
 	local unit = {}
 
 	unit.faction = FACTION
+	unit.name, unit.realm = name, realm
+	if shallow then
+		Debug(BSYC_DL.TRACE, "GetUnitInfo-Shallow", shallow, name, realm, FACTION)
+		return unit
+	end
 
 	if not isguild then
 		unit.money = (GetMoney() or 0) - GetCursorMoney() - GetPlayerTradeMoney()
@@ -211,7 +216,7 @@ function Unit:GetUnitInfo(unit)
 	end
 
 	unit.guild = unit.guild and (unit.guild..'©')
-	unit.name, unit.realm, unit.isguild = name, realm, isguild
+	unit.isguild = isguild
 	unit.realmKey = realmKey
 	unit.rwsKey = self:GetRealmKey_RWS()
 

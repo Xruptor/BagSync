@@ -34,11 +34,6 @@ local LastEquipped = INVSLOT_LAST_EQUIPPED
 
 Scanner.pendingdMail = {items={}}
 
-function Scanner:ResetTooltips()
-	--the true is to set it to silent and not return an error if not found
-	if BSYC:GetModule("Tooltip", true) then BSYC:GetModule("Tooltip"):Reset() end
-end
-
 --https://wowpedia.fandom.com/wiki/BagID
 function Scanner:GetBagSlots(bagType)
 	if bagType == "bag" then
@@ -147,8 +142,6 @@ function Scanner:SaveBag(bagtype, bagid)
 	else
 		BSYC.db.player[bagtype][bagid] = nil
 	end
-
-	self:ResetTooltips()
 end
 
 function Scanner:SaveEquipment()
@@ -193,8 +186,6 @@ function Scanner:SaveEquipment()
 	end
 
 	BSYC.db.player.equip = slotItems
-
-	self:ResetTooltips()
 end
 
 function Scanner:SaveBank(rootOnly)
@@ -213,8 +204,6 @@ function Scanner:SaveBank(rootOnly)
 		--scan the reagents as part of the bank scan, but make sure it's even enabled on server
 		if IsReagentBankUnlocked then self:SaveReagents() end
 	end
-
-	self:ResetTooltips()
 end
 
 function Scanner:SaveReagents()
@@ -224,8 +213,6 @@ function Scanner:SaveReagents()
 	if IsReagentBankUnlocked() then
 		self:SaveBag("reagents", REAGENTBANK_CONTAINER)
 	end
-
-	self:ResetTooltips()
 end
 
 function Scanner:SaveVoidBank()
@@ -245,8 +232,6 @@ function Scanner:SaveVoidBank()
 	end
 
 	BSYC.db.player.void = slotItems
-
-	self:ResetTooltips()
 end
 
 local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
@@ -310,7 +295,6 @@ function Scanner:SaveGuildBank(queueList)
 	if not guildDB then
 		--we don't have a guild object to work with
 		Scanner.isScanningGuild = false
-		self:ResetTooltips()
 		return
 	else
 		Debug(BSYC_DL.TRACE, "SaveGuildBank", "FoundGuild")
@@ -371,7 +355,6 @@ function Scanner:SaveGuildBank(queueList)
 	guildDB.rwsKey = player.rwsKey
 
 	Scanner.isScanningGuild = false
-	self:ResetTooltips()
 end
 
 function Scanner:SaveMailbox(isShow)
@@ -420,7 +403,6 @@ function Scanner:SaveMailbox(isShow)
 	BSYC.db.player.mailbox = slotItems
 
 	self.isCheckingMail = false
-	self:ResetTooltips()
 end
 
 function Scanner:SendMail(mailTo, addMail)
@@ -448,6 +430,7 @@ function Scanner:SendMail(mailTo, addMail)
 					slotItems.texture = texture
 					slotItems.count = count
 					slotItems.quality = quality
+					slotItems.sendLink = sendLink
 
 					table.insert(Scanner.pendingdMail.items, slotItems)
 				end
@@ -473,13 +456,15 @@ function Scanner:SendMail(mailTo, addMail)
 
 		for i=1, #mailItems do
 			tinsert(unitObj.mailbox, mailItems[i].link)
+			--check the cache and remove it to refresh that item
+			if Data.__cache and Data.__cache and Data.__cache.tooltip and Data.__cache.tooltip[mailItems[i].sendLink] then
+				Data.__cache.tooltip[mailItems[i].sendLink] = nil
+			end
 			Debug(BSYC_DL.FINE, "SendMail-Add", mailTo, mailRealm, mailItems[i].name, mailItems[i].itemID, mailItems[i].link)
 		end
 
 		Scanner.pendingdMail = {items={}} --reset everything
 	end
-
-	self:ResetTooltips()
 end
 
 function Scanner:SaveAuctionHouse()
@@ -558,8 +543,6 @@ function Scanner:SaveAuctionHouse()
 	BSYC.db.player.auction.bag = slotItems
 	BSYC.db.player.auction.count = #slotItems or 0
 	BSYC.db.player.auction.lastscan = time()
-
-	self:ResetTooltips()
 end
 
 function Scanner:SaveCurrency(showDebug)
@@ -621,8 +604,6 @@ function Scanner:SaveCurrency(showDebug)
 	end
 
 	BSYC.db.player.currency = slotItems
-
-	self:ResetTooltips()
 end
 
 function Scanner:CleanupBags()
