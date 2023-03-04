@@ -1,0 +1,395 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.blizzard.com/wow/ui/..\FrameXML\UI.xsd">
+
+    <Frame name="BagSyncListItemTemplate" virtual="true">
+        <Size x="0" y="22"/>
+        <Layers>
+            <Layer level="BACKGROUND">
+                <Texture parentKey="Background" setAllPoints="true">
+                    <Color r="0" g="0" b="0" a="0"/>
+                </Texture>
+            </Layer>
+            <Layer level="ARTWORK">
+                <Texture parentKey="Icon">
+                    <Size x="18" y="18"/>
+                    <Anchors>
+                        <Anchor point="LEFT" x="0" y="0"/>
+                    </Anchors>
+                </Texture>
+                <FontString parentKey="Text" inherits="GameFontNormal" justifyH="LEFT">
+                    <Anchors>
+                        <Anchor point="LEFT" relativeKey="$parent.Icon" relativePoint="RIGHT" x="8" y="0"/>
+                        <Anchor point="RIGHT" relativeKey="$parent.DetailsButton" x="-8" y="0"/>
+                    </Anchors>
+                </FontString>
+            </Layer>
+            <Layer level="OVERLAY">
+                <Texture parentKey="HeaderHighlight" setAllPoints="true" alphaMode="ADD" file="Interface\QuestFrame\UI-QuestTitleHighlight" alpha="0">
+                    <Color r="1" g="1" b="1" a="1"/>
+                </Texture>
+                <Texture parentKey="DetailsHighlight" setAllPoints="true" alphaMode="ADD" file="Interface\Tooltips\UI-Tooltip-Background" alpha="0">
+                    <Color r="0.4" g="0.2" b="0.5" a="0.2"/>
+                </Texture>
+            </Layer>
+            <Layer level="HIGHLIGHT">
+                <Texture parentKey="Highlight" setAllPoints="true" alphaMode="ADD">
+                    <Color r="0" g="1" b="0" a="0.2"/>
+                </Texture>
+            </Layer>
+        </Layers>
+        <Frames>
+            <Button parentKey="DetailsButton">
+                <Size x="16" y="16"/>
+                <Anchors>
+                    <Anchor point="RIGHT" x="-4" y="0"/>
+                </Anchors>
+                <NormalTexture setAllPoints="true" atlas="shop-games-magnifyingglass"/>
+                <HighlightTexture setAllPoints="true" atlas="shop-games-magnifyingglass" alphaMode="ADD"/>
+                <Scripts>
+                    <OnClick>
+                        CallMethodOnNearestAncestor(self, "ItemDetails", self);
+                    </OnClick>
+					<OnEnter>
+						self:GetParent().DetailsHighlight:SetAlpha(0.75);
+					</OnEnter>
+					<OnLeave>
+						self:GetParent().DetailsHighlight:SetAlpha(0);
+					</OnLeave>
+                </Scripts>
+            </Button>
+        </Frames>
+		<Scripts>
+			<OnClick>
+				CallMethodOnNearestAncestor(self, "Item_OnClick", self);
+			</OnClick>
+			<OnEnter>
+				if self.isHeader and self.Highlight:IsVisible() then self.Highlight:Hide() end;
+				CallMethodOnNearestAncestor(self, "Item_OnEnter", self);
+			</OnEnter>
+			<OnLeave>
+				if not self.isHeader and not self.Highlight:IsVisible() then self.Highlight:Show() end;
+				CallMethodOnNearestAncestor(self, "Item_OnLeave", self);
+			</OnLeave>
+		</Scripts>
+    </Frame>
+
+<!--
+*******************************************************************************
+    Modified version of Blizzard's BagSyncFrameTemplate
+    BagSyncBagSyncFrameTemplate
+	This is an empty frame with a titlebar and a close button.
+*******************************************************************************
+-->
+
+	<Frame name="BaseBagSyncFrameTemplate" virtual="true">
+		<Layers>
+			<Layer level="OVERLAY">
+				<Texture parentKey="TopLeftCorner" inherits="UI-Frame-TopLeftCorner">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="-6" y="1"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="TopRightCorner" inherits="UI-Frame-TopCornerRight">
+					<Anchors>
+						<Anchor point="TOPRIGHT" x="0" y="1"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="TopBorder" inherits="_UI-Frame-TitleTile">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.TopLeftCorner" relativePoint="TOPRIGHT"/>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.TopRightCorner" relativePoint="TOPLEFT"/>
+					</Anchors>
+				</Texture>
+				<FontString parentKey="TitleText" inherits="GameFontNormal" text="">
+					<Anchors>
+						<Anchor point="TOP" x="-6" y="-4" />
+					</Anchors>
+				</FontString>
+			</Layer>
+			<Layer level="BORDER">
+				<Texture parentKey="BotLeftCorner" inherits="UI-Frame-BotCornerLeft">
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" x="-6" y="-5"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="BotRightCorner" inherits="UI-Frame-BotCornerRight">
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT" x="0" y="-5"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="BottomBorder" inherits="_UI-Frame-Bot">
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BotLeftCorner" relativePoint="BOTTOMRIGHT" y="0"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BotRightCorner" relativePoint="BOTTOMLEFT" y="0"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="LeftBorder" inherits="!UI-Frame-LeftTile">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.TopLeftCorner" relativePoint="BOTTOMLEFT"/>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BotLeftCorner" relativePoint="TOPLEFT"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="RightBorder" inherits="!UI-Frame-RightTile">
+					<Anchors>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.TopRightCorner" relativePoint="BOTTOMRIGHT" x="1"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BotRightCorner" relativePoint="TOPRIGHT"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Button parentKey="CloseButton" inherits="UIPanelCloseButtonDefaultAnchors"/>
+			<EditBox parentKey="SearchBox" enableMouse="true" autoFocus="false" inherits="InputBoxTemplate">
+				<Size x="0" y="24"/>
+				<TextInsets>
+					<AbsInset left="24" right="19" top="1" bottom="-1"/> <!-- Move the Input cursor to the right beyong Search Icon -->
+				</TextInsets>
+				<Anchors>
+					<!-- Set Initial Size and location of EditBox-->
+					<Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="TOPRIGHT" x="-112" y="-28"/>
+					<Anchor point="RIGHT" relativeKey="$parent" relativePoint="LEFT" x="13" y="0"/>
+				</Anchors>
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture parentKey="SearchIcon" file="Interface\Common\UI-Searchbox-Icon">
+							<Size x="18" y="18"/>
+							<Anchors>
+								<Anchor point="LEFT" x="6" y="-2"/>
+							</Anchors>
+							<Color r="0.6" g="0.6" b="0.6"/>
+						</Texture>
+						<FontString parentKey="SubInfo" inherits="GameFontDisable" text="SEARCH">
+							<Anchors>
+								<Anchor point="LEFT" x="24" y="0"/>
+							</Anchors>
+							<Color r="0.35" g="0.35" b="0.35"/>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Frames>
+					<Button parentKey="ClearButton" hidden="true">
+						<Size x="18" y="18"/>
+						<Anchors>
+							<Anchor point="RIGHT" x="-3" y="0"/>
+						</Anchors>
+						<HitRectInsets>
+							<AbsInset left="-2" right="-2" top="-2" bottom="-2"/>
+						</HitRectInsets>
+						<Layers>
+							<Layer level="ARTWORK">
+								<Texture parentKey="Texture" file="Interface\FriendsFrame\ClearBroadcastIcon" alpha="0.5">
+									<Size x="18" y="18"/>
+									<Anchors>
+										<Anchor point="TOPLEFT"/>
+									</Anchors>
+								</Texture>
+							</Layer>
+						</Layers>
+						<Scripts>
+							<OnEnter>
+								self.Texture:SetAlpha(1.0);
+							</OnEnter>
+							<OnLeave>
+								self.Texture:SetAlpha(0.5)
+							</OnLeave>
+							<OnMouseDown>
+								self.Texture:SetPoint("TOPLEFT",-1,-2)
+							</OnMouseDown>
+							<OnMouseUp>
+								self.Texture:SetPoint("TOPLEFT",0,0)
+							</OnMouseUp>
+							<OnShow>
+								self.Texture:SetPoint("TOPLEFT",0,0)
+							</OnShow>
+							<OnClick>
+								CallMethodOnNearestAncestor(self, "SearchBox_ResetSearch", self);
+							</OnClick>
+						</Scripts>
+					</Button>
+				</Frames>
+				<FontString inherits="GameFontHighlight"/>
+				<Scripts>
+					<OnEscapePressed>
+						self:ClearFocus()
+						CallMethodOnNearestAncestor(self, "SearchBox_OnEscapePressed", self:GetText());
+					</OnEscapePressed>
+					<OnEnterPressed>
+						self:ClearFocus()
+						CallMethodOnNearestAncestor(self, "SearchBox_OnEnterPressed", self:GetText());
+					</OnEnterPressed>
+					<OnEditFocusLost>
+						self.SearchIcon:SetVertexColor(0.6,0.6,0.6)
+						self.SubInfo:SetShown(self:GetText():len()==0)
+						self.ClearButton:SetShown(self:GetText():len()>0)
+					</OnEditFocusLost>
+					<OnEditFocusGained>
+						self.SearchIcon:SetVertexColor(1.0,1.0,1.0)
+						self.ClearButton:Show()
+						self.SubInfo:Hide()
+					</OnEditFocusGained>
+					<OnTextChanged>
+						CallMethodOnNearestAncestor(self, "SearchBox_OnTextChanged", userInput);
+					</OnTextChanged>
+				</Scripts>
+			</EditBox>
+            <Button parentKey="RefreshButton" inherits="UIPanelButtonTemplate" text="REFRESH">
+                <Size x="80" y="20"/>
+                <Anchors>
+                    <Anchor point="TOPRIGHT" x="-28" y="-30"/>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        CallMethodOnNearestAncestor(self, "RefreshClick");
+                    </OnClick>
+                </Scripts>
+            </Button>
+            <Button parentKey="HelpButton" inherits="UIPanelButtonTemplate" text="?">
+                <Size x="20" y="20"/>
+                <Anchors>
+                    <Anchor point="TOPRIGHT" x="-8" y="-30"/>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        CallMethodOnNearestAncestor(self, "HelpClick");
+                    </OnClick>
+                </Scripts>
+            </Button>
+		</Frames>
+	</Frame>
+
+	<Frame name="BagSyncFrameTemplate" inherits="BaseBagSyncFrameTemplate" virtual="true">
+		<Layers>
+			<Layer level="BACKGROUND" textureSubLevel="-1">
+				<Texture parentKey="Bg" file="Interface\Tooltips\UI-Tooltip-Background" horizTile="true" vertTile="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="2" y="-21"/>
+						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
+					</Anchors>
+                    <Color r="0" g="0" b="0" a=".75"/>
+				</Texture>
+				<Texture parentKey="TitleBg" inherits="_UI-Frame-TitleTileBg">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="2" y="-1"/>
+						<Anchor point="TOPRIGHT" x="-25" y="-1"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="TopTileStreaks" inherits="_UI-Frame-TopTileStreaks">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="0" y="-21"/>
+						<Anchor point="TOPRIGHT" x="-2" y="-21"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+	</Frame>
+
+	<Frame name="BagSyncFrameTemplateWithInset" inherits="BagSyncFrameTemplate" virtual="true">
+		<Layers>
+			<Layer level="BACKGROUND" textureSubLevel="1">
+				<Texture parentKey="InsetBg" file="Interface\Tooltips\UI-Tooltip-Background" horizTile="true" vertTile="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="4" y="-24" />
+						<Anchor point="BOTTOMRIGHT" x="-6" y="4" />
+					</Anchors>
+                    <Color r="0" g="0" b="0" a=".75"/>
+				</Texture>
+			</Layer>
+			<Layer level="BORDER" textureSubLevel="-1">
+				<Texture parentKey="InsetBorderTopLeft" inherits="UI-Frame-InnerTopLeft">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.InsetBg"/>
+					</Anchors>
+				</Texture>
+
+				<Texture parentKey="InsetBorderTopRight" inherits="UI-Frame-InnerTopRight">
+					<Anchors>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.InsetBg"/>
+					</Anchors>
+				</Texture>
+
+				<Texture parentKey="InsetBorderBottomLeft" inherits="UI-Frame-InnerBotLeftCorner">
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.InsetBg" y="-1"/>
+					</Anchors>
+				</Texture>
+
+				<Texture parentKey="InsetBorderBottomRight" inherits="UI-Frame-InnerBotRight">
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.InsetBg" y="-1"/>
+					</Anchors>
+				</Texture>
+
+				<Texture parentKey="InsetBorderTop" inherits="_UI-Frame-InnerTopTile">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.InsetBorderTopLeft" relativePoint="TOPRIGHT"/>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.InsetBorderTopRight" relativePoint="TOPLEFT"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="InsetBorderBottom" inherits="_UI-Frame-InnerBotTile">
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.InsetBorderBottomLeft" relativePoint="BOTTOMRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.InsetBorderBottomRight" relativePoint="BOTTOMLEFT"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="InsetBorderLeft" inherits="!UI-Frame-InnerLeftTile">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.InsetBorderTopLeft" relativePoint="BOTTOMLEFT" x="0" y="0" />
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.InsetBorderBottomLeft" relativePoint="TOPLEFT"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="InsetBorderRight" inherits="!UI-Frame-InnerRightTile">
+					<Anchors>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.InsetBorderTopRight" relativePoint="BOTTOMRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.InsetBorderBottomRight" relativePoint="TOPRIGHT"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+	</Frame>
+
+	<Frame name="BagSyncInfoFrameTemplate" inherits="TooltipBackdropTemplate" virtual="true">
+		<Size x="300" y="300"/>
+		<Anchors>
+			<Anchor point="BOTTOM" x="0" y="0"/>
+		</Anchors>
+		<Layers>
+			<Layer level="OVERLAY">
+				<FontString parentKey="TitleText" inherits="GameFontNormal" text="">
+					<Anchors>
+						<Anchor point="TOP" x="-6" y="-4" />
+					</Anchors>
+				</FontString>
+				<FontString parentKey="InfoText1" inherits="GameFontNormal" text="">
+                    <Anchors>
+                        <Anchor point="LEFT" relativeKey="$parent" relativePoint="TOPLEFT" x="10" y="-40"/>
+                    </Anchors>
+				</FontString>
+				<FontString parentKey="InfoText2" inherits="GameFontNormal" text="">
+                    <Anchors>
+                        <Anchor point="LEFT" relativeKey="$parent" relativePoint="TOPLEFT" x="10" y="-50"/>
+                    </Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Button parentKey="CloseButton">
+				<Size x="32" y="32"/>
+				<Anchors>
+					<Anchor point="TOPRIGHT" x="1" y="0"/>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						self:GetParent():Hide();
+					</OnClick>
+				</Scripts>
+				<NormalTexture file="Interface\Buttons\UI-Panel-MinimizeButton-Up"/>
+				<PushedTexture file="Interface\Buttons\UI-Panel-MinimizeButton-Down"/>
+				<HighlightTexture file="Interface\Buttons\UI-Panel-MinimizeButton-Highlight" alphaMode="ADD"/>
+			</Button>
+		</Frames>
+	</Frame>
+
+</Ui>
