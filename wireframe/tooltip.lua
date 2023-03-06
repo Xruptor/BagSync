@@ -281,6 +281,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET
 
 	Debug(BSYC_DL.INFO, "ColorizeUnit", tmpTag, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, player.realm)
 	Debug(BSYC_DL.SL2, "ColorizeUnit [Realm]", GetRealmName(), GetNormalizedRealmName())
+
 	return tmpTag
 end
 
@@ -389,6 +390,7 @@ end
 function Tooltip:AddItem(unitObj, itemID, target, countList)
 	local total = 0
 	if not unitObj or not itemID or not target or not countList then return total end
+	if not unitObj.data then return total end
 
 	local function getTotal(data)
 		local iCount = 0
@@ -398,7 +400,7 @@ function Tooltip:AddItem(unitObj, itemID, target, countList)
 				if link then
 					if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
 					if link == itemID then
-						iCount = iCount + 1
+						iCount = iCount + (count or 1)
 					end
 				end
 			end
@@ -421,11 +423,11 @@ function Tooltip:AddItem(unitObj, itemID, target, countList)
 		total = getTotal(unitObj.data[target] or {})
 
 	elseif target == "guild" and BSYC.options.enableGuild then
-		if not countList.gtab then countList.gtab = {} end
-		for tabID, tabData in pairs(unitObj.tabs or (unitObj.data and unitObj.data.tabs) or {}) do
+		countList.gtab = {}
+		for tabID, tabData in pairs(unitObj.data.tabs) do
 			local tabCount = getTotal(tabData)
 			if tabCount > 0 then
-				countList.gtab[tabID] = tabID
+				countList.gtab[tabID] = tabCount
 			end
 			total = total + tabCount
 		end
@@ -489,12 +491,12 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 		total = total + countList["guild"]
 		local gTabStr = ""
 
-		--check for guild tabs first only on servers that even have guild banks enabled
-		if BSYC.options.showGuildTabs and CanGuildBankRepair then
+		--check for guild tabs first
+		if BSYC.options.showGuildTabs then
 			table.sort(countList["gtab"], function(a, b) return a < b end)
 
 			for k, v in pairs(countList["gtab"]) do
-				gTabStr = gTabStr..","..tostring(v)
+				gTabStr = gTabStr..","..tostring(k)
 			end
 			gTabStr = string.sub(gTabStr, 2)  -- remove comma
 
@@ -745,7 +747,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local grandTotal = 0
 	local unitList = {}
 	local countList = {}
-	local player = Unit:GetUnitInfo(true)
+	local player = Unit:GetUnitInfo(false)
 
 	local allowList = {
 		bag = true,
@@ -786,7 +788,10 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 						end
 					end
 				else
-					grandTotal = grandTotal + self:AddItem(unitObj, link, "guild", countList)
+					--don't cache the players guild bank, lets get that in real time
+					if not player.guild or unitObj.realm ~= player.guildrealm or unitObj.name ~= player.guild then
+						grandTotal = grandTotal + self:AddItem(unitObj, link, "guild", countList)
+					end
 				end
 
 				--only process the totals if we have something to work with
@@ -821,6 +826,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			grandTotal = grandTotal + self:AddItem(playerObj, link, "auction", countList)
 			grandTotal = grandTotal + self:AddItem(playerObj, link, "void", countList)
 			grandTotal = grandTotal + self:AddItem(playerObj, link, "mailbox", countList)
+			grandTotal = grandTotal + self:AddItem(Data:GetPlayerGuild(), link, "guild", countList)
 
 			--GetItemCount does not work on battlepet links
 			if isBattlePet then
@@ -966,10 +972,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		end
 	end
 
-	if not skipTally or #unitList > 0 then
-		local WLChk = (BSYC.options.enableWhitelist and "WL-ON") or "WL-OFF"
-		Debug(BSYC_DL.INFO, "TallyUnits", link, shortID, origLink, source, isBattlePet, grandTotal, WLChk)
-	end
+	local WLChk = (BSYC.options.enableWhitelist and "WL-ON") or "WL-OFF"
+	Debug(BSYC_DL.INFO, "TallyUnits", link, shortID, origLink, source, isBattlePet, grandTotal, WLChk)
 end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)

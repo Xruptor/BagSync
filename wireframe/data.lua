@@ -362,7 +362,7 @@ function Data:LoadSlashCommand()
 		if string.len(cmd) > 0 then
 
 			if cmd == L.SlashSearch then
-				BSYC:GetModule("Search"):StartSearch()
+				BSYC:GetModule("Search").frame:Show()
 				return true
 			elseif cmd == L.SlashGold or cmd == L.SlashMoney then
 				BSYC:GetModule("Tooltip"):MoneyTooltip()
@@ -407,7 +407,10 @@ function Data:LoadSlashCommand()
 				return true
 			else
 				--do an item search, use the full command to search
-				BSYC:GetModule("Search"):StartSearch(input)
+				BSYC:GetModule("Search").frame:Show()
+				BSYC:GetModule("Search").frame.SearchBox:SetText(input)
+				BSYC:GetModule("Search").frame.SearchBox.SearchInfo:Hide()
+				BSYC:GetModule("Search"):DoSearch()
 				return true
 			end
 
@@ -434,6 +437,56 @@ function Data:LoadSlashCommand()
 	BSYC:RegisterChatCommand("bgs", ChatCommand)
 	BSYC:RegisterChatCommand("bagsync", ChatCommand)
 
+end
+
+function Data:CacheLink(dbEntry, parseLink, qOpts)
+	local itemObj = {}
+	if not Data.__cache.items[parseLink] then
+		if qOpts.battlepet then
+			itemObj.itemQuality = 1
+			itemObj.itemLink = dbEntry --use the whole link, not just the FakeID, this is to grab qOpts in future uses
+
+			--https://wowpedia.fandom.com/wiki/API_C_PetJournal.GetPetInfoBySpeciesID
+			itemObj.speciesName,
+			itemObj.speciesIcon,
+			itemObj.petType,
+			itemObj.companionID,
+			itemObj.tooltipSource,
+			itemObj.tooltipDescription,
+			itemObj.isWild,
+			itemObj.canBattle,
+			itemObj.isTradeable,
+			itemObj.isUnique,
+			itemObj.obtainable,
+			itemObj.creatureDisplayID = C_PetJournal.GetPetInfoBySpeciesID(qOpts.battlepet)
+		else
+			--https://wowpedia.fandom.com/wiki/API_GetItemInfo
+			itemObj.itemName,
+			itemObj.itemLink,
+			itemObj.itemQuality,
+			itemObj.itemLevel,
+			itemObj.itemMinLevel,
+			itemObj.itemType,
+			itemObj.itemSubType,
+			itemObj.itemStackCount,
+			itemObj.itemEquipLoc,
+			itemObj.itemTexture,
+			itemObj.sellPrice,
+			itemObj.classID,
+			itemObj.subclassID,
+			itemObj.bindType,
+			itemObj.expacID,
+			itemObj.setID,
+			itemObj.isCraftingReagent = GetItemInfo("item:"..parseLink)
+		end
+		--add to Cache if we have something to work with
+		if itemObj.speciesName or itemObj.itemName then
+			Data.__cache.items[parseLink] = itemObj
+		end
+	else
+		itemObj = Data.__cache.items[parseLink]
+	end
+	return itemObj
 end
 
 function Data:CheckExpiredAuctions()
@@ -471,20 +524,35 @@ end
 function Data:GetGuild(unitObj)
 	if not unitObj and not IsInGuild() then return end
 
-	local player = unitObj or Unit:GetUnitInfo()
-	Debug(BSYC_DL.INFO, "GetGuild", player)
+	local unit = unitObj or Unit:GetUnitInfo()
+	Debug(BSYC_DL.INFO, "GetGuild", unit)
 
-	if not player.guild or not player.guildrealm then return end
-
-	if not BagSyncDB[player.guildrealm] then BagSyncDB[player.guildrealm] = {} end
-	if not BagSyncDB[player.guildrealm][player.guild] then BagSyncDB[player.guildrealm][player.guild] = {} end
-	return BagSyncDB[player.guildrealm][player.guild]
+	if not unit.guild or not unit.guildrealm then return end
+	if not BagSyncDB[unit.guildrealm] then BagSyncDB[unit.guildrealm] = {} end
+	if not BagSyncDB[unit.guildrealm][unit.guild] then BagSyncDB[unit.guildrealm][unit.guild] = {} end
+	return BagSyncDB[unit.guildrealm][unit.guild]
 end
 
 function Data:GetCurrentPlayer()
+	Debug(BSYC_DL.TRACE, "GetCurrentPlayer")
 	local player = Unit:GetUnitInfo(true)
 	local isConnectedRealm = (Unit:isConnectedRealm(player.realm) and true) or false
 	return {realm=player.realm, name=player.name, data=BSYC.db.player, isGuild=false, isConnectedRealm=isConnectedRealm, isXRGuild=false}
+end
+
+function Data:GetPlayerGuild()
+	local player = Unit:GetUnitInfo()
+	Debug(BSYC_DL.TRACE, "GetPlayerGuild", player.guild, BSYC.options.enableGuild)
+	if not player.guild then return end
+	if not BSYC.options.enableGuild then return end
+
+	local isConnectedRealm = (Unit:isConnectedRealm(player.guildrealm) and true) or false
+	local isXRGuild = (player.guildrealm ~= player.realm) or false
+
+	if not BagSyncDB[player.guildrealm] then return end
+	if not BagSyncDB[player.guildrealm][player.guild] then return end
+
+	return {realm=player.guildrealm, name=player.guild, data=BagSyncDB[player.guildrealm][player.guild], isGuild=true, isConnectedRealm=isConnectedRealm, isXRGuild=isXRGuild}
 end
 
 function Data:IterateUnits(dumpAll, filterList)

@@ -22,19 +22,20 @@ Search.warningAutoScan = 0
 
 function Search:OnEnable()
     local searchFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")
+	Mixin(searchFrame, Search) --implement new frame to our parent module Mixin, to have access to parent methods
 	_G["BagSyncSearchFrame"] = searchFrame
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncSearchFrame")
-	Mixin(searchFrame, Search) --implement new frame to our parent module Mixin
     searchFrame.TitleText:SetText("BagSync - "..L.Search)
 	searchFrame:SetWidth(400)
-    searchFrame:SetWidth(400)
     searchFrame:SetHeight(500)
     searchFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-    searchFrame:EnableMouse()
+    searchFrame:EnableMouse(true) --don't allow clickthrough
     searchFrame:SetMovable(true)
     searchFrame:SetResizable(false)
     searchFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    searchFrame:SetScript("OnShow", function() Search:OnShow() end)
+	searchFrame:SetScript("OnHide", function() Search:OnHide() end)
     Search.frame = searchFrame
 
     Search.scrollFrame = _G.CreateFrame("ScrollFrame", nil, searchFrame, "HybridScrollFrameTemplate")
@@ -50,8 +51,6 @@ function Search:OnEnable()
     Search.items = {}
 	Search.scrollFrame.update = function() Search:RefreshList(); end
     HybridScrollFrame_SetDoNotHideScrollBar(Search.scrollFrame, true)
-    searchFrame:SetScript("OnShow", function() Search:OnShow() end)
-	searchFrame:SetScript("OnHide", function() Search:OnHide() end)
 
 	--total counter
 	searchFrame.totalText = searchFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
@@ -65,14 +64,15 @@ function Search:OnEnable()
 	searchFrame.advSearchBtn = _G.CreateFrame("Button", nil, searchFrame, "UIPanelButtonTemplate")
 	searchFrame.advSearchBtn:SetText(L.AdvancedSearch)
 	searchFrame.advSearchBtn:SetHeight(20)
-	searchFrame.advSearchBtn:SetWidth(150)
-	searchFrame.advSearchBtn:SetPoint("CENTER", searchFrame, "BOTTOM", 115, 21)
+	searchFrame.advSearchBtn:SetWidth(searchFrame.advSearchBtn:GetTextWidth() + 30)
+	searchFrame.advSearchBtn:SetPoint("RIGHT", searchFrame, "BOTTOMRIGHT", -10, 20)
+	searchFrame.advSearchBtn:SetScript("OnClick", function() Search:ShowAdvanced() end)
 
 	--Reset button
 	searchFrame.resetButton = _G.CreateFrame("Button", nil, searchFrame, "UIPanelButtonTemplate")
 	searchFrame.resetButton:SetText(L.Reset)
 	searchFrame.resetButton:SetHeight(20)
-	searchFrame.resetButton:SetWidth(70)
+	searchFrame.resetButton:SetWidth(searchFrame.resetButton:GetTextWidth() + 30)
 	searchFrame.resetButton:SetPoint("RIGHT", searchFrame.advSearchBtn, "LEFT", 0, 0)
 	searchFrame.resetButton:SetScript("OnClick", function() Search:Reset() end)
 
@@ -80,6 +80,8 @@ function Search:OnEnable()
 	local warningFrame = _G.CreateFrame("Frame", nil, searchFrame, "BagSyncInfoFrameTemplate")
 	warningFrame:Hide()
 	warningFrame:SetBackdropColor(0, 0, 0, 0.75)
+    warningFrame:EnableMouse(true) --don't allow clickthrough
+    warningFrame:SetMovable(false)
 	warningFrame:SetResizable(false)
     warningFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 	warningFrame:ClearAllPoints()
@@ -107,6 +109,8 @@ function Search:OnEnable()
 	helpFrame:SetWidth(500)
 	helpFrame:SetHeight(300)
 	helpFrame:SetBackdropColor(0, 0, 0, 0.75)
+    helpFrame:EnableMouse(true) --don't allow clickthrough
+    helpFrame:SetMovable(false)
 	helpFrame:SetResizable(false)
     helpFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 	helpFrame:ClearAllPoints()
@@ -148,80 +152,33 @@ function Search:OnShow()
 			end
 		end)
 	else
-		--TODO if self.advancedsearchframe then self.advancedsearchframe:Show() end
+		Search:ShowAdvanced(true)
 	end
 
-    HybridScrollFrame_CreateButtons(Search.scrollFrame, "BagSyncListItemTemplate")
+	HybridScrollFrame_CreateButtons(Search.scrollFrame, "BagSyncListItemTemplate")
     Search:RefreshList()
 end
 
 function Search:OnHide()
 	Search.warningFrame:Hide()
 	Search.helpFrame:Hide()
-	--TODO AdvancedSearchFrame:Hide()
 	Search.warningAutoScan = 0
+	Search:ShowAdvanced(false)
 end
 
---TODO
--- function Search:StartSearch(searchStr)
--- 	self.frame:Show()
-
--- 	if not BSYC.options.alwaysShowAdvSearch then
--- 		self.searchbar:SetText(searchStr)
--- 		self:DoSearch(searchStr)
--- 	else
--- 		self.advancedsearchframe.advsearchbar:SetText(searchStr)
--- 	end
--- end
-
-function Search:CacheLink(dbEntry, parseLink, qOpts)
-	local itemObj = {}
-	if not Data.__cache.items[parseLink] then
-		if qOpts.battlepet then
-			itemObj.itemQuality = 1
-			itemObj.itemLink = dbEntry --use the whole link, not just the FakeID, this is to grab qOpts in future uses
-
-			--https://wowpedia.fandom.com/wiki/API_C_PetJournal.GetPetInfoBySpeciesID
-			itemObj.speciesName,
-			itemObj.speciesIcon,
-			itemObj.petType,
-			itemObj.companionID,
-			itemObj.tooltipSource,
-			itemObj.tooltipDescription,
-			itemObj.isWild,
-			itemObj.canBattle,
-			itemObj.isTradeable,
-			itemObj.isUnique,
-			itemObj.obtainable,
-			itemObj.creatureDisplayID = C_PetJournal.GetPetInfoBySpeciesID(qOpts.battlepet)
-		else
-			--https://wowpedia.fandom.com/wiki/API_GetItemInfo
-			itemObj.itemName,
-			itemObj.itemLink,
-			itemObj.itemQuality,
-			itemObj.itemLevel,
-			itemObj.itemMinLevel,
-			itemObj.itemType,
-			itemObj.itemSubType,
-			itemObj.itemStackCount,
-			itemObj.itemEquipLoc,
-			itemObj.itemTexture,
-			itemObj.sellPrice,
-			itemObj.classID,
-			itemObj.subclassID,
-			itemObj.bindType,
-			itemObj.expacID,
-			itemObj.setID,
-			itemObj.isCraftingReagent = GetItemInfo("item:"..parseLink)
+function Search:ShowAdvanced(visible)
+	if BSYC:GetModule("AdvancedSearch", true) then
+		local frame = BSYC:GetModule("AdvancedSearch", true).frame
+		if frame then
+			if visible == nil then
+				frame:SetShown(not frame:IsShown())
+			elseif visible == true then
+				frame:Show()
+			else
+				frame:Hide()
+			end
 		end
-		--add to Cache if we have something to work with
-		if itemObj.speciesName or itemObj.itemName then
-			Data.__cache.items[parseLink] = itemObj
-		end
-	else
-		itemObj = Data.__cache.items[parseLink]
 	end
-	return itemObj
 end
 
 function Search:CheckItem(searchStr, unitObj, target, checkList, onlyPlayer)
@@ -239,7 +196,7 @@ function Search:CheckItem(searchStr, unitObj, target, checkList, onlyPlayer)
 				--we only really want to grab and search the item only once
 				if link and not checkList[link] then
 					--do cache grab
-					local cacheObj = Search:CacheLink(data[i], link, qOpts)
+					local cacheObj = Data:CacheLink(data[i], link, qOpts)
 					local entry = cacheObj.speciesName or cacheObj.itemLink --GetItemInfo does not support battlepet links, use speciesName instead
 					local texture = cacheObj.speciesIcon or cacheObj.itemTexture
 					local itemName = cacheObj.speciesName or cacheObj.itemName
@@ -294,8 +251,11 @@ end
 
 function Search:DoSearch(searchStr, advUnitList, advAllowList)
 
-	if not searchStr then searchStr = Search.frame.SearchBox:GetText() end
-	if string.len(searchStr) <= 0 then return end
+	--only check for specifics when not using advanced search
+	if not advUnitList then
+		if not searchStr then searchStr = Search.frame.SearchBox:GetText() end
+		if string.len(searchStr) <= 0 then return end
+	end
 
 	Search.items = {}
 	local checkList = {}
@@ -385,6 +345,8 @@ function Search:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
+		button.parentHandler = Search
+
         local itemIndex = buttonIndex + offset
 
         if itemIndex <= #items then
@@ -398,18 +360,6 @@ function Search:RefreshList()
             button.Text:SetText(item.name or "")
 			button.Text:SetTextColor(r, g, b)
             button:SetWidth(Search.scrollFrame.scrollChild:GetWidth())
-
-
-			-- if string.find(item.name or "", "Life") then
-			-- 	button.DetailsButton:Hide()
-			-- 	button.HeaderHighlight:SetAlpha(1)
-			-- 	button.isHeader = true
-			-- else
-			-- 	button.DetailsButton:Show()
-			-- 	button.HeaderHighlight:SetAlpha(0)
-			-- 	button.isHeader = nil
-			-- end
-
             button:Show()
         else
             button:Hide()
@@ -446,11 +396,9 @@ function Search:SearchBox_ResetSearch(btn)
 end
 
 function Search:ItemDetails(btn)
-	print('ItemDetails')
 end
 
 function Search:Item_OnClick(btn)
-    print('Item_OnClick')
 end
 
 function Search:Item_OnEnter(btn)

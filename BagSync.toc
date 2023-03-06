@@ -23,7 +23,6 @@ libs\AceConfig-3.0\AceConfig-3.0.xml
 libs\AceLocale-3.0\AceLocale-3.0.xml
 libs\AceConsole-3.0\AceConsole-3.0.xml
 libs\AceEvent-3.0\AceEvent-3.0.xml
-libs\AceTimer-3.0\AceTimer-3.0.xml
 libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 libs\LibItemScout-1.0\LibItemScout-1.0.lua
@@ -53,6 +52,7 @@ wireframe\tooltip.lua
 
 modules\databroker.lua
 modules\search.lua
+modules\advancedsearch.lua
 modules\currency.lua
 modules\professions.lua
 modules\recipes.lua

@@ -287,8 +287,7 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 	end
 end
 
-function Scanner:SaveGuildBank(queueList)
-	Debug(BSYC_DL.INFO, "SaveGuildBank", Unit.atGuildBank)
+function Scanner:SaveGuildBank(tabID)
 	if Scanner.isScanningGuild then return end
 
 	local guildDB = Data:GetGuild()
@@ -296,56 +295,47 @@ function Scanner:SaveGuildBank(queueList)
 		--we don't have a guild object to work with
 		Scanner.isScanningGuild = false
 		return
-	else
-		Debug(BSYC_DL.TRACE, "SaveGuildBank", "FoundGuild")
 	end
 
 	Scanner.isScanningGuild = true
 	if not guildDB.tabs then guildDB.tabs = {} end
 
-	if queueList then
-        for tab in pairs(queueList) do
+	local tabMin, tabMax = 1, GetNumGuildBankTabs()
+	if tabID then
+		--if we have tabID we are only scanning a specific tab
+		tabMin, tabMax = tabID, tabID
+	end
+	Debug(BSYC_DL.INFO, "SaveGuildBank", "FoundGuild", Unit.atGuildBank, tabMin, tabMax)
 
-			local slotItems = {}
-			local _, _, isViewable = GetGuildBankTabInfo(tab)
+	for tab=tabMin, tabMax do
+		local slotItems = {}
+		local _, _, isViewable = GetGuildBankTabInfo(tab)
 
-			--if we don't check for isViewable we get a weirdo permissions error for the player when they attempt it
-			if isViewable then
-				for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
-					local link = GetGuildBankItemLink(tab, slot)
+		--if we don't check for isViewable we get a weirdo permissions error for the player when they attempt it
+		if isViewable then
+			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB do
+				local link = GetGuildBankItemLink(tab, slot)
+
+				if link then
+					local shortID = BSYC:GetShortItemID(link)
+					local iconTexture, count = GetGuildBankItemInfo(tab, slot)
+
+					--check if it's a battle pet cage or something, pet cage is 82800.  This is the placeholder for battle pets
+					--if it's a battlepet link it will be parsed anyways in ParseItemLink
+					if shortID and tonumber(shortID) == 82800 then
+						link = BSYC:CreateFakeBattlePetID(nil, nil, findBattlePet(iconTexture, nil, "guild", tab, slot))
+					else
+						link = BSYC:ParseItemLink(link, count)
+					end
 
 					if link then
-						local shortID = BSYC:GetShortItemID(link)
-						local iconTexture, count = GetGuildBankItemInfo(tab, slot)
-
-						--check if it's a battle pet cage or something, pet cage is 82800.  This is the placeholder for battle pets
-						--if it's a battlepet link it will be parsed anyways in ParseItemLink
-
-						if shortID and tonumber(shortID) == 82800 then
-							link = BSYC:CreateFakeBattlePetID(nil, nil, findBattlePet(iconTexture, nil, "guild", tab, slot))
-						else
-							link = BSYC:ParseItemLink(link, count)
-						end
-
-						if link then
-							table.insert(slotItems, link)
-						end
+						table.insert(slotItems, link)
 					end
 				end
 			end
-
-			guildDB.tabs[tab] = slotItems
-        end
-    end
-
-	queueList = nil
-
-	--remove invalid or unviewable tabs due to permissions
-    for i = 1, MAX_GUILDBANK_TABS do
-		local _, _, isViewable = GetGuildBankTabInfo(i)
-		if not isViewable and guildDB.tabs and guildDB.tabs[i] then
-			guildDB.tabs[i] = nil
 		end
+
+		guildDB.tabs[tab] = slotItems
 	end
 
 	local player = Unit:GetUnitInfo()

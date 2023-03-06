@@ -7,38 +7,13 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
-local Events = BSYC:NewModule("Events", 'AceEvent-3.0', 'AceTimer-3.0')
+local Events = BSYC:NewModule("Events", 'AceEvent-3.0')
 local Unit = BSYC:GetModule("Unit")
 local Scanner = BSYC:GetModule("Scanner")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Events", ...) end
-end
-
-function Events:DoTimer(sName, sFunc, sDelay, sRepeat)
-	Debug(BSYC_DL.SL3, "DoTimer", sName, sFunc, sDelay, sRepeat)
-
-	if not self.timers then self.timers = {} end
-	if not sRepeat then
-		--stop and delete current timer to recreate
-		self:StopTimer(sName)
-		self.timers[sName] = self:ScheduleTimer(sFunc, sDelay)
-	else
-		--don't recreate a repeatingtimer if it already exists.
-		if not self.timers[sName] then
-			self.timers[sName] = self:ScheduleRepeatingTimer(sFunc, sDelay)
-		end
-	end
-	return self.timers[sName]
-end
-
-function Events:StopTimer(sName)
-	if not self.timers then return end
-	if not sName then return end
-	if not self.timers[sName] then return end
-	self:CancelTimer(self.timers[sName])
-	self.timers[sName] = nil
 end
 
 function Events:OnEnable()
@@ -54,7 +29,7 @@ function Events:OnEnable()
 
 	--this event is when we trigger a CheckInbox()
 	self:RegisterEvent("MAIL_INBOX_UPDATE", function()
-		self:DoTimer("MailBoxScan", function() Scanner:SaveMailbox() end, 0.3)
+		BSYC:StartTimer("MAIL_INBOX_UPDATE", 0.3, Scanner, "SaveMailbox")
 	end)
 	self:RegisterEvent("MAIL_SEND_SUCCESS", function()
 		Scanner:SendMail(nil, true)
@@ -91,9 +66,7 @@ function Events:OnEnable()
 	--check to see if guildbanks are even enabled on server
 	if CanGuildBankRepair then
 		self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED", function()
-			--queue the current tab we are on if we changed anything
-			if not self.GuildTabQueryQueue then self.GuildTabQueryQueue = {} end
-			self.GuildTabQueryQueue[GetCurrentGuildBankTab()] = true
+			BSYC:StartTimer("GUILDBANKBAGSLOTS_CHANGED", 1, Events, "GuildBank_Changed")
 		end)
 	end
 
@@ -150,8 +123,8 @@ end
 
 function Events:BAGSYNC_EVENT_GUILDBANK(event, isOpen)
 	Debug(BSYC_DL.DEBUG, "BAGSYNC_EVENT_GUILDBANK", isOpen)
-	if not isOpen then
-		self:GuildBank_Close()
+	if isOpen then
+		self:GuildBank_Open()
 	end
 end
 
@@ -215,13 +188,39 @@ function Events:BAG_UPDATE_DELAYED(event)
 	Debug(BSYC_DL.INFO, "SpamBagQueue", "totalProcessed", totalProcessed)
 end
 
-function Events:GuildBank_Close()
+function Events:GuildBank_Open()
+	Debug(BSYC_DL.SL3, "GuildBank_Open")
 	if not BSYC.options.enableGuild then return end
-	Debug(BSYC_DL.INFO, "GuildBank_Close")
+	--I used to do one query per server response, but honestly it wasn't much of a difference then just spamming them all
+	for tab=1, GetNumGuildBankTabs() do
+		--permissions issue, only query tabs we can see duh
+		if select(3,GetGuildBankTabInfo(tab)) then
+			QueryGuildBankTab(tab)
+		end
+	end
+	self.queryGuild = true
+end
 
-	Scanner:SaveGuildBank(self.GuildTabQueryQueue)
-	BSYC:Print(L.ScanGuildBankDone)
-	self.GuildTabQueryQueue = nil --reset
+function Events:GuildBank_Changed()
+	Debug(BSYC_DL.SL3, "GuildBank_Changed")
+	if not Unit.atGuildBank then
+		if self.queryGuild then
+			BSYC:Print(L.ScanGuildBankError)
+			self.queryGuild = false
+		end
+		return
+	end
+	if not BSYC.options.enableGuild then return end
+
+	if self.queryGuild then
+		self.queryGuild = false
+		BSYC:Print(L.ScanGuildBankDone)
+		--save all tabs
+		Scanner:SaveGuildBank()
+	else
+		--save only current tab we are viewing or changed to
+		Scanner:SaveGuildBank(GetCurrentGuildBankTab())
+	end
 end
 
 function Events:CURRENCY_DISPLAY_UPDATE()

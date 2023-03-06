@@ -352,6 +352,46 @@ function BSYC:SetDefaults(category, defaults)
 	end
 end
 
+BSYC.timerFrame = CreateFrame("Frame")
+BSYC.timerFrame:Hide()
+BSYC.timers = {}
+
+function BSYC:StartTimer(name, delay, selfObj, func, ...)
+	-- args (...) are passed a variable length arguments in an index table (https://www.lua.org/pil/5.2.html)
+	BSYC.timers[func] = {
+		object = selfObj,
+		delay = delay,
+		name = name,
+		argsCount = select("#", ...),
+		...
+	}
+	BSYC.timerFrame:Show() --show frame to start the OnUpdate
+end
+
+function BSYC:StopTimer(func)
+    if BSYC.timers[func] then BSYC.timers[func] = nil end
+end
+
+BSYC.timerFrame:SetScript("OnUpdate", function(self, elapsed)
+	local chk = false
+	for k, v in pairs(BSYC.timers) do
+		v.delay = v.delay - elapsed
+        if v.delay < 0 then
+			Debug(BSYC_DL.SL3, "DoTimer", v.name, v.delay, v.object, k, v)
+			if type(k) == "string" and v.object then
+				v.object[k](v.object, unpack(v, 1, v.argsCount))
+			else
+				k(unpack(v, 1, v.argsCount))
+			end
+			BSYC.timers[k] = nil
+        end
+		chk = true
+	end
+    if not chk then
+        BSYC.timerFrame:Hide()
+    end
+end)
+
 --create base DB entries before we load any modules
 function BSYC:OnEnable()
 

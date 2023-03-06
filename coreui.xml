@@ -26,7 +26,7 @@
             </Layer>
             <Layer level="OVERLAY">
                 <Texture parentKey="HeaderHighlight" setAllPoints="true" alphaMode="ADD" file="Interface\QuestFrame\UI-QuestTitleHighlight" alpha="0">
-                    <Color r="1" g="1" b="1" a="1"/>
+                    <Color r="0.8" g="0.7" b="0" a="1"/>
                 </Texture>
                 <Texture parentKey="DetailsHighlight" setAllPoints="true" alphaMode="ADD" file="Interface\Tooltips\UI-Tooltip-Background" alpha="0">
                     <Color r="0.4" g="0.2" b="0.5" a="0.2"/>
@@ -48,7 +48,9 @@
                 <HighlightTexture setAllPoints="true" atlas="shop-games-magnifyingglass" alphaMode="ADD"/>
                 <Scripts>
                     <OnClick>
-                        CallMethodOnNearestAncestor(self, "ItemDetails", self);
+						if self:GetParent().parentHandler and self:GetParent().parentHandler.ItemDetails then
+							self:GetParent().parentHandler:ItemDetails(self);
+						end
                     </OnClick>
 					<OnEnter>
 						self:GetParent().DetailsHighlight:SetAlpha(0.75);
@@ -61,15 +63,74 @@
         </Frames>
 		<Scripts>
 			<OnClick>
-				CallMethodOnNearestAncestor(self, "Item_OnClick", self);
+				<!-- self:<scrollframe><parentObject> -->
+				if self.parentHandler and self.parentHandler.Item_OnClick then
+					self.parentHandler:Item_OnClick(self);
+				end
 			</OnClick>
 			<OnEnter>
 				if self.isHeader and self.Highlight:IsVisible() then self.Highlight:Hide() end;
-				CallMethodOnNearestAncestor(self, "Item_OnEnter", self);
+				if self.parentHandler and self.parentHandler.Item_OnEnter then
+					self.parentHandler:Item_OnEnter(self);
+				end
 			</OnEnter>
 			<OnLeave>
 				if not self.isHeader and not self.Highlight:IsVisible() then self.Highlight:Show() end;
-				CallMethodOnNearestAncestor(self, "Item_OnLeave", self);
+				if self.parentHandler and self.parentHandler.Item_OnLeave then
+					self.parentHandler:Item_OnLeave(self);
+				end
+			</OnLeave>
+		</Scripts>
+    </Frame>
+
+	<Frame name="BagSyncListSimpleItemTemplate" virtual="true">
+        <Size x="0" y="22"/>
+        <Layers>
+            <Layer level="BACKGROUND">
+                <Texture parentKey="Background" setAllPoints="true">
+                    <Color r="0" g="0" b="0" a="0"/>
+                </Texture>
+            </Layer>
+            <Layer level="ARTWORK">
+                <FontString parentKey="Text" inherits="GameFontNormal" justifyH="LEFT">
+                    <Anchors>
+                        <Anchor point="LEFT" x="8" y="0"/>
+						<Anchor point="RIGHT" relativeKey="$parent" x="-8" y="0"/>
+                    </Anchors>
+                </FontString>
+            </Layer>
+            <Layer level="OVERLAY">
+                <Texture parentKey="HeaderHighlight" setAllPoints="true" alphaMode="ADD" file="Interface\QuestFrame\UI-QuestTitleHighlight" alpha="0">
+                    <Color r="0.8" g="0.7" b="0" a="1"/>
+                </Texture>
+                <Texture parentKey="DetailsHighlight" setAllPoints="true" alphaMode="ADD" file="Interface\Tooltips\UI-Tooltip-Background" alpha="0">
+                    <Color r="0.4" g="0.2" b="0.5" a="0.2"/>
+                </Texture>
+            </Layer>
+            <Layer level="HIGHLIGHT">
+                <Texture parentKey="Highlight" setAllPoints="true" alphaMode="ADD">
+                    <Color r="0" g="1" b="0" a="0.2"/>
+                </Texture>
+            </Layer>
+        </Layers>
+		<Scripts>
+			<OnClick>
+				<!-- self:<scrollframe><parentObject> -->
+				if self.parentHandler and self.parentHandler.Item_OnClick then
+					self.parentHandler:Item_OnClick(self);
+				end
+			</OnClick>
+			<OnEnter>
+				if self.isHeader and self.Highlight:IsVisible() then self.Highlight:Hide() end;
+				if self.parentHandler and self.parentHandler.Item_OnEnter then
+					self.parentHandler:Item_OnEnter(self);
+				end
+			</OnEnter>
+			<OnLeave>
+				if not self.isHeader and not self.Highlight:IsVisible() then self.Highlight:Show() end;
+				if self.parentHandler and self.parentHandler.Item_OnLeave then
+					self.parentHandler:Item_OnLeave(self);
+				end
 			</OnLeave>
 		</Scripts>
     </Frame>
@@ -143,10 +204,10 @@
 			<EditBox parentKey="SearchBox" enableMouse="true" autoFocus="false" inherits="InputBoxTemplate">
 				<Size x="0" y="24"/>
 				<TextInsets>
-					<AbsInset left="24" right="19" top="1" bottom="-1"/> <!-- Move the Input cursor to the right beyong Search Icon -->
+					<AbsInset left="24" right="19" top="1" bottom="-1"/> <!-- Move the Input cursor to the right beyond Search Icon -->
 				</TextInsets>
 				<Anchors>
-					<!-- Set Initial Size and location of EditBox-->
+					<!-- This is important as it sets the size of the SearchBox to dimentions it can fit on the frame-->
 					<Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="TOPRIGHT" x="-112" y="-28"/>
 					<Anchor point="RIGHT" relativeKey="$parent" relativePoint="LEFT" x="13" y="0"/>
 				</Anchors>
@@ -159,7 +220,8 @@
 							</Anchors>
 							<Color r="0.6" g="0.6" b="0.6"/>
 						</Texture>
-						<FontString parentKey="SubInfo" inherits="GameFontDisable" text="SEARCH">
+						<!-- Lets add a default flavor text in the search box to be informative -->
+						<FontString parentKey="SearchInfo" inherits="GameFontDisable" text="SEARCH">
 							<Anchors>
 								<Anchor point="LEFT" x="24" y="0"/>
 							</Anchors>
@@ -203,7 +265,9 @@
 								self.Texture:SetPoint("TOPLEFT",0,0)
 							</OnShow>
 							<OnClick>
-								CallMethodOnNearestAncestor(self, "SearchBox_ResetSearch", self);
+								if self:GetParent():GetParent().SearchBox_ResetSearch then
+									self:GetParent():GetParent():SearchBox_ResetSearch(self);
+								end
 							</OnClick>
 						</Scripts>
 					</Button>
@@ -212,24 +276,30 @@
 				<Scripts>
 					<OnEscapePressed>
 						self:ClearFocus()
-						CallMethodOnNearestAncestor(self, "SearchBox_OnEscapePressed", self:GetText());
+						if self:GetParent().SearchBox_OnEscapePressed then
+							self:GetParent():SearchBox_OnEscapePressed(self:GetText());
+						end
 					</OnEscapePressed>
 					<OnEnterPressed>
 						self:ClearFocus()
-						CallMethodOnNearestAncestor(self, "SearchBox_OnEnterPressed", self:GetText());
+						if self:GetParent().SearchBox_OnEnterPressed then
+							self:GetParent():SearchBox_OnEnterPressed(self:GetText());
+						end
 					</OnEnterPressed>
 					<OnEditFocusLost>
 						self.SearchIcon:SetVertexColor(0.6,0.6,0.6)
-						self.SubInfo:SetShown(self:GetText():len()==0)
+						self.SearchInfo:SetShown(self:GetText():len()==0)
 						self.ClearButton:SetShown(self:GetText():len()>0)
 					</OnEditFocusLost>
 					<OnEditFocusGained>
 						self.SearchIcon:SetVertexColor(1.0,1.0,1.0)
 						self.ClearButton:Show()
-						self.SubInfo:Hide()
+						self.SearchInfo:Hide()
 					</OnEditFocusGained>
 					<OnTextChanged>
-						CallMethodOnNearestAncestor(self, "SearchBox_OnTextChanged", userInput);
+						if self:GetParent().SearchBox_OnTextChanged then
+							self:GetParent():SearchBox_OnTextChanged(userInput);
+						end
 					</OnTextChanged>
 				</Scripts>
 			</EditBox>
@@ -240,7 +310,9 @@
                 </Anchors>
                 <Scripts>
                     <OnClick>
-                        CallMethodOnNearestAncestor(self, "RefreshClick");
+						if self:GetParent().RefreshClick then
+							self:GetParent():RefreshClick();
+						end
                     </OnClick>
                 </Scripts>
             </Button>
@@ -251,7 +323,9 @@
                 </Anchors>
                 <Scripts>
                     <OnClick>
-                        CallMethodOnNearestAncestor(self, "HelpClick");
+						if self:GetParent().HelpClick then
+							self:GetParent():HelpClick();
+						end
                     </OnClick>
                 </Scripts>
             </Button>
