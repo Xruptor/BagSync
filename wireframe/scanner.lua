@@ -34,6 +34,11 @@ local LastEquipped = INVSLOT_LAST_EQUIPPED
 
 Scanner.pendingdMail = {items={}}
 
+function Scanner:ResetTooltips()
+	--the true is to set it to silent and not return an error if not found
+	if BSYC:GetModule("Tooltip", true) then BSYC:GetModule("Tooltip"):ResetLastLink() end
+end
+
 --https://wowpedia.fandom.com/wiki/BagID
 function Scanner:GetBagSlots(bagType)
 	if bagType == "bag" then
@@ -142,6 +147,7 @@ function Scanner:SaveBag(bagtype, bagid)
 	else
 		BSYC.db.player[bagtype][bagid] = nil
 	end
+	self:ResetTooltips()
 end
 
 function Scanner:SaveEquipment()
@@ -186,6 +192,7 @@ function Scanner:SaveEquipment()
 	end
 
 	BSYC.db.player.equip = slotItems
+	self:ResetTooltips()
 end
 
 function Scanner:SaveBank(rootOnly)
@@ -204,6 +211,7 @@ function Scanner:SaveBank(rootOnly)
 		--scan the reagents as part of the bank scan, but make sure it's even enabled on server
 		if IsReagentBankUnlocked then self:SaveReagents() end
 	end
+	self:ResetTooltips()
 end
 
 function Scanner:SaveReagents()
@@ -213,6 +221,7 @@ function Scanner:SaveReagents()
 	if IsReagentBankUnlocked() then
 		self:SaveBag("reagents", REAGENTBANK_CONTAINER)
 	end
+	self:ResetTooltips()
 end
 
 function Scanner:SaveVoidBank()
@@ -224,7 +233,7 @@ function Scanner:SaveVoidBank()
 
 	for tab = 1, VOID_STORAGE_PAGES do
 		for i = 1, VOID_STORAGE_MAX do
-			local link, textureName, locked, recentDeposit, isFiltered = GetVoidItemInfo(tab, i)
+			local link = GetVoidItemInfo(tab, i)
 			if link then
 				table.insert(slotItems, BSYC:ParseItemLink(link))
 			end
@@ -232,6 +241,7 @@ function Scanner:SaveVoidBank()
 	end
 
 	BSYC.db.player.void = slotItems
+	self:ResetTooltips()
 end
 
 local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
@@ -269,7 +279,7 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 	end
 
 	if petName and C_PetJournal then
-		local speciesId, petGUID = C_PetJournal.FindPetIDByName(petName)
+		local speciesId = C_PetJournal.FindPetIDByName(petName)
 		if speciesId then
 			return speciesId
 		end
@@ -279,7 +289,7 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 	--Example:  Toxic Wasteling shares the same icon as Jade Oozeling
 	if iconTexture and C_PetJournal then
 		for index = 1, C_PetJournal.GetNumPets() do
-			local petID, speciesID, _, _, _, _, _, _, icon = C_PetJournal.GetPetInfoByIndex(index)
+			local _, speciesID, _, _, _, _, _, _, icon = C_PetJournal.GetPetInfoByIndex(index)
 			if icon == iconTexture then
 				return speciesID
 			end
@@ -294,6 +304,7 @@ function Scanner:SaveGuildBank(tabID)
 	if not guildDB then
 		--we don't have a guild object to work with
 		Scanner.isScanningGuild = false
+		self:ResetTooltips()
 		return
 	end
 
@@ -323,7 +334,7 @@ function Scanner:SaveGuildBank(tabID)
 					--check if it's a battle pet cage or something, pet cage is 82800.  This is the placeholder for battle pets
 					--if it's a battlepet link it will be parsed anyways in ParseItemLink
 					if shortID and tonumber(shortID) == 82800 then
-						link = BSYC:CreateFakeBattlePetID(nil, nil, findBattlePet(iconTexture, nil, "guild", tab, slot))
+						link = BSYC:CreateFakeID(nil, nil, findBattlePet(iconTexture, nil, "guild", tab, slot))
 					else
 						link = BSYC:ParseItemLink(link, count)
 					end
@@ -345,6 +356,7 @@ function Scanner:SaveGuildBank(tabID)
 	guildDB.rwsKey = player.rwsKey
 
 	Scanner.isScanningGuild = false
+	self:ResetTooltips()
 end
 
 function Scanner:SaveMailbox(isShow)
@@ -369,14 +381,14 @@ function Scanner:SaveMailbox(isShow)
 	if (numInbox > 0) then
 		for mailIndex = 1, numInbox do
 			for i = 1, ATTACHMENTS_MAX_RECEIVE do
-				local name, itemID, itemTexture, count, quality, canUse = GetInboxItem(mailIndex, i)
+				local name, itemID, itemTexture, count = GetInboxItem(mailIndex, i)
 				local link = GetInboxItemLink(mailIndex, i)
 
 				if name and link then
 
 					--check for battle pet cages
 					if itemID and itemID == 82800 then
-						link = BSYC:CreateFakeBattlePetID(nil, nil, findBattlePet(itemTexture, name, "mail", mailIndex, i))
+						link = BSYC:CreateFakeID(nil, nil, findBattlePet(itemTexture, name, "mail", mailIndex, i))
 					else
 						link = BSYC:ParseItemLink(link, count)
 					end
@@ -393,6 +405,7 @@ function Scanner:SaveMailbox(isShow)
 	BSYC.db.player.mailbox = slotItems
 
 	self.isCheckingMail = false
+	self:ResetTooltips()
 end
 
 function Scanner:SendMail(mailTo, addMail)
@@ -455,6 +468,7 @@ function Scanner:SendMail(mailTo, addMail)
 
 		Scanner.pendingdMail = {items={}} --reset everything
 	end
+	self:ResetTooltips()
 end
 
 function Scanner:SaveAuctionHouse()
@@ -503,7 +517,7 @@ function Scanner:SaveAuctionHouse()
 		--scan the auction house
 		if (numActiveAuctions > 0) then
 			for ahIndex = 1, numActiveAuctions do
-				local name, texture, count, quality, canUse, level, minBid, minIncrement, buyoutPrice, bidAmount, highBidder, owner, saleStatus  = GetAuctionItemInfo("owner", ahIndex)
+				local name, _, count = GetAuctionItemInfo("owner", ahIndex)
 				if name then
 					local link = GetAuctionItemLink("owner", ahIndex)
 					local timeLeft = GetAuctionItemTimeLeft("owner", ahIndex)
@@ -516,7 +530,7 @@ function Scanner:SaveAuctionHouse()
 
 						--since classic doesn't return the exact time on old auction house, we got to add it manually
 						--it only does short, long and very long
-						local expireTime = time() + timestampChk[timeLeft]
+						local expTime = time() + timestampChk[timeLeft]
 						local parseLink = BSYC:ParseItemLink(link, count)
 
 						local encodeStr = BSYC:EncodeOpts({auction=expTime}, parseLink)
@@ -533,6 +547,7 @@ function Scanner:SaveAuctionHouse()
 	BSYC.db.player.auction.bag = slotItems
 	BSYC.db.player.auction.count = #slotItems or 0
 	BSYC.db.player.auction.lastscan = time()
+	self:ResetTooltips()
 end
 
 function Scanner:SaveCurrency(showDebug)
@@ -594,6 +609,7 @@ function Scanner:SaveCurrency(showDebug)
 	end
 
 	BSYC.db.player.currency = slotItems
+	self:ResetTooltips()
 end
 
 function Scanner:CleanupBags()
@@ -823,7 +839,7 @@ function Scanner:CleanupProfessions()
 	for i = 1, select("#", GetProfessions()) do
 		local prof = select(i, GetProfessions())
 		if prof then
-			local name, _, rank, maxRank, _, _, skillLine = GetProfessionInfo(prof)
+			local name, _, _, _, _, _, skillLine = GetProfessionInfo(prof)
 			if name and skillLine then
 				tmpList[skillLine] = name
 			end

@@ -396,9 +396,8 @@ function Tooltip:AddItem(unitObj, itemID, target, countList)
 		local iCount = 0
 		for i=1, #data do
 			if data[i] then
-				local link, count, qOpts = BSYC:Split(data[i], true)
+				local link, count = BSYC:Split(data[i], true)
 				if link then
-					if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
 					if link == itemID then
 						iCount = iCount + (count or 1)
 					end
@@ -639,10 +638,14 @@ function Tooltip:SetQTipAnchor(frame, qTip)
 	qTip:SetPoint(vhalf .. hhalf, frame, (vhalf == "TOP" and "BOTTOM" or "TOP") .. hhalf)
 end
 
-function Tooltip:Reset()
+function Tooltip:ResetCache()
 	if Data.__cache and Data.__cache.tooltip then
 		Data.__cache.tooltip = {}
 	end
+end
+
+function Tooltip:ResetLastLink()
+	self.__lastLink = nil
 end
 
 function Tooltip:CheckModifier()
@@ -710,14 +713,35 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	link = BSYC:ParseItemLink(link)
 
 	--make sure we have something to work with
-	--since we aren't using a count, it will return only the itemid
 	if not link then
 		objTooltip:Show()
 		return
 	end
 
 	link = BSYC:Split(link, true) --if we are parsing a database entry, return only the itemID portion
+
+	--we do this because the itemID portion can be something like 190368::::::::::::5:8115:7946:6652:7579:1491::::::
 	local shortID = BSYC:GetShortItemID(link)
+	if isBattlePet then origLink = shortID end
+
+	--if we already did the item, then display the previous information, use the unparsed link to verify
+	if self.__lastLink and self.__lastLink == origLink then
+		if self.__lastTally and #self.__lastTally > 0 then
+			for i=1, #self.__lastTally do
+				local color = self:GetClassColor(self.__lastTally[i].unitObj, 2, false, BSYC.options.colors.total)
+				if showQTip then
+					local lineNum = Tooltip.qTip:AddLine(self.__lastTally[i].colorized, string.rep(" ", 4), self.__lastTally[i].tallyString)
+					Tooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
+				else
+					objTooltip:AddDoubleLine(self.__lastTally[i].colorized, self.__lastTally[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
+				end
+			end
+			objTooltip:Show()
+			if showQTip then Tooltip.qTip:Show() end
+		end
+		objTooltip.__tooltipUpdated = true
+		return
+	end
 
 	local permIgnore ={
 		[6948] = "Hearthstone",
@@ -744,6 +768,10 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	--short the shortID and ignore all BonusID's and stats
 	if BSYC.options.enableShowUniqueItemsTotals and shortID then link = shortID end
 
+	--store these in the addon itself not in the tooltip
+	self.__lastTally = {}
+	self.__lastLink = origLink
+
 	local grandTotal = 0
 	local unitList = {}
 	local countList = {}
@@ -767,7 +795,11 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	-------------------
 	if advUnitList or not skipTally then
 
-		--check cache first, if we already have it then don't do it again, duh
+		--OTHER PLAYERS AND GUILDS
+		-----------------
+		--CACHE CHECK
+		--NOTE: This cache check is ONLY for units (guild, players) that isn't related to the current player.  Since that data doesn't really change we can cache those lines
+		--For the player however, we always want to grab the latest information.  So once it's grabbed we can do a small local cache for that using __lastTally
 		if not Data.__cache.tooltip[origLink] then
 
 			--allow advance search matches if found, no need to set to true as advUnitList will default to dumpAll if found
@@ -788,7 +820,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 						end
 					end
 				else
-					--don't cache the players guild bank, lets get that in real time
+					--don't cache the players guild bank, lets get that in real time in case they put stuff in it
 					if not player.guild or unitObj.realm ~= player.guildrealm or unitObj.name ~= player.guild then
 						grandTotal = grandTotal + self:AddItem(unitObj, link, "guild", countList)
 					end
@@ -810,14 +842,12 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			--use the cached results from previous DB searches, copy the table don't reference it
 			unitList = CopyTable(Data.__cache.tooltip[origLink].unitList)
 			grandTotal = Data.__cache.tooltip[origLink].grandTotal
+			Debug(BSYC_DL.INFO, "TallyUnits", "|cFF09DBE0CacheUsed|r", origLink)
 		end
 
 		--CURRENT PLAYER
 		-----------------
-
-		--first check the advUnitList search results
 		if not advUnitList or (advUnitList and advUnitList[player.realm] and advUnitList[player.realm][player.name]) then
-
 			countList = {}
 			local playerObj = Data:GetCurrentPlayer()
 
@@ -826,7 +856,6 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			grandTotal = grandTotal + self:AddItem(playerObj, link, "auction", countList)
 			grandTotal = grandTotal + self:AddItem(playerObj, link, "void", countList)
 			grandTotal = grandTotal + self:AddItem(playerObj, link, "mailbox", countList)
-			grandTotal = grandTotal + self:AddItem(Data:GetPlayerGuild(), link, "guild", countList)
 
 			--GetItemCount does not work on battlepet links
 			if isBattlePet then
@@ -864,6 +893,22 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			if grandTotal > 0 then
 				--table variables gets passed as byRef
 				self:UnitTotals(playerObj, countList, unitList, advUnitList)
+			end
+		end
+
+		--CURRENT PLAYER GUILD
+		--We do this separately so that the guild has it's own line in the unitList and not included inline with the player character
+		--We also want to do this in real time and not cache, otherwise they may put stuff in their guild bank which will not be reflected in a cache
+		-----------------
+		if player.guild then
+			if not advUnitList or (advUnitList and advUnitList[player.guildrealm] and advUnitList[player.guildrealm][player.guild]) then
+				countList = {}
+				local guildObj = Data:GetPlayerGuild()
+				grandTotal = grandTotal + self:AddItem(guildObj, link, "guild", countList)
+				if grandTotal > 0 then
+					--table variables gets passed as byRef
+					self:UnitTotals(guildObj, countList, unitList, advUnitList)
+				end
 			end
 		end
 
@@ -917,7 +962,6 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			end
 			table.insert(unitList, 1, { colorized=desc, tallyString=value} )
 		end
-
 		--add item types
 		if BSYC.options.enableItemTypes and shortID then
 			local itemType, itemSubType, _, _, _, _, classID, subclassID = select(6, GetItemInfo(shortID))
@@ -961,6 +1005,9 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		end
 	end
 
+	--this is only a local cache for the current tooltip and will be reset on bag updates, it is not the same as Data.__cache.tooltip
+	self.__lastTally = unitList
+
 	objTooltip.__tooltipUpdated = true
 	objTooltip:Show()
 
@@ -973,7 +1020,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	end
 
 	local WLChk = (BSYC.options.enableWhitelist and "WL-ON") or "WL-OFF"
-	Debug(BSYC_DL.INFO, "TallyUnits", link, shortID, origLink, source, isBattlePet, grandTotal, WLChk)
+	Debug(BSYC_DL.INFO, "TallyUnits", shortID, source, isBattlePet, grandTotal, WLChk)
 end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)
@@ -991,7 +1038,7 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	if permIgnore[currencyID] then return end
 
 	for unitObj in Data:IterateUnits() do
-		if not unitObj.isGuild and unitObj.data.currency and unitObj.data.currency[currencyID] then
+		if not unitObj.isGuild and unitObj.data.currency and unitObj.data.currency[currencyID] and unitObj.data.currency[currencyID].count > 0 then
 			table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj), count=unitObj.data.currency[currencyID].count} )
 		end
 	end
@@ -1126,7 +1173,7 @@ function Tooltip:HookTooltip(objTooltip)
 				hooksecurefunc("BattlePetToolTip_Show", function(speciesID, level, breedQuality, maxHealth, power, speed, name)
 					if objTooltip.__tooltipUpdated then return end
 					if speciesID then
-						local fakeID = BSYC:CreateFakeBattlePetID(nil, nil, speciesID, level, breedQuality, maxHealth, power, speed, name)
+						local fakeID = BSYC:CreateFakeID(nil, nil, speciesID, level, breedQuality, maxHealth, power, speed, name)
 						if fakeID then
 							Tooltip:TallyUnits(objTooltip, fakeID, "BattlePetToolTip_Show", true)
 						end
@@ -1138,7 +1185,7 @@ function Tooltip:HookTooltip(objTooltip)
 				hooksecurefunc("FloatingBattlePet_Show", function(speciesID, level, breedQuality, maxHealth, power, speed, name)
 					if objTooltip.__tooltipUpdated then return end
 					if speciesID then
-						local fakeID = BSYC:CreateFakeBattlePetID(nil, nil, speciesID, level, breedQuality, maxHealth, power, speed, name)
+						local fakeID = BSYC:CreateFakeID(nil, nil, speciesID, level, breedQuality, maxHealth, power, speed, name)
 						if fakeID then
 							Tooltip:TallyUnits(objTooltip, fakeID, "FloatingBattlePet_Show", true)
 						end

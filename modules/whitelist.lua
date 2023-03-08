@@ -180,7 +180,7 @@ function Whitelist:AddItemID()
 		local fakeID
 
 		if C_PetJournal then
-			fakeID = BSYC:FakeIDToBattlePetID(itemid)
+			fakeID = BSYC:FakeIDToSpeciesID(itemid)
 			if fakeID then
 				dName = C_PetJournal.GetPetInfoBySpeciesID(fakeID)
 				dItemLink = "["..dName.."] - "..fakeID
@@ -230,7 +230,7 @@ function Whitelist:AddEntry(entry)
 			GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
 			if type(entry.key) == "number" then
 				if entry.key >= BSYC.FakePetCode then
-					local fakeID = BSYC:FakeIDToBattlePetID(entry.key)
+					local fakeID = BSYC:FakeIDToSpeciesID(entry.key)
 					if fakeID then
 						BattlePetToolTip_Show(fakeID, 0, 0, 0, 0, 0, nil, nil)
 					end

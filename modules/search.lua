@@ -21,7 +21,7 @@ Search.cacheItems = {}
 Search.warningAutoScan = 0
 
 function Search:OnEnable()
-    local searchFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")
+    local searchFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncSearchFrameTemplate")
 	Mixin(searchFrame, Search) --implement new frame to our parent module Mixin, to have access to parent methods
 	_G["BagSyncSearchFrame"] = searchFrame
     --Add to special frames so window can be closed when the escape key is pressed.
@@ -51,6 +51,7 @@ function Search:OnEnable()
     Search.items = {}
 	Search.scrollFrame.update = function() Search:RefreshList(); end
     HybridScrollFrame_SetDoNotHideScrollBar(Search.scrollFrame, true)
+	HybridScrollFrame_CreateButtons(Search.scrollFrame, "BagSyncListItemTemplate")
 
 	--total counter
 	searchFrame.totalText = searchFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
@@ -154,8 +155,6 @@ function Search:OnShow()
 	else
 		Search:ShowAdvanced(true)
 	end
-
-	HybridScrollFrame_CreateButtons(Search.scrollFrame, "BagSyncListItemTemplate")
     Search:RefreshList()
 end
 
@@ -190,13 +189,13 @@ function Search:CheckItem(searchStr, unitObj, target, checkList, onlyPlayer)
 		local iCount = 0
 		for i=1, #data do
 			if data[i] then
-				local link, count, qOpts = BSYC:Split(data[i])
-				if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
+				local link = BSYC:Split(data[i], true)
+				if BSYC.options.enableShowUniqueItemsTotals and link then link = BSYC:GetShortItemID(link) end
 
 				--we only really want to grab and search the item only once
 				if link and not checkList[link] then
 					--do cache grab
-					local cacheObj = Data:CacheLink(data[i], link, qOpts)
+					local cacheObj = Data:CacheLink(link)
 					local entry = cacheObj.speciesName or cacheObj.itemLink --GetItemInfo does not support battlepet links, use speciesName instead
 					local texture = cacheObj.speciesIcon or cacheObj.itemTexture
 					local itemName = cacheObj.speciesName or cacheObj.itemName
@@ -213,7 +212,7 @@ function Search:CheckItem(searchStr, unitObj, target, checkList, onlyPlayer)
 
 						checkList[link] = entry
 						if testMatch or onlyPlayer then
-							table.insert(Search.items, { name=itemName, link=cacheObj.itemLink, rarity=cacheObj.itemQuality, icon=texture, speciesID=qOpts.battlepet } )
+							table.insert(Search.items, { name=itemName, link=cacheObj.itemLink, rarity=cacheObj.itemQuality, icon=texture, speciesID=BSYC:FakeIDToSpeciesID(link) } )
 						end
 					else
 						--add to warning count total if we haven't processed that item
@@ -342,6 +341,7 @@ function Search:RefreshList()
     local items = Search.items
     local buttons = HybridScrollFrame_GetButtons(Search.scrollFrame)
     local offset = HybridScrollFrame_GetOffset(Search.scrollFrame)
+	if not buttons then return end
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
@@ -360,6 +360,14 @@ function Search:RefreshList()
             button.Text:SetText(item.name or "")
 			button.Text:SetTextColor(r, g, b)
             button:SetWidth(Search.scrollFrame.scrollChild:GetWidth())
+
+			--while we are updating the scrollframe, is the mouse currently over a button?
+			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
+			if GetMouseFocus() == button then
+				Search:Item_OnLeave() --hide first
+				Search:Item_OnEnter(button)
+			end
+
             button:Show()
         else
             button:Hide()
@@ -377,6 +385,7 @@ end
 
 function Search:Reset()
 	Search.frame.SearchBox:SetText("")
+	Search.frame.SearchBox.ClearButton:Hide()
 	Search.advUnitList = nil
 	Search.items = {}
 	Search:RefreshList()
@@ -399,6 +408,23 @@ function Search:ItemDetails(btn)
 end
 
 function Search:Item_OnClick(btn)
+	if btn.data then
+		if btn.data.speciesID and IsModifiedClick("DRESSUP") then
+			--https://github.com/tomrus88/BlizzardInterfaceCode/blob/master/Interface/FrameXML/DressUpFrames.lua
+			local _, _ ,_ , creatureID, _, _, _, _, _, _, _, displayID = C_PetJournal.GetPetInfoBySpeciesID(btn.data.speciesID)
+			DressUpBattlePet(creatureID, displayID, btn.data.speciesID)
+			return
+		end
+		if IsModifiedClick("CHATLINK") then
+			ChatEdit_InsertLink(btn.link)
+		elseif IsModifiedClick("DRESSUP") then
+			if BSYC.IsRetail then
+				DressUpLink(btn.link)
+			else
+				DressUpItemLink(btn.link)
+			end
+		end
+	end
 end
 
 function Search:Item_OnEnter(btn)
@@ -415,13 +441,9 @@ function Search:Item_OnEnter(btn)
 	end
 end
 
-function Search:Item_OnLeave(btn)
+function Search:Item_OnLeave()
 	GameTooltip:Hide()
-    if btn.data then
-		if btn.data.speciesID then
-			BattlePetTooltip:Hide()
-		end
-	end
+	BattlePetTooltip:Hide()
 end
 
 function Search:SearchBox_OnEnterPressed(text)

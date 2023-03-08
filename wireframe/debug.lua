@@ -10,11 +10,9 @@ local BSYC = select(2, ...) --grab the addon namespace
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local Debug = BSYC:NewModule("Debug")
 
-local AceGUI = LibStub("AceGUI-3.0")
-
-local xListLen = 400
+local xListLen = 500
 local debugWidth = 880
-local debugHeight = 450
+local debugHeight = 455
 
 local function unescape(str)
     str = gsub(str, "|T.-|t", "") --textures in chat like currency coins and such
@@ -24,234 +22,41 @@ local function unescape(str)
     return str
 end
 
-local function SetExportFrameText(pageNum)
-	if not Debug.exportFrame then return end
-
-	Debug.exportFrame.MLEditBox:SetText("") --clear it first in case there were previous messages
-	Debug.exportFrame.currChatIndex = chatIndex
-
-	--the editbox of the multiline editbox (The parent of the multiline object)
-	local parentEditBox = Debug.exportFrame.MLEditBox.editBox
-
-	--there is a hard limit of text that can be highlighted in an editbox to 500 lines.
-	local MAXLINES = 150 --150 don't use large numbers or it will cause LAG when frame opens.  EditBox was not made for large amounts of text
-	local msgCount = #Debug.scrollframe.children
-	local startPos = 0
-	local endPos = 0
-	local lineText
-
-	--lets create the pages
-	local pages = {}
-	local pageCount = 0 --start at zero
-	for i = 1, msgCount, MAXLINES do
-	  pageCount = i-1 --the block will extend by 1 past 150, so subtract 1
-	  if pageCount <= 0 then pageCount = 1 end --this is the first page, so start at 1
-	  table.insert(pages, pageCount)
-	end
-
-	--load past page if we don't have a pageNum
-	if not pageNum and startPos < 1 then
-		if msgCount > MAXLINES then
-			startPos = msgCount - MAXLINES
-			endPos = startPos + MAXLINES
-		else
-			startPos = 1
-			endPos = msgCount
-		end
-	--otherwise load the page number
-	elseif pageNum and pages[pageNum] then
-		if pages[pageNum] == 1 then
-			--first page
-			startPos = 1
-			endPos = MAXLINES
-		else
-			startPos = pages[pageNum]
-			endPos = pages[pageNum] + MAXLINES
-		end
-	else
-		return
-	end
-
-	--adjust the endPos if it's greater than the total messages we have
-	if endPos > msgCount then endPos = msgCount end
-
-	for i = startPos, endPos do
-
-		local tmpObj = Debug.scrollframe.children[i]
-
-		if tmpObj and tmpObj.label then
-			lineText = tmpObj.label:GetText()
-		else
-			break
-		end
-
-		--we add |r at the end to break any color codes that don't terminate properly and will taint the next lines
-		if (i == startPos) then
-			lineText = unescape(lineText).."|r"
-		else
-			lineText = "\n"..unescape(lineText).."|r"
-		end
-
-		parentEditBox:Insert(lineText)
-	end
-
-	if pageNum then
-		Debug.exportFrame.currentPage = pageNum
-	else
-		Debug.exportFrame.currentPage = #pages
-	end
-
-	Debug.exportFrame.pages = pages
-	Debug.exportFrame.pageNumText:SetText(L.Page.." "..Debug.exportFrame.currentPage)
-
-	Debug.exportFrame.handleCursorChange = true -- just in case
-	Debug.exportFrame:Show()
-end
-
-local function CreateExportFrame()
-	--check to see if we have the frame already, if we do then return it
-	if Debug.exportFrame then return Debug.exportFrame end
-
-	local exportFrame = CreateFrame("FRAME", nil, UIParent, BackdropTemplateMixin and "BackdropTemplate")
-	exportFrame:SetClampedToScreen(true)
-
-	exportFrame:SetBackdrop({
-		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-		tile = true,
-		tileSize = 32,
-		edgeSize = 32,
-		insets = { left = 8, right = 8, top = 8, bottom = 8 }
-	})
-	exportFrame:SetBackdropColor(0, 0, 0, 1)
-	exportFrame:EnableMouse(true)
-	exportFrame:SetFrameStrata("DIALOG")
-	exportFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-	exportFrame:SetWidth(830)
-	exportFrame:SetHeight(490)
-
-	local group = AceGUI:Create("InlineGroup")
-	group.frame:SetParent(exportFrame)
-	group.frame:SetPoint("BOTTOMRIGHT", exportFrame, "BOTTOMRIGHT", -17, 12)
-	group.frame:SetPoint("TOPLEFT", exportFrame, "TOPLEFT", 17, -10)
-	group.frame:Hide()
-	group:SetLayout("fill")
-	group.frame:Show() --show the group so everything in it displays in the frame
-
-	local MLEditBox = AceGUI:Create("MultiLineEditBox")
-	MLEditBox:SetWidth(400)
-	MLEditBox.button:Hide()
-	MLEditBox.frame:SetClipsChildren(true)
-	MLEditBox:SetLabel(L.DebugExport)
-    MLEditBox:ClearFocus()
-	MLEditBox:SetText("")
-	group:AddChild(MLEditBox)
-	exportFrame.MLEditBox = MLEditBox
-
-	exportFrame.handleCursorChange = false --setting this to true will update the scrollbar to the cursor position
-	MLEditBox.scrollFrame:HookScript("OnUpdate", function(self, elapsed)
-		if not MLEditBox.scrollFrame:IsVisible() then return end
-
-		self.OnUpdateCounter = (self.OnUpdateCounter or 0) + elapsed
-		if self.OnUpdateCounter < 0.1 then return end
-		self.OnUpdateCounter = 0
-
-		local pos = math.max(string.len(MLEditBox:GetText()), MLEditBox.editBox:GetNumLetters())
-
-		if ( exportFrame.handleCursorChange ) then
-			MLEditBox:SetFocus()
-			MLEditBox:SetCursorPosition(pos)
-			MLEditBox:ClearFocus()
-			--put the scrollbar button at the max it can go
-			local statusMin, statusMax = MLEditBox.scrollBar:GetMinMaxValues()
-			MLEditBox.scrollBar:SetValue(statusMax + 100) --extra 100 just in case (sometimes the offset is slightly off)
-			exportFrame.handleCursorChange = false
-		end
-
-	end)
-	exportFrame:HookScript("OnShow", function() exportFrame.handleCursorChange = true end)
-
-	local close = CreateFrame("Button", nil, group.frame, "UIPanelButtonTemplate")
-	close:SetScript("OnClick", function() exportFrame:Hide() end)
-	close:SetPoint("BOTTOMRIGHT", -27, 13)
-	close:SetFrameLevel(close:GetFrameLevel() + 1)
-	close:SetHeight(20)
-	close:SetWidth(100)
-	close:SetText(L.Done)
-
-    local buttonBack = CreateFrame("Button", nil, group.frame, "UIPanelButtonTemplate")
-    buttonBack:SetText("<")
-    buttonBack:SetHeight(25)
-    buttonBack:SetWidth(25)
-    buttonBack:SetPoint("BOTTOMLEFT", 10, 13)
-	buttonBack:SetFrameLevel(buttonBack:GetFrameLevel() + 1)
-    buttonBack:SetScript("OnClick", function()
-		if exportFrame.currentPage then
-			if (exportFrame.currentPage - 1) > 0 then
-				SetExportFrameText(exportFrame.currentPage - 1)
-			end
-		end
-    end)
-    exportFrame.buttonBack = buttonBack
-
-    local buttonForward = CreateFrame("Button", nil, group.frame, "UIPanelButtonTemplate")
-    buttonForward:SetText(">")
-    buttonForward:SetHeight(25)
-    buttonForward:SetWidth(25)
-    buttonForward:SetPoint("BOTTOMLEFT", 40, 13)
-	buttonForward:SetFrameLevel(buttonForward:GetFrameLevel() + 1)
-    buttonForward:SetScript("OnClick", function()
-		if exportFrame.currentPage and exportFrame.pages then
-			if (exportFrame.currentPage + 1) <= #exportFrame.pages then
-				SetExportFrameText(exportFrame.currentPage + 1)
-			end
-		end
-    end)
-    exportFrame.buttonForward = buttonForward
-
-	--this is to place it above the group layer
-	local textFrame = CreateFrame("FRAME", nil, group.frame, BackdropTemplateMixin and "BackdropTemplate")
-	textFrame:SetFrameLevel(textFrame:GetFrameLevel() + 1)
-	textFrame:SetPoint("BOTTOMLEFT", 80, 18)
-	textFrame:Show()
-
-    local pageNumText = textFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    pageNumText:SetPoint("LEFT", textFrame)
-    pageNumText:SetShadowOffset(1, -1)
-    pageNumText:SetText(L.Page.." 1")
-	textFrame:SetHeight(pageNumText:GetHeight() + 2)
-	textFrame:SetWidth(pageNumText:GetWidth() + 2)
-    exportFrame.pageNumText = pageNumText
-
-	exportFrame:Hide()
-
-	--store it for the future
-	Debug.exportFrame = exportFrame
-end
-
 function Debug:OnEnable()
+    local DebugFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")
+	Mixin(DebugFrame, Debug) --implement new frame to our parent module Mixin, to have access to parent methods
+	DebugFrame:Hide()
 
-	--lets create our widgets
-	local DebugFrame = AceGUI:Create("Window")
-	Debug.frame = DebugFrame
-
-	DebugFrame:SetTitle("BagSync - "..L.Debug)
-	DebugFrame:SetHeight(debugHeight)
+    DebugFrame.TitleText:SetText("BagSync - "..L.Debug)
 	DebugFrame:SetWidth(debugWidth)
-	DebugFrame:EnableResize(false)
-	DebugFrame:SetPoint("CENTER",UIParent,"CENTER",0,120)
-	DebugFrame.frame:SetFrameStrata("BACKGROUND")
+    DebugFrame:SetHeight(debugHeight)
+    DebugFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 150)
+    DebugFrame:EnableMouse(true) --don't allow clickthrough
+    DebugFrame:SetMovable(true)
+    DebugFrame:SetResizable(false)
+    DebugFrame:SetFrameStrata("BACKGROUND")
+    DebugFrame:SetScript("OnShow", function() Debug:OnShow() end)
+	DebugFrame:SetScript("OnHide", function() Debug:OnHide() end)
+    Debug.frame = DebugFrame
 
-	--scrollbar:SetMinMaxValues(0, 1000)
-	local scrollframe = AceGUI:Create("ScrollFrame");
-	scrollframe:SetFullWidth(true)
-	scrollframe:SetLayout("Flow")
+    Debug.scrollFrame = _G.CreateFrame("ScrollFrame", nil, DebugFrame, "HybridScrollFrameTemplate")
+    Debug.scrollFrame:SetWidth(debugWidth-35)
+    Debug.scrollFrame:SetPoint("TOPLEFT", DebugFrame, "TOPLEFT", 5, -30)
+    --set ScrollFrame height by altering the distance from the bottom of the frame
+    Debug.scrollFrame:SetPoint("BOTTOMLEFT", DebugFrame, "BOTTOMLEFT", -25, 10)
+    Debug.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Debug.scrollFrame, "HybridScrollBarTemplate")
+    Debug.scrollFrame.scrollBar:SetPoint("TOPLEFT", Debug.scrollFrame, "TOPRIGHT", 1, -16)
+    Debug.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Debug.scrollFrame, "BOTTOMRIGHT", 1, 12)
+	--initiate the scrollFrame
+    --the items we will work with
+    Debug.debugItems = {}
+	Debug.scrollFrame.update = function() Debug:RefreshList(); end
+    HybridScrollFrame_SetDoNotHideScrollBar(Debug.scrollFrame, true)
+	HybridScrollFrame_CreateButtons(Debug.scrollFrame, "BagSyncListSimpleItemTemplate")
 
-	Debug.scrollframe = scrollframe
-	DebugFrame:AddChild(scrollframe)
-
-	Debug.optionsFrame = CreateFrame("Frame", "OptionsFrame", DebugFrame.frame, BackdropTemplateMixin and "BackdropTemplate")
-
+	--Options Frame
+	Debug.optionsFrame = CreateFrame("Frame", nil, DebugFrame, BackdropTemplateMixin and "BackdropTemplate")
+	local optionsFrame = Debug.optionsFrame
 	local backdrop = {
 		bgFile = [[Interface\Tooltips\UI-Tooltip-Background]],
 		edgeFile = [[Interface\Tooltips\UI-Tooltip-Border]],
@@ -261,23 +66,22 @@ function Debug:OnEnable()
 		insets = { left = 3, right = 3, top = 3, bottom = 3 }
 	}
 
-	Debug.optionsFrame:SetHeight(100)
-	Debug.optionsFrame:SetWidth(debugWidth)
-	Debug.optionsFrame:SetBackdrop(backdrop)
-	Debug.optionsFrame:SetBackdropColor(0, 0, 0, 0.6)
-	Debug.optionsFrame:SetPoint("TOPLEFT",DebugFrame.frame,"BOTTOMLEFT",0,0)
+	optionsFrame:SetHeight(120)
+	optionsFrame:SetWidth(debugWidth)
+	optionsFrame:SetBackdrop(backdrop)
+	optionsFrame:SetBackdropColor(0, 0, 0, 0.6)
+	optionsFrame:SetPoint("TOPLEFT", DebugFrame, "BOTTOMLEFT",0, 0)
 
-	local enableDebugChk = AceGUI:Create("CheckBox")
-	enableDebugChk:SetLabel(L.DebugEnable)
-	enableDebugChk.frame:Show()
-	enableDebugChk:SetWidth(enableDebugChk.text:GetStringWidth() + 40) --add length for checkbox and what not
-	enableDebugChk.frame:SetParent(Debug.optionsFrame)
-	enableDebugChk.frame:SetPoint("TOPLEFT",Debug.optionsFrame,"TOPLEFT",10,-5)
-	enableDebugChk:SetCallback("OnValueChanged",function(self, func, checked)
-		if BSYC.options and BSYC.options.debug then
-			BSYC.options.debug.enable = checked
-		end
+	local enableDebugChk = CreateFrame("CheckButton", nil, optionsFrame, "UICheckButtonTemplate")
+	DEBUGME = enableDebugChk
+	enableDebugChk.Text:SetText(L.DebugEnable)
+	enableDebugChk.Text:SetTextColor(1, 1, 1)
+	enableDebugChk:SetPoint("TOPLEFT", optionsFrame, "TOPLEFT", 10, -5)
+	enableDebugChk:SetScript("OnClick", function(self)
+		BSYC.options.debug.enable = enableDebugChk:GetChecked()
 	end)
+	enableDebugChk:SetChecked(BSYC.options.debug.enable)
+	optionsFrame.enableDebugChk = enableDebugChk
 
 	local levels = {
 		"DEBUG",
@@ -292,85 +96,68 @@ function Debug:OnEnable()
 
 	local lastPoint
 
-	Debug.debugLevels = {}
+	optionsFrame.debugLevels = {}
 
 	for k=1, #levels do
-		local tmpLevel = AceGUI:Create("CheckBox")
-		tmpLevel:SetLabel(L["Debug_"..levels[k]])
-		tmpLevel.frame:Show()
+		local tmpLevel = CreateFrame("CheckButton", nil, optionsFrame, "UICheckButtonTemplate")
 		tmpLevel.level = levels[k]
-		tmpLevel:SetWidth(tmpLevel.text:GetStringWidth() + 30) --add length for checkbox and what not
-		--tmpLevel.text:SetWidth(tmpLevel.text:GetStringHeight())
-		tmpLevel.frame:SetParent(Debug.optionsFrame)
+		tmpLevel.Text:SetText(L["Debug_"..levels[k]])
+		tmpLevel.Text:SetTextColor(1, 1, 1)
 		if not lastPoint then
-			tmpLevel.frame:SetPoint("BOTTOMLEFT",Debug.optionsFrame,"BOTTOMLEFT",10,5)
+			tmpLevel:SetPoint("BOTTOMLEFT", optionsFrame, "BOTTOMLEFT", 10, 3)
 		else
-			tmpLevel.frame:SetPoint("LEFT",lastPoint.frame,"RIGHT", 10,0)
+			tmpLevel:SetPoint("LEFT", lastPoint.Text, "RIGHT", 10, 0)
 		end
 		lastPoint = tmpLevel
 
-		tmpLevel:SetCallback("OnValueChanged",function(self, func, checked)
-			if BSYC.options and BSYC.options.debug then
-				BSYC.options.debug[self.level] = checked
-			end
+		tmpLevel:SetScript("OnClick", function(self)
+			BSYC.options.debug[self.level] = self:GetChecked()
 		end)
-
-		table.insert(Debug.debugLevels, tmpLevel)
+		tmpLevel:SetChecked(BSYC.options.debug[levels[k]])
+		table.insert(optionsFrame.debugLevels, tmpLevel)
 	end
 
-	Debug.optionsFrame:SetScript("OnShow", function()
-		if BSYC.options and BSYC.options.debug then
-			for k=1, #Debug.debugLevels do
-				Debug.debugLevels[k]:SetValue(BSYC.options.debug[Debug.debugLevels[k].level])
-			end
-			enableDebugChk:SetValue(BSYC.options.debug.enable)
-		end
-	end)
-
-	local dumpOptions = AceGUI:Create("Button")
-	dumpOptions.frame:SetParent(Debug.optionsFrame)
+	--dump options
+	local dumpOptions = _G.CreateFrame("Button", nil, optionsFrame, "UIPanelButtonTemplate")
 	dumpOptions:SetText(L.DebugDumpOptions)
 	dumpOptions:SetHeight(30)
-	dumpOptions:SetAutoWidth(true)
-	dumpOptions:SetCallback("OnClick", function()
-		BSYC:GetModule("Data"):DebugDumpOptions()
-	end)
-	dumpOptions.frame:SetParent(Debug.optionsFrame)
-	dumpOptions.frame:SetPoint("TOPLEFT",Debug.optionsFrame,"TOPLEFT",10,-35)
-	dumpOptions.frame:Show()
+	dumpOptions:SetWidth(dumpOptions:GetTextWidth() + 30)
+	dumpOptions:SetPoint("TOPLEFT", optionsFrame, "TOPLEFT", 10, -43)
+	dumpOptions:SetScript("OnClick", function() BSYC:GetModule("Data"):DebugDumpOptions() end)
+	optionsFrame.dumpOptions = dumpOptions
 
-	local iterateUnits = AceGUI:Create("Button")
-	iterateUnits.frame:SetParent(Debug.optionsFrame)
+	--iterate units
+	local iterateUnits = _G.CreateFrame("Button", nil, optionsFrame, "UIPanelButtonTemplate")
 	iterateUnits:SetText(L.DebugIterateUnits)
 	iterateUnits:SetHeight(30)
-	iterateUnits:SetAutoWidth(true)
-	iterateUnits:SetCallback("OnClick", function()
+	iterateUnits:SetWidth(iterateUnits:GetTextWidth() + 30)
+	iterateUnits:SetPoint("LEFT", dumpOptions, "RIGHT", 10, 0)
+	iterateUnits:SetScript("OnClick", function(self)
 		local player = BSYC:GetModule("Unit"):GetUnitInfo()
 
-		self:AddMessage(1, "IterateUnits", "UnitInfo-1", player.name, player.realm)
-		self:AddMessage(1, "IterateUnits", "UnitInfo-2", player.class, player.race, player.gender, player.faction)
-		self:AddMessage(1, "IterateUnits", "UnitInfo-3", player.guild, player.guildrealm)
-		self:AddMessage(1, "IterateUnits", "RealmKey", player.realmKey)
-		self:AddMessage(1, "IterateUnits", "RealmKey_RWS", player.rwsKey)
+		Debug:AddMessage(1, "IterateUnits", "UnitInfo-1", player.name, player.realm)
+		Debug:AddMessage(1, "IterateUnits", "UnitInfo-2", player.class, player.race, player.gender, player.faction)
+		Debug:AddMessage(1, "IterateUnits", "UnitInfo-3", player.guild, player.guildrealm)
+		Debug:AddMessage(1, "IterateUnits", "RealmKey", player.realmKey)
+		Debug:AddMessage(1, "IterateUnits", "RealmKey_RWS", player.rwsKey)
 
 		for unitObj in BSYC:GetModule("Data"):IterateUnits() do
 			if not unitObj.isGuild then
-				self:AddMessage(1, "IterateUnits", "player", unitObj.name, unitObj.realm, unitObj.isConnectedRealm, unitObj.data.guild, unitObj.data.guildrealm, unitObj.data.realmKey, unitObj.data.rwsKey)
+				Debug:AddMessage(1, "IterateUnits", "player", unitObj.name, unitObj.realm, unitObj.isConnectedRealm, unitObj.data.guild, unitObj.data.guildrealm, unitObj.data.realmKey, unitObj.data.rwsKey)
 			else
-				self:AddMessage(1, "IterateUnits", "guild", unitObj.name, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, unitObj.data.realmKey, unitObj.data.rwsKey)
+				Debug:AddMessage(1, "IterateUnits", "guild", unitObj.name, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, unitObj.data.realmKey, unitObj.data.rwsKey)
 			end
 		end
 	end)
-	iterateUnits.frame:SetParent(Debug.optionsFrame)
-	iterateUnits.frame:SetPoint("LEFT",dumpOptions.frame,"RIGHT",10,-0)
-	iterateUnits.frame:Show()
+	optionsFrame.iterateUnits = iterateUnits
 
-	local dumpTotals = AceGUI:Create("Button")
-	dumpTotals.frame:SetParent(Debug.optionsFrame)
+	--dump totals
+	local dumpTotals = _G.CreateFrame("Button", nil, optionsFrame, "UIPanelButtonTemplate")
 	dumpTotals:SetText(L.DebugDBTotals)
 	dumpTotals:SetHeight(30)
-	dumpTotals:SetAutoWidth(true)
-	dumpTotals:SetCallback("OnClick", function()
+	dumpTotals:SetWidth(dumpTotals:GetTextWidth() + 30)
+	dumpTotals:SetPoint("LEFT", iterateUnits, "RIGHT", 10, 0)
+	dumpTotals:SetScript("OnClick", function(self)
 		local totalUnits = 0
 		local totalGuilds = 0
 		local totalRealms = 0
@@ -440,84 +227,148 @@ function Debug:OnEnable()
 			end
 		end
 
-		self:AddMessage(1, "DBTotals", "totalUnits", totalUnits)
-		self:AddMessage(1, "DBTotals", "totalGuilds", totalGuilds)
-		self:AddMessage(1, "DBTotals", "totalRealms", totalRealms)
-		self:AddMessage(1, "DBTotals", "biggestRealmName", biggestRealmName)
-		self:AddMessage(1, "DBTotals", "biggestRealmCount", biggestRealmCount)
-		self:AddMessage(1, "DBTotals", "toatlItems", toatlItems)
+		Debug:AddMessage(1, "DBTotals", "totalUnits", totalUnits)
+		Debug:AddMessage(1, "DBTotals", "totalGuilds", totalGuilds)
+		Debug:AddMessage(1, "DBTotals", "totalRealms", totalRealms)
+		Debug:AddMessage(1, "DBTotals", "biggestRealmName", biggestRealmName)
+		Debug:AddMessage(1, "DBTotals", "biggestRealmCount", biggestRealmCount)
+		Debug:AddMessage(1, "DBTotals", "toatlItems", toatlItems)
 
 	end)
-	dumpTotals.frame:SetParent(Debug.optionsFrame)
-	dumpTotals.frame:SetPoint("LEFT",iterateUnits.frame,"RIGHT",10,-0)
-	dumpTotals.frame:Show()
+	optionsFrame.dumpTotals = dumpTotals
 
-	local addonList = AceGUI:Create("Button")
-	addonList.frame:SetParent(Debug.optionsFrame)
+	--addon list
+	local addonList = _G.CreateFrame("Button", nil, optionsFrame, "UIPanelButtonTemplate")
 	addonList:SetText(L.DebugAddonList)
 	addonList:SetHeight(30)
-	addonList:SetAutoWidth(true)
-	addonList:SetCallback("OnClick", function()
+	addonList:SetWidth(addonList:GetTextWidth() + 30)
+	addonList:SetPoint("LEFT", dumpTotals, "RIGHT", 10, 0)
+	addonList:SetScript("OnClick", function(self)
 		for i=1, GetNumAddOns() do
-			local name, title, notes, loadable, reason, security, newVersion = GetAddOnInfo(i)
-			self:AddMessage(1, "AddonList", title)
+			local _, title = GetAddOnInfo(i)
+			Debug:AddMessage(1, "AddonList", title)
 		end
 	end)
-	addonList.frame:SetParent(Debug.optionsFrame)
-	addonList.frame:SetPoint("LEFT",dumpTotals.frame,"RIGHT",10,-0)
-	addonList.frame:Show()
+	optionsFrame.addonList = addonList
 
-	local exportBtn = AceGUI:Create("Button")
-	exportBtn.frame:SetParent(Debug.optionsFrame)
+	--export frame
+	local exportFrame = _G.CreateFrame("Frame", nil, DebugFrame, "BagSyncInfoFrameTemplate")
+	exportFrame:Hide()
+	exportFrame:SetWidth(850)
+	exportFrame:SetHeight(500)
+	exportFrame:SetBackdropColor(0, 0, 0, 0.75)
+	exportFrame:EnableMouse(true) --don't allow clickthrough
+	exportFrame:SetMovable(false)
+	exportFrame:SetResizable(false)
+	exportFrame:SetFrameStrata("DIALOG")
+	exportFrame:ClearAllPoints()
+	exportFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+	exportFrame.TitleText:SetText(L.DebugExport)
+	exportFrame.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
+	exportFrame.TitleText:SetTextColor(1, 1, 1)
+	exportFrame.InfoText1:Hide()
+	exportFrame.InfoText2:Hide()
+	exportFrame.ScrollFrame = CreateFrame("ScrollFrame", nil, exportFrame, "UIPanelScrollFrameTemplate")
+	exportFrame.ScrollFrame:SetPoint("TOPLEFT", exportFrame, "TOPLEFT", 8, -30)
+	exportFrame.ScrollFrame:SetPoint("BOTTOMRIGHT", exportFrame, "BOTTOMRIGHT", -30, 8)
+	exportFrame.EditBox = _G.CreateFrame("EditBox", nil, exportFrame.ScrollFrame)
+	exportFrame.EditBox:SetAllPoints()
+	exportFrame.EditBox:SetFont("Fonts\\ARIALN.TTF", 14, "OUTLINE")
+	exportFrame.EditBox:SetMultiLine(true)
+	exportFrame.EditBox:SetAutoFocus(false)
+	exportFrame.EditBox:SetMaxLetters(0)
+	exportFrame.EditBox:SetCountInvisibleLetters(false)
+	--exportFrame.EditBox:SetText(L.SearchHelp)
+	exportFrame.EditBox:SetWidth(815) --set the boundaries for word wrapping on the scrollbar, if smaller than the frame it will wrap it
+	exportFrame.ScrollFrame:SetScrollChild(exportFrame.EditBox)
+	--lets set it to disabled to prevent editing
+	exportFrame.EditBox:ClearFocus()
+	exportFrame.EditBox:EnableMouse(true)
+	exportFrame.EditBox:SetTextColor(1, 1, 1) --set default to white
+	exportFrame.ScrollFrame:EnableMouse(false)
+	DebugFrame.exportFrame = exportFrame
+
+	--export button
+	local exportBtn = _G.CreateFrame("Button", nil, optionsFrame, "UIPanelButtonTemplate")
 	exportBtn:SetText(L.DebugExport)
 	exportBtn:SetHeight(20)
-	exportBtn:SetAutoWidth(true)
-	exportBtn:SetCallback("OnClick", function()
-		-- local lines = {};
-		-- for i=1, #self.scrollframe.children do
-		-- 	local tmpObj = self.scrollframe.children[i]
-		-- 	if tmpObj and tmpObj.label then
-		-- 		table.insert(lines, tmpObj.label:GetText())
-		-- 	end
-		-- end
-
-		-- local strLines = table.concat(lines, "\r\n")
-
-		SetExportFrameText()
+	exportBtn:SetWidth(exportBtn:GetTextWidth() + 30)
+	exportBtn:SetPoint("TOPRIGHT", optionsFrame, "TOPRIGHT", -5, -5)
+	exportBtn:SetScript("OnClick", function(self)
+		local lineText = ""
+		for i=1, #Debug.debugItems do
+			if (i == 1) then
+				lineText = unescape(Debug.debugItems[i]).."|r"
+			else
+				lineText = lineText.."\n"..unescape(Debug.debugItems[i]).."|r"
+			end
+		end
+		exportFrame.EditBox:SetText(lineText)
+		exportFrame:Show()
 	end)
-	exportBtn.frame:SetParent(Debug.optionsFrame)
-	exportBtn.frame:SetPoint("TOPRIGHT",Debug.optionsFrame,"TOPRIGHT",-5,-5)
-	exportBtn.frame:Show()
+	optionsFrame.exportBtn = exportBtn
 
-	local clearBtn = AceGUI:Create("Button")
-	clearBtn.frame:SetParent(Debug.optionsFrame)
+	--clear button
+	local clearBtn = _G.CreateFrame("Button", nil, optionsFrame, "UIPanelButtonTemplate")
 	clearBtn:SetText(L.Clear)
 	clearBtn:SetHeight(20)
-	clearBtn:SetAutoWidth(true)
-	clearBtn:SetCallback("OnClick", function()
-		scrollframe:ReleaseChildren()
+	clearBtn:SetWidth(clearBtn:GetTextWidth() + 30)
+	clearBtn:SetPoint("BOTTOMRIGHT", optionsFrame, "BOTTOMRIGHT", -5, 7)
+	clearBtn:SetScript("OnClick", function(self)
+		Debug.debugItems = {}
+		Debug:RefreshList()
 	end)
-	clearBtn.frame:SetParent(Debug.optionsFrame)
-	clearBtn.frame:SetPoint("BOTTOMRIGHT",Debug.optionsFrame,"BOTTOMRIGHT",-5,5)
-	clearBtn.frame:Show()
-
-	--create the export frame
-	CreateExportFrame()
-
-	DebugFrame:Hide()
+	optionsFrame.clearBtn = clearBtn
 
 	--only annoy the user if the option is enabled, making sure to remind them that debugging is on.
 	--can you tell that I really don't want them to leave this on? LOL
-	if BSYC.options and BSYC.options.debug and BSYC.options.debug.enable then
+	if BSYC.options.debug.enable then
 		DebugFrame:Show()
 	end
+end
 
-	--put warnings everywhere! Including if they hide the window WHILE debugging is enabled
-	DebugFrame.frame:SetScript("OnHide", function()
-		if BSYC.options and BSYC.options.debug and BSYC.options.debug.enable then
-			BSYC:Print(L.DebugWarning)
-		end
-	end)
+function Debug:OnShow()
+    Debug:RefreshList()
+end
+
+function Debug:OnHide()
+	if  BSYC.options.debug.enable then
+		BSYC:Print(L.DebugWarning)
+	end
+end
+
+function Debug:RefreshList()
+    local items =  Debug.debugItems
+    local buttons = HybridScrollFrame_GetButtons(Debug.scrollFrame)
+    local offset = HybridScrollFrame_GetOffset(Debug.scrollFrame)
+
+	if not buttons then return end
+
+    for buttonIndex = 1, #buttons do
+        local button = buttons[buttonIndex]
+		button.parentHandler = Debug
+
+        local itemIndex = buttonIndex + offset
+
+        if itemIndex <= #items then
+            local item = items[itemIndex]
+
+            button:SetID(itemIndex)
+			button.Text:SetFont("Fonts\\ARIALN.TTF", 14, "OUTLINE")
+            button.Text:SetText(item or "")
+			button.Text:SetTextColor(1, 1, 1) --set white
+            button:SetWidth(Debug.scrollFrame.scrollChild:GetWidth())
+            button:Show()
+        else
+            button:Hide()
+        end
+    end
+
+    local buttonHeight = Debug.scrollFrame.buttonHeight
+    local totalHeight = #items * buttonHeight
+    local shownHeight = #buttons * buttonHeight
+
+    HybridScrollFrame_Update(Debug.scrollFrame, totalHeight, shownHeight)
 end
 
 function Debug:AddMessage(level, sName, ...)
@@ -565,18 +416,15 @@ function Debug:AddMessage(level, sName, ...)
 	debugStr = moduleName..debugStr
 	debugStr = "|cff808080["..date("%X").."]:|r "..debugStr
 
-	local label = AceGUI:Create("BagSyncLabel")
-
 	--if it exceeds the amount of labels then remove top most one before adding
-	if #self.scrollframe.children > xListLen then
-		local tmpTable = table.remove(self.scrollframe.children, 1)
-		tmpTable:Release()
+	if #Debug.debugItems > xListLen then
+		table.remove(Debug.debugItems, 1)
 	end
 
-	label:SetText(debugStr)
-	label:SetFont("Fonts\\ARIALN.TTF", 14, "OUTLINE")
-	label:SetFullWidth(true)
-	self.scrollframe:AddChild(label)
+	table.insert(Debug.debugItems, debugStr)
+	Debug:RefreshList()
 
-	self.scrollframe:SetScroll(1000)
+	--scroll to bottom by getting the current range and adjusting the scrollframe offset and scrollbar value
+	HybridScrollFrame_SetOffset(Debug.scrollFrame, Debug.scrollFrame.range)
+	Debug.scrollFrame.scrollBar:SetValue(Debug.scrollFrame.range)
 end

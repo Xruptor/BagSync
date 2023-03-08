@@ -235,18 +235,12 @@ function Data:FixDB()
 		if data then
 			for i=1, #data do
 				if data[i] then
-					local link, count, qOpts = BSYC:Split(data[i], false)
-					if link and tonumber(link) and (tonumber(link) >= BSYC.FakePetCode) then
-						if not qOpts or type(qOpts) ~= "table" or not qOpts.battlepet then
-							link = (link - BSYC.FakePetCode) / 100000
-							link = BSYC:CreateFakeBattlePetID(nil, count, link)
-							data[i] = link
-						end
+					local link, count = BSYC:Split(data[i], true)
+					if link and tonumber(link) and (tonumber(link) >= BSYC.FakePetCode) and not data[i]:find("petdata") then
+						link = (link - BSYC.FakePetCode) / 100000
+						link = BSYC:CreateFakeID(nil, count, link)
+						data[i] = link
 					end
-					--old gtab qOpts
-					-- if qOpts.gtab then
-					-- 	data[i] = BSYC:EncodeOpts(qOpts, data[i], {gtab=true})
-					-- end
 				end
 			end
 		end
@@ -439,12 +433,15 @@ function Data:LoadSlashCommand()
 
 end
 
-function Data:CacheLink(dbEntry, parseLink, qOpts)
+function Data:CacheLink(parseLink)
 	local itemObj = {}
+	local speciesID = BSYC:FakeIDToSpeciesID(parseLink)
+
 	if not Data.__cache.items[parseLink] then
-		if qOpts.battlepet then
+		if speciesID then
 			itemObj.itemQuality = 1
-			itemObj.itemLink = dbEntry --use the whole link, not just the FakeID, this is to grab qOpts in future uses
+			itemObj.itemLink = parseLink --store the FakeID
+			itemObj.speciesID = speciesID
 
 			--https://wowpedia.fandom.com/wiki/API_C_PetJournal.GetPetInfoBySpeciesID
 			itemObj.speciesName,
@@ -458,7 +455,7 @@ function Data:CacheLink(dbEntry, parseLink, qOpts)
 			itemObj.isTradeable,
 			itemObj.isUnique,
 			itemObj.obtainable,
-			itemObj.creatureDisplayID = C_PetJournal.GetPetInfoBySpeciesID(qOpts.battlepet)
+			itemObj.creatureDisplayID = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
 		else
 			--https://wowpedia.fandom.com/wiki/API_GetItemInfo
 			itemObj.itemName,

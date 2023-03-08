@@ -19,7 +19,7 @@ end
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
 function AdvancedSearch:OnEnable()
-    local advFrame = _G.CreateFrame("Frame", nil, Search.frame, "BagSyncFrameTemplate")
+    local advFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncSearchFrameTemplate")
 	Mixin(advFrame, AdvancedSearch) --implement new frame to our parent module Mixin, to have access to parent methods
 	_G["BagSyncAdvSearchFrame"] = advFrame
     --Add to special frames so window can be closed when the escape key is pressed.
@@ -67,6 +67,7 @@ function AdvancedSearch:OnEnable()
 	AdvancedSearch.playerList = {}
 	AdvancedSearch.playerScroll.update = function() AdvancedSearch:RefreshPlayerList(); end
     HybridScrollFrame_SetDoNotHideScrollBar(AdvancedSearch.playerScroll, true)
+	HybridScrollFrame_CreateButtons(AdvancedSearch.playerScroll, "BagSyncListItemTemplate")
 
 	advFrame.locationTitle = advFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
 	advFrame.locationTitle:SetText(L.Locations)
@@ -97,6 +98,7 @@ function AdvancedSearch:OnEnable()
     AdvancedSearch.locationList = {}
 	AdvancedSearch.locationScroll.update = function() AdvancedSearch:RefreshLocationList(); end
     HybridScrollFrame_SetDoNotHideScrollBar(AdvancedSearch.locationScroll, true)
+	HybridScrollFrame_CreateButtons(AdvancedSearch.locationScroll, "BagSyncListItemTemplate")
 
 	--Reset button
 	advFrame.resetButton = _G.CreateFrame("Button", nil, advFrame, "UIPanelButtonTemplate")
@@ -177,9 +179,6 @@ function AdvancedSearch:DoSearch(searchStr)
 end
 
 function AdvancedSearch:CreateLists()
-	HybridScrollFrame_CreateButtons(AdvancedSearch.playerScroll, "BagSyncListItemTemplate")
-	HybridScrollFrame_CreateButtons(AdvancedSearch.locationScroll, "BagSyncListItemTemplate")
-
 	local playerListTable = {}
 
 	--show simple for ColorizeUnit
@@ -228,6 +227,7 @@ function AdvancedSearch:RefreshPlayerList()
     local items = AdvancedSearch.playerList
     local buttons = HybridScrollFrame_GetButtons(AdvancedSearch.playerScroll)
     local offset = HybridScrollFrame_GetOffset(AdvancedSearch.playerScroll)
+	if not buttons then return end
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
@@ -245,6 +245,13 @@ function AdvancedSearch:RefreshPlayerList()
 			button.Text:SetTextColor(1, 1, 1)
             button:SetWidth(AdvancedSearch.playerScroll.scrollChild:GetWidth())
 			button.DetailsButton:Hide()
+
+			--while we are updating the scrollframe, is the mouse currently over a button?
+			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
+			-- if GetMouseFocus() == button then
+			-- 	AdvancedSearch:Item_OnLeave() --hide first
+			-- 	AdvancedSearch:Item_OnEnter(button)
+			-- end
 
 			button.Icon:SetTexture(nil)
 			button.Icon:Hide()
@@ -282,6 +289,7 @@ function AdvancedSearch:RefreshLocationList()
     local items = AdvancedSearch.locationList
     local buttons = HybridScrollFrame_GetButtons(AdvancedSearch.locationScroll)
     local offset = HybridScrollFrame_GetOffset(AdvancedSearch.locationScroll)
+	if not buttons then return end
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
@@ -331,6 +339,7 @@ function AdvancedSearch:Reset()
 	AdvancedSearch.frame.SearchBox:SetText("")
 	Search.advUnitList = nil
 	AdvancedSearch:SelectAll(true)
+	AdvancedSearch.frame.SearchBox.ClearButton:Hide()
 end
 
 function AdvancedSearch:SelectAll(uncheck)
@@ -355,7 +364,7 @@ end
 
 function AdvancedSearch:SearchBox_ResetSearch(btn)
 	btn:Hide()
-	AdvancedSearch:Reset()
+	AdvancedSearch.frame.SearchBox:SetText("")
 end
 
 function AdvancedSearch:Item_OnClick(btn)

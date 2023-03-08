@@ -116,10 +116,11 @@ end
 function BSYC:EncodeOpts(tbl, link, removeOpts)
 	if not tbl then return nil end
 	local tmpStr = ""
+	--To Remove Opts: (example) BSYC:EncodeOpts(qOpts, link, {gtab=true})
 
 	if link then
 		--when doing the split, make sure to merge our table
-		local xLink, xCount, xOpts = self:Split(link, false, tbl)
+		local xLink, xCount, xOpts = self:Split(link, nil, tbl)
 
 		if xLink then
 			if not xCount then xCount = 1 end
@@ -192,7 +193,7 @@ function BSYC:ParseItemLink(link, count)
 		--end
 		local isBattlepet = string.match(link, ".*(battlepet):.*") == "battlepet"
 		if isBattlepet then
-			return BSYC:CreateFakeBattlePetID(link, count)
+			return BSYC:CreateFakeID(link, count)
 		end
 
 		local result = link:match("item:([%d:]+)")
@@ -264,9 +265,9 @@ function BSYC:ParseItemLink(link, count)
 	end
 end
 
-function BSYC:CreateFakeBattlePetID(link, count, speciesID, level, breedQuality, maxHealth, power, speed, name)
+function BSYC:CreateFakeID(link, count, speciesID, level, breedQuality, maxHealth, power, speed, name)
 	if not BattlePetTooltip then return nil end
-	Debug(BSYC_DL.DEBUG, "CreateFakeBattlePetID", link, count, speciesID, level, breedQuality, maxHealth, power, speed, name)
+	Debug(BSYC_DL.DEBUG, "CreateFakeID", link, count, speciesID, level, breedQuality, maxHealth, power, speed, name)
 	--https://github.com/tomrus88/BlizzardInterfaceCode/blob/8633e552f3335b8c66b1fbcea6760a5cd8bcc06b/Interface/FrameXML/BattlePetTooltip.lua
 
 	local petData
@@ -291,7 +292,7 @@ function BSYC:CreateFakeBattlePetID(link, count, speciesID, level, breedQuality,
 		if fakePetID then
 			if not count then count = 1 end
 
-			local encodeStr = self:EncodeOpts({battlepet=speciesID, petdata=petData})
+			local encodeStr = self:EncodeOpts({petdata=petData})
 			if encodeStr then
 				return fakePetID..";"..count..";"..encodeStr
 			end
@@ -301,16 +302,15 @@ function BSYC:CreateFakeBattlePetID(link, count, speciesID, level, breedQuality,
 	return nil
 end
 
-function BSYC:FakeIDToBattlePetID(fakeID)
+function BSYC:FakeIDToSpeciesID(fakeID)
 	if not fakeID or not tonumber(fakeID) then return nil end
 	fakeID = tonumber(fakeID)
 
 	if fakeID >= BSYC.FakePetCode then
 		fakeID = (fakeID - BSYC.FakePetCode) / 100000
 		return fakeID
-	else
-		return nil
 	end
+	return nil
 end
 
 function BSYC:GetShortItemID(link)
@@ -321,7 +321,7 @@ function BSYC:GetShortItemID(link)
 		local isBattlepet = string.match(link, ".*(battlepet):.*") == "battlepet"
 		if isBattlepet then
 			--create a FakeID
-			link = BSYC:CreateFakeBattlePetID(link)
+			link = BSYC:CreateFakeID(link)
 		end
 		if not link then return end
 
