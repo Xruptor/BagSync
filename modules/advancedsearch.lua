@@ -21,9 +21,6 @@ local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 function AdvancedSearch:OnEnable()
     local advFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncSearchFrameTemplate")
 	Mixin(advFrame, AdvancedSearch) --implement new frame to our parent module Mixin, to have access to parent methods
-	_G["BagSyncAdvSearchFrame"] = advFrame
-    --Add to special frames so window can be closed when the escape key is pressed.
-    tinsert(UISpecialFrames, "BagSyncAdvSearchFrame")
     advFrame.TitleText:SetText(L.AdvancedSearch)
 	advFrame:SetWidth(400)
     advFrame:SetHeight(550)
@@ -183,7 +180,7 @@ function AdvancedSearch:CreateLists()
 
 	--show simple for ColorizeUnit
 	for unitObj in Data:IterateUnits(true) do
-		table.insert(playerListTable, { unitObj=unitObj, colorized=Tooltip:ColorizeUnit(unitObj, true) })
+		table.insert(playerListTable, { unitObj=unitObj, colorized=Tooltip:ColorizeUnit(unitObj, true)})
 	end
 
 	--units
@@ -199,11 +196,19 @@ function AdvancedSearch:CreateLists()
 		for i=1, #playerListTable do
 			if lastHeader ~= playerListTable[i].unitObj.realm then
 				--add header
-				table.insert(AdvancedSearch.playerList, {unitObj=playerListTable[i].unitObj, colorized=playerListTable[i].unitObj.realm, isHeader=true, isSelected=false})
+				table.insert(AdvancedSearch.playerList, {
+					colorized = playerListTable[i].unitObj.realm,
+					isHeader = true,
+					isSelected = false
+				})
 				lastHeader = playerListTable[i].unitObj.realm
 			end
 			--add player
-			table.insert(AdvancedSearch.playerList, {unitObj=playerListTable[i].unitObj, colorized=playerListTable[i].colorized, isHeader=false, isSelected=false})
+			table.insert(AdvancedSearch.playerList, {
+				unitObj = playerListTable[i].unitObj,
+				colorized = playerListTable[i].colorized,
+				isSelected = false
+			})
 		end
 	end
 
@@ -240,7 +245,6 @@ function AdvancedSearch:RefreshPlayerList()
 
             button:SetID(itemIndex)
 			button.listData = item
-            button.Icon:SetTexture(nil)
 			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
 			button.Text:SetTextColor(1, 1, 1)
             button:SetWidth(AdvancedSearch.playerScroll.scrollChild:GetWidth())

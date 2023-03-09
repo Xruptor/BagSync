@@ -16,127 +16,61 @@ local function Debug(level, ...)
 end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
-local AceGUI = LibStub("AceGUI-3.0")
 
 function Professions:OnEnable()
-
-	--lets create our widgets
-	local ProfessionsFrame = AceGUI:Create("Window")
-	_G["BagSyncProfessionsFrame"] = ProfessionsFrame
+	local professionsFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")
+	Mixin(professionsFrame, Professions) --implement new frame to our parent module Mixin, to have access to parent methods
+	_G["BagSyncProfessionsFrame"] = professionsFrame
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncProfessionsFrame")
-	Professions.frame = ProfessionsFrame
-	Professions.parentFrame = ProfessionsFrame.frame
+    professionsFrame.TitleText:SetText("BagSync - "..L.Professions)
+    professionsFrame:SetHeight(500)
+	professionsFrame:SetWidth(380)
+    professionsFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    professionsFrame:EnableMouse(true) --don't allow clickthrough
+    professionsFrame:SetMovable(true)
+    professionsFrame:SetResizable(false)
+    professionsFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    professionsFrame:SetScript("OnShow", function() Professions:OnShow() end)
+    Professions.frame = professionsFrame
 
-	ProfessionsFrame:SetTitle("BagSync - "..L.Professions)
-	ProfessionsFrame:SetHeight(500)
-	ProfessionsFrame:SetWidth(380)
-	ProfessionsFrame:EnableResize(false)
+	professionsFrame.infoText = professionsFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
+	professionsFrame.infoText:SetText(L.ProfessionInformation)
+	professionsFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
+	professionsFrame.infoText:SetTextColor(1, 165/255, 0)
+	professionsFrame.infoText:SetPoint("LEFT", professionsFrame, "TOPLEFT", 15, -30)
+	professionsFrame.infoText:SetJustifyH("LEFT")
+	professionsFrame.infoText:SetWidth(professionsFrame:GetWidth() - 15)
 
-	local information = AceGUI:Create("BagSyncLabel")
-	information:SetText(L.ProfessionInformation)
-	information:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
-	information:SetColor(1, 165/255, 0)
-	information:SetFullWidth(true)
-	ProfessionsFrame:AddChild(information)
+    Professions.scrollFrame = _G.CreateFrame("ScrollFrame", nil, professionsFrame, "HybridScrollFrameTemplate")
+    Professions.scrollFrame:SetWidth(345)
+    Professions.scrollFrame:SetPoint("TOPLEFT", professionsFrame, "TOPLEFT", 6, -40)
+    --set ScrollFrame height by altering the distance from the bottom of the frame
+    Professions.scrollFrame:SetPoint("BOTTOMLEFT", professionsFrame, "BOTTOMLEFT", -25, 10)
+    Professions.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Professions.scrollFrame, "HybridScrollBarTemplate")
+    Professions.scrollFrame.scrollBar:SetPoint("TOPLEFT", Professions.scrollFrame, "TOPRIGHT", 1, -16)
+    Professions.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Professions.scrollFrame, "BOTTOMRIGHT", 1, 12)
+	--initiate the scrollFrame
+    --the items we will work with
+    Professions.professionList = {}
+	Professions.scrollFrame.update = function() Professions:RefreshList(); end
+    HybridScrollFrame_SetDoNotHideScrollBar(Professions.scrollFrame, true)
+	HybridScrollFrame_CreateButtons(Professions.scrollFrame, "BagSyncListSimpleItemTemplate")
 
-	local scrollframe = AceGUI:Create("ScrollFrame");
-	scrollframe:SetFullWidth(true)
-	scrollframe:SetLayout("Flow")
-
-	Professions.scrollframe = scrollframe
-	ProfessionsFrame:AddChild(scrollframe)
-
-	hooksecurefunc(ProfessionsFrame, "Show" ,function()
-		self:DisplayList()
-	end)
-
-	ProfessionsFrame:Hide()
-
+	professionsFrame:Hide()
 end
 
-function Professions:AddEntry(entry, isHeader)
+function Professions:OnShow()
+	Professions:CreateList()
+    Professions:RefreshList()
 
-	local label = AceGUI:Create("BagSyncInteractiveLabel")
-
-	label:SetHeaderHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-	label:ToggleHeaderHighlight(false)
-	label.entry = entry
-	label:SetColor(1, 1, 1)
-
-	if isHeader then
-		label:SetText(entry.skillData.name)
-		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
-		label:SetFullWidth(true)
-		label:ApplyJustifyH("CENTER")
-		label.userdata.hasRecipes = false
-		label:ToggleHeaderHighlight(true)
-		label.userdata.isHeader = true
-	else
-		label:SetText(entry.colorized)
-		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
-		label:SetFullWidth(true)
-
-		if entry.hasRecipes then
-			label.userdata.hasRecipes = true
-		else
-			if not entry.skillData.skillLineCurrentLevel or not entry.skillData.skillLineMaxLevel then
-				label:SetText(entry.colorized.."   "..L.PleaseRescan)
-			else
-				label:SetText(entry.colorized..format("   |cFFFFFFFF%s/%s|r", entry.skillData.skillLineCurrentLevel or 0, entry.skillData.skillLineMaxLevel or 0))
-			end
-			label.userdata.hasRecipes = false
-		end
-		label:ApplyJustifyH("LEFT")
-		label.userdata.isHeader = false
-	end
-
-	label:SetCallback(
-		"OnClick",
-		function (widget, sometable, button)
-			if "LeftButton" == button and label.userdata.hasRecipes then
-				BSYC:GetModule("Recipes"):ViewRecipes(label.entry)
-			end
-		end)
-	label:SetCallback(
-		"OnEnter",
-		function (widget, sometable)
-			if not label.userdata.isHeader then
-				label:SetColor(1, 0, 0)
-				--override the single tooltip use of BagSync
-				label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-				label.highlight:SetVertexColor(0,1,0,0.3)
-
-				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
-
-				if not label.userdata.isHeader then
-					if label.userdata.hasRecipes then
-						GameTooltip:AddLine(label.entry.colorized..": "..L.ProfessionHasRecipes)
-					else
-						GameTooltip:AddLine(label.entry.colorized..": "..L.ProfessionHasNoRecipes)
-					end
-					GameTooltip:Show()
-				end
-			end
-		end)
-	label:SetCallback(
-		"OnLeave",
-		function (widget, sometable)
-			label:SetColor(1, 1, 1)
-			--override the single tooltip use of BagSync
-			label.highlight:SetTexture(nil)
-			GameTooltip:Hide()
-		end)
-
-	self.scrollframe:AddChild(label)
+	--scroll to top when shown
+	HybridScrollFrame_SetOffset(Professions.scrollFrame, 0)
+	Professions.scrollFrame.scrollBar:SetValue(0)
 end
 
-function Professions:DisplayList()
-
-	self.scrollframe:ReleaseChildren() --clear out the scrollframe
-
-	local professionsTable = {}
-	local tempList = {}
+function Professions:CreateList()
+	local usrData = {}
 
 	for unitObj in Data:IterateUnits() do
 		if not unitObj.isGuild and unitObj.data.professions then
@@ -146,15 +80,21 @@ function Professions:DisplayList()
 					if (skillData.recipeCount and skillData.recipeCount > 0) or (skillData.categoryCount and skillData.categoryCount > 0) then
 						hasRecipes = true
 					end
-					table.insert(professionsTable, { skillID=skillID, skillData=skillData, unitObj=unitObj, colorized=Tooltip:ColorizeUnit(unitObj), sortIndex=Tooltip:GetSortIndex(unitObj), hasRecipes=hasRecipes } )
+					table.insert(usrData, {
+						skillID = skillID,
+						skillData = skillData,
+						unitObj = unitObj,
+						colorized = Tooltip:ColorizeUnit(unitObj),
+						sortIndex = Tooltip:GetSortIndex(unitObj),
+						hasRecipes = hasRecipes
+					})
 				end
 			end
 		end
 	end
 
-	if #professionsTable > 0 then
-
-		table.sort(professionsTable, function(a, b)
+	if #usrData > 0 then
+		table.sort(usrData, function(a, b)
 			if a.skillData.name == b.skillData.name then
 				if a.sortIndex  == b.sortIndex then
 					if a.unitObj.realm == b.unitObj.realm then
@@ -168,18 +108,112 @@ function Professions:DisplayList()
 		end)
 
 		local lastHeader = ""
-		for i=1, #professionsTable do
-			if lastHeader ~= professionsTable[i].skillData.name then
-				self:AddEntry(professionsTable[i], true) --add header
-				self:AddEntry(professionsTable[i], false) --add entry
-				lastHeader = professionsTable[i].skillData.name
-			else
-				self:AddEntry(professionsTable[i], false) --add entry
+		for i=1, #usrData do
+			if lastHeader ~= usrData[i].skillData.name then
+				--add header
+				table.insert(Professions.professionList, {
+					header = usrData[i].skillData.name,
+					isHeader = true
+				})
+				lastHeader = usrData[i].skillData.name
 			end
+			--add unit
+			table.insert(Professions.professionList, {
+				skillID = usrData[i].skillID,
+				skillData = usrData[i].skillData,
+				unitObj = usrData[i].unitObj,
+				colorized = usrData[i].colorized,
+				sortIndex = usrData[i].sortIndex,
+				hasRecipes = usrData[i].hasRecipes
+			})
 		end
-		self.scrollframe.frame:Show()
-	else
-		self.scrollframe.frame:Hide()
 	end
+end
 
+function Professions:RefreshList()
+    local items = Professions.professionList
+    local buttons = HybridScrollFrame_GetButtons(Professions.scrollFrame)
+    local offset = HybridScrollFrame_GetOffset(Professions.scrollFrame)
+	if not buttons then return end
+
+    for buttonIndex = 1, #buttons do
+        local button = buttons[buttonIndex]
+		button.parentHandler = Professions
+
+        local itemIndex = buttonIndex + offset
+
+        if itemIndex <= #items then
+            local item = items[itemIndex]
+
+            button:SetID(itemIndex)
+			button.data = item
+			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+            button:SetWidth(Professions.scrollFrame.scrollChild:GetWidth())
+
+			if item.isHeader then
+				button.Text:SetJustifyH("CENTER")
+				button.Text:SetTextColor(1, 1, 1)
+				button.Text:SetText(item.header or "")
+				--button.HeaderHighlight:SetVertexColor(0.8, 0.7, 0, 1)
+				button.HeaderHighlight:SetAlpha(0.75)
+				button.isHeader = true
+			else
+				button.Text:SetJustifyH("LEFT")
+				button.Text:SetTextColor(0.25, 0.88, 0.82)
+				button.Text:SetText(item.colorized or "")
+				button.HeaderHighlight:SetAlpha(0)
+				button.isHeader = nil
+
+				--check for possible rescans and display baseline profession levels
+				if not item.hasRecipes then
+					if not item.skillData.skillLineCurrentLevel or not item.skillData.skillLineMaxLevel then
+						button.Text:SetText(item.colorized.."   "..L.PleaseRescan)
+					else
+						button.Text:SetText(item.colorized..format("   |cFFFFFFFF%s/%s|r", item.skillData.skillLineCurrentLevel or 0, item.skillData.skillLineMaxLevel or 0))
+					end
+				end
+			end
+
+			--while we are updating the scrollframe, is the mouse currently over a button?
+			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
+			if GetMouseFocus() == button then
+				Professions:Item_OnLeave() --hide first
+				Professions:Item_OnEnter(button)
+			end
+
+            button:Show()
+        else
+            button:Hide()
+        end
+    end
+
+    local buttonHeight = Professions.scrollFrame.buttonHeight
+    local totalHeight = #items * buttonHeight
+    local shownHeight = #buttons * buttonHeight
+
+    HybridScrollFrame_Update(Professions.scrollFrame, totalHeight, shownHeight)
+end
+
+function Professions:Item_OnEnter(btn)
+    if not btn.isHeader then
+		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+		if btn.data.hasRecipes then
+			GameTooltip:AddLine(btn.data.colorized..": "..L.ProfessionHasRecipes)
+		else
+			GameTooltip:AddLine(btn.data.colorized..": "..L.ProfessionHasNoRecipes)
+		end
+		GameTooltip:Show()
+		return
+	end
+	GameTooltip:Hide()
+end
+
+function Professions:Item_OnLeave()
+	GameTooltip:Hide()
+end
+
+function Professions:Item_OnClick(btn)
+	if not btn.isHeader and btn.data.hasRecipes then
+		BSYC:GetModule("Recipes"):ViewRecipes(btn.data)
+	end
 end

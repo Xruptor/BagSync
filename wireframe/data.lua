@@ -548,6 +548,7 @@ function Data:GetPlayerGuild()
 
 	if not BagSyncDB[player.guildrealm] then return end
 	if not BagSyncDB[player.guildrealm][player.guild] then return end
+	if BSYC.db.blacklist[player.guild..player.guildrealm] then return end
 
 	return {realm=player.guildrealm, name=player.guild, data=BagSyncDB[player.guildrealm][player.guild], isGuild=true, isConnectedRealm=isConnectedRealm, isXRGuild=isXRGuild}
 end

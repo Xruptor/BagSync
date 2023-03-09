@@ -212,7 +212,13 @@ function Search:CheckItem(searchStr, unitObj, target, checkList, onlyPlayer)
 
 						checkList[link] = entry
 						if testMatch or onlyPlayer then
-							table.insert(Search.items, { name=itemName, link=cacheObj.itemLink, rarity=cacheObj.itemQuality, icon=texture, speciesID=BSYC:FakeIDToSpeciesID(link) } )
+							table.insert(Search.items, {
+								name = itemName,
+								link = cacheObj.itemLink,
+								rarity = cacheObj.itemQuality,
+								icon = texture,
+								speciesID = BSYC:FakeIDToSpeciesID(link)
+							})
 						end
 					else
 						--add to warning count total if we haven't processed that item
@@ -308,10 +314,10 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 			countWarning = countWarning + Search:CheckItem(searchStr, playerObj, atUserLoc, checkList, true)
 		else
 			if playerObj.data.guild then
-				local guildObj = Data:GetGuild(playerObj.data)
+				local guildObj = Data:GetPlayerGuild()
 				if guildObj then
 					Debug(BSYC_DL.FINE, "guild")
-					countWarning = countWarning + Search:CheckItem(searchStr, guildObj, atUserLoc, checkList, true)
+					countWarning = countWarning + Search:CheckItem(searchStr, guildObj.data, atUserLoc, checkList, true)
 				end
 			end
 		end
@@ -409,19 +415,21 @@ end
 
 function Search:Item_OnClick(btn)
 	if btn.data then
-		if btn.data.speciesID and IsModifiedClick("DRESSUP") then
-			--https://github.com/tomrus88/BlizzardInterfaceCode/blob/master/Interface/FrameXML/DressUpFrames.lua
-			local _, _ ,_ , creatureID, _, _, _, _, _, _, _, displayID = C_PetJournal.GetPetInfoBySpeciesID(btn.data.speciesID)
-			DressUpBattlePet(creatureID, displayID, btn.data.speciesID)
+		if btn.data.speciesID then
+			if IsModifiedClick("DRESSUP") then
+				--https://github.com/tomrus88/BlizzardInterfaceCode/blob/master/Interface/FrameXML/DressUpFrames.lua
+				local _, _ ,_ , creatureID, _, _, _, _, _, _, _, displayID = C_PetJournal.GetPetInfoBySpeciesID(btn.data.speciesID)
+				DressUpBattlePet(creatureID, displayID, btn.data.speciesID)
+			end
 			return
 		end
 		if IsModifiedClick("CHATLINK") then
-			ChatEdit_InsertLink(btn.link)
+			ChatEdit_InsertLink(btn.data.link)
 		elseif IsModifiedClick("DRESSUP") then
 			if BSYC.IsRetail then
-				DressUpLink(btn.link)
+				DressUpLink(btn.data.link)
 			else
-				DressUpItemLink(btn.link)
+				DressUpItemLink(btn.data.link)
 			end
 		end
 	end

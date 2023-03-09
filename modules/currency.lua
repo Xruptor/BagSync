@@ -16,100 +16,52 @@ local function Debug(level, ...)
 end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
-local AceGUI = LibStub("AceGUI-3.0")
 
 function Currency:OnEnable()
-
-	--lets create our widgets
-	local CurrencyFrame = AceGUI:Create("Window")
-	_G["BagSyncCurrencyFrame"] = CurrencyFrame
+	local currencyFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")
+	Mixin(currencyFrame, Currency) --implement new frame to our parent module Mixin, to have access to parent methods
+	_G["BagSyncCurrencyFrame"] = currencyFrame
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncCurrencyFrame")
-	Currency.frame = CurrencyFrame
-	Currency.parentFrame = CurrencyFrame.frame
+    currencyFrame.TitleText:SetText("BagSync - "..L.Currency)
+    currencyFrame:SetHeight(500)
+	currencyFrame:SetWidth(380)
+    currencyFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    currencyFrame:EnableMouse(true) --don't allow clickthrough
+    currencyFrame:SetMovable(true)
+    currencyFrame:SetResizable(false)
+    currencyFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    currencyFrame:SetScript("OnShow", function() Currency:OnShow() end)
+    Currency.frame = currencyFrame
 
-	CurrencyFrame:SetTitle("BagSync - "..L.Currency)
-	CurrencyFrame:SetHeight(500)
-	CurrencyFrame:SetWidth(380)
-	CurrencyFrame:EnableResize(false)
+    Currency.scrollFrame = _G.CreateFrame("ScrollFrame", nil, currencyFrame, "HybridScrollFrameTemplate")
+    Currency.scrollFrame:SetWidth(345)
+    Currency.scrollFrame:SetPoint("TOPLEFT", currencyFrame, "TOPLEFT", 6, -30)
+    --set ScrollFrame height by altering the distance from the bottom of the frame
+    Currency.scrollFrame:SetPoint("BOTTOMLEFT", currencyFrame, "BOTTOMLEFT", -25, 10)
+    Currency.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Currency.scrollFrame, "HybridScrollBarTemplate")
+    Currency.scrollFrame.scrollBar:SetPoint("TOPLEFT", Currency.scrollFrame, "TOPRIGHT", 1, -16)
+    Currency.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Currency.scrollFrame, "BOTTOMRIGHT", 1, 12)
+	--initiate the scrollFrame
+    --the items we will work with
+    Currency.currencies = {}
+	Currency.scrollFrame.update = function() Currency:RefreshList(); end
+    HybridScrollFrame_SetDoNotHideScrollBar(Currency.scrollFrame, true)
+	HybridScrollFrame_CreateButtons(Currency.scrollFrame, "BagSyncListItemTemplate")
 
-	local scrollframe = AceGUI:Create("ScrollFrame");
-	scrollframe:SetFullWidth(true)
-	scrollframe:SetLayout("Flow")
-
-	Currency.scrollframe = scrollframe
-	CurrencyFrame:AddChild(scrollframe)
-
-	hooksecurefunc(CurrencyFrame, "Show" ,function()
-		self:DisplayList()
-	end)
-
-	CurrencyFrame:Hide()
-
+	currencyFrame:Hide()
 end
 
-function Currency:AddEntry(entry, isHeader)
+function Currency:OnShow()
+	Currency:CreateList()
+    Currency:RefreshList()
 
-	local highlightColor = {1, 0, 0}
-	local label = AceGUI:Create("BagSyncInteractiveLabel")
-
-	label.userdata.color = {1, 1, 1}
-
-	label:SetHeaderHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-	label:ToggleHeaderHighlight(false)
-
-	if isHeader then
-		label:SetText(entry.header)
-		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
-		label:SetFullWidth(true)
-		label:SetColor(unpack(label.userdata.color))
-		label:ApplyJustifyH("CENTER")
-		label.userdata.isHeader = true
-		label.userdata.text = entry.header
-		label.userdata.icon = entry.icon
-		label.userdata.currencyID = entry.currencyID
-
-		label:ToggleHeaderHighlight(true)
-	else
-		label:SetText(entry.name)
-		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
-		label:SetFullWidth(true)
-		label.userdata.color = {64/255, 224/255, 208/255} --hex: 40e0d0
-		label:SetColor(unpack(label.userdata.color))
-		label:ApplyJustifyH("LEFT")
-		label:SetImage(entry.icon)
-		label:SetImageSize(18, 18)
-		label.userdata.isHeader = false
-		label.userdata.text = entry.name
-		label.userdata.icon = entry.icon
-		label.userdata.currencyID = entry.currencyID
-	end
-
-	label:SetCallback(
-		"OnEnter",
-		function (widget, sometable)
-			if not label.userdata.isHeader then
-				label:SetColor(unpack(highlightColor))
-				GameTooltip:SetOwner(label.frame, "ANCHOR_RIGHT")
-				if not label.userdata.isHeader then
-					Tooltip:CurrencyTooltip(GameTooltip, label.userdata.text, label.userdata.icon, label.userdata.currencyID)
-				end
-			end
-		end)
-	label:SetCallback(
-		"OnLeave",
-		function (widget, sometable)
-			label:SetColor(unpack(label.userdata.color))
-			GameTooltip:Hide()
-		end)
-
-	self.scrollframe:AddChild(label)
+	--scroll to top when shown
+	HybridScrollFrame_SetOffset(Currency.scrollFrame, 0)
+	Currency.scrollFrame.scrollBar:SetValue(0)
 end
 
-function Currency:DisplayList()
-
-	self.scrollframe:ReleaseChildren() --clear out the scrollframe
-
+function Currency:CreateList()
 	local usrData = {}
 	local tempList = {}
 
@@ -118,8 +70,8 @@ function Currency:DisplayList()
 			for k, v in pairs(unitObj.data.currency) do
 				local header = v.header or L.Currency
 				--only do the entry once per heading and name
-				if not tempList[header..v.name] then
-					table.insert(usrData, { header=header, name=v.name, icon=v.icon, currencyID=k} )
+				if not tempList[header..v.name]  then
+					table.insert(usrData, {header=header, name=v.name, icon=v.icon, currencyID=k} )
 					tempList[header..v.name] = true
 				end
 			end
@@ -127,7 +79,6 @@ function Currency:DisplayList()
 	end
 
 	if #usrData > 0 then
-
 		--sort the list by header, name
 		table.sort(usrData, function(a, b)
 			if a.header  == b.header then
@@ -139,16 +90,93 @@ function Currency:DisplayList()
 		local lastHeader = ""
 		for i=1, #usrData do
 			if lastHeader ~= usrData[i].header then
-				self:AddEntry(usrData[i], true) --add header
-				self:AddEntry(usrData[i], false) --add entry
+				--add header
+				table.insert(Currency.currencies, {
+					header = usrData[i].header,
+					isHeader = true
+				})
 				lastHeader = usrData[i].header
-			else
-				self:AddEntry(usrData[i], false) --add entry
 			end
+			--add currency
+			table.insert(Currency.currencies, {
+				header = usrData[i].header,
+				name = usrData[i].name,
+				icon = usrData[i].icon,
+				currencyID = usrData[i].currencyID
+			})
 		end
-		self.scrollframe.frame:Show()
-	else
-		self.scrollframe.frame:Hide()
 	end
+end
 
+function Currency:RefreshList()
+    local items = Currency.currencies
+    local buttons = HybridScrollFrame_GetButtons(Currency.scrollFrame)
+    local offset = HybridScrollFrame_GetOffset(Currency.scrollFrame)
+	if not buttons then return end
+
+    for buttonIndex = 1, #buttons do
+        local button = buttons[buttonIndex]
+		button.parentHandler = Currency
+
+        local itemIndex = buttonIndex + offset
+
+        if itemIndex <= #items then
+            local item = items[itemIndex]
+
+            button:SetID(itemIndex)
+			button.data = item
+			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+            button:SetWidth(Currency.scrollFrame.scrollChild:GetWidth())
+			button.DetailsButton:Hide()
+
+			if item.isHeader then
+				button.Icon:SetTexture(nil)
+				button.Icon:Hide()
+				button.Text:SetJustifyH("CENTER")
+				button.Text:SetTextColor(1, 1, 1)
+				button.Text:SetText(item.header or "")
+				--button.HeaderHighlight:SetVertexColor(0.8, 0.7, 0, 1)
+				button.HeaderHighlight:SetAlpha(0.75)
+				button.isHeader = true
+			else
+				button.Icon:SetTexture(item.icon or nil)
+				button.Icon:Show()
+				button.Text:SetJustifyH("LEFT")
+				button.Text:SetTextColor(0.25, 0.88, 0.82)
+				button.Text:SetText(item.name or "")
+				button.HeaderHighlight:SetAlpha(0)
+				button.isHeader = nil
+			end
+
+			--while we are updating the scrollframe, is the mouse currently over a button?
+			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
+			if GetMouseFocus() == button then
+				Currency:Item_OnLeave() --hide first
+				Currency:Item_OnEnter(button)
+			end
+
+            button:Show()
+        else
+            button:Hide()
+        end
+    end
+
+    local buttonHeight = Currency.scrollFrame.buttonHeight
+    local totalHeight = #items * buttonHeight
+    local shownHeight = #buttons * buttonHeight
+
+    HybridScrollFrame_Update(Currency.scrollFrame, totalHeight, shownHeight)
+end
+
+function Currency:Item_OnEnter(btn)
+    if not btn.isHeader then
+		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+		Tooltip:CurrencyTooltip(GameTooltip, btn.data.name, btn.data.icon, btn.data.currencyID)
+		return
+	end
+	GameTooltip:Hide()
+end
+
+function Currency:Item_OnLeave()
+	GameTooltip:Hide()
 end

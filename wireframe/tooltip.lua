@@ -1056,6 +1056,9 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 			objTooltip:AddDoubleLine(usrData[i].colorized, comma_value(usrData[i].count), 1, 1, 1, 1, 1, 1)
 		end
 	end
+	if #usrData <= 0 then
+		objTooltip:AddDoubleLine(NONE, "", 1, 1, 1, 1, 1, 1)
+	end
 
 	if BSYC.options.enableTooltipItemID and currencyID then
 		local desc = self:HexColor(BSYC.options.colors.itemid, L.TooltipCurrencyID)

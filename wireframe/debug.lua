@@ -73,7 +73,6 @@ function Debug:OnEnable()
 	optionsFrame:SetPoint("TOPLEFT", DebugFrame, "BOTTOMLEFT",0, 0)
 
 	local enableDebugChk = CreateFrame("CheckButton", nil, optionsFrame, "UICheckButtonTemplate")
-	DEBUGME = enableDebugChk
 	enableDebugChk.Text:SetText(L.DebugEnable)
 	enableDebugChk.Text:SetTextColor(1, 1, 1)
 	enableDebugChk:SetPoint("TOPLEFT", optionsFrame, "TOPLEFT", 10, -5)

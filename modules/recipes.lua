@@ -9,138 +9,88 @@
 local BSYC = select(2, ...) --grab the addon namespace
 local Recipes = BSYC:NewModule("Recipes")
 local Tooltip = BSYC:GetModule("Tooltip")
+local Professions = BSYC:GetModule("Professions")
 
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Recipes", ...) end
 end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
-local AceGUI = LibStub("AceGUI-3.0")
 
 function Recipes:OnEnable()
-
-	--lets create our widgets
-	local RecipesFrame = AceGUI:Create("Window")
-	_G["BagSyncRecipesFrame"] = RecipesFrame
+	local recipesFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")
+	Mixin(recipesFrame, Recipes) --implement new frame to our parent module Mixin, to have access to parent methods
+	_G["BagSyncRecipesFrame"] = recipesFrame
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncRecipesFrame")
-	Recipes.frame = RecipesFrame
-	Recipes.parentFrame = RecipesFrame.frame
+    recipesFrame.TitleText:SetText("BagSync - "..L.Recipes)
+    recipesFrame:SetHeight(500)
+	recipesFrame:SetWidth(570)
+    recipesFrame:SetPoint("TOPLEFT", Professions.frame, "TOPRIGHT", 10, 0)
+    recipesFrame:EnableMouse(true) --don't allow clickthrough
+    recipesFrame:SetMovable(true)
+    recipesFrame:SetResizable(false)
+    recipesFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    Recipes.frame = recipesFrame
 
-	RecipesFrame:SetTitle("BagSync - "..L.Recipes)
-	RecipesFrame:SetHeight(500)
-	RecipesFrame:SetWidth(570)
-	RecipesFrame:EnableResize(false)
+	recipesFrame.infoText = recipesFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
+	recipesFrame.infoText:SetText(L.ProfessionInformation)
+	recipesFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
+	recipesFrame.infoText:SetTextColor(1, 165/255, 0)
+	recipesFrame.infoText:SetPoint("LEFT", recipesFrame, "TOPLEFT", 15, -30)
+	recipesFrame.infoText:SetJustifyH("CENTER")
+	recipesFrame.infoText:SetWidth(recipesFrame:GetWidth() - 15)
 
-	local information = AceGUI:Create("BagSyncInteractiveLabel")
-	information:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
-	information:SetColor(153/255,204/255,51/255)
-	information:SetFullWidth(true)
-	information:ApplyJustifyH("CENTER")
-	RecipesFrame:AddChild(information)
+    Recipes.scrollFrame = _G.CreateFrame("ScrollFrame", nil, recipesFrame, "HybridScrollFrameTemplate")
+    Recipes.scrollFrame:SetWidth(535)
+    Recipes.scrollFrame:SetPoint("TOPLEFT", recipesFrame, "TOPLEFT", 6, -40)
+    --set ScrollFrame height by altering the distance from the bottom of the frame
+    Recipes.scrollFrame:SetPoint("BOTTOMLEFT", recipesFrame, "BOTTOMLEFT", -25, 10)
+    Recipes.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Recipes.scrollFrame, "HybridScrollBarTemplate")
+    Recipes.scrollFrame.scrollBar:SetPoint("TOPLEFT", Recipes.scrollFrame, "TOPRIGHT", 1, -16)
+    Recipes.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Recipes.scrollFrame, "BOTTOMRIGHT", 1, 12)
+	--initiate the scrollFrame
+    --the items we will work with
+    Recipes.recipesList = {}
+	Recipes.scrollFrame.update = function() Recipes:RefreshList(); end
+    HybridScrollFrame_SetDoNotHideScrollBar(Recipes.scrollFrame, true)
+	HybridScrollFrame_CreateButtons(Recipes.scrollFrame, "BagSyncListItemTemplate")
 
-	Recipes.information = information
-
-	local scrollframe = AceGUI:Create("ScrollFrame");
-	scrollframe:SetFullWidth(true)
-	scrollframe:SetLayout("Flow")
-
-	Recipes.scrollframe = scrollframe
-	RecipesFrame:AddChild(scrollframe)
-
-	hooksecurefunc(RecipesFrame, "Show" ,function()
-		--always show the recipes frame on the right of the Professions window
-		RecipesFrame:SetPoint( "TOPLEFT", BSYC:GetModule("Professions").parentFrame, "TOPRIGHT", 0, 0)
-	end)
-
-	RecipesFrame:Hide()
-end
-
-function Recipes:AddEntry(entry, isHeader)
-
-	local label = AceGUI:Create("BagSyncInteractiveLabel")
-
-	label:SetHeaderHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-	label:ToggleHeaderHighlight(false)
-	label:SetColor(1, 1, 1)
-	label.entry = entry
-
-	if isHeader then
-		label:SetText(entry.tierData.name..format("   |cFF00FF00[ %s / %s ]|r", entry.tierData.skillLineCurrentLevel or 0, entry.tierData.skillLineMaxLevel or 0))
-		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
-		label:SetFullWidth(true)
-		label:ApplyJustifyH("CENTER")
-		label:ToggleHeaderHighlight(true)
-		label.userdata.isHeader = true
-	else
-		label:SetText(entry.recipeName)
-		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
-		label:SetFullWidth(true)
-		label:SetImage(entry.recipeIcon)
-		label.userdata.isHeader = false
-	end
-
-	label:SetCallback(
-		"OnClick",
-		function (widget, sometable, button)
-			if not label.userdata.isHeader then
-				ChatEdit_InsertLink(GetSpellLink(label.entry.recipeID))
-			end
-		end)
-	label:SetCallback(
-		"OnEnter",
-		function (widget, sometable)
-			if not label.userdata.isHeader then
-				label:SetColor(1, 0, 0)
-				--override the single tooltip use of BagSync
-				label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-				label.highlight:SetVertexColor(0,1,0,0.3)
-
-				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
-				GameTooltip:SetSpellByID(label.entry.recipeID)
-				GameTooltip:Show()
-			end
-		end)
-	label:SetCallback(
-		"OnLeave",
-		function (widget, sometable)
-			label:SetColor(1, 1, 1)
-			--override the single tooltip use of BagSync
-			label.highlight:SetTexture(nil)
-
-			GameTooltip:Hide()
-		end)
-
-	self.scrollframe:AddChild(label)
+	recipesFrame:Hide()
 end
 
 function Recipes:ViewRecipes(data)
-	self.information:SetText(data.colorized.." | "..data.skillData.name)
-	self:DisplayList(data)
-	self.frame:Show()
+	Recipes.frame:Show()
+	Recipes:CreateList(data)
+    Recipes:RefreshList()
+
+	--scroll to top when shown
+	HybridScrollFrame_SetOffset(Recipes.scrollFrame, 0)
+	Recipes.scrollFrame.scrollBar:SetValue(0)
 end
 
-function Recipes:DisplayList(data)
+
+function Recipes:CreateList(data)
 	if not data then return end
 	if not data.skillData.categories then return end
 
-	self.scrollframe:ReleaseChildren() --clear out the scrollframe
+	Recipes.recipesList = {}
+	Recipes.frame.infoText:SetText(data.colorized.." | "..data.skillData.name)
 
-	local tierTable = {}
+	local recipeData = {}
 
 	for k, v in pairs(data.skillData.categories) do
 		if v.recipes then
 			local recipeList = {strsplit("|", v.recipes)}
 
 			if #recipeList > 0 then
-
 				for idx = 1, #recipeList do
 					if recipeList[idx] and string.len(recipeList[idx]) > 0 then
 						local recipe_info = _G.C_TradeSkillUI.GetRecipeInfo(recipeList[idx])
 						local recipeName = recipeList[idx]
 						local iconTexture = "Interface\\Icons\\INV_Misc_QuestionMark"
 
-						local gName, gRank, gIcon = GetSpellInfo(recipeList[idx])
+						local gName, _, gIcon = GetSpellInfo(recipeList[idx])
 
 						if recipe_info and recipe_info.name then
 							recipeName = recipe_info.name
@@ -149,25 +99,34 @@ function Recipes:DisplayList(data)
 							recipeName = gName
 							iconTexture = gIcon
 						else
-							recipeName = L.ProfessionsFailedRequest:format(recipeList[idx])
+							recipeName = L.RecipesFailedRequest:format(recipeList[idx])
 						end
 
-						table.insert(tierTable, { tierID=k, tierData=v, tierIndex=v.orderIndex, recipeName=recipeName, recipeID=recipeList[idx], recipeIcon=iconTexture, isEmpty=false } )
+						table.insert(recipeData, {
+							tierID = k,
+							tierData = v,
+							tierIndex = v.orderIndex,
+							recipeName = recipeName,
+							recipeID = recipeList[idx],
+							recipeIcon = iconTexture,
+							hasRecipes = true
+						})
 					end
 				end
-
 			end
 		else
-			--we have no recipes but the tier is learned and is leveled.  So display it as a header
-			table.insert(tierTable, { tierID=k, tierData=v, tierIndex=v.orderIndex, recipeName=v.name, isEmpty=true } )
+			--we have no recipes but the tier is learned and is leveled.  So display it as a header (don't pass hasRecipes)
+			table.insert(recipeData, {
+				tierID = k,
+				tierData = v,
+				tierIndex = v.orderIndex,
+				recipeName = v.name,
+			})
 		end
 	end
 
-	--now do the recipes per tier
-	if #tierTable > 0 then
-
-		--sort the tiers
-		table.sort(tierTable, function(a, b)
+	if #recipeData > 0 then
+		table.sort(recipeData, function(a, b)
 			if a.tierIndex  == b.tierIndex then
 				return a.recipeName < b.recipeName;
 			end
@@ -175,22 +134,108 @@ function Recipes:DisplayList(data)
 		end)
 
 		local lastHeader = ""
-		for i = 1, #tierTable do
-			if tierTable[i].isEmpty then
-				--no recipes just display it as a header
-				self:AddEntry(tierTable[i], true) --add header
-				lastHeader = tierTable[i].tierData.name
-			elseif lastHeader ~= tierTable[i].tierData.name then
-				self:AddEntry(tierTable[i], true) --add header
-				self:AddEntry(tierTable[i], false) --add entry
-				lastHeader = tierTable[i].tierData.name
-			else
-				self:AddEntry(tierTable[i], false) --add entry
+		for i=1, #recipeData do
+			if not recipeData[i].hasRecipes or lastHeader ~= recipeData[i].tierData.name then
+				--add header
+				table.insert(Recipes.recipesList, {
+					header = recipeData[i].tierData.name,
+					skillLineCurrentLevel = recipeData[i].tierData.skillLineCurrentLevel,
+					skillLineMaxLevel = recipeData[i].tierData.skillLineMaxLevel,
+					isHeader = true
+				})
+				lastHeader = recipeData[i].tierData.name
+			end
+			if recipeData[i].hasRecipes then
+				--only add recipe data if we have recipes to work with
+				table.insert(Recipes.recipesList, {
+					tierID = recipeData[i].tierID,
+					tierData = recipeData[i].tierData,
+					tierIndex = recipeData[i].tierIndex,
+					recipeName = recipeData[i].recipeName,
+					recipeID = recipeData[i].recipeID,
+					recipeIcon = recipeData[i].recipeIcon
+				})
 			end
 		end
-		self.scrollframe.frame:Show()
-	else
-		self.scrollframe.frame:Hide()
 	end
+end
 
+function Recipes:RefreshList()
+    local items = Recipes.recipesList
+    local buttons = HybridScrollFrame_GetButtons(Recipes.scrollFrame)
+    local offset = HybridScrollFrame_GetOffset(Recipes.scrollFrame)
+	if not buttons then return end
+
+    for buttonIndex = 1, #buttons do
+        local button = buttons[buttonIndex]
+		button.parentHandler = Recipes
+
+        local itemIndex = buttonIndex + offset
+
+        if itemIndex <= #items then
+            local item = items[itemIndex]
+
+            button:SetID(itemIndex)
+			button.data = item
+			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+            button:SetWidth(Recipes.scrollFrame.scrollChild:GetWidth())
+			button.DetailsButton:Hide()
+
+			if item.isHeader then
+				button.Icon:SetTexture(nil)
+				button.Icon:Hide()
+				button.Text:SetJustifyH("CENTER")
+				button.Text:SetTextColor(1, 1, 1)
+				button.Text:SetText(item.header..format("   |cFF52D386[ %s / %s ]|r", item.skillLineCurrentLevel or 0, item.skillLineMaxLevel or 0))
+				--button.HeaderHighlight:SetVertexColor(0.8, 0.7, 0, 1)
+				button.HeaderHighlight:SetAlpha(0.75)
+				button.isHeader = true
+			else
+				button.Icon:SetTexture(item.recipeIcon or nil)
+				button.Icon:Show()
+				button.Text:SetJustifyH("LEFT")
+				button.Text:SetTextColor(0.25, 0.88, 0.82)
+				button.Text:SetText(item.recipeName or "")
+				button.HeaderHighlight:SetAlpha(0)
+				button.isHeader = nil
+			end
+
+			--while we are updating the scrollframe, is the mouse currently over a button?
+			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
+			if GetMouseFocus() == button then
+				Recipes:Item_OnLeave() --hide first
+				Recipes:Item_OnEnter(button)
+			end
+
+            button:Show()
+        else
+            button:Hide()
+        end
+    end
+
+    local buttonHeight = Recipes.scrollFrame.buttonHeight
+    local totalHeight = #items * buttonHeight
+    local shownHeight = #buttons * buttonHeight
+
+    HybridScrollFrame_Update(Recipes.scrollFrame, totalHeight, shownHeight)
+end
+
+function Recipes:Item_OnEnter(btn)
+    if not btn.isHeader then
+		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+		GameTooltip:SetSpellByID(btn.data.recipeID)
+		GameTooltip:Show()
+		return
+	end
+	GameTooltip:Hide()
+end
+
+function Recipes:Item_OnLeave()
+	GameTooltip:Hide()
+end
+
+function Recipes:Item_OnClick(btn)
+	if not btn.isHeader and IsModifiedClick("CHATLINK") then
+		ChatEdit_InsertLink(GetSpellLink(btn.data.recipeID))
+	end
 end

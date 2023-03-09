@@ -16,139 +16,76 @@ local function Debug(level, ...)
 end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
-local AceGUI = LibStub("AceGUI-3.0")
 
 function Blacklist:OnEnable()
-
-	--lets create our widgets
-	local BlacklistFrame = AceGUI:Create("Window")
-	_G["BagSyncBlacklistFrame"] = BlacklistFrame
+	local blacklistFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")
+	Mixin(blacklistFrame, Blacklist) --implement new frame to our parent module Mixin, to have access to parent methods
+	_G["BagSyncBlacklistFrame"] = blacklistFrame
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncBlacklistFrame")
-	Blacklist.frame = BlacklistFrame
-	Blacklist.parentFrame = BlacklistFrame.frame
+    blacklistFrame.TitleText:SetText("BagSync - "..L.Blacklist)
+    blacklistFrame:SetHeight(500)
+	blacklistFrame:SetWidth(380)
+    blacklistFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    blacklistFrame:EnableMouse(true) --don't allow clickthrough
+    blacklistFrame:SetMovable(true)
+    blacklistFrame:SetResizable(false)
+    blacklistFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    blacklistFrame:SetScript("OnShow", function() Blacklist:UpdateLists() end)
+    Blacklist.frame = blacklistFrame
 
-	BlacklistFrame:SetTitle("BagSync - "..L.Blacklist)
-	BlacklistFrame:SetHeight(500)
-	BlacklistFrame:SetWidth(380)
-	BlacklistFrame:EnableResize(false)
+	--guild dropdown
+	local guildDD = CreateFrame("Frame", nil, blacklistFrame, "UIDropDownMenuTemplate")
+	guildDD:SetPoint("LEFT", blacklistFrame, "TOPLEFT", 0, -40)
+	UIDropDownMenu_SetWidth(guildDD, 200)
+	UIDropDownMenu_SetText(guildDD, L.Tooltip_guild)
+	blacklistFrame.guildDD = guildDD
 
-	local editbox = AceGUI:Create("EditBox")
-	editbox:SetText()
-	editbox:SetWidth(357)
-	editbox.disablebutton = true --disable the okay button
-	editbox:SetCallback("OnEnterPressed",function(widget)
-		editbox:ClearFocus()
-	end)
+	--add guild button
+	blacklistFrame.addGuildBtn = _G.CreateFrame("Button", nil, blacklistFrame, "UIPanelButtonTemplate")
+	blacklistFrame.addGuildBtn:SetText(L.AddGuild)
+	blacklistFrame.addGuildBtn:SetHeight(20)
+	blacklistFrame.addGuildBtn:SetWidth(blacklistFrame.addGuildBtn:GetTextWidth() + 30)
+	blacklistFrame.addGuildBtn:SetPoint("LEFT", guildDD, "RIGHT", -10, 2)
+	blacklistFrame.addGuildBtn:SetScript("OnClick", function() Blacklist:AddGuild() end)
 
-	Blacklist.editbox = editbox
-	BlacklistFrame:AddChild(editbox)
+	local itemIDBox = CreateFrame("EditBox", nil, blacklistFrame, "InputBoxTemplate")
+	itemIDBox:SetSize(210, 20)
+	itemIDBox:SetPoint("LEFT", blacklistFrame, "TOPLEFT", 20, -70)
+	itemIDBox:SetAutoFocus(false)
+	itemIDBox:SetText("")
+	blacklistFrame.itemIDBox = itemIDBox
 
-	local w = AceGUI:Create("SimpleGroup")
-	w:SetLayout("List")
-	w:SetFullWidth(true)
-	BlacklistFrame:AddChild(w)
+	--add itemID button
+	blacklistFrame.addItemIDBtn = _G.CreateFrame("Button", nil, blacklistFrame, "UIPanelButtonTemplate")
+	blacklistFrame.addItemIDBtn:SetText(L.AddItemID)
+	blacklistFrame.addItemIDBtn:SetHeight(20)
+	blacklistFrame.addItemIDBtn:SetWidth(blacklistFrame.addItemIDBtn:GetTextWidth() + 30)
+	blacklistFrame.addItemIDBtn:SetPoint("LEFT", itemIDBox, "RIGHT", 5, 2)
+	blacklistFrame.addItemIDBtn:SetScript("OnClick", function() Blacklist:AddItemID() end)
 
-	local addbutton = AceGUI:Create("Button")
-	addbutton:SetText(L.AddItemID)
-	addbutton:SetWidth(160)
-	addbutton:SetHeight(20)
-	addbutton:SetCallback("OnClick", function()
-		editbox:ClearFocus()
-		self:AddItemID()
-	end)
-	w:AddChild(addbutton)
+	blacklistFrame.infoText = blacklistFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
+	blacklistFrame.infoText:SetText(L.UseFakeID)
+	blacklistFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
+	blacklistFrame.infoText:SetTextColor(1, 165/255, 0)
+	blacklistFrame.infoText:SetPoint("LEFT", blacklistFrame, "TOPLEFT", 15, -90)
+	blacklistFrame.infoText:SetJustifyH("LEFT")
+	blacklistFrame.infoText:SetWidth(blacklistFrame:GetWidth() - 15)
 
-	local spacer = AceGUI:Create("BagSyncLabel")
-    spacer:SetFullWidth(true)
-	spacer:SetText(" ")
-	BlacklistFrame:AddChild(spacer)
-
-	------------------------------------------
-	--Scrollframe has to be in its own group with Fill set
-	--otherwise it will always be a fixed height based on how many child elements
-	local q = AceGUI:Create("SimpleGroup")
-	q:SetLayout("Fill")
-	q:SetFullWidth(true)
-	q:SetHeight(390)
-	BlacklistFrame:AddChild(q)
-
-	local scrollframe = AceGUI:Create("ScrollFrame");
-	scrollframe:SetFullWidth(true)
-	scrollframe:SetLayout("Flow")
-
-	Blacklist.scrollframe = scrollframe
-	q:AddChild(scrollframe)
-	------------------------------------------
-
-	--do the guild dropdown box on right
-	-----------------------------------------------------
-	local guildFrame = AceGUI:Create("Window")
-	local guildAddButton = AceGUI:Create("Button")
-	local guildDDlist = AceGUI:Create("Dropdown")
-
-	Blacklist.guildFrame = guildFrame
-	Blacklist.guildAddButton = guildAddButton
-	Blacklist.guildDDlist = guildDDlist
-
-	local spacer = AceGUI:Create("BagSyncLabel")
-    spacer:SetFullWidth(true)
-	spacer:SetText(" ")
-
-	guildFrame:AddChild(guildDDlist)
-	guildFrame:AddChild(spacer)
-	guildFrame:AddChild(guildAddButton)
-
-	guildFrame:SetTitle(L.Tooltip_guild)
-	guildFrame:SetHeight(120)
-	guildFrame:SetWidth(330)
-	guildFrame:EnableResize(false)
-	guildFrame:ClearAllPoints()
-	guildFrame:SetPoint("TOPLEFT", BlacklistFrame.frame, "TOPRIGHT", 0, 0)
-	guildFrame.closebutton:Hide()
-	guildFrame.closebutton = nil
-
-	guildDDlist:SetWidth(300)
-	guildAddButton:SetWidth(100)
-	guildAddButton:SetText(L.AddGuild)
-
-	guildAddButton:SetCallback("OnClick", function()
-		if not guildDDlist:GetValue() then return end
-
-		if BSYC.db.blacklist[guildDDlist:GetValue()] then
-			BSYC:Print(L.GuildExist:format(guildDDlist.text:GetText()))
-			guildDDlist:SetValue(nil) --reset
-			return
-		end
-
-		BSYC.db.blacklist[guildDDlist:GetValue()] = guildDDlist.text:GetText()
-		BSYC:Print(L.GuildAdded:format(guildDDlist.text:GetText()))
-		guildDDlist:SetValue(nil) --reset
-
-		self:DisplayList()
-	end)
-
-	-----------------------------------------------------
-
-	hooksecurefunc(BlacklistFrame, "Show" ,function()
-		guildFrame:Show()
-
-		local tmp = {}
-		for unitObj in Data:IterateUnits() do
-			if unitObj.isGuild then
-				local guildName = select(2, Unit:GetUnitAddress(unitObj.name))
-				local key = unitObj.name..unitObj.realm --note key is different then displayed name
-				tmp[key] = guildName.."-"..unitObj.realm
-			end
-		end
-		table.sort(tmp, function(a,b) return (a < b) end)
-		guildDDlist:SetList(tmp)
-
-		self:DisplayList()
-	end)
-	hooksecurefunc(BlacklistFrame, "Hide" ,function()
-		guildFrame:Hide()
-	end)
+    Blacklist.scrollFrame = _G.CreateFrame("ScrollFrame", nil, blacklistFrame, "HybridScrollFrameTemplate")
+    Blacklist.scrollFrame:SetWidth(345)
+    Blacklist.scrollFrame:SetPoint("TOPLEFT", blacklistFrame, "TOPLEFT", 6, -100)
+    --set ScrollFrame height by altering the distance from the bottom of the frame
+    Blacklist.scrollFrame:SetPoint("BOTTOMLEFT", blacklistFrame, "BOTTOMLEFT", -25, 10)
+    Blacklist.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Blacklist.scrollFrame, "HybridScrollBarTemplate")
+    Blacklist.scrollFrame.scrollBar:SetPoint("TOPLEFT", Blacklist.scrollFrame, "TOPRIGHT", 1, -16)
+    Blacklist.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Blacklist.scrollFrame, "BOTTOMRIGHT", 1, 12)
+	--initiate the scrollFrame
+    --the items we will work with
+    Blacklist.listItems = {}
+	Blacklist.scrollFrame.update = function() Blacklist:RefreshList(); end
+    HybridScrollFrame_SetDoNotHideScrollBar(Blacklist.scrollFrame, true)
+	HybridScrollFrame_CreateButtons(Blacklist.scrollFrame, "BagSyncListSimpleItemTemplate")
 
 	StaticPopupDialogs["BAGSYNC_BLACKLIST_REMOVE"] = {
 		text = L.BlackListRemove,
@@ -169,7 +106,7 @@ function Blacklist:OnEnable()
 					BSYC:Print(L.GuildRemoved:format(self.data.value))
 				end
 				BSYC.db.blacklist[self.data.key] = nil
-				Blacklist:DisplayList()
+				Blacklist:UpdateLists()
 			else
 				BSYC:Print(L.BlackListErrorRemove)
 			end
@@ -177,15 +114,121 @@ function Blacklist:OnEnable()
 		whileDead = 1,
 	}
 
-	BlacklistFrame:Hide()
+	blacklistFrame:Hide()
+end
+
+function Blacklist:UpdateLists()
+	Blacklist.frame.itemIDBox:ClearFocus()
+	Blacklist:CreateList()
+    Blacklist:RefreshList()
+
+	--scroll to top when shown
+	HybridScrollFrame_SetOffset(Blacklist.scrollFrame, 0)
+	Blacklist.scrollFrame.scrollBar:SetValue(0)
+end
+
+function Blacklist:CreateList()
+
+	Blacklist.listItems = {}
+	Blacklist.selectedGuild = nil
+
+	--do the dropdown first
+	local tmp = {}
+	for unitObj in Data:IterateUnits() do
+		if unitObj.isGuild then
+			local guildName = select(2, Unit:GetUnitAddress(unitObj.name))
+			local key = unitObj.name..unitObj.realm --note key is different then displayed name
+			tmp[key] = guildName.." - "..unitObj.realm
+		end
+	end
+	table.sort(tmp, function(a,b) return (a < b) end)
+
+	UIDropDownMenu_Initialize(Blacklist.frame.guildDD, function(self)
+		local info = UIDropDownMenu_CreateInfo()
+		for k, v in pairs(tmp) do
+			info.text, info.value, info.arg1 = v, k, v
+			info.notCheckable = true
+			info.func = function(data)
+				self.Text:SetText(data.arg1)
+				Blacklist.selectedGuild = data
+			end
+			UIDropDownMenu_AddButton(info)
+		end
+	end)
+
+	local dataObj = {}
+
+	--loop through our blacklist
+	for k, v in pairs(BSYC.db.blacklist) do
+		table.insert(dataObj, {
+			key = k,
+			value = v
+		})
+	end
+
+	if #dataObj > 0 then
+		table.sort(dataObj, function(a,b) return (a.value < b.value) end)
+		for i=1, #dataObj do
+			table.insert(Blacklist.listItems, {
+				key = dataObj[i].key,
+				value = dataObj[i].value
+			})
+		end
+	end
+end
+
+function Blacklist:RefreshList()
+    local items = Blacklist.listItems
+    local buttons = HybridScrollFrame_GetButtons(Blacklist.scrollFrame)
+    local offset = HybridScrollFrame_GetOffset(Blacklist.scrollFrame)
+	if not buttons then return end
+
+    for buttonIndex = 1, #buttons do
+        local button = buttons[buttonIndex]
+		button.parentHandler = Blacklist
+
+        local itemIndex = buttonIndex + offset
+
+        if itemIndex <= #items then
+            local item = items[itemIndex]
+
+            button:SetID(itemIndex)
+			button.data = item
+			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+            button:SetWidth(Blacklist.scrollFrame.scrollChild:GetWidth())
+
+			button.Text:SetJustifyH("LEFT")
+			button.Text:SetTextColor(1, 1, 1)
+			button.Text:SetText(item.value or "")
+			button.HeaderHighlight:SetAlpha(0)
+
+			if GetMouseFocus() == button then
+				Blacklist:Item_OnLeave() --hide first
+				Blacklist:Item_OnEnter(button)
+			end
+
+            button:Show()
+        else
+            button:Hide()
+        end
+    end
+
+    local buttonHeight = Blacklist.scrollFrame.buttonHeight
+    local totalHeight = #items * buttonHeight
+    local shownHeight = #buttons * buttonHeight
+
+    HybridScrollFrame_Update(Blacklist.scrollFrame, totalHeight, shownHeight)
 end
 
 function Blacklist:AddItemID()
-	local itemid = self.editbox:GetText()
+	local editBox = Blacklist.frame.itemIDBox
 
-	if not itemid or string.len(self.editbox:GetText()) < 1 or not tonumber(itemid) then
+	editBox:ClearFocus()
+	local itemid = editBox:GetText()
+
+	if not itemid or string.len(editBox:GetText()) < 1 or not tonumber(itemid) then
 		BSYC:Print(L.EnterItemID)
-		self.editbox:SetText()
+		editBox:SetText("")
 		return
 	end
 
@@ -193,82 +236,78 @@ function Blacklist:AddItemID()
 
 	if BSYC.db.blacklist[itemid] then
 		BSYC:Print(L.ItemIDExistBlacklist:format(itemid))
-		self.editbox:SetText()
+		editBox:SetText("")
 		return
 	end
-
-	if not GetItemInfo(itemid) then
-		BSYC:Print(L.ItemIDNotValid:format(itemid))
-		self.editbox:SetText()
-		return
-	end
-
-	local dName, dItemLink = GetItemInfo(itemid)
-
-	BSYC.db.blacklist[itemid] = dName
-	BSYC:Print(L.ItemIDAdded:format(itemid), dItemLink)
-
-	self.editbox:SetText()
-
-	self:DisplayList()
-end
-
-function Blacklist:AddEntry(entry)
-
-	local label = AceGUI:Create("InteractiveLabel")
-
-	label:SetText(entry.value)
-	label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
-	label:SetFullWidth(true)
-	label:SetColor(1, 1, 1)
-	label:SetCallback(
-		"OnClick",
-		function (widget, sometable, button)
-			StaticPopup_Show("BAGSYNC_BLACKLIST_REMOVE", '', '', entry) --cannot pass nil as it's expected for SetFormattedText (Interface/FrameXML/StaticPopup.lua)
-		end)
-	label:SetCallback(
-		"OnEnter",
-		function (widget, sometable)
-			label:SetColor(1, 0, 0)
-			GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
-			if type(entry.key) == "number" then
-				GameTooltip:SetHyperlink("item:"..entry.key)
-			else
-				GameTooltip:AddLine(entry.value)
-				GameTooltip:AddLine(L.TooltipRealmKey.." "..entry.key)
-			end
-			GameTooltip:Show()
-		end)
-	label:SetCallback(
-		"OnLeave",
-		function (widget, sometable)
-			label:SetColor(1, 1, 1)
-			GameTooltip:Hide()
-		end)
-
-	self.scrollframe:AddChild(label)
-end
-
-function Blacklist:DisplayList()
-
-	self.scrollframe:ReleaseChildren() --clear out the scrollframe
-
-	local blacklistTable = {}
-
-	--loop through our blacklist
-	for k, v in pairs(BSYC.db.blacklist) do
-		table.insert(blacklistTable, {key=k, value=v})
-	end
-
-	--show or hide the scrolling frame depending on count
-	if #blacklistTable > 0 then
-		table.sort(blacklistTable, function(a,b) return (a.value < b.value) end)
-		for i=1, #blacklistTable do
-			self:AddEntry(blacklistTable[i])
+	if itemid >= BSYC.FakePetCode then
+		local speciesID = BSYC:FakeIDToSpeciesID(itemid)
+		if not speciesID then
+			BSYC:Print(L.ItemIDNotValid:format(itemid))
+			editBox:SetText("")
+			return
 		end
-		self.scrollframe.frame:Show()
+		local speciesName = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
+		if not speciesName then
+			BSYC:Print(L.ItemIDNotValid:format(itemid))
+			editBox:SetText("")
+			return
+		end
+		BSYC.db.blacklist[itemid] = speciesName
+		BSYC:Print(L.ItemIDAdded:format(itemid), speciesName)
 	else
-		self.scrollframe.frame:Hide()
+		if not GetItemInfo(itemid) then
+			BSYC:Print(L.ItemIDNotValid:format(itemid))
+			editBox:SetText("")
+			return
+		end
+
+		local dName, dItemLink = GetItemInfo(itemid)
+
+		BSYC.db.blacklist[itemid] = dName
+		BSYC:Print(L.ItemIDAdded:format(itemid), dItemLink)
+	end
+	editBox:SetText("")
+
+	Blacklist:UpdateLists()
+end
+
+function Blacklist:AddGuild()
+	if not Blacklist.selectedGuild then return end
+
+	if BSYC.db.blacklist[Blacklist.selectedGuild.value] then
+		BSYC:Print(L.GuildExist:format(Blacklist.selectedGuild.arg1))
+		return
 	end
 
+	BSYC.db.blacklist[Blacklist.selectedGuild.value] = Blacklist.selectedGuild.arg1
+	BSYC:Print(L.GuildAdded:format(Blacklist.selectedGuild.arg1))
+
+	Blacklist:UpdateLists()
+end
+
+function Blacklist:Item_OnEnter(btn)
+	GameTooltip:SetOwner(btn, "ANCHOR_BOTTOMRIGHT")
+	if type(btn.data.key) == "number" then
+		if tonumber(btn.data.key) >= BSYC.FakePetCode then
+			local speciesID = BSYC:FakeIDToSpeciesID(btn.data.key)
+			if speciesID then
+				BattlePetToolTip_Show(speciesID, 0, 0, 0, 0, 0, nil)
+			end
+		else
+			GameTooltip:SetHyperlink("item:"..btn.data.key)
+		end
+	else
+		GameTooltip:AddLine(btn.data.value)
+		GameTooltip:AddLine(L.TooltipRealmKey.." "..btn.data.key)
+	end
+	GameTooltip:Show()
+end
+
+function Blacklist:Item_OnLeave()
+	GameTooltip:Hide()
+	BattlePetTooltip:Hide()
+end
+
+function Blacklist:Item_OnClick(btn)
+	StaticPopup_Show("BAGSYNC_BLACKLIST_REMOVE", '', '', btn.data) --cannot pass nil as it's expected for SetFormattedText (Interface/FrameXML/StaticPopup.lua)
 end
