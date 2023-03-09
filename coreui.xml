@@ -98,6 +98,12 @@
 						<Anchor point="RIGHT" relativeKey="$parent" x="-8" y="0"/>
                     </Anchors>
                 </FontString>
+                <FontString parentKey="Text2" inherits="GameFontNormal" justifyH="RIGHT">
+                    <Anchors>
+                        <Anchor point="RIGHT" x="-10" y="0"/>
+						<Anchor point="LEFT" relativeKey="$parent" x="-8" y="0"/>
+                    </Anchors>
+                </FontString>
             </Layer>
             <Layer level="OVERLAY">
                 <Texture parentKey="HeaderHighlight" setAllPoints="true" alphaMode="ADD" file="Interface\QuestFrame\UI-QuestTitleHighlight" alpha="0">

@@ -70,6 +70,7 @@ function Professions:OnShow()
 end
 
 function Professions:CreateList()
+	Professions.professionList = {}
 	local usrData = {}
 
 	for unitObj in Data:IterateUnits() do

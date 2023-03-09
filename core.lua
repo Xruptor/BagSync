@@ -161,15 +161,11 @@ function BSYC:Split(dataStr, skipOpts, mergeOpts)
 end
 
 function BagSync_ShowWindow(windowName)
-    if windowName == "Gold" then
-        BSYC:GetModule("Tooltip"):MoneyTooltip()
-    else
-		if BSYC:GetModule(windowName).frame:IsVisible() then
-			BSYC:GetModule(windowName).frame:Hide()
-		else
-			BSYC:GetModule(windowName).frame:Show()
-		end
-    end
+	if BSYC:GetModule(windowName).frame:IsVisible() then
+		BSYC:GetModule(windowName).frame:Hide()
+	else
+		BSYC:GetModule(windowName).frame:Show()
+	end
 end
 
 --This function will always return the base short itemID if no count is provided or if the count is less than 1.

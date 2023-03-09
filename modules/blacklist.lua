@@ -128,7 +128,6 @@ function Blacklist:UpdateLists()
 end
 
 function Blacklist:CreateList()
-
 	Blacklist.listItems = {}
 	Blacklist.selectedGuild = nil
 

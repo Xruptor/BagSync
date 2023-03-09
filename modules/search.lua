@@ -98,7 +98,7 @@ function Search:OnEnable()
 	warningFrame.InfoText1:SetWidth(warningFrame:GetWidth() - 15)
 	warningFrame.InfoText2:SetText(L.ObsoleteWarning)
 	warningFrame.InfoText2:SetFont(STANDARD_TEXT_FONT, 14, "")
-	warningFrame.InfoText2:SetPoint("LEFT", warningFrame.InfoText1, "BOTTOMLEFT", 5, -40)
+	warningFrame.InfoText2:SetPoint("LEFT", warningFrame.InfoText1, "BOTTOMLEFT", 5, -60)
 	warningFrame.InfoText2:SetTextColor(50/255, 165/255, 0) --orange, red is just too much sometimes
 	warningFrame.InfoText2:SetJustifyH("CENTER")
 	warningFrame.InfoText2:SetWidth(warningFrame:GetWidth() - 15)

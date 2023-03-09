@@ -62,6 +62,7 @@ function Currency:OnShow()
 end
 
 function Currency:CreateList()
+	Currency.currencies = {}
 	local usrData = {}
 	local tempList = {}
 

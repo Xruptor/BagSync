@@ -321,72 +321,6 @@ function Tooltip:DoSort(tblData)
 	return tblData
 end
 
-function Tooltip:MoneyTooltip()
-	local tooltip = _G["BagSyncMoneyTooltip"] or nil
-	Debug(BSYC_DL.INFO, "MoneyTooltip")
-
-	if (not tooltip) then
-			tooltip = CreateFrame("GameTooltip", "BagSyncMoneyTooltip", UIParent, "GameTooltipTemplate")
-			_G["BagSyncMoneyTooltip"] = tooltip
-			--Add to special frames so window can be closed when the escape key is pressed.
-			tinsert(UISpecialFrames, "BagSyncMoneyTooltip")
-
-			local closeButton = CreateFrame("Button", nil, tooltip, "UIPanelCloseButton")
-			closeButton:SetPoint("TOPRIGHT", tooltip, 1, 0)
-
-			tooltip:SetToplevel(true)
-			tooltip:EnableMouse(true)
-			tooltip:SetMovable(true)
-			tooltip:SetClampedToScreen(true)
-
-			tooltip:SetScript("OnMouseDown",function(self)
-					self.isMoving = true
-					self:StartMoving();
-			end)
-			tooltip:SetScript("OnMouseUp",function(self)
-				if( self.isMoving ) then
-					self.isMoving = nil
-					self:StopMovingOrSizing()
-				end
-			end)
-	end
-
-	tooltip:ClearLines()
-	tooltip:ClearAllPoints()
-	tooltip:SetOwner(UIParent, "ANCHOR_NONE")
-	tooltip:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-	tooltip:AddLine("BagSync")
-	tooltip:AddLine(" ")
-
-	--loop through our characters
-	local usrData = {}
-	local total = 0
-
-	for unitObj in Data:IterateUnits() do
-		if unitObj.data.money and unitObj.data.money > 0 then
-			if not unitObj.isGuild or (unitObj.isGuild and BSYC.options.showGuildInGoldTooltip) then
-				table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj), count=unitObj.data.money } )
-			end
-		end
-	end
-
-	--sort
-	usrData = self:DoSort(usrData)
-
-	for i=1, #usrData do
-		--use GetMoneyString and true to seperate it by thousands
-		tooltip:AddDoubleLine(usrData[i].colorized, GetMoneyString(usrData[i].unitObj.data.money, true), 1, 1, 1, 1, 1, 1)
-		total = total + usrData[i].unitObj.data.money
-	end
-	if BSYC.options.showTotal and total > 0 then
-		tooltip:AddLine(" ")
-		tooltip:AddDoubleLine(self:HexColor(BSYC.options.colors.total, L.TooltipTotal), GetMoneyString(total, true), 1, 1, 1, 1, 1, 1)
-	end
-
-	tooltip:AddLine(" ")
-	tooltip:Show()
-end
-
 function Tooltip:AddItem(unitObj, itemID, target, countList)
 	local total = 0
 	if not unitObj or not itemID or not target or not countList then return total end
@@ -756,7 +690,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	end
 	--check whitelist
 	if BSYC.options.enableWhitelist then
-		if not BSYC.db.whitelist[tonumber(link)] then
+		if not BSYC.db.whitelist[tonumber(shortID)] then
 			skipTally = true
 		end
 		--always display if we are showing tooltips in the search window of ANY kind when using whitelist

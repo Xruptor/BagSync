@@ -315,8 +315,11 @@ function Data:ResetFramePositions()
 		"Whitelist",
 		"Currency",
 		"Professions",
+		"Recipes",
+		"Gold",
 		"Profiles",
 		"Search",
+		"AdvancedSearch",
 		"SortOrder",
 		"Debug",
 	}
@@ -327,11 +330,6 @@ function Data:ResetFramePositions()
 			BSYC:GetModule(mName).frame:ClearAllPoints()
 			BSYC:GetModule(mName).frame:SetPoint("CENTER",UIParent,"CENTER",0,0)
 		end
-	end
-
-	if _G["BagSyncMoneyTooltip"] then
-		_G["BagSyncMoneyTooltip"]:ClearAllPoints()
-		_G["BagSyncMoneyTooltip"]:SetPoint("CENTER",UIParent,"CENTER",0,0)
 	end
 end
 
