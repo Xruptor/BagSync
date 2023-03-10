@@ -374,6 +374,9 @@ function Data:LoadSlashCommand()
 			elseif cmd == L.SlashWhitelist then
 				BSYC:GetModule("Whitelist").frame:Show()
 				return true
+			elseif cmd == L.SlashSortOrder then
+				BSYC:GetModule("SortOrder").frame:Show()
+				return true
 			elseif cmd == L.SlashFixDB then
 				self:FixDB()
 				return true
@@ -418,6 +421,7 @@ function Data:LoadSlashCommand()
 		end
 		BSYC:Print("/bgs "..L.SlashBlacklist.." - "..L.HelpBlacklistWindow)
 		BSYC:Print("/bgs "..L.SlashWhitelist.." - "..L.HelpWhitelistWindow)
+		BSYC:Print("/bgs "..L.SlashSortOrder.." - "..L.HelpSortOrder)
 		BSYC:Print("/bgs "..L.SlashFixDB.." - "..L.HelpFixDB)
 		BSYC:Print("/bgs "..L.SlashResetDB.." - "..L.HelpResetDB)
 		BSYC:Print("/bgs "..L.SlashConfig.." - "..L.HelpConfigWindow)
@@ -532,7 +536,14 @@ function Data:GetCurrentPlayer()
 	Debug(BSYC_DL.TRACE, "GetCurrentPlayer")
 	local player = Unit:GetUnitInfo(true)
 	local isConnectedRealm = (Unit:isConnectedRealm(player.realm) and true) or false
-	return {realm=player.realm, name=player.name, data=BSYC.db.player, isGuild=false, isConnectedRealm=isConnectedRealm, isXRGuild=false}
+	return {
+		realm = player.realm,
+		name = player.name,
+		data = BSYC.db.player,
+		isGuild = false,
+		isConnectedRealm = isConnectedRealm,
+		isXRGuild = false
+	}
 end
 
 function Data:GetPlayerGuild()
@@ -548,7 +559,14 @@ function Data:GetPlayerGuild()
 	if not BagSyncDB[player.guildrealm][player.guild] then return end
 	if BSYC.db.blacklist[player.guild..player.guildrealm] then return end
 
-	return {realm=player.guildrealm, name=player.guild, data=BagSyncDB[player.guildrealm][player.guild], isGuild=true, isConnectedRealm=isConnectedRealm, isXRGuild=isXRGuild}
+	return {
+		realm = player.guildrealm,
+		name = player.guild,
+		data = BagSyncDB[player.guildrealm][player.guild],
+		isGuild = true,
+		isConnectedRealm = isConnectedRealm,
+		isXRGuild = isXRGuild
+	}
 end
 
 function Data:IterateUnits(dumpAll, filterList)
@@ -602,7 +620,14 @@ function Data:IterateUnits(dumpAll, filterList)
 							end
 
 							if not skipReturn then
-								return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm, isXRGuild=isXRGuild}
+								return {
+									realm = argKey,
+									name = k,
+									data = v,
+									isGuild = isGuild,
+									isConnectedRealm = isConnectedRealm,
+									isXRGuild = isXRGuild
+								}
 							end
 
 						elseif v.faction and (v.faction == BSYC.db.player.faction or BSYC.options.enableFaction) then
@@ -632,7 +657,14 @@ function Data:IterateUnits(dumpAll, filterList)
 							end
 
 							if not skipReturn then
-								return {realm=argKey, name=k, data=v, isGuild=isGuild, isConnectedRealm=isConnectedRealm, isXRGuild=isXRGuild}
+								return {
+									realm = argKey,
+									name = k,
+									data = v,
+									isGuild = isGuild,
+									isConnectedRealm = isConnectedRealm,
+									isXRGuild = isXRGuild
+								}
 							end
 
 						end

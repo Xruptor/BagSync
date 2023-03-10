@@ -9,7 +9,6 @@
 local BSYC = select(2, ...) --grab the addon namespace
 local SortOrder = BSYC:NewModule("SortOrder")
 local Data = BSYC:GetModule("Data")
-local Unit = BSYC:GetModule("Unit")
 local Tooltip = BSYC:GetModule("Tooltip")
 
 local function Debug(level, ...)
@@ -17,162 +16,103 @@ local function Debug(level, ...)
 end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
-local AceGUI = LibStub("AceGUI-3.0")
 
 function SortOrder:OnEnable()
-
-	--lets create our widgets
-	local SortOrderFrame = AceGUI:Create("Window")
-	_G["BagSyncSortOrderFrame"] = SortOrderFrame
+	local sortorderFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")
+	Mixin(sortorderFrame, SortOrder) --implement new frame to our parent module Mixin, to have access to parent methods
+	_G["BagSyncSortOrderFrame"] = sortorderFrame
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncSortOrderFrame")
-	SortOrder.frame = SortOrderFrame
-	SortOrder.parentFrame = SortOrderFrame.frame
+    sortorderFrame.TitleText:SetText("BagSync - "..L.SortOrder)
+    sortorderFrame:SetHeight(500)
+	sortorderFrame:SetWidth(440)
+    sortorderFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    sortorderFrame:EnableMouse(true) --don't allow clickthrough
+    sortorderFrame:SetMovable(true)
+    sortorderFrame:SetResizable(false)
+    sortorderFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    sortorderFrame:SetScript("OnShow", function() SortOrder:OnShow() end)
+    SortOrder.frame = sortorderFrame
 
-	SortOrderFrame:SetTitle("BagSync - "..L.SortOrder)
-	SortOrderFrame:SetHeight(500)
-	SortOrderFrame:SetWidth(380)
-	SortOrderFrame:EnableResize(false)
+    SortOrder.scrollFrame = _G.CreateFrame("ScrollFrame", nil, sortorderFrame, "HybridScrollFrameTemplate")
+    SortOrder.scrollFrame:SetWidth(405)
+    SortOrder.scrollFrame:SetPoint("TOPLEFT", sortorderFrame, "TOPLEFT", 6, -25)
+    --set ScrollFrame height by altering the distance from the bottom of the frame
+    SortOrder.scrollFrame:SetPoint("BOTTOMLEFT", sortorderFrame, "BOTTOMLEFT", -25, 10)
+    SortOrder.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", SortOrder.scrollFrame, "HybridScrollBarTemplate")
+    SortOrder.scrollFrame.scrollBar:SetPoint("TOPLEFT", SortOrder.scrollFrame, "TOPRIGHT", 1, -16)
+    SortOrder.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", SortOrder.scrollFrame, "BOTTOMRIGHT", 1, 12)
+	--initiate the scrollFrame
+    --the items we will work with
+    SortOrder.sortorderList = {}
+	SortOrder.scrollFrame.update = function() SortOrder:RefreshList(); end
+    HybridScrollFrame_SetDoNotHideScrollBar(SortOrder.scrollFrame, true)
+	HybridScrollFrame_CreateButtons(SortOrder.scrollFrame, "BagSyncListSortItemTemplate")
 
-	local information = AceGUI:Create("BagSyncLabel")
-	information:SetText(L.CustomSortInfo)
-	information:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
-	information:SetColor(1, 165/255, 0)
-	information:SetFullWidth(true)
-	SortOrderFrame:AddChild(information)
+	--Warning Frame
+	local warningFrame = _G.CreateFrame("Frame", nil, sortorderFrame, "BagSyncInfoFrameTemplate")
+	warningFrame:Hide()
+	warningFrame:SetBackdropColor(0, 0, 0, 0.75)
+    warningFrame:EnableMouse(true) --don't allow clickthrough
+    warningFrame:SetMovable(false)
+	warningFrame:SetResizable(false)
+    warningFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+	warningFrame:ClearAllPoints()
+	warningFrame:SetPoint("TOPLEFT", sortorderFrame, "TOPRIGHT", 5, 0)
+	warningFrame.TitleText:SetText(L.DisplaySortOrderHelp)
+	warningFrame.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
+	warningFrame.TitleText:SetTextColor(1, 1, 1)
+	warningFrame.infoText1 = warningFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
+	warningFrame.infoText1:SetText(L.DisplaySortOrderStatus)
+	warningFrame.infoText1:SetFont(STANDARD_TEXT_FONT, 14, "")
+	warningFrame.infoText1:SetTextColor(1, 165/255, 0) --orange, red is just too much sometimes
+	warningFrame.infoText1:SetJustifyH("CENTER")
+	warningFrame.infoText1:SetWidth(warningFrame:GetWidth() - 30)
+	warningFrame.infoText1:SetPoint("LEFT", warningFrame, "TOPLEFT", 10, -40)
+	warningFrame.infoText2 = warningFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
+	warningFrame.infoText2:SetText(L.CustomSortInfo.."\n\n"..L.CustomSortInfoWarn)
+	warningFrame.infoText2:SetFont(STANDARD_TEXT_FONT, 14, "")
+	warningFrame.infoText2:SetTextColor(50/255, 165/255, 0)
+	warningFrame.infoText2:SetWidth(warningFrame:GetWidth() - 30)
+	warningFrame.infoText2:SetPoint("LEFT", warningFrame.infoText1, "BOTTOMLEFT", 5, -100)
+	warningFrame.infoText2:SetJustifyH("CENTER")
+	SortOrder.warningFrame = warningFrame
 
-	local information2 = AceGUI:Create("BagSyncLabel")
-	information2:SetText(L.CustomSortInfoWarn)
-	information2:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
-	information2:SetColor(1, 165/255, 0)
-	information2:SetFullWidth(true)
-	SortOrderFrame:AddChild(information2)
-
-	local scrollframe = AceGUI:Create("ScrollFrame");
-	scrollframe:SetFullWidth(true)
-	scrollframe:SetLayout("Flow")
-
-	SortOrder.scrollframe = scrollframe
-	SortOrderFrame:AddChild(scrollframe)
-
-	hooksecurefunc(SortOrderFrame, "Show" ,function()
-		self:DisplayList()
-	end)
-
-	local refreshbutton = AceGUI:Create("Button")
-	refreshbutton:SetText(L.Refresh)
-	refreshbutton:SetWidth(100)
-	refreshbutton:SetHeight(20)
-	refreshbutton:SetCallback("OnClick", function()
-		self:DisplayList()
-	end)
-	SortOrderFrame:AddChild(refreshbutton)
-
-	SortOrderFrame:Hide()
+	sortorderFrame:Hide()
 end
 
-function SortOrder:AddEntry(entry, isHeader)
-
-	local label = AceGUI:Create("BagSyncInteractiveLabel")
-
-	label:SetHeaderHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-	label:ToggleHeaderHighlight(false)
-	label.entry = entry
-	label:SetColor(1, 1, 1)
-
-	if isHeader then
-		label:SetText(entry.unitObj.realm)
-		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
-		label:SetFullWidth(true)
-		label:ApplyJustifyH("CENTER")
-		label:ToggleHeaderHighlight(true)
-		label.userdata.isHeader = true
-		label:ToggleEditBox(false)
-		label.editbox:SetText("")
-	else
-		if entry.unitObj.isGuild then
-			label:SetText(GUILD..":  "..entry.colorized)
-		else
-			label:SetText(entry.colorized)
-		end
-		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
-		label:SetFullWidth(true)
-		label:ApplyJustifyH("LEFT")
-		label.userdata.isHeader = false
-
-		label:ToggleEditBox(true)
-		label:SetCustomHeight(32)
-		label:SetEditBoxHeight(25)
-		label:SetEditBoxWidth(65)
-		label.editbox:SetText(entry.unitObj.data.SortIndex)
-	end
-
-	label:SetCallback(
-		"OnEnterPressed",
-		function (widget, event, value)
-			local indexNum = tonumber(value)
-
-			--make sure it's a number we are working with
-			if indexNum then
-				--set the new sortindex number
-				entry.unitObj.data.SortIndex = indexNum
-			else
-				--reset to one already stored or 0
-				if entry.unitObj.data.SortIndex then
-					label.editbox:SetText(entry.unitObj.data.SortIndex)
-				else
-					label.editbox:SetText(0)
-				end
-			end
-		end)
-
-	label:SetCallback(
-		"OnEnter",
-		function (widget, sometable)
-			if not label.userdata.isHeader then
-				label:SetColor(1, 0, 0)
-				--override the single tooltip use of BagSync
-				label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-				label.highlight:SetVertexColor(0,1,0,0.3)
-
-				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
-
-				if not label.entry.unitObj.isGuild then
-					GameTooltip:AddLine(PLAYER..":  "..entry.colorized)
-				else
-					GameTooltip:AddLine(GUILD..":  "..entry.colorized)
-					GameTooltip:AddLine(L.Realm.."  "..entry.unitObj.realm)
-					GameTooltip:AddLine(L.TooltipRealmKey.." "..entry.unitObj.data.realmKey)
-				end
-				GameTooltip:Show()
-			end
-		end)
-	label:SetCallback(
-		"OnLeave",
-		function (widget, sometable)
-			label:SetColor(1, 1, 1)
-			--override the single tooltip use of BagSync
-			label.highlight:SetTexture(nil)
-			GameTooltip:Hide()
-		end)
-
-	self.scrollframe:AddChild(label)
+function SortOrder:OnShow()
+	local getStatus = (BSYC.options.sortByCustomOrder and ("|cFF99CC33"..L.ON.."|r")) or ( "|cFFDF2B2B"..L.OFF.."|r")
+	SortOrder.warningFrame.infoText1:SetText(L.DisplaySortOrderStatus:format(getStatus))
+	SortOrder.warningFrame:Show()
+	SortOrder:UpdateList()
 end
 
-function SortOrder:DisplayList()
+function SortOrder:UpdateList()
+	SortOrder:CreateList()
+    SortOrder:RefreshList()
 
-	self.scrollframe:ReleaseChildren() --clear out the scrollframe
+	--scroll to top when shown
+	HybridScrollFrame_SetOffset(SortOrder.scrollFrame, 0)
+	SortOrder.scrollFrame.scrollBar:SetValue(0)
+end
 
-	local sortOrderTable = {}
+function SortOrder:CreateList()
+	SortOrder.sortorderList = {}
+	local usrData = {}
 	local SortIndex = 0
 
 	for unitObj in Data:IterateUnits(true) do
-		table.insert(sortOrderTable, { unitObj=unitObj, colorized=Tooltip:ColorizeUnit(unitObj, true) } )
+		table.insert(usrData, {
+			unitObj = unitObj,
+			name = unitObj.name,
+			realm = unitObj.realm,
+			colorized = Tooltip:ColorizeUnit(unitObj, true)
+		})
 	end
 
-	if #sortOrderTable > 0 then
-
-		table.sort(sortOrderTable, function(a, b)
+	if #usrData > 0 then
+		table.sort(usrData, function(a, b)
 			if a.unitObj.data.SortIndex and b.unitObj.data.SortIndex  then
 				return  a.unitObj.data.SortIndex < b.unitObj.data.SortIndex;
 			else
@@ -184,30 +124,129 @@ function SortOrder:DisplayList()
 		end)
 
 		local lastHeader = ""
-
-		for i=1, #sortOrderTable do
-			local unitObj = sortOrderTable[i].unitObj
+		for i=1, #usrData do
 			--add SortIndex if missing
-			if not unitObj.data.SortIndex then
+			if not usrData[i].unitObj.data.SortIndex then
 				SortIndex = SortIndex + 1
-				unitObj.data.SortIndex = SortIndex
-			else
+				usrData[i].unitObj.data.SortIndex = SortIndex
+			elseif usrData[i].unitObj.data.SortIndex > SortIndex then
 				--this is for future entries that will always start at the bottom
-				if unitObj.data.SortIndex > SortIndex then
-					SortIndex = unitObj.data.SortIndex
-				end
+				SortIndex = usrData[i].unitObj.data.SortIndex
 			end
-			if lastHeader ~= unitObj.realm then
-				self:AddEntry(sortOrderTable[i], true) --add header
-				self:AddEntry(sortOrderTable[i], false) --add entry
-				lastHeader = unitObj.realm
-			else
-				self:AddEntry(sortOrderTable[i], false) --add entry
+			if lastHeader ~= usrData[i].realm then
+				--add header
+				table.insert(SortOrder.sortorderList, {
+					colorized = usrData[i].realm,
+					isHeader = true,
+				})
+				lastHeader = usrData[i].realm
 			end
+			--add player
+			table.insert(SortOrder.sortorderList, {
+				unitObj = usrData[i].unitObj,
+				name = usrData[i].name,
+				realm = usrData[i].realm,
+				colorized = usrData[i].colorized
+			})
 		end
-		self.scrollframe.frame:Show()
-	else
-		self.scrollframe.frame:Hide()
 	end
+end
 
+function SortOrder:RefreshList()
+    local items = SortOrder.sortorderList
+    local buttons = HybridScrollFrame_GetButtons(SortOrder.scrollFrame)
+    local offset = HybridScrollFrame_GetOffset(SortOrder.scrollFrame)
+	if not buttons then return end
+
+    for buttonIndex = 1, #buttons do
+        local button = buttons[buttonIndex]
+		button.parentHandler = SortOrder
+
+        local itemIndex = buttonIndex + offset
+
+        if itemIndex <= #items then
+            local item = items[itemIndex]
+
+            button:SetID(itemIndex)
+			button.data = item
+			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+			button.Text:SetTextColor(1, 1, 1)
+            button:SetWidth(SortOrder.scrollFrame.scrollChild:GetWidth())
+
+			if item.isHeader then
+				button.Text:SetJustifyH("CENTER")
+				--button.HeaderHighlight:SetVertexColor(0.8, 0.7, 0, 1)
+				button.HeaderHighlight:SetAlpha(0.75)
+				button.isHeader = true
+				button.SortBox:SetText("")
+				button.SortBox:Hide()
+			else
+				button.Text:SetJustifyH("LEFT")
+				button.HeaderHighlight:SetAlpha(0)
+				button.isHeader = nil
+				button.SortBox:SetText(item.unitObj.data.SortIndex)
+				button.SortBox:Show()
+			end
+			button.Text:SetText(item.colorized or "")
+
+			--while we are updating the scrollframe, is the mouse currently over a button?
+			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
+			if GetMouseFocus() == button then
+				SortOrder:Item_OnLeave() --hide first
+				SortOrder:Item_OnEnter(button)
+			end
+
+            button:Show()
+        else
+            button:Hide()
+        end
+    end
+
+    local buttonHeight = SortOrder.scrollFrame.buttonHeight
+    local totalHeight = #items * buttonHeight
+    local shownHeight = #buttons * buttonHeight
+
+    HybridScrollFrame_Update(SortOrder.scrollFrame, totalHeight, shownHeight)
+end
+
+function SortOrder:Item_OnEnter(btn)
+    if not btn.isHeader then
+		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+		if not btn.data.unitObj.isGuild then
+			GameTooltip:AddLine("|cFFFFFFFF"..PLAYER..":|r  "..btn.data.colorized)
+		else
+			GameTooltip:AddLine("|cFFFFFFFF"..GUILD..":|r  "..btn.data.colorized)
+			GameTooltip:AddLine("|cFFFFFFFF"..L.Realm.."|r  "..btn.data.realm)
+			GameTooltip:AddLine("|cFFFFFFFF"..L.TooltipRealmKey.."|r "..btn.data.unitObj.data.realmKey)
+		end
+		GameTooltip:Show()
+		return
+	end
+	GameTooltip:Hide()
+end
+
+function SortOrder:Item_OnLeave()
+	GameTooltip:Hide()
+end
+
+function SortOrder:SortBox_OnEnterPressed(text, editbox)
+	local btn = editbox:GetParent()
+	if not btn then return end
+
+	local num = tonumber(text)
+	--make sure it's a number we are working with
+	if num then
+		--set the new sortindex number
+		btn.data.unitObj.data.SortIndex = num
+		SortOrder:UpdateList()
+		--reset tooltip cache since we have moved around the units to display
+		Tooltip:ResetCache()
+	else
+		--reset to one already stored or 0
+		if btn.data.unitObj.data.SortIndex then
+			editbox:SetText(btn.data.unitObj.data.SortIndex)
+		else
+			editbox:SetText(0)
+		end
+	end
 end

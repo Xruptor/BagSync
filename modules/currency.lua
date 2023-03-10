@@ -72,7 +72,12 @@ function Currency:CreateList()
 				local header = v.header or L.Currency
 				--only do the entry once per heading and name
 				if not tempList[header..v.name]  then
-					table.insert(usrData, {header=header, name=v.name, icon=v.icon, currencyID=k} )
+					table.insert(usrData, {
+						header = header,
+						name = v.name,
+						icon = v.icon,
+						currencyID = k
+					})
 					tempList[header..v.name] = true
 				end
 			end

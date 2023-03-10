@@ -180,7 +180,10 @@ function AdvancedSearch:CreateLists()
 
 	--show simple for ColorizeUnit
 	for unitObj in Data:IterateUnits(true) do
-		table.insert(playerListTable, { unitObj=unitObj, colorized=Tooltip:ColorizeUnit(unitObj, true)})
+		table.insert(playerListTable, {
+			unitObj = unitObj,
+			colorized = Tooltip:ColorizeUnit(unitObj, true)
+		})
 	end
 
 	--units
@@ -224,7 +227,11 @@ function AdvancedSearch:CreateLists()
 	}
 
 	for i = 1, #list do
-		table.insert(AdvancedSearch.locationList, {name=list[i].desc, source=list[i].source, isSelected=false})
+		table.insert(AdvancedSearch.locationList, {
+			name = list[i].desc,
+			source = list[i].source,
+			isSelected = false
+		})
 	end
 end
 
@@ -250,13 +257,6 @@ function AdvancedSearch:RefreshPlayerList()
             button:SetWidth(AdvancedSearch.playerScroll.scrollChild:GetWidth())
 			button.DetailsButton:Hide()
 
-			--while we are updating the scrollframe, is the mouse currently over a button?
-			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
-			-- if GetMouseFocus() == button then
-			-- 	AdvancedSearch:Item_OnLeave() --hide first
-			-- 	AdvancedSearch:Item_OnEnter(button)
-			-- end
-
 			button.Icon:SetTexture(nil)
 			button.Icon:Hide()
 			if item.isSelected then
@@ -275,6 +275,13 @@ function AdvancedSearch:RefreshPlayerList()
 				button.isHeader = nil
 			end
 			button.Text:SetText(item.colorized or "")
+
+			--while we are updating the scrollframe, is the mouse currently over a button?
+			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
+			-- if GetMouseFocus() == button then
+			-- 	AdvancedSearch:Item_OnLeave() --hide first
+			-- 	AdvancedSearch:Item_OnEnter(button)
+			-- end
 
             button:Show()
         else

@@ -90,18 +90,20 @@ function Search:OnEnable()
 	warningFrame.TitleText:SetText(L.WarningHeader)
 	warningFrame.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
 	warningFrame.TitleText:SetTextColor(1, 1, 1)
-	warningFrame.InfoText1:SetText(L.WarningItemSearch)
-	warningFrame.InfoText1:SetFont(STANDARD_TEXT_FONT, 14, "")
-	warningFrame.InfoText1:SetPoint("LEFT", warningFrame, "TOPLEFT", 5, -90)
-	warningFrame.InfoText1:SetTextColor(1, 165/255, 0) --orange, red is just too much sometimes
-	warningFrame.InfoText1:SetJustifyH("CENTER")
-	warningFrame.InfoText1:SetWidth(warningFrame:GetWidth() - 15)
-	warningFrame.InfoText2:SetText(L.ObsoleteWarning)
-	warningFrame.InfoText2:SetFont(STANDARD_TEXT_FONT, 14, "")
-	warningFrame.InfoText2:SetPoint("LEFT", warningFrame.InfoText1, "BOTTOMLEFT", 5, -60)
-	warningFrame.InfoText2:SetTextColor(50/255, 165/255, 0) --orange, red is just too much sometimes
-	warningFrame.InfoText2:SetJustifyH("CENTER")
-	warningFrame.InfoText2:SetWidth(warningFrame:GetWidth() - 15)
+	warningFrame.infoText1 = warningFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
+	warningFrame.infoText1:SetText(L.WarningItemSearch)
+	warningFrame.infoText1:SetFont(STANDARD_TEXT_FONT, 14, "")
+	warningFrame.infoText1:SetTextColor(1, 165/255, 0) --orange, red is just too much sometimes
+	warningFrame.infoText1:SetJustifyH("CENTER")
+	warningFrame.infoText1:SetWidth(warningFrame:GetWidth() - 30)
+	warningFrame.infoText1:SetPoint("LEFT", warningFrame, "TOPLEFT", 10, -100)
+	warningFrame.infoText2 = warningFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
+	warningFrame.infoText2:SetText(L.ObsoleteWarning)
+	warningFrame.infoText2:SetFont(STANDARD_TEXT_FONT, 14, "")
+	warningFrame.infoText2:SetTextColor(50/255, 165/255, 0)
+	warningFrame.infoText2:SetWidth(warningFrame:GetWidth() - 30)
+	warningFrame.infoText2:SetPoint("LEFT", warningFrame.infoText1, "BOTTOMLEFT", 5, -70)
+	warningFrame.infoText2:SetJustifyH("CENTER")
 	Search.warningFrame = warningFrame
 
 	--Help Frame
@@ -119,8 +121,6 @@ function Search:OnEnable()
 	helpFrame.TitleText:SetText(L.SearchHelpHeader)
 	helpFrame.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
 	helpFrame.TitleText:SetTextColor(1, 1, 1)
-	helpFrame.InfoText1:Hide()
-	helpFrame.InfoText2:Hide()
 	helpFrame.ScrollFrame = CreateFrame("ScrollFrame", nil, helpFrame, "UIPanelScrollFrameTemplate")
 	helpFrame.ScrollFrame:SetPoint("TOPLEFT", helpFrame, "TOPLEFT", 8, -30)
 	helpFrame.ScrollFrame:SetPoint("BOTTOMRIGHT", helpFrame, "BOTTOMRIGHT", -30, 8)
@@ -325,7 +325,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 
 	--show warning window if the server hasn't queried all the items yet
 	if countWarning > 0 then
-		Search.warningFrame.InfoText1:SetText(L.WarningItemSearch:format(countWarning))
+		Search.warningFrame.infoText1:SetText(L.WarningItemSearch:format(countWarning))
 		Search.warningFrame:Show()
 
 		--lets not do TOO many refreshes

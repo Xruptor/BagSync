@@ -458,7 +458,13 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 
 	--add to list
 	local doAdv = (advUnitList and true) or false
-	local unitData = { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj, false, doAdv, false, doAdv), tallyString=tallyString, sortIndex=self:GetSortIndex(unitObj), count=total }
+	local unitData = {
+		unitObj=unitObj,
+		colorized=self:ColorizeUnit(unitObj, false, doAdv, false, doAdv),
+		tallyString=tallyString,
+		sortIndex=self:GetSortIndex(unitObj),
+		count=total
+	}
 	table.insert(unitList, unitData)
 	return unitData
 end
@@ -973,7 +979,12 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 
 	for unitObj in Data:IterateUnits() do
 		if not unitObj.isGuild and unitObj.data.currency and unitObj.data.currency[currencyID] and unitObj.data.currency[currencyID].count > 0 then
-			table.insert(usrData, { unitObj=unitObj, colorized=self:ColorizeUnit(unitObj), sortIndex=self:GetSortIndex(unitObj), count=unitObj.data.currency[currencyID].count} )
+			table.insert(usrData, {
+				unitObj=unitObj,
+				colorized=self:ColorizeUnit(unitObj),
+				sortIndex=self:GetSortIndex(unitObj),
+				count=unitObj.data.currency[currencyID].count
+			})
 		end
 	end
 

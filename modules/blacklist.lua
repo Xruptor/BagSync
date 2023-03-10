@@ -10,6 +10,7 @@ local BSYC = select(2, ...) --grab the addon namespace
 local Blacklist = BSYC:NewModule("Blacklist")
 local Data = BSYC:GetModule("Data")
 local Unit = BSYC:GetModule("Unit")
+local Tooltip = BSYC:GetModule("Tooltip")
 
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Blacklist", ...) end
@@ -31,7 +32,7 @@ function Blacklist:OnEnable()
     blacklistFrame:SetMovable(true)
     blacklistFrame:SetResizable(false)
     blacklistFrame:SetFrameStrata("FULLSCREEN_DIALOG")
-    blacklistFrame:SetScript("OnShow", function() Blacklist:UpdateLists() end)
+    blacklistFrame:SetScript("OnShow", function() Blacklist:UpdateList() end)
     Blacklist.frame = blacklistFrame
 
 	--guild dropdown
@@ -99,17 +100,7 @@ function Blacklist:OnEnable()
 			self.text:SetText(L.BlackListRemove:format(self.data.value));
 		end,
 		OnAccept = function (self)
-			if BSYC.db.blacklist[self.data.key] then
-				if type(self.data.key) == "number" then
-					BSYC:Print(L.ItemIDRemoved:format(self.data.value))
-				else
-					BSYC:Print(L.GuildRemoved:format(self.data.value))
-				end
-				BSYC.db.blacklist[self.data.key] = nil
-				Blacklist:UpdateLists()
-			else
-				BSYC:Print(L.BlackListErrorRemove)
-			end
+			Blacklist:RemoveData(self.data)
 		end,
 		whileDead = 1,
 	}
@@ -117,7 +108,7 @@ function Blacklist:OnEnable()
 	blacklistFrame:Hide()
 end
 
-function Blacklist:UpdateLists()
+function Blacklist:UpdateList()
 	Blacklist.frame.itemIDBox:ClearFocus()
 	Blacklist:CreateList()
     Blacklist:RefreshList()
@@ -197,7 +188,12 @@ function Blacklist:RefreshList()
             button:SetWidth(Blacklist.scrollFrame.scrollChild:GetWidth())
 
 			button.Text:SetJustifyH("LEFT")
-			button.Text:SetTextColor(1, 1, 1)
+			if not tonumber(item.key) then
+				--is guild
+				button.Text:SetTextColor(101/255, 184/255, 	192/255)
+			else
+				button.Text:SetTextColor(1, 1, 1)
+			end
 			button.Text:SetText(item.value or "")
 			button.HeaderHighlight:SetAlpha(0)
 
@@ -251,7 +247,7 @@ function Blacklist:AddItemID()
 			editBox:SetText("")
 			return
 		end
-		BSYC.db.blacklist[itemid] = speciesName
+		BSYC.db.blacklist[itemid] = "|cFFCF9FFF"..speciesName.."|r"
 		BSYC:Print(L.ItemIDAdded:format(itemid), speciesName)
 	else
 		if not GetItemInfo(itemid) then
@@ -262,12 +258,12 @@ function Blacklist:AddItemID()
 
 		local dName, dItemLink = GetItemInfo(itemid)
 
-		BSYC.db.blacklist[itemid] = dName
+		BSYC.db.blacklist[itemid] = dItemLink
 		BSYC:Print(L.ItemIDAdded:format(itemid), dItemLink)
 	end
 	editBox:SetText("")
 
-	Blacklist:UpdateLists()
+	Blacklist:UpdateList()
 end
 
 function Blacklist:AddGuild()
@@ -281,7 +277,23 @@ function Blacklist:AddGuild()
 	BSYC.db.blacklist[Blacklist.selectedGuild.value] = Blacklist.selectedGuild.arg1
 	BSYC:Print(L.GuildAdded:format(Blacklist.selectedGuild.arg1))
 
-	Blacklist:UpdateLists()
+	Blacklist:UpdateList()
+end
+
+function Blacklist:RemoveData(entry)
+	if BSYC.db.blacklist[entry.key] then
+		if type(entry.key) == "number" then
+			BSYC:Print(L.ItemIDRemoved:format(entry.value))
+		else
+			BSYC:Print(L.GuildRemoved:format(entry.value))
+		end
+		BSYC.db.blacklist[entry.key] = nil
+		Blacklist:UpdateList()
+		--reset tooltip cache since we have blacklisted some items or guilds
+		Tooltip:ResetCache()
+	else
+		BSYC:Print(L.BlackListErrorRemove)
+	end
 end
 
 function Blacklist:Item_OnEnter(btn)

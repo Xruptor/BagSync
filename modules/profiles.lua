@@ -17,40 +17,46 @@ local function Debug(level, ...)
 end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
-local AceGUI = LibStub("AceGUI-3.0")
 
 function Profiles:OnEnable()
-
-	--lets create our widgets
-	local ProfilesFrame = AceGUI:Create("Window")
-	_G["BagSyncProfilesFrame"] = ProfilesFrame
+	local profilesFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")
+	Mixin(profilesFrame, Profiles) --implement new frame to our parent module Mixin, to have access to parent methods
+	_G["BagSyncProfilesFrame"] = profilesFrame
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncProfilesFrame")
-	Profiles.frame = ProfilesFrame
-	Profiles.parentFrame = ProfilesFrame.frame
+    profilesFrame.TitleText:SetText("BagSync - "..L.Profiles)
+    profilesFrame:SetHeight(500)
+	profilesFrame:SetWidth(440)
+    profilesFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    profilesFrame:EnableMouse(true) --don't allow clickthrough
+    profilesFrame:SetMovable(true)
+    profilesFrame:SetResizable(false)
+    profilesFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    profilesFrame:SetScript("OnShow", function() Profiles:OnShow() end)
+    Profiles.frame = profilesFrame
 
-	ProfilesFrame:SetTitle("BagSync - "..L.Profiles)
-	ProfilesFrame:SetHeight(500)
-	ProfilesFrame:SetWidth(380)
-	ProfilesFrame:EnableResize(false)
+	profilesFrame.infoText = profilesFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
+	profilesFrame.infoText:SetText(L.DeleteWarning)
+	profilesFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
+	profilesFrame.infoText:SetTextColor(1, 0, 0)
+	profilesFrame.infoText:SetPoint("LEFT", profilesFrame, "TOPLEFT", 15, -30)
+	profilesFrame.infoText:SetJustifyH("LEFT")
+	profilesFrame.infoText:SetWidth(profilesFrame:GetWidth() - 15)
 
-	local information = AceGUI:Create("BagSyncLabel")
-	information:SetText(L.DeleteWarning)
-	information:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
-	information:SetColor(1, 165/255, 0)
-	information:SetFullWidth(true)
-	ProfilesFrame:AddChild(information)
-
-	local scrollframe = AceGUI:Create("ScrollFrame");
-	scrollframe:SetFullWidth(true)
-	scrollframe:SetLayout("Flow")
-
-	Profiles.scrollframe = scrollframe
-	ProfilesFrame:AddChild(scrollframe)
-
-	hooksecurefunc(ProfilesFrame, "Show" ,function()
-		self:DisplayList()
-	end)
+    Profiles.scrollFrame = _G.CreateFrame("ScrollFrame", nil, profilesFrame, "HybridScrollFrameTemplate")
+    Profiles.scrollFrame:SetWidth(405)
+    Profiles.scrollFrame:SetPoint("TOPLEFT", profilesFrame, "TOPLEFT", 6, -40)
+    --set ScrollFrame height by altering the distance from the bottom of the frame
+    Profiles.scrollFrame:SetPoint("BOTTOMLEFT", profilesFrame, "BOTTOMLEFT", -25, 10)
+    Profiles.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Profiles.scrollFrame, "HybridScrollBarTemplate")
+    Profiles.scrollFrame.scrollBar:SetPoint("TOPLEFT", Profiles.scrollFrame, "TOPRIGHT", 1, -16)
+    Profiles.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Profiles.scrollFrame, "BOTTOMRIGHT", 1, 12)
+	--initiate the scrollFrame
+    --the items we will work with
+    Profiles.profilesList = {}
+	Profiles.scrollFrame.update = function() Profiles:RefreshList(); end
+    HybridScrollFrame_SetDoNotHideScrollBar(Profiles.scrollFrame, true)
+	HybridScrollFrame_CreateButtons(Profiles.scrollFrame, "BagSyncListSimpleItemTemplate")
 
 	StaticPopupDialogs["BAGSYNC_PROFILES_REMOVE"] = {
 		text = L.ProfilesRemove,
@@ -62,7 +68,7 @@ function Profiles:OnEnable()
 		hideOnEscape = 1,
 		OnShow = function (self)
 			--entry.unitObj.realm
-			self.text:SetText(L.ProfilesRemove:format(self.data.colorized, self.data.unitObj.realm));
+			self.text:SetText(L.ProfilesRemove:format(self.data.colorized, self.data.realm));
 		end,
 		OnAccept = function (self)
 			Profiles:DeleteUnit(self.data)
@@ -70,8 +76,115 @@ function Profiles:OnEnable()
 		whileDead = 1,
 	}
 
-	ProfilesFrame:Hide()
+	profilesFrame:Hide()
+end
 
+function Profiles:OnShow()
+	Profiles:UpdateList()
+end
+
+function Profiles:UpdateList()
+	Profiles:CreateList()
+    Profiles:RefreshList()
+
+	--scroll to top when shown
+	HybridScrollFrame_SetOffset(Profiles.scrollFrame, 0)
+	Profiles.scrollFrame.scrollBar:SetValue(0)
+end
+
+function Profiles:CreateList()
+	Profiles.profilesList = {}
+	local usrData = {}
+
+	for unitObj in Data:IterateUnits(true) do
+		table.insert(usrData, {
+			unitObj = unitObj,
+			name = unitObj.name,
+			realm = unitObj.realm,
+			colorized = Tooltip:ColorizeUnit(unitObj, true)
+		})
+	end
+
+	if #usrData > 0 then
+		table.sort(usrData, function(a, b)
+			if a.realm  == b.realm then
+				return a.name < b.name;
+			end
+			return a.realm < b.realm;
+		end)
+
+		local lastHeader = ""
+		for i=1, #usrData do
+			if lastHeader ~= usrData[i].realm then
+				--add header
+				table.insert(Profiles.profilesList, {
+					colorized = usrData[i].realm,
+					isHeader = true,
+				})
+				lastHeader = usrData[i].realm
+			end
+			--add player
+			table.insert(Profiles.profilesList, {
+				unitObj = usrData[i].unitObj,
+				name = usrData[i].name,
+				realm = usrData[i].realm,
+				colorized = usrData[i].colorized
+			})
+		end
+	end
+end
+
+function Profiles:RefreshList()
+    local items = Profiles.profilesList
+    local buttons = HybridScrollFrame_GetButtons(Profiles.scrollFrame)
+    local offset = HybridScrollFrame_GetOffset(Profiles.scrollFrame)
+	if not buttons then return end
+
+    for buttonIndex = 1, #buttons do
+        local button = buttons[buttonIndex]
+		button.parentHandler = Profiles
+
+        local itemIndex = buttonIndex + offset
+
+        if itemIndex <= #items then
+            local item = items[itemIndex]
+
+            button:SetID(itemIndex)
+			button.data = item
+			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+			button.Text:SetTextColor(1, 1, 1)
+            button:SetWidth(Profiles.scrollFrame.scrollChild:GetWidth())
+
+			if item.isHeader then
+				button.Text:SetJustifyH("CENTER")
+				--button.HeaderHighlight:SetVertexColor(0.8, 0.7, 0, 1)
+				button.HeaderHighlight:SetAlpha(0.75)
+				button.isHeader = true
+			else
+				button.Text:SetJustifyH("LEFT")
+				button.HeaderHighlight:SetAlpha(0)
+				button.isHeader = nil
+			end
+			button.Text:SetText(item.colorized or "")
+
+			--while we are updating the scrollframe, is the mouse currently over a button?
+			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
+			if GetMouseFocus() == button then
+				Profiles:Item_OnLeave() --hide first
+				Profiles:Item_OnEnter(button)
+			end
+
+            button:Show()
+        else
+            button:Hide()
+        end
+    end
+
+    local buttonHeight = Profiles.scrollFrame.buttonHeight
+    local totalHeight = #items * buttonHeight
+    local shownHeight = #buttons * buttonHeight
+
+    HybridScrollFrame_Update(Profiles.scrollFrame, totalHeight, shownHeight)
 end
 
 function Profiles:DeleteUnit(entry)
@@ -89,120 +202,39 @@ function Profiles:DeleteUnit(entry)
 		else
 			BSYC:Print(L.ProfileBeenRemoved:format(entry.colorized, entry.unitObj.realm))
 			BagSyncDB[entry.unitObj.realm][entry.unitObj.name] = nil
-			Data:FixDB()
-			self:DisplayList()
-			return
 		end
 	else
 		BSYC:Print(L.GuildRemoved:format(entry.colorized))
 		BagSyncDB[entry.unitObj.realm][entry.unitObj.name] = nil
-		Data:FixDB()
-		self:DisplayList()
+	end
+	Data:FixDB()
+	Profiles:UpdateList()
+	--reset tooltip cache since we have removed some units
+	Tooltip:ResetCache()
+end
+
+function Profiles:Item_OnEnter(btn)
+    if not btn.isHeader then
+		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+		if not btn.data.unitObj.isGuild then
+			GameTooltip:AddLine("|cFFFFFFFF"..PLAYER..":|r  "..btn.data.colorized)
+		else
+			GameTooltip:AddLine("|cFFFFFFFF"..GUILD..":|r  "..btn.data.colorized)
+			GameTooltip:AddLine("|cFFFFFFFF"..L.Realm.."|r  "..btn.data.realm)
+			GameTooltip:AddLine("|cFFFFFFFF"..L.TooltipRealmKey.."|r "..btn.data.unitObj.data.realmKey)
+		end
+		GameTooltip:Show()
 		return
 	end
+	GameTooltip:Hide()
 end
 
-function Profiles:AddEntry(entry, isHeader)
-
-	local label = AceGUI:Create("BagSyncInteractiveLabel")
-
-	label:SetHeaderHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-	label:ToggleHeaderHighlight(false)
-	label.entry = entry
-	label:SetColor(1, 1, 1)
-
-	if isHeader then
-		label:SetText(entry.unitObj.realm)
-		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
-		label:SetFullWidth(true)
-		label:ApplyJustifyH("CENTER")
-		label:ToggleHeaderHighlight(true)
-		label.userdata.isHeader = true
-	else
-		if entry.unitObj.isGuild then
-			label:SetText(GUILD..":  "..entry.colorized)
-		else
-			label:SetText(entry.colorized)
-		end
-		label:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
-		label:SetFullWidth(true)
-		label:ApplyJustifyH("LEFT")
-		label.userdata.isHeader = false
-	end
-
-	label:SetCallback(
-		"OnClick",
-		function (widget, sometable, button)
-			if "LeftButton" == button and not label.userdata.isHeader then
-				StaticPopup_Show("BAGSYNC_PROFILES_REMOVE", '', '', entry) --cannot pass nil as it's expected for SetFormattedText (Interface/FrameXML/StaticPopup.lua)
-			end
-		end)
-	label:SetCallback(
-		"OnEnter",
-		function (widget, sometable)
-			if not label.userdata.isHeader then
-				label:SetColor(1, 0, 0)
-				--override the single tooltip use of BagSync
-				label.highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-				label.highlight:SetVertexColor(0,1,0,0.3)
-
-				GameTooltip:SetOwner(label.frame, "ANCHOR_BOTTOMRIGHT")
-
-				if not label.entry.unitObj.isGuild then
-					GameTooltip:AddLine(PLAYER..":  "..entry.colorized)
-				else
-					GameTooltip:AddLine(GUILD..":  "..entry.colorized)
-					GameTooltip:AddLine(L.Realm.."  "..entry.unitObj.realm)
-					GameTooltip:AddLine(L.TooltipRealmKey.." "..entry.unitObj.data.realmKey)
-				end
-				GameTooltip:Show()
-			end
-		end)
-	label:SetCallback(
-		"OnLeave",
-		function (widget, sometable)
-			label:SetColor(1, 1, 1)
-			--override the single tooltip use of BagSync
-			label.highlight:SetTexture(nil)
-			GameTooltip:Hide()
-		end)
-
-	self.scrollframe:AddChild(label)
+function Profiles:Item_OnLeave()
+	GameTooltip:Hide()
 end
 
-function Profiles:DisplayList()
-
-	self.scrollframe:ReleaseChildren() --clear out the scrollframe
-
-	local profilesTable = {}
-	local tempList = {}
-
-	for unitObj in Data:IterateUnits(true) do
-		table.insert(profilesTable, { unitObj=unitObj, colorized=Tooltip:ColorizeUnit(unitObj, true) } )
+function Profiles:Item_OnClick(btn)
+	if not btn.isHeader then
+		StaticPopup_Show("BAGSYNC_PROFILES_REMOVE", '', '', btn.data) --cannot pass nil as it's expected for SetFormattedText (Interface/FrameXML/StaticPopup.lua)
 	end
-
-	if #profilesTable > 0 then
-
-		table.sort(profilesTable, function(a, b)
-			if a.unitObj.realm  == b.unitObj.realm then
-				return a.unitObj.name < b.unitObj.name;
-			end
-			return a.unitObj.realm < b.unitObj.realm;
-		end)
-
-		local lastHeader = ""
-		for i=1, #profilesTable do
-			if lastHeader ~= profilesTable[i].unitObj.realm then
-				self:AddEntry(profilesTable[i], true) --add header
-				self:AddEntry(profilesTable[i], false) --add entry
-				lastHeader = profilesTable[i].unitObj.realm
-			else
-				self:AddEntry(profilesTable[i], false) --add entry
-			end
-		end
-		self.scrollframe.frame:Show()
-	else
-		self.scrollframe.frame:Hide()
-	end
-
 end

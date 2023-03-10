@@ -8,6 +8,7 @@
 
 local BSYC = select(2, ...) --grab the addon namespace
 local Whitelist = BSYC:NewModule("Whitelist")
+local Tooltip = BSYC:GetModule("Tooltip")
 
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Whitelist", ...) end
@@ -83,18 +84,20 @@ function Whitelist:OnEnable()
 	warningFrame.TitleText:SetText(L.DisplayWhitelistHelp)
 	warningFrame.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
 	warningFrame.TitleText:SetTextColor(1, 1, 1)
-	warningFrame.InfoText1:SetText(L.DisplayWhitelistStatus)
-	warningFrame.InfoText1:SetFont(STANDARD_TEXT_FONT, 14, "")
-	warningFrame.InfoText1:SetPoint("LEFT", warningFrame, "TOPLEFT", 5, -30)
-	warningFrame.InfoText1:SetTextColor(1, 165/255, 0) --orange, red is just too much sometimes
-	warningFrame.InfoText1:SetJustifyH("CENTER")
-	warningFrame.InfoText1:SetWidth(warningFrame:GetWidth() - 15)
-	warningFrame.InfoText2:SetText(L.DisplayWhitelistHelpInfo)
-	warningFrame.InfoText2:SetFont(STANDARD_TEXT_FONT, 14, "")
-	warningFrame.InfoText2:SetPoint("LEFT", warningFrame.InfoText1, "BOTTOMLEFT", 5, -100)
-	warningFrame.InfoText2:SetTextColor(50/255, 165/255, 0) --orange, red is just too much sometimes
-	warningFrame.InfoText2:SetJustifyH("CENTER")
-	warningFrame.InfoText2:SetWidth(warningFrame:GetWidth() - 15)
+	warningFrame.infoText1 = warningFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
+	warningFrame.infoText1:SetText(L.DisplayWhitelistStatus)
+	warningFrame.infoText1:SetFont(STANDARD_TEXT_FONT, 14, "")
+	warningFrame.infoText1:SetTextColor(1, 165/255, 0) --orange, red is just too much sometimes
+	warningFrame.infoText1:SetJustifyH("CENTER")
+	warningFrame.infoText1:SetWidth(warningFrame:GetWidth() - 30)
+	warningFrame.infoText1:SetPoint("LEFT", warningFrame, "TOPLEFT", 10, -40)
+	warningFrame.infoText2 = warningFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
+	warningFrame.infoText2:SetText(L.DisplayWhitelistHelpInfo)
+	warningFrame.infoText2:SetFont(STANDARD_TEXT_FONT, 14, "")
+	warningFrame.infoText2:SetTextColor(50/255, 165/255, 0)
+	warningFrame.infoText2:SetWidth(warningFrame:GetWidth() - 30)
+	warningFrame.infoText2:SetPoint("LEFT", warningFrame.infoText1, "BOTTOMLEFT", 5, -100)
+	warningFrame.infoText2:SetJustifyH("CENTER")
 	Whitelist.warningFrame = warningFrame
 
 	StaticPopupDialogs["BAGSYNC_WHITELIST_REMOVE"] = {
@@ -109,13 +112,7 @@ function Whitelist:OnEnable()
 			self.text:SetText(L.WhiteListRemove:format(self.data.value));
 		end,
 		OnAccept = function (self)
-			if BSYC.db.whitelist[self.data.key] then
-				BSYC:Print(L.ItemIDRemoved:format(self.data.value))
-				BSYC.db.whitelist[self.data.key] = nil
-				Whitelist:UpdateLists()
-			else
-				BSYC:Print(L.WhiteListErrorRemove)
-			end
+			Whitelist:RemoveData(self.data)
 		end,
 		whileDead = 1,
 	}
@@ -125,12 +122,12 @@ end
 
 function Whitelist:OnShow()
 	local getStatus = (BSYC.options.enableWhitelist and ("|cFF99CC33"..L.ON.."|r")) or ( "|cFFDF2B2B"..L.OFF.."|r")
-	Whitelist.warningFrame.InfoText1:SetText(L.DisplayWhitelistStatus:format(getStatus))
+	Whitelist.warningFrame.infoText1:SetText(L.DisplayWhitelistStatus:format(getStatus))
 	Whitelist.warningFrame:Show()
-	Whitelist:UpdateLists()
+	Whitelist:UpdateList()
 end
 
-function Whitelist:UpdateLists()
+function Whitelist:UpdateList()
 	Whitelist.frame.itemIDBox:ClearFocus()
 	Whitelist:CreateList()
     Whitelist:RefreshList()
@@ -238,7 +235,7 @@ function Whitelist:AddItemID()
 			editBox:SetText("")
 			return
 		end
-		BSYC.db.whitelist[itemid] = speciesName
+		BSYC.db.whitelist[itemid] = "|cFFCF9FFF"..speciesName.."|r"
 		BSYC:Print(L.ItemIDAdded:format(itemid), speciesName)
 	else
 		if not GetItemInfo(itemid) then
@@ -249,12 +246,12 @@ function Whitelist:AddItemID()
 
 		local dName, dItemLink = GetItemInfo(itemid)
 
-		BSYC.db.whitelist[itemid] = dName
+		BSYC.db.whitelist[itemid] = dItemLink
 		BSYC:Print(L.ItemIDAdded:format(itemid), dItemLink)
 	end
 	editBox:SetText("")
 
-	Whitelist:UpdateLists()
+	Whitelist:UpdateList()
 end
 
 function Whitelist:AddGuild()
@@ -268,7 +265,19 @@ function Whitelist:AddGuild()
 	BSYC.db.whitelist[Whitelist.selectedGuild.value] = Whitelist.selectedGuild.arg1
 	BSYC:Print(L.GuildAdded:format(Whitelist.selectedGuild.arg1))
 
-	Whitelist:UpdateLists()
+	Whitelist:UpdateList()
+end
+
+function Whitelist:RemoveData(entry)
+	if BSYC.db.whitelist[entry.key] then
+		BSYC:Print(L.ItemIDRemoved:format(entry.value))
+		BSYC.db.whitelist[entry.key] = nil
+		Whitelist:UpdateList()
+		--reset tooltip cache since we have whitelisted some items or guilds
+		Tooltip:ResetCache()
+	else
+		BSYC:Print(L.WhiteListErrorRemove)
+	end
 end
 
 function Whitelist:Item_OnEnter(btn)

@@ -142,9 +142,24 @@ function Debug:OnEnable()
 
 		for unitObj in BSYC:GetModule("Data"):IterateUnits() do
 			if not unitObj.isGuild then
-				Debug:AddMessage(1, "IterateUnits", "player", unitObj.name, unitObj.realm, unitObj.isConnectedRealm, unitObj.data.guild, unitObj.data.guildrealm, unitObj.data.realmKey, unitObj.data.rwsKey)
+				Debug:AddMessage(1, "IterateUnits", "player",
+					unitObj.name,
+					unitObj.realm,
+					unitObj.isConnectedRealm,
+					unitObj.data.guild,
+					unitObj.data.guildrealm,
+					unitObj.data.realmKey,
+					unitObj.data.rwsKey
+				)
 			else
-				Debug:AddMessage(1, "IterateUnits", "guild", unitObj.name, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, unitObj.data.realmKey, unitObj.data.rwsKey)
+				Debug:AddMessage(1, "IterateUnits", "guild",
+					unitObj.name,
+					unitObj.realm,
+					unitObj.isConnectedRealm,
+					unitObj.isXRGuild,
+					unitObj.data.realmKey,
+					unitObj.data.rwsKey
+				)
 			end
 		end
 	end)
@@ -265,8 +280,6 @@ function Debug:OnEnable()
 	exportFrame.TitleText:SetText(L.DebugExport)
 	exportFrame.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
 	exportFrame.TitleText:SetTextColor(1, 1, 1)
-	exportFrame.InfoText1:Hide()
-	exportFrame.InfoText2:Hide()
 	exportFrame.ScrollFrame = CreateFrame("ScrollFrame", nil, exportFrame, "UIPanelScrollFrameTemplate")
 	exportFrame.ScrollFrame:SetPoint("TOPLEFT", exportFrame, "TOPLEFT", 8, -30)
 	exportFrame.ScrollFrame:SetPoint("BOTTOMRIGHT", exportFrame, "BOTTOMRIGHT", -30, 8)

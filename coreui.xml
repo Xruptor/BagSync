@@ -141,6 +141,85 @@
 		</Scripts>
     </Frame>
 
+	<Frame name="BagSyncListSortItemTemplate" virtual="true">
+        <Size x="0" y="30"/>
+        <Layers>
+            <Layer level="BACKGROUND">
+                <Texture parentKey="Background" setAllPoints="true">
+                    <Color r="0" g="0" b="0" a="0"/>
+                </Texture>
+            </Layer>
+            <Layer level="ARTWORK">
+                <FontString parentKey="Text" inherits="GameFontNormal" justifyH="LEFT">
+                    <Anchors>
+                        <Anchor point="LEFT" x="8" y="0"/>
+						<Anchor point="RIGHT" relativeKey="$parent" x="-8" y="0"/>
+                    </Anchors>
+                </FontString>
+            </Layer>
+            <Layer level="OVERLAY">
+                <Texture parentKey="HeaderHighlight" setAllPoints="true" alphaMode="ADD" file="Interface\QuestFrame\UI-QuestTitleHighlight" alpha="0">
+                    <Color r="0.8" g="0.7" b="0" a="1"/>
+                </Texture>
+                <Texture parentKey="DetailsHighlight" setAllPoints="true" alphaMode="ADD" file="Interface\Tooltips\UI-Tooltip-Background" alpha="0">
+                    <Color r="0.4" g="0.2" b="0.5" a="0.2"/>
+                </Texture>
+            </Layer>
+            <Layer level="HIGHLIGHT">
+                <Texture parentKey="Highlight" setAllPoints="true" alphaMode="ADD">
+                    <Color r="0" g="1" b="0" a="0.2"/>
+                </Texture>
+            </Layer>
+        </Layers>
+		<Frames>
+			<EditBox parentKey="SortBox" enableMouse="true" autoFocus="false" inherits="InputBoxTemplate">
+				<Size x="70" y="14"/>
+				<Anchors>
+					<Anchor point="RIGHT" relativeKey="$parent" relativePoint="RIGHT" x="-10" y="0"/>
+				</Anchors>
+				<FontString inherits="GameFontHighlight"/>
+				<Scripts>
+					<OnEscapePressed>
+						self:ClearFocus()
+						if self:GetParent().parentHandler and self:GetParent().parentHandler.SortBox_OnEscapePressed then
+							self:GetParent().parentHandler:SortBox_OnEscapePressed(self:GetText(), self);
+						end
+					</OnEscapePressed>
+					<OnEnterPressed>
+						self:ClearFocus()
+						if self:GetParent().parentHandler and self:GetParent().parentHandler.SortBox_OnEnterPressed then
+							self:GetParent().parentHandler:SortBox_OnEnterPressed(self:GetText(), self);
+						end
+					</OnEnterPressed>
+					<OnTextChanged>
+						if self:GetParent().parentHandler and self:GetParent().parentHandler.SortBox_OnTextChanged then
+							self:GetParent().parentHandler:SortBox_OnTextChanged(userInput, self);
+						end
+					</OnTextChanged>
+				</Scripts>
+			</EditBox>
+		</Frames>
+		<Scripts>
+			<OnClick>
+				<!-- self:<scrollframe><parentObject> -->
+				if self.parentHandler and self.parentHandler.Item_OnClick then
+					self.parentHandler:Item_OnClick(self);
+				end
+			</OnClick>
+			<OnEnter>
+				if self.isHeader and self.Highlight:IsVisible() then self.Highlight:Hide() end;
+				if self.parentHandler and self.parentHandler.Item_OnEnter then
+					self.parentHandler:Item_OnEnter(self);
+				end
+			</OnEnter>
+			<OnLeave>
+				if not self.isHeader and not self.Highlight:IsVisible() then self.Highlight:Show() end;
+				if self.parentHandler and self.parentHandler.Item_OnLeave then
+					self.parentHandler:Item_OnLeave(self);
+				end
+			</OnLeave>
+		</Scripts>
+    </Frame>
 
 <!--
 *******************************************************************************
@@ -337,20 +416,6 @@
                 </Scripts>
             </Button>
 		</Frames>
-		<Scripts>
-			<OnMouseDown>
-				if ( button == "LeftButton" ) then
-					self:StartMoving();
-					self.isMoving = true;
-				end
-			</OnMouseDown>
-			<OnMouseUp>
-				if ( self.isMoving ) then
-					self:StopMovingOrSizing();
-					self.isMoving = false;
-				end
-			</OnMouseUp>
-		</Scripts>
 	</Frame>
 
 	<Frame name="BagSyncSearchFrameTemplate" inherits="BaseBagSyncSearchFrameTemplate" virtual="true">
@@ -379,6 +444,20 @@
 				</Texture>
 			</Layer>
 		</Layers>
+		<Scripts>
+			<OnMouseDown>
+				if ( button == "LeftButton" ) then
+					self:StartMoving();
+					self.isMoving = true;
+				end
+			</OnMouseDown>
+			<OnMouseUp>
+				if ( self.isMoving ) then
+					self:StopMovingOrSizing();
+					self.isMoving = false;
+				end
+			</OnMouseUp>
+		</Scripts>
 	</Frame>
 
 <!--
@@ -447,20 +526,6 @@
 		<Frames>
 			<Button parentKey="CloseButton" inherits="UIPanelCloseButtonDefaultAnchors"/>
 		</Frames>
-		<Scripts>
-			<OnMouseDown>
-				if ( button == "LeftButton" ) then
-					self:StartMoving();
-					self.isMoving = true;
-				end
-			</OnMouseDown>
-			<OnMouseUp>
-				if ( self.isMoving ) then
-					self:StopMovingOrSizing();
-					self.isMoving = false;
-				end
-			</OnMouseUp>
-		</Scripts>
 	</Frame>
 
 	<Frame name="BagSyncFrameTemplate" inherits="BaseBagSyncFrameTemplate" virtual="true">
@@ -489,6 +554,20 @@
 				</Texture>
 			</Layer>
 		</Layers>
+		<Scripts>
+			<OnMouseDown>
+				if ( button == "LeftButton" ) then
+					self:StartMoving();
+					self.isMoving = true;
+				end
+			</OnMouseDown>
+			<OnMouseUp>
+				if ( self.isMoving ) then
+					self:StopMovingOrSizing();
+					self.isMoving = false;
+				end
+			</OnMouseUp>
+		</Scripts>
 	</Frame>
 
 <!--
@@ -507,16 +586,6 @@
 					<Anchors>
 						<Anchor point="TOP" x="-6" y="-4" />
 					</Anchors>
-				</FontString>
-				<FontString parentKey="InfoText1" inherits="GameFontNormal" text="">
-                    <Anchors>
-                        <Anchor point="LEFT" relativeKey="$parent" relativePoint="TOPLEFT" x="10" y="-40"/>
-                    </Anchors>
-				</FontString>
-				<FontString parentKey="InfoText2" inherits="GameFontNormal" text="">
-                    <Anchors>
-                        <Anchor point="LEFT" relativeKey="$parent" relativePoint="TOPLEFT" x="10" y="-50"/>
-                    </Anchors>
 				</FontString>
 			</Layer>
 		</Layers>

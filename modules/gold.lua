@@ -82,20 +82,23 @@ function Gold:CreateList()
 					unitObj = unitObj,
 					colorized = Tooltip:ColorizeUnit(unitObj),
 					sortIndex = Tooltip:GetSortIndex(unitObj),
-					count = unitObj.data.money
+					count = unitObj.data.money --we use count because of the DoSort() function
 				})
 			end
 		end
 	end
+
 	if #usrData > 0 then
 		usrData = Tooltip:DoSort(usrData)
 
 		for i=1, #usrData do
-			total = total + usrData[i].unitObj.data.money
+			total = total + usrData[i].count
 			table.insert(Gold.goldList, {
+				unitObj = usrData[i].unitObj,
 				colorized = usrData[i].colorized,
-				money = usrData[i].unitObj.data.money,
-				moneyString = GetMoneyString(usrData[i].unitObj.data.money, true)
+				sortIndex = usrData[i].sortIndex,
+				count = usrData[i].count,
+				moneyString = GetMoneyString(usrData[i].count, true)
 			})
 		end
 
@@ -168,7 +171,8 @@ function Gold:Item_OnEnter(btn)
     if btn.data then
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		GameTooltip:AddLine(btn.data.colorized or "")
-		GameTooltip:AddLine("|CFFFFFFFF"..(btn.data.moneyString or "").."|r")
+		GameTooltip:AddLine("|cFF3588FF"..(btn.data.unitObj.realm or "").."|r")
+		GameTooltip:AddLine("|cFFFFFFFF"..(btn.data.moneyString or "").."|r")
 		GameTooltip:Show()
 		return
 	end
