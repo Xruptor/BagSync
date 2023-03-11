@@ -280,8 +280,6 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET
 	end
 
 	Debug(BSYC_DL.INFO, "ColorizeUnit", tmpTag, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, player.realm)
-	Debug(BSYC_DL.SL2, "ColorizeUnit [Realm]", GetRealmName(), GetNormalizedRealmName())
-
 	return tmpTag
 end
 
@@ -321,7 +319,7 @@ function Tooltip:DoSort(tblData)
 	return tblData
 end
 
-function Tooltip:AddItem(unitObj, itemID, target, countList)
+function Tooltip:AddItems(unitObj, itemID, target, countList)
 	local total = 0
 	if not unitObj or not itemID or not target or not countList then return total end
 	if not unitObj.data then return total end
@@ -331,6 +329,7 @@ function Tooltip:AddItem(unitObj, itemID, target, countList)
 		for i=1, #data do
 			if data[i] then
 				local link, count = BSYC:Split(data[i], true)
+				if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
 				if link then
 					if link == itemID then
 						iCount = iCount + (count or 1)
@@ -651,18 +650,18 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local origLink = link --store the original unparsed link
 	--remember when no count is provided to ParseItemLink, only the itemID is returned.  Integer or a string if it has bonusID
 	link = BSYC:ParseItemLink(link)
-
-	--make sure we have something to work with
-	if not link then
-		objTooltip:Show()
-		return
-	end
-
 	link = BSYC:Split(link, true) --if we are parsing a database entry, return only the itemID portion
 
 	--we do this because the itemID portion can be something like 190368::::::::::::5:8115:7946:6652:7579:1491::::::
 	local shortID = BSYC:GetShortItemID(link)
 	if isBattlePet then origLink = shortID end
+
+	--make sure we have something to work with
+	if not link or not shortID then
+		objTooltip:Show()
+		Debug(BSYC_DL.WARN, "TallyUnits", "NoLink", origLink, source, isBattlePet)
+		return
+	end
 
 	--if we already did the item, then display the previous information, use the unparsed link to verify
 	if self.__lastLink and self.__lastLink == origLink then
@@ -706,7 +705,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	end
 
 	--short the shortID and ignore all BonusID's and stats
-	if BSYC.options.enableShowUniqueItemsTotals and shortID then link = shortID end
+	if BSYC.options.enableShowUniqueItemsTotals then link = shortID end
 
 	--store these in the addon itself not in the tooltip
 	self.__lastTally = {}
@@ -756,13 +755,13 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 					local isCurrentPlayer = ((unitObj.name == player.name and unitObj.realm == player.realm) and true) or false
 					if not isCurrentPlayer then
 						for k, v in pairs(allowList) do
-							grandTotal = grandTotal + self:AddItem(unitObj, link, k, countList)
+							grandTotal = grandTotal + self:AddItems(unitObj, link, k, countList)
 						end
 					end
 				else
 					--don't cache the players guild bank, lets get that in real time in case they put stuff in it
 					if not player.guild or unitObj.realm ~= player.guildrealm or unitObj.name ~= player.guild then
-						grandTotal = grandTotal + self:AddItem(unitObj, link, "guild", countList)
+						grandTotal = grandTotal + self:AddItems(unitObj, link, "guild", countList)
 					end
 				end
 
@@ -791,17 +790,17 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			countList = {}
 			local playerObj = Data:GetCurrentPlayer()
 
-			grandTotal = grandTotal + self:AddItem(playerObj, link, "equip", countList)
+			grandTotal = grandTotal + self:AddItems(playerObj, link, "equip", countList)
 			--GetItemCount does not work in the auction, void bank or mailbox, grab manually
-			grandTotal = grandTotal + self:AddItem(playerObj, link, "auction", countList)
-			grandTotal = grandTotal + self:AddItem(playerObj, link, "void", countList)
-			grandTotal = grandTotal + self:AddItem(playerObj, link, "mailbox", countList)
+			grandTotal = grandTotal + self:AddItems(playerObj, link, "auction", countList)
+			grandTotal = grandTotal + self:AddItems(playerObj, link, "void", countList)
+			grandTotal = grandTotal + self:AddItems(playerObj, link, "mailbox", countList)
 
 			--GetItemCount does not work on battlepet links
 			if isBattlePet then
-				grandTotal = grandTotal + self:AddItem(playerObj, link, "bag", countList)
-				grandTotal = grandTotal + self:AddItem(playerObj, link, "bank", countList)
-				grandTotal = grandTotal + self:AddItem(playerObj, link, "reagents", countList)
+				grandTotal = grandTotal + self:AddItems(playerObj, link, "bag", countList)
+				grandTotal = grandTotal + self:AddItems(playerObj, link, "bank", countList)
+				grandTotal = grandTotal + self:AddItems(playerObj, link, "reagents", countList)
 
 			elseif not isBattlePet then
 				local equipCount = countList["equip"] or 0
@@ -844,7 +843,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			if not advUnitList or (advUnitList and advUnitList[player.guildrealm] and advUnitList[player.guildrealm][player.guild]) then
 				countList = {}
 				local guildObj = Data:GetPlayerGuild()
-				grandTotal = grandTotal + self:AddItem(guildObj, link, "guild", countList)
+				grandTotal = grandTotal + self:AddItems(guildObj, link, "guild", countList)
 				if grandTotal > 0 then
 					--table variables gets passed as byRef
 					self:UnitTotals(guildObj, countList, unitList, advUnitList)
@@ -960,7 +959,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	end
 
 	local WLChk = (BSYC.options.enableWhitelist and "WL-ON") or "WL-OFF"
-	Debug(BSYC_DL.INFO, "TallyUnits", shortID, source, isBattlePet, grandTotal, WLChk)
+	Debug(BSYC_DL.INFO, "TallyUnits", link, shortID, source, isBattlePet, grandTotal, WLChk)
 end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)

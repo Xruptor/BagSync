@@ -30,7 +30,7 @@ function Professions:OnEnable()
     professionsFrame:EnableMouse(true) --don't allow clickthrough
     professionsFrame:SetMovable(true)
     professionsFrame:SetResizable(false)
-    professionsFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    professionsFrame:SetFrameStrata("HIGH")
     professionsFrame:SetScript("OnShow", function() Professions:OnShow() end)
     Professions.frame = professionsFrame
 
@@ -75,6 +75,8 @@ function Professions:CreateList()
 
 	for unitObj in Data:IterateUnits() do
 		if not unitObj.isGuild and unitObj.data.professions then
+			local colorized = Tooltip:ColorizeUnit(unitObj, true)
+
 			for skillID, skillData in pairs(unitObj.data.professions) do
 				if skillData.name then
 					local hasRecipes = false
@@ -85,7 +87,7 @@ function Professions:CreateList()
 						skillID = skillID,
 						skillData = skillData,
 						unitObj = unitObj,
-						colorized = Tooltip:ColorizeUnit(unitObj),
+						colorized = colorized,
 						sortIndex = Tooltip:GetSortIndex(unitObj),
 						hasRecipes = hasRecipes
 					})
@@ -198,10 +200,15 @@ end
 function Professions:Item_OnEnter(btn)
     if not btn.isHeader then
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+		GameTooltip:AddLine("|cFFFFFFFF"..PLAYER..":|r  "..btn.data.colorized)
+		GameTooltip:AddLine("|cFFFFFFFF"..L.Realm.."|r  "..btn.data.unitObj.realm)
+		GameTooltip:AddLine("|cFFFFFFFF"..L.TooltipRealmKey.."|r "..btn.data.unitObj.data.realmKey)
+		GameTooltip:AddLine(" ")
+
 		if btn.data.hasRecipes then
-			GameTooltip:AddLine(btn.data.colorized..": "..L.ProfessionHasRecipes)
+			GameTooltip:AddLine("|cFF4DD827"..L.ProfessionHasRecipes.."|r")
 		else
-			GameTooltip:AddLine(btn.data.colorized..": "..L.ProfessionHasNoRecipes)
+			GameTooltip:AddLine("|cFFFF3C38"..L.ProfessionHasNoRecipes.."|r")
 		end
 		GameTooltip:Show()
 		return

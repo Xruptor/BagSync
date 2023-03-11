@@ -31,7 +31,7 @@ function Blacklist:OnEnable()
     blacklistFrame:EnableMouse(true) --don't allow clickthrough
     blacklistFrame:SetMovable(true)
     blacklistFrame:SetResizable(false)
-    blacklistFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    blacklistFrame:SetFrameStrata("HIGH")
     blacklistFrame:SetScript("OnShow", function() Blacklist:UpdateList() end)
     Blacklist.frame = blacklistFrame
 

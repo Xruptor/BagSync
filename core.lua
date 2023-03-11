@@ -93,7 +93,7 @@ function BSYC:GetHashTableLen(tbl)
 end
 
 function BSYC:DecodeOpts(tblString, mergeOpts)
-	--Example = "battlepet=245|auction=124567|foo=bar|tickle=elmo|test=12:3:4|forthe=horde"
+	--Example = "petdata=245:12:4:5:3|auction=124567|foo=bar|tickle=elmo|test=12:3:4|forthe=horde"
 	local t = mergeOpts or {}
 
 	--([^=]+) everything except '='
@@ -114,7 +114,7 @@ function BSYC:DecodeOpts(tblString, mergeOpts)
 end
 
 function BSYC:EncodeOpts(tbl, link, removeOpts)
-	if not tbl then return nil end
+	if not tbl then return end
 	local tmpStr = ""
 	--To Remove Opts: (example) BSYC:EncodeOpts(qOpts, link, {gtab=true})
 
@@ -136,7 +136,7 @@ function BSYC:EncodeOpts(tbl, link, removeOpts)
 		end
 
 		--this is an invalid ParseItemLink, return empty string
-		return nil
+		return
 	end
 
 	for k, v in pairs(tbl) do
@@ -148,7 +148,7 @@ function BSYC:EncodeOpts(tbl, link, removeOpts)
 		return tmpStr
 	end
 
-	return nil
+	return
 end
 
 function BSYC:Split(dataStr, skipOpts, mergeOpts)
@@ -262,7 +262,7 @@ function BSYC:ParseItemLink(link, count)
 end
 
 function BSYC:CreateFakeID(link, count, speciesID, level, breedQuality, maxHealth, power, speed, name)
-	if not BattlePetTooltip then return nil end
+	if not BattlePetTooltip then return end
 	Debug(BSYC_DL.DEBUG, "CreateFakeID", link, count, speciesID, level, breedQuality, maxHealth, power, speed, name)
 	--https://github.com/tomrus88/BlizzardInterfaceCode/blob/8633e552f3335b8c66b1fbcea6760a5cd8bcc06b/Interface/FrameXML/BattlePetTooltip.lua
 
@@ -294,19 +294,16 @@ function BSYC:CreateFakeID(link, count, speciesID, level, breedQuality, maxHealt
 			end
 		end
 	end
-
-	return nil
 end
 
 function BSYC:FakeIDToSpeciesID(fakeID)
-	if not fakeID or not tonumber(fakeID) then return nil end
+	if not fakeID or not tonumber(fakeID) then return end
 	fakeID = tonumber(fakeID)
 
 	if fakeID >= BSYC.FakePetCode then
 		fakeID = (fakeID - BSYC.FakePetCode) / 100000
 		return fakeID
 	end
-	return nil
 end
 
 function BSYC:GetShortItemID(link)

@@ -28,7 +28,7 @@ function AdvancedSearch:OnEnable()
     advFrame:EnableMouse(true) --don't allow clickthrough
     advFrame:SetMovable(true)
     advFrame:SetResizable(false)
-    advFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    advFrame:SetFrameStrata("HIGH")
 	advFrame.HelpButton:Hide()
     advFrame:SetScript("OnShow", function() AdvancedSearch:OnShow() end)
 	advFrame:SetScript("OnHide", function() AdvancedSearch:OnHide() end)

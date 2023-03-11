@@ -30,7 +30,7 @@ function SortOrder:OnEnable()
     sortorderFrame:EnableMouse(true) --don't allow clickthrough
     sortorderFrame:SetMovable(true)
     sortorderFrame:SetResizable(false)
-    sortorderFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    sortorderFrame:SetFrameStrata("HIGH")
     sortorderFrame:SetScript("OnShow", function() SortOrder:OnShow() end)
     SortOrder.frame = sortorderFrame
 
@@ -56,7 +56,7 @@ function SortOrder:OnEnable()
     warningFrame:EnableMouse(true) --don't allow clickthrough
     warningFrame:SetMovable(false)
 	warningFrame:SetResizable(false)
-    warningFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    warningFrame:SetFrameStrata("HIGH")
 	warningFrame:ClearAllPoints()
 	warningFrame:SetPoint("TOPLEFT", sortorderFrame, "TOPRIGHT", 5, 0)
 	warningFrame.TitleText:SetText(L.DisplaySortOrderHelp)

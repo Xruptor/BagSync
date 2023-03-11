@@ -33,7 +33,7 @@ function Search:OnEnable()
     searchFrame:EnableMouse(true) --don't allow clickthrough
     searchFrame:SetMovable(true)
     searchFrame:SetResizable(false)
-    searchFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    searchFrame:SetFrameStrata("HIGH")
     searchFrame:SetScript("OnShow", function() Search:OnShow() end)
 	searchFrame:SetScript("OnHide", function() Search:OnHide() end)
     Search.frame = searchFrame
@@ -84,7 +84,7 @@ function Search:OnEnable()
     warningFrame:EnableMouse(true) --don't allow clickthrough
     warningFrame:SetMovable(false)
 	warningFrame:SetResizable(false)
-    warningFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    warningFrame:SetFrameStrata("HIGH")
 	warningFrame:ClearAllPoints()
 	warningFrame:SetPoint("TOPLEFT", searchFrame, "TOPRIGHT", 5, 0)
 	warningFrame.TitleText:SetText(L.WarningHeader)
@@ -115,7 +115,7 @@ function Search:OnEnable()
     helpFrame:EnableMouse(true) --don't allow clickthrough
     helpFrame:SetMovable(false)
 	helpFrame:SetResizable(false)
-    helpFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    helpFrame:SetFrameStrata("HIGH")
 	helpFrame:ClearAllPoints()
 	helpFrame:SetPoint("TOPLEFT", searchFrame, "TOPRIGHT", 5, 0)
 	helpFrame.TitleText:SetText(L.SearchHelpHeader)
@@ -180,7 +180,7 @@ function Search:ShowAdvanced(visible)
 	end
 end
 
-function Search:CheckItem(searchStr, unitObj, target, checkList, onlyPlayer)
+function Search:CheckItems(searchStr, unitObj, target, checkList, onlyPlayer)
 	local total = 0
 	if not unitObj or not target then return total end
 	searchStr = searchStr or ''
@@ -214,6 +214,7 @@ function Search:CheckItem(searchStr, unitObj, target, checkList, onlyPlayer)
 						if testMatch or onlyPlayer then
 							table.insert(Search.items, {
 								name = itemName,
+								parseLink = link,
 								link = cacheObj.itemLink,
 								rarity = cacheObj.itemQuality,
 								icon = texture,
@@ -297,11 +298,11 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 				Debug(BSYC_DL.FINE, "Search-IterateUnits", "player", unitObj.name, unitObj.realm)
 				for k, v in pairs(allowList) do
 					Debug(BSYC_DL.FINE, k)
-					countWarning = countWarning + Search:CheckItem(searchStr, unitObj, k, checkList)
+					countWarning = countWarning + Search:CheckItems(searchStr, unitObj, k, checkList)
 				end
 			else
 				Debug(BSYC_DL.FINE, "Search-IterateUnits", "guild", unitObj.name, unitObj.realm)
-				countWarning = countWarning + Search:CheckItem(searchStr, unitObj, "guild", checkList)
+				countWarning = countWarning + Search:CheckItems(searchStr, unitObj, "guild", checkList)
 			end
 		end
 	else
@@ -311,13 +312,13 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 
 		if atUserLoc ~= "guild" then
 			Debug(BSYC_DL.FINE, atUserLoc)
-			countWarning = countWarning + Search:CheckItem(searchStr, playerObj, atUserLoc, checkList, true)
+			countWarning = countWarning + Search:CheckItems(searchStr, playerObj, atUserLoc, checkList, true)
 		else
 			if playerObj.data.guild then
 				local guildObj = Data:GetPlayerGuild()
 				if guildObj then
 					Debug(BSYC_DL.FINE, "guild")
-					countWarning = countWarning + Search:CheckItem(searchStr, guildObj.data, atUserLoc, checkList, true)
+					countWarning = countWarning + Search:CheckItems(searchStr, guildObj.data, atUserLoc, checkList, true)
 				end
 			end
 		end
@@ -411,6 +412,12 @@ function Search:SearchBox_ResetSearch(btn)
 end
 
 function Search:ItemDetails(btn)
+	if BSYC:GetModule("Details", true) then
+		local item = btn:GetParent()
+		if item and item.data then
+			BSYC:GetModule("Details"):ShowItem(item.data.parseLink)
+		end
+	end
 end
 
 function Search:Item_OnClick(btn)

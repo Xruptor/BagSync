@@ -30,7 +30,7 @@ function Currency:OnEnable()
     currencyFrame:EnableMouse(true) --don't allow clickthrough
     currencyFrame:SetMovable(true)
     currencyFrame:SetResizable(false)
-    currencyFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    currencyFrame:SetFrameStrata("HIGH")
     currencyFrame:SetScript("OnShow", function() Currency:OnShow() end)
     Currency.frame = currencyFrame
 

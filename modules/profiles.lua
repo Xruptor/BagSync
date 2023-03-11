@@ -31,7 +31,7 @@ function Profiles:OnEnable()
     profilesFrame:EnableMouse(true) --don't allow clickthrough
     profilesFrame:SetMovable(true)
     profilesFrame:SetResizable(false)
-    profilesFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    profilesFrame:SetFrameStrata("HIGH")
     profilesFrame:SetScript("OnShow", function() Profiles:OnShow() end)
     Profiles.frame = profilesFrame
 

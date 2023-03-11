@@ -30,7 +30,7 @@ function Gold:OnEnable()
     goldFrame:EnableMouse(true) --don't allow clickthrough
     goldFrame:SetMovable(true)
     goldFrame:SetResizable(false)
-    goldFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    goldFrame:SetFrameStrata("HIGH")
     goldFrame:SetScript("OnShow", function() Gold:OnShow() end)
     Gold.frame = goldFrame
 
@@ -70,6 +70,51 @@ function Gold:OnShow()
 	Gold.scrollFrame.scrollBar:SetValue(0)
 end
 
+--this is a modified version of GetMoneyString from FormattingUtil.lua found in the Blizzard code
+--I wanted something that only displayed the gold if found, otherwise display the rest
+local function CustomMoneyString(money, separateThousands)
+	local goldString, silverString, copperString;
+	local gold = floor(money / (COPPER_PER_SILVER * SILVER_PER_GOLD));
+	local silver = floor((money - (gold * COPPER_PER_SILVER * SILVER_PER_GOLD)) / COPPER_PER_SILVER);
+	local copper = mod(money, COPPER_PER_SILVER);
+
+	if ( CVarCallbackRegistry:GetCVarValueBool("colorblindMode") or ENABLE_COLORBLIND_MODE == "1" ) then
+		if (separateThousands) then
+			goldString = FormatLargeNumber(gold)..GOLD_AMOUNT_SYMBOL;
+		else
+			goldString = gold..GOLD_AMOUNT_SYMBOL;
+		end
+		silverString = silver..SILVER_AMOUNT_SYMBOL;
+		copperString = copper..COPPER_AMOUNT_SYMBOL;
+	else
+		if (separateThousands) then
+			goldString = GOLD_AMOUNT_TEXTURE_STRING:format(FormatLargeNumber(gold), 0, 0);
+		else
+			goldString = GOLD_AMOUNT_TEXTURE:format(gold, 0, 0);
+		end
+		silverString = SILVER_AMOUNT_TEXTURE:format(silver, 0, 0);
+		copperString = COPPER_AMOUNT_TEXTURE:format(copper, 0, 0);
+	end
+
+	local moneyString = "";
+	local separator = "";
+
+	--only return the gold if we have any, otherwise return silver and copper
+	if ( gold > 0 ) then
+		moneyString = goldString;
+		return moneyString
+	end
+	if ( silver > 0 ) then
+		moneyString = moneyString..separator..silverString;
+		separator = " ";
+	end
+	if ( copper > 0 or moneyString == "" ) then
+		moneyString = moneyString..separator..copperString;
+	end
+
+	return moneyString;
+end
+
 function Gold:CreateList()
 	Gold.goldList = {}
 	local usrData = {}
@@ -80,7 +125,7 @@ function Gold:CreateList()
 			if not unitObj.isGuild or (unitObj.isGuild and BSYC.options.showGuildInGoldTooltip) then
 				table.insert(usrData, {
 					unitObj = unitObj,
-					colorized = Tooltip:ColorizeUnit(unitObj),
+					colorized = Tooltip:ColorizeUnit(unitObj, true),
 					sortIndex = Tooltip:GetSortIndex(unitObj),
 					count = unitObj.data.money --we use count because of the DoSort() function
 				})
@@ -98,7 +143,7 @@ function Gold:CreateList()
 				colorized = usrData[i].colorized,
 				sortIndex = usrData[i].sortIndex,
 				count = usrData[i].count,
-				moneyString = GetMoneyString(usrData[i].count, true)
+				moneyString = CustomMoneyString(usrData[i].count, true)
 			})
 		end
 
@@ -171,8 +216,8 @@ function Gold:Item_OnEnter(btn)
     if btn.data then
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		GameTooltip:AddLine(btn.data.colorized or "")
-		GameTooltip:AddLine("|cFF3588FF"..(btn.data.unitObj.realm or "").."|r")
-		GameTooltip:AddLine("|cFFFFFFFF"..(btn.data.moneyString or "").."|r")
+		GameTooltip:AddLine("|cFFF4A460"..(btn.data.unitObj.realm or "").."|r")
+		GameTooltip:AddLine("|cFFFFFFFF"..GetMoneyString(btn.data.count or 0, true).."|r")
 		GameTooltip:Show()
 		return
 	end

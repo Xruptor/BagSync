@@ -29,7 +29,7 @@ function Whitelist:OnEnable()
     whitelistFrame:EnableMouse(true) --don't allow clickthrough
     whitelistFrame:SetMovable(true)
     whitelistFrame:SetResizable(false)
-    whitelistFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    whitelistFrame:SetFrameStrata("HIGH")
     whitelistFrame:SetScript("OnShow", function() Whitelist:OnShow() end)
     Whitelist.frame = whitelistFrame
 
@@ -78,7 +78,7 @@ function Whitelist:OnEnable()
     warningFrame:EnableMouse(true) --don't allow clickthrough
     warningFrame:SetMovable(false)
 	warningFrame:SetResizable(false)
-    warningFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    warningFrame:SetFrameStrata("HIGH")
 	warningFrame:ClearAllPoints()
 	warningFrame:SetPoint("TOPLEFT", whitelistFrame, "TOPRIGHT", 5, 0)
 	warningFrame.TitleText:SetText(L.DisplayWhitelistHelp)

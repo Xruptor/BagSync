@@ -30,7 +30,7 @@ function Recipes:OnEnable()
     recipesFrame:EnableMouse(true) --don't allow clickthrough
     recipesFrame:SetMovable(true)
     recipesFrame:SetResizable(false)
-    recipesFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    recipesFrame:SetFrameStrata("HIGH")
     Recipes.frame = recipesFrame
 
 	recipesFrame.infoText = recipesFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
