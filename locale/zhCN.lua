@@ -242,6 +242,62 @@ L.ConfigSearchHeader = "搜索窗口的设置"
 L.WarningItemSearch = "警告：共有 [|cFFFFFFFF%s|r] 个物品未被搜索！\n\nBagSync 仍在等待服务器/数据库响应\n\n按“搜索”或“刷新”按钮。"
 L.WarningUpdatedDB = "您已更新到最新的版本!您将需要再次重新扫描所有角色!|r "
 L.WarningHeader = "警告!"
+---------------------------------------
+--Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  Example: class:<name of class in your locale>
+--This includes name searches like name:<name in your locale>
+---------------------------------------
+L.SearchHelpHeader = "搜索帮助"
+L.SearchHelp = [[
+|cffff7d0a搜索选项|r:
+|cFFDF2B2B(注意: 所有命令及标点符号只能是英文!)|r
+
+|cFF99CC33物品在角色位置的顺序|r:
+@bag <背包>
+@bank <银行>
+@reagents <材料银行>
+@equip <已装备>
+@mailbox <信箱>
+@void <虚空仓库>
+@auction <拍卖行>
+@guild <公会>
+
+|cffff7d0a高级搜索|r (|cFF99CC33命令|r | |cFFFFD580示例|r):
+
+|cff00ffff<物品名称>|r = |cFF99CC33n|r ; |cFF99CC33name|r | 示例：|cFFFFD580[输入简称]:矿石|r ;  |cFFFFD580[输入全称]:宁铁矿石|r 
+
+|cff00ffff<物品已装备>|r = |cFF99CC33bind|r | 示例|cFFFFD580bind:boe|r ; types (boe, bop, bou, boq) i.e   boe = 专业装备
+
+|cff00ffff<品质>|r = |cFF99CC33q|r ; |cFF99CC33quality|r | 示例：|cFFFFD580q:史诗|r 
+
+|cff00ffff<物品等级>|r = |cFF99CC33l|r ; |cFF99CC33level|r ; |cFF99CC33lvl|r ; |cFF99CC33ilvl|r |示例： |cFFFFD580ilvl:382|r  ;  |cFFFFD580lvl:>=370|r 
+
+|cff00ffff<需要的等级><|r = |cFF99CC33r|r ; |cFF99CC33req|r ; |cFF99CC33rl|r ; |cFF99CC33reql|r ; |cFF99CC33reqlvl|r | 示例：|cFFFFD580r:>5|r  ;  |cFFFFD580req:>=20|r 
+
+|cff00ffff<种类/部位>|r = |cFF99CC33t|r ; |cFF99CC33type|r ; 示例：|cFF99CC33饰品|r  ;  |cFFFFD580t:脚|r 
+
+|cff00ffff<提示>|r = |cFF99CC33tt|r ; |cFF99CC33tip|r ; |cFF99CC33tooltip|r | |cFFFFD580tt:<text>|r (tt:summon)
+
+|cff00ffff<item set>|r = |cFF99CC33s|r ; |cFF99CC33set|r | |cFFFFD580s:<setname>|r (setname can be * for all sets)
+
+|cff00ffff<来源>|r = |cFF99CC33x|r ; |cFF99CC33xpac|r ; |cFF99CC33expansion|r | 示例： |cFFFFD580x:巨龙时代|r  ;   |cFFFFD580xpac:暗影国度|r 
+
+|cff00ffff<关键字>|r = |cFF99CC33k|r ; |cFF99CC33key|r ; |cFF99CC33keyword|r | 示例：|cFFFFD580k:任务|r (关键字: soulbound, bound, boe, bop, bou, boa, quest, unique, toy, reagent, crafting, naval, follower, follow, power, apperance)
+
+|cff00ffff<职业>|r = |cFF99CC33c|r ; |cFF99CC33class|r | 示例：|cFFFFD580class:战士|r  ;  |cFFFFD580c:恶魔猎手|r
+
+|cffff7d0a函数 <op>|r:
+|cFF99CC33:|r | |cFF99CC33=|r | |cFF99CC33==|r | |cFF99CC33!=|r | |cFF99CC33~=|r | |cFF99CC33<|r | |cFF99CC33>|r | |cFF99CC33<=|r | |cFF99CC33>=|r
+
+|cffff7d0a等级搜索|r:
+示例: |cFF99CC33!|r|cFFFFD580boe|r (not boe)
+示例: |cFF99CC33!|r|cFFFFD580boe|r |cFF99CC33&|r |cFFFFD580lvl:>350|r (专业装备和配饰的物品等级大于350)
+
+|cffff7d0a公会搜索 (和搜索):|r
+示例: |cFFFFD580bind:boe|r |cFF99CC33&|r |cFFFFD580lvl:>20|r
+
+|cffff7d0a交叉搜索 (或搜索):|r
+示例: |cFFFFD580bind:boe|r |cFF99CC33|||r |cFFFFD580lvl:>20|r
+]]
 L.ConfigFAQ= " FAQ / 帮助 "
 L.ConfigFAQHeader = "BagSync 的常见问题和帮助介绍。"
 L.FAQ_Question_1 = "我在鼠标提示上遇到卡顿/滞后。"
