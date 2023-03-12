@@ -2,7 +2,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhTW")
 if not L then return end
 
 --  zhTW client (三皈依-暗影之月@TW補齊)
---  Last update: 2023/02/21
+--  Last update: 2023/03/13
 
 L.Yes = "是"
 L.No = "否"
@@ -37,6 +37,10 @@ L.TooltipExpansion = "[資料片]:"
 L.TooltipItemType = "[物品類型]:"
 L.TooltipDelimiter = ", "
 L.TooltipRealmKey = "伺服器:"
+L.TooltipDetailsInfo = "物品詳細總計。"
+L.DetailsBagID = "背包:"
+L.DetailsSlot = "部位:"
+L.DetailsTab = "標籤:"			 
 L.Debug_DEBUG = "偵錯"
 L.Debug_INFO = "資訊"
 L.Debug_TRACE = "追蹤"
@@ -64,12 +68,13 @@ L.AdvancedLocationInformation = "* 選擇所有因為無預設"
 L.Units = "名字:"
 L.Locations = "位置:"
 L.Profiles = "訊息"
-L.HelpSortOrder = "自定義排序"
+L.SortOrder = "自定義排序"
 L.Professions = "專業"
 L.Currency = "貨幣"
 L.Blacklist = "黑名單"
 L.Whitelist = "白名單"
 L.Recipes = "配方"
+L.Details = "詳細"
 L.Gold = "金幣"
 L.Close = "關閉"
 L.FixDB = "優化數據庫"
@@ -77,6 +82,7 @@ L.Config = "設定"
 L.DeleteWarning = "選擇要刪除的設定檔. 注意:此操作不可逆！"
 L.Delete = "刪除"
 L.Confirm = "確認"
+L.SelectAll = "全選"
 L.FixDBComplete = "已執行FixDB, 數據庫已優化!"
 L.ResetDBInfo = "BagSync:\n您確定要重置數據庫嗎?\n|cFFDF2B2B注意: 這是不可逆的!|r"
 L.ON = "開[ON]"
@@ -92,6 +98,7 @@ L.AddGuild = "添加公會"
 L.AddItemID = "添加物品ID"
 L.RemoveItemID = "移除物品ID"
 L.PleaseRescan = "|cFF778899[請重新掃描]|r"
+L.UseFakeID = "在戰寵使用[FakeID]取代[ItemID]。"
 L.ItemIDNotFound = "[%s] 未找到物品ID。再試一次!"
 L.ItemIDNotValid = "[%s] 物品ID無效或者查詢伺服器未響應。再試一次!"
 L.ItemIDRemoved = "[%s] 物品ID已移除"
@@ -140,6 +147,8 @@ L.SlashBlacklist = "黑名單"
 L.SlashWhitelist = "白名單"
 L.SlashResetDB = "重置"
 L.SlashDebug = "偵錯"
+L.SlashResetPOS = "重設位置"
+L.SlashSortOrder = "排序"
 ------------------------
 -- ----THESE USE THE SLASH OPERATOR COMMANDS FOUND ABOVE
 L.HelpSearchItemName = "快速搜索一件物品"
@@ -155,6 +164,7 @@ L.HelpBlacklistWindow = "打開黑名單視窗"
 L.HelpWhitelistWindow = "打開白名單視窗"
 L.HelpDebug = "打開BagSync偵錯視窗。"
 L.HelpResetPOS = "重設每個BagSync模組的框架位置。"
+L.HelpSortOrder = "角色與公會的自訂排列順序。"
 ------------------------
 L.EnableBagSyncTooltip = "啟用BagSync鼠標提示"
 L.ShowOnModifier = "BagSync工具提示快捷鍵:"
@@ -168,7 +178,7 @@ L.EnableLoginVersionInfo = "顯示BagSync的登入訊息"
 L.FocusSearchEditBox = "開啟搜尋視窗時聚焦到搜尋框架"
 L.AlwaysShowAdvSearch = "始終顯示BagSync進階搜尋視窗。"
 L.DisplayTotal = "顯示 [總計] 金額"
-L.DisplayGuildGoldInGoldWindow = "顯示 [公會] 金幣總數"
+L.DisplayGuildGoldInGoldTooltip = "顯示 [公會] 金幣總數"
 L.DisplayGuildBank = "包括公會倉物品|cFF99CC33(需要掃描公會銀行)|r"
 L.DisplayMailbox = "包括信箱內物品"
 L.DisplayAuctionHouse = "包括拍賣行物品"
@@ -188,6 +198,8 @@ L.DisplayItemTypes = "顯示工具提示中 [物品類型 | 子類型] 的類別
 L.DisplayTooltipTags = "標識符號"
 L.DisplayTooltipStorage = "倉庫"
 L.DisplayTooltipExtra = "其他統計"
+L.DisplaySortOrderHelp = "排序幫助"
+L.DisplaySortOrderStatus = "排序目前為: [%s]"
 L.DisplayWhitelistHelp = "白名單幫助"
 L.DisplayWhitelistStatus = "白名單目前為: [%s]"
 L.DisplayWhitelistHelpInfo = "您只能在白名單數據庫中輸入物品ID編號。 \n\n要輸入戰鬥寵物，請使用FakeID而不是物品ID，您可以通過在bagsync 設置中啟用物品ID工具提示功能來獲取FakeID。\n\n|cFFDF2B2B這不適用於兌換通貨視窗。|r"
@@ -199,9 +211,11 @@ L.DisplayRealmNames = "顯示伺服器名字"
 L.DisplayRealmAstrick = "顯示 [*] 而不是顯示 |cffff7d0a[XR]|r 和 |cff3587ff[BNet]|r"
 L.DisplayShortRealmName = "顯示短位名字 |cffff7d0a[XR]|r 和 |cff3587ff[BNet]|r"
 L.DisplayFactionIcons = "顯示陣營圖案"
+L.DisplayGuildBankTabs = "Display guild bank tabs [1,2,3, etc...] in tooltip."
 L.DisplayRaceIcons = "在工具提示中顯示角色種族圖示。"
 L.DisplaySingleCharLocs = "在儲存位置顯示一個單獨角色。"
 L.DisplayIconLocs = "在儲存位置顯示一個圖示。"
+L.DisplayGuildSeparately = "從角色總計中分離顯示[公會]名稱與物品總計。"
 L.DisplayGuildCurrentCharacter = "僅顯示當前游戲角色的 [公會] 物品"
 L.DisplayGuildBankScanAlert = "顯示公會銀行掃描視窗。"
 L.DisplayAccurateBattlePets = "在公會銀行和郵箱中啟用準確的戰鬥寵物。 |cFFDF2B2B(可能導致延遲)|r |cff3587ff[請參閱BagSync的常見問題]|r"
@@ -240,6 +254,70 @@ L.ConfigSearchHeader = "搜尋視窗的設定"
 L.WarningItemSearch = "警告：共有 [|cFFFFFFFF%s|r] 個物品未被搜索！\n\nBagSync 仍在等待伺服器/數據庫響應\n\n按“搜尋”或“更新”按鈕"
 L.WarningUpdatedDB = "您已更新到最新的版本!您將需要再次重新掃描所有角色!|r "
 L.WarningHeader = "警告!"
+---------------------------------------
+--Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  範例: class:<name of class in your locale>
+--This includes name searches like name:<name in your locale>
+---------------------------------------
+L.SearchHelpHeader = "搜尋幫助"
+L.SearchHelp = [[
+|cffff7d0a搜尋選項|r:
+|cFFDF2B2B(注意: 所有指令只限英文！)|r
+
+|cFF99CC33角色物品的位置|r:
+@bag
+@bank
+@reagents
+@equip
+@mailbox
+@void
+@auction
+@guild
+
+|cffff7d0a進階搜尋|r (|cFF99CC33指令|r | |cFFFFD580範例|r):
+
+|cff00ffff<item name>|r = |cFF99CC33n|r ; |cFF99CC33name|r | |cFFFFD580n:<text>|r ; |cFFFFD580name:<text>|r (n:ore ; name:ore)
+
+|cff00ffff<item bind>|r = |cFF99CC33bind|r | |cFFFFD580bind:<type>|r ; types (boe, bop, bou, boq) i.e boe = bind on equip
+
+|cff00ffff<quality>|r = |cFF99CC33q|r ; |cFF99CC33quality|r | |cFFFFD580q<op><text>|r ; |cFFFFD580q<op><digit>|r (q:rare ; q:>2 ; q:>=3)
+
+|cff00ffff<ilvl>|r = |cFF99CC33l|r ; |cFF99CC33level|r ; |cFF99CC33lvl|r ; |cFF99CC33ilvl|r | |cFFFFD580ilvl<op><number>|r ; |cFFFFD580lvl<op><number>|r (lvl:>5 ; lvl:>=20)
+
+|cff00ffff<required ilvl>|r = |cFF99CC33r|r ; |cFF99CC33req|r ; |cFF99CC33rl|r ; |cFF99CC33reql|r ; |cFF99CC33reqlvl|r | |cFFFFD580req<op><number>|r ; |cFFFFD580req<op><number>|r (req:>5 ; req:>=20)
+
+|cff00ffff<type / slot>|r = |cFF99CC33t|r ; |cFF99CC33type|r ; |cFF99CC33slot|r | |cFFFFD580t:<text>|r (slot:head)
+
+|cff00ffff<tooltip>|r = |cFF99CC33tt|r ; |cFF99CC33tip|r ; |cFF99CC33tooltip|r | |cFFFFD580tt:<text>|r (tt:summon)
+
+|cff00ffff<item set>|r = |cFF99CC33s|r ; |cFF99CC33set|r | |cFFFFD580s:<setname>|r (setname can be * for all sets)
+
+|cff00ffff<expansion>|r = |cFF99CC33x|r ; |cFF99CC33xpac|r ; |cFF99CC33expansion|r | |cFFFFD580x:<expacID>|r ; |cFFFFD580x:<expansion name>|r ; |cFFFFD580xpac:<expansion name>|r (xpac:shadow)
+
+|cff00ffff<keyword>|r = |cFF99CC33k|r ; |cFF99CC33key|r ; |cFF99CC33keyword|r | |cFFFFD580k:<keyword>|r (key:quest) (keywords: soulbound, bound, boe, bop, bou, boa, quest, unique, toy, reagent, crafting, naval, follower, follow, power, apperance)
+
+|cff00ffff<class>|r = |cFF99CC33c|r ; |cFF99CC33class|r | |cFFFFD580c:<classname>|r ; |cFFFFD580class:<classname>|r (class:shaman)
+
+|cffff7d0a運算符號 <op>|r:
+|cFF99CC33:|r | |cFF99CC33=|r | |cFF99CC33==|r | |cFF99CC33!=|r | |cFF99CC33~=|r | |cFF99CC33<|r | |cFF99CC33>|r | |cFF99CC33<=|r | |cFF99CC33>=|r
+
+
+|cffff7d0a反向指令|r:
+範例: |cFF99CC33!|r|cFFFFD580bind:boe|r (不是boe)
+範例: |cFF99CC33!|r|cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:>20|r (不是boe以及物品等級大於20)
+
+|cffff7d0a聯合搜尋 (以及搜尋):|r
+(使用以及 |cFF99CC33&|r 標點符號)
+範例: |cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:>20|r  |cFFCF9FFF(不要使用空格！)|r
+
+|cffff7d0a交互搜尋 (或搜尋):|r
+(使用分隔 |cFF99CC33|||r 標點符號)
+範例: |cFFFFD580bind:boe|r|cFF99CC33|||r|cFFFFD580lvl:>20|r  |cFFCF9FFF(不要使用空格！)|r
+
+|cffff7d0a複雜搜尋範例:|r
+(boe裝備綁定，裝等正好20且名稱中帶有'robe')
+|cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:20|r|cFF99CC33&|r|cFFFFD580name:robe|r |cFFCF9FFF(不要使用空格！)|r
+
+]]
 L.ConfigFAQ= " FAQ / 幫助 "
 L.ConfigFAQHeader = "BagSync的常見問題和幫助介紹"
 L.FAQ_Question_1 = "我遇到鼠標提示上/卡頓/滯後"
