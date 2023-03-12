@@ -237,7 +237,7 @@
 			</Layer>
 			<Layer level="BACKGROUND">
 				<Texture parentKey="Bg" file="Interface\Tooltips\UI-Tooltip-Background">
-					<Color r="0" g="0" b="0" a="1"/>
+					<Color r="0" g="0" b="0" a="0.80"/>
 					<Anchors>
 						<Anchor point="TOPLEFT" x="8" y="-12"/>
 						<Anchor point="BOTTOMRIGHT" x="-6" y="8"/>

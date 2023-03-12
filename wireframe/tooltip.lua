@@ -469,6 +469,36 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 	return unitData
 end
 
+function Tooltip:QTipCheck(source, isBattlePet)
+	local showQTip = false
+
+	--create the extra tooltip (qTip) only if it doesn't already exist
+	if BSYC.options.enableExtTooltip or isBattlePet then
+		local doQTip = true
+		--only show the external tooltip if we have the option enabled, otherwise show it inside the tooltip if isBattlePet
+		if source == "ArkInventory" and not BSYC.options.enableExtTooltip then doQTip = false end
+		if doQTip then
+			if not Tooltip.qTip then
+				Tooltip.qTip = LibQTip:Acquire("BagSyncQTip", 3, "LEFT", "CENTER", "RIGHT")
+				Tooltip.qTip:SetClampedToScreen(true)
+
+				Tooltip.qTip:SetScript("OnShow", function()
+					Tooltip:GetBottomChild()
+				end)
+			end
+			Tooltip.qTip:Clear()
+			showQTip = true
+		end
+	end
+	--release it if we aren't using the qTip
+	if Tooltip.qTip and not showQTip then
+		LibQTip:Release(Tooltip.qTip)
+		Tooltip.qTip = nil
+	end
+
+	return showQTip
+end
+
 function Tooltip:GetBottomChild()
 	Debug(BSYC_DL.TRACE, "GetBottomChild", Tooltip.objTooltip, Tooltip.qTip)
 
@@ -610,34 +640,10 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	--check for modifier option
 	if not self:CheckModifier() then return end
 
-	local showQTip = false
+	local showQTip = Tooltip:QTipCheck(source, isBattlePet)
 	local skipTally = false
 
 	Tooltip.objTooltip = objTooltip
-
-	--create the extra tooltip (qTip) only if it doesn't already exist
-	if BSYC.options.enableExtTooltip or isBattlePet then
-		local doQTip = true
-		--only show the external tooltip if we have the option enabled, otherwise show it inside the tooltip if isBattlePet
-		if source == "ArkInventory" and not BSYC.options.enableExtTooltip then doQTip = false end
-		if doQTip then
-			if not Tooltip.qTip then
-				Tooltip.qTip = LibQTip:Acquire("BagSyncQTip", 3, "LEFT", "CENTER", "RIGHT")
-				Tooltip.qTip:SetClampedToScreen(true)
-
-				Tooltip.qTip:SetScript("OnShow", function()
-					Tooltip:GetBottomChild()
-				end)
-			end
-			Tooltip.qTip:Clear()
-			showQTip = true
-		end
-	end
-	--release it if we aren't using the qTip
-	if Tooltip.qTip and not showQTip then
-		LibQTip:Release(Tooltip.qTip)
-		Tooltip.qTip = nil
-	end
 
 	local tooltipOwner = objTooltip.GetOwner and objTooltip:GetOwner()
 	local tooltipType = tooltipOwner and tooltipOwner.obj and tooltipOwner.obj.type
@@ -994,36 +1000,55 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	--sort
 	usrData = self:DoSort(usrData)
 
+	local displayList = {}
+	local showQTip = Tooltip:QTipCheck()
+
+	if not showQTip then
+		--add a space at the top of standard gametooltip method
+		table.insert(displayList, {" ", " "})
+	end
 	if currencyName then
-		objTooltip:AddLine(currencyName, 64/255, 224/255, 208/255)
-		objTooltip:AddLine(" ")
+		table.insert(displayList, {string.format("|cff%s%s|r", RGBPercToHex(64/255, 224/255, 208/255), tostring(currencyName)), " "})
+		table.insert(displayList, {" ", " "})
 	end
 
 	for i=1, #usrData do
 		if usrData[i].count then
-			objTooltip:AddDoubleLine(usrData[i].colorized, comma_value(usrData[i].count), 1, 1, 1, 1, 1, 1)
+			table.insert(displayList, {usrData[i].colorized, comma_value(usrData[i].count)})
 		end
 	end
 	if #usrData <= 0 then
-		objTooltip:AddDoubleLine(NONE, "", 1, 1, 1, 1, 1, 1)
+		table.insert(displayList, {NONE, " "})
 	end
 
 	if BSYC.options.enableTooltipItemID and currencyID then
 		local desc = self:HexColor(BSYC.options.colors.itemid, L.TooltipCurrencyID)
 		local value = self:HexColor(BSYC.options.colors.second, currencyID)
-		objTooltip:AddDoubleLine(" ", " ", 1, 1, 1, 1, 1, 1)
-		objTooltip:AddDoubleLine(desc, value, 1, 1, 1, 1, 1, 1)
+		table.insert(displayList, {" ", " "})
+		table.insert(displayList, {desc, value})
 	end
 
 	if BSYC.options.enableSourceDebugInfo and source then
 		local desc = self:HexColor(BSYC.options.colors.debug, L.TooltipDebug)
 		local value = self:HexColor(BSYC.options.colors.second, "2;"..source..";"..tostring(currencyID or 0)..";"..tostring(currencyIcon or 0))
-		objTooltip:AddDoubleLine(" ", " ", 1, 1, 1, 1, 1, 1)
-		objTooltip:AddDoubleLine(desc, value, 1, 1, 1, 1, 1, 1)
+		table.insert(displayList, {" ", " "})
+		table.insert(displayList, {desc, value})
+	end
+
+	--finally display it
+	for i=1, #displayList do
+		if showQTip then
+			Tooltip.qTip:AddLine(displayList[i][1], string.rep(" ", 4), displayList[i][2])
+		else
+			objTooltip:AddDoubleLine(displayList[i][1], displayList[i][2], 1, 1, 1, 1, 1, 1)
+		end
 	end
 
 	objTooltip.__tooltipUpdated = true
 	objTooltip:Show()
+	if showQTip then
+		Tooltip.qTip:Show()
+	end
 end
 
 function Tooltip:HookTooltip(objTooltip)
