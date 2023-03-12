@@ -254,7 +254,7 @@ function Data:FixDB()
 			end
 
 			for k, v in pairs(unitObj.data) do
-				if allowList[k] and type(v) == "table" then
+				if allowList[k] and type(v) == "table" and k ~= "guild" then
 					--bags, bank, reagents
 					if k == "bag" or k == "bank" or k == "reagents" then
 						for bagID, bagData in pairs(v) do

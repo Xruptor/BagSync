@@ -44,6 +44,10 @@ L.TooltipExpansion = "[Expansion]:"
 L.TooltipItemType = "[ItemTypes]:"
 L.TooltipDelimiter = ", "
 L.TooltipRealmKey = "RealmKey:"
+L.TooltipDetailsInfo = "Item detailed summary."
+L.DetailsBagID = "Bag:"
+L.DetailsSlot = "Slot:"
+L.DetailsTab = "Tab:"
 L.Debug_DEBUG = "DEBUG"
 L.Debug_INFO = "INFO"
 L.Debug_TRACE = "TRACE"
@@ -311,15 +315,15 @@ Example: |cFF99CC33!|r|cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:>20|r (not 
 
 |cffff7d0aUnion Searches (and searches):|r
 (Use the ampersand |cFF99CC33&|r symbol)
-Example: |cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:>20|r  (do not use spaces!)
+Example: |cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:>20|r  |cFFCF9FFF(do not use spaces!)|r
 
 |cffff7d0aIntersect Searches (or searches):|r
 (Use the pipe |cFF99CC33|||r symbol)
-Example: |cFFFFD580bind:boe|r|cFF99CC33|||r|cFFFFD580lvl:>20|r  (do not use spaces!)
+Example: |cFFFFD580bind:boe|r|cFF99CC33|||r|cFFFFD580lvl:>20|r  |cFFCF9FFF(do not use spaces!)|r
 
 |cffff7d0aComplex Search Example:|r
 (bind on equip, lvl is exactly 20 with the word 'robe' in the name)
-|cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:20|r|cFF99CC33&|r|cFFFFD580name:robe|r (do not use spaces!)
+|cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:20|r|cFF99CC33&|r|cFFFFD580name:robe|r |cFFCF9FFF(do not use spaces!)|r
 
 ]]
 L.ConfigFAQ= "FAQ / Help"

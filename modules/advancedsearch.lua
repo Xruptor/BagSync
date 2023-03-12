@@ -172,7 +172,7 @@ function AdvancedSearch:DoSearch(searchStr)
 	--global for tooltip checks
 	Search.advUnitList = advUnitList
 	--send it off to the regular search
-	Search:DoSearch(searchStr, advUnitList, advAllowList)
+	Search:DoSearch(searchStr, advUnitList, advAllowList, true)
 end
 
 function AdvancedSearch:CreateLists()
@@ -252,7 +252,7 @@ function AdvancedSearch:RefreshPlayerList()
 
             button:SetID(itemIndex)
 			button.listData = item
-			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "")
 			button.Text:SetTextColor(1, 1, 1)
             button:SetWidth(AdvancedSearch.playerScroll.scrollChild:GetWidth())
 			button.DetailsButton:Hide()
@@ -313,7 +313,7 @@ function AdvancedSearch:RefreshLocationList()
 
             button:SetID(itemIndex)
 			button.listData = item
-			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "")
 			button.Text:SetTextColor(1, 1, 1)
             button:SetWidth(AdvancedSearch.locationScroll.scrollChild:GetWidth())
 			button.DetailsButton:Hide()
@@ -348,9 +348,9 @@ end
 
 function AdvancedSearch:Reset()
 	AdvancedSearch.frame.SearchBox:SetText("")
-	Search.advUnitList = nil
 	AdvancedSearch:SelectAll(true)
 	AdvancedSearch.frame.SearchBox.ClearButton:Hide()
+	Search:Reset()
 end
 
 function AdvancedSearch:SelectAll(uncheck)

@@ -151,7 +151,7 @@ function Profiles:RefreshList()
 
             button:SetID(itemIndex)
 			button.data = item
-			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "")
 			button.Text:SetTextColor(1, 1, 1)
             button:SetWidth(Profiles.scrollFrame.scrollChild:GetWidth())
 

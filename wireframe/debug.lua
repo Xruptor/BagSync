@@ -218,7 +218,7 @@ function Debug:OnEnable()
 				totalUnits = totalUnits + 1
 
 				for k, v in pairs(unitObj.data) do
-					if allowList[k] and type(v) == "table" then
+					if allowList[k] and type(v) == "table" and k ~= "guild" then
 						--bags, bank, reagents are stored in individual bags
 						if k == "bag" or k == "bank" or k == "reagents" then
 							for bagID, bagData in pairs(v) do
@@ -285,7 +285,7 @@ function Debug:OnEnable()
 	exportFrame.ScrollFrame:SetPoint("BOTTOMRIGHT", exportFrame, "BOTTOMRIGHT", -30, 8)
 	exportFrame.EditBox = _G.CreateFrame("EditBox", nil, exportFrame.ScrollFrame)
 	exportFrame.EditBox:SetAllPoints()
-	exportFrame.EditBox:SetFont("Fonts\\ARIALN.TTF", 14, "OUTLINE")
+	exportFrame.EditBox:SetFont("Fonts\\ARIALN.TTF", 14, "")
 	exportFrame.EditBox:SetMultiLine(true)
 	exportFrame.EditBox:SetAutoFocus(false)
 	exportFrame.EditBox:SetMaxLetters(0)
@@ -366,7 +366,7 @@ function Debug:RefreshList()
             local item = items[itemIndex]
 
             button:SetID(itemIndex)
-			button.Text:SetFont("Fonts\\ARIALN.TTF", 14, "OUTLINE")
+			button.Text:SetFont("Fonts\\ARIALN.TTF", 14, "")
             button.Text:SetText(item or "")
 			button.Text:SetTextColor(1, 1, 1) --set white
             button:SetWidth(Debug.scrollFrame.scrollChild:GetWidth())

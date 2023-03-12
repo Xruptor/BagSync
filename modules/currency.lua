@@ -131,7 +131,7 @@ function Currency:RefreshList()
 
             button:SetID(itemIndex)
 			button.data = item
-			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "")
             button:SetWidth(Currency.scrollFrame.scrollChild:GetWidth())
 			button.DetailsButton:Hide()
 

@@ -54,9 +54,15 @@
                     </OnClick>
 					<OnEnter>
 						self:GetParent().DetailsHighlight:SetAlpha(0.75);
+						if self:GetParent().parentHandler and self:GetParent().parentHandler.ItemDetails_OnEnter then
+							self:GetParent().parentHandler:ItemDetails_OnEnter(self);
+						end
 					</OnEnter>
 					<OnLeave>
 						self:GetParent().DetailsHighlight:SetAlpha(0);
+						if self:GetParent().parentHandler and self:GetParent().parentHandler.ItemDetails_OnLeave then
+							self:GetParent().parentHandler:ItemDetails_OnLeave(self);
+						end
 					</OnLeave>
                 </Scripts>
             </Button>

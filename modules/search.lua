@@ -215,6 +215,7 @@ function Search:CheckItems(searchStr, unitObj, target, checkList, onlyPlayer)
 							table.insert(Search.items, {
 								name = itemName,
 								parseLink = link,
+								entry = entry,
 								link = cacheObj.itemLink,
 								rarity = cacheObj.itemQuality,
 								icon = texture,
@@ -231,22 +232,23 @@ function Search:CheckItems(searchStr, unitObj, target, checkList, onlyPlayer)
 		return iCount
 	end
 
-	if target == "bag" or target == "bank" or target == "reagents" then
-		for bagID, bagData in pairs(unitObj.data[target] or {}) do
-			total = total + parseItems(bagData)
+	if unitObj.data[target] then
+		if target == "bag" or target == "bank" or target == "reagents" then
+			for bagID, bagData in pairs(unitObj.data[target] or {}) do
+				total = total + parseItems(bagData)
+			end
+		elseif target == "auction" and BSYC.options.enableAuction then
+			total = parseItems(unitObj.data[target].bag or {})
+
+		elseif target == "mailbox" and BSYC.options.enableMailbox then
+			total = parseItems(unitObj.data[target] or {})
+
+		elseif target == "equip" or target == "void" then
+			total = parseItems(unitObj.data[target] or {})
 		end
-
-	elseif target == "auction" and BSYC.options.enableAuction then
-		total = parseItems((unitObj.data[target] and unitObj.data[target].bag) or {})
-
-	elseif target == "mailbox" and BSYC.options.enableMailbox then
-		total = parseItems(unitObj.data[target] or {})
-
-	elseif target == "equip" or target == "void" then
-		total = parseItems(unitObj.data[target] or {})
-
-	elseif target == "guild" and BSYC.options.enableGuild then
-		for tabID, tabData in pairs(unitObj.tabs or (unitObj.data and unitObj.data.tabs) or {}) do
+	end
+	if target == "guild" and BSYC.options.enableGuild then
+		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
 			local tabCount = parseItems(tabData)
 			total = total + tabCount
 		end
@@ -255,10 +257,10 @@ function Search:CheckItems(searchStr, unitObj, target, checkList, onlyPlayer)
 	return total
 end
 
-function Search:DoSearch(searchStr, advUnitList, advAllowList)
+function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch)
 
 	--only check for specifics when not using advanced search
-	if not advUnitList then
+	if not isAdvancedSearch then
 		if not searchStr then searchStr = Search.frame.SearchBox:GetText() end
 		if string.len(searchStr) <= 0 then return end
 	end
@@ -282,7 +284,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 	}
 
 	--This is used when a player is requesting to view a custom list, such as @bank, @auction, @bag etc...
-	if not advUnitList and string.len(searchStr) > 1 then
+	if not isAdvancedSearch and string.len(searchStr) > 1 then
 		atUserLoc = searchStr:match("@(.+)")
 		--check it to verify it's a valid command
 		if atUserLoc and string.len(atUserLoc) > 0 and (atUserLoc ~= "guild" and not allowList[atUserLoc]) then atUserLoc = nil end
@@ -290,7 +292,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 
 	--overwrite the allowlist with the advance one if it isn't empty
 	allowList = advAllowList or allowList
-	Debug(BSYC_DL.INFO, "init:DoSearch", searchStr, advUnitList, advAllowList)
+	Debug(BSYC_DL.INFO, "init:DoSearch", searchStr, advUnitList, advAllowList, isAdvancedSearch)
 
 	if not atUserLoc then
 		for unitObj in Data:IterateUnits(false, advUnitList) do
@@ -301,8 +303,12 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 					countWarning = countWarning + Search:CheckItems(searchStr, unitObj, k, checkList)
 				end
 			else
-				Debug(BSYC_DL.FINE, "Search-IterateUnits", "guild", unitObj.name, unitObj.realm)
-				countWarning = countWarning + Search:CheckItems(searchStr, unitObj, "guild", checkList)
+				--only do guild if we aren't using a custom adllowlist, otherwise it will always show up regardless of what custom field is selected
+				--obviously guilds can't have stuff stored in AH, Mailbox, Void, etc...
+				if not advAllowList then
+					Debug(BSYC_DL.FINE, "Search-IterateUnits", "guild", unitObj.name, unitObj.realm)
+					countWarning = countWarning + Search:CheckItems(searchStr, unitObj, "guild", checkList)
+				end
 			end
 		end
 	else
@@ -314,11 +320,12 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 			Debug(BSYC_DL.FINE, atUserLoc)
 			countWarning = countWarning + Search:CheckItems(searchStr, playerObj, atUserLoc, checkList, true)
 		else
-			if playerObj.data.guild then
+			--only do guild if we aren't using a custom adllowlist, otherwise it will always show up regardless of what custom field is selected
+			if playerObj.data.guild and not advAllowList then
 				local guildObj = Data:GetPlayerGuild()
 				if guildObj then
 					Debug(BSYC_DL.FINE, "guild")
-					countWarning = countWarning + Search:CheckItems(searchStr, guildObj.data, atUserLoc, checkList, true)
+					countWarning = countWarning + Search:CheckItems(searchStr, guildObj, atUserLoc, checkList, true)
 				end
 			end
 		end
@@ -330,9 +337,9 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList)
 		Search.warningFrame:Show()
 
 		--lets not do TOO many refreshes
-		if Search.warningAutoScan <= 5 then
+		if Search.warningAutoScan <= 3 then
 			C_Timer.After(0.5, function()
-				Search:DoSearch(searchStr, advUnitList, advAllowList)
+				Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch)
 			end)
 			Search.warningAutoScan = Search.warningAutoScan + 1
 			return
@@ -363,7 +370,7 @@ function Search:RefreshList()
             button:SetID(itemIndex)
 			button.data = item
             button.Icon:SetTexture(item.icon or nil)
-			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "")
             button.Text:SetText(item.name or "")
 			button.Text:SetTextColor(r, g, b)
             button:SetWidth(Search.scrollFrame.scrollChild:GetWidth())
@@ -415,7 +422,7 @@ function Search:ItemDetails(btn)
 	if BSYC:GetModule("Details", true) then
 		local item = btn:GetParent()
 		if item and item.data then
-			BSYC:GetModule("Details"):ShowItem(item.data.parseLink)
+			BSYC:GetModule("Details"):ShowItem(item.data.parseLink, item.data.entry)
 		end
 	end
 end
@@ -463,4 +470,21 @@ end
 
 function Search:SearchBox_OnEnterPressed(text)
 	Search:DoSearch(text)
+end
+
+function Search:ItemDetails_OnEnter(btn)
+	local item = btn:GetParent()
+
+	GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+	GameTooltip:AddLine("|cFFe454fd"..L.Details.."|r")
+	GameTooltip:AddLine("|cFFFFFFFF"..L.TooltipDetailsInfo.."|r")
+	GameTooltip:AddLine(" ")
+	if item and item.data then
+		GameTooltip:AddLine("|cFFCF9FFF"..item.data.entry.."|r")
+	end
+	GameTooltip:Show()
+end
+
+function Search:ItemDetails_OnLeave()
+	Search:Item_OnLeave()
 end

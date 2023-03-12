@@ -150,7 +150,7 @@ function Professions:RefreshList()
 
             button:SetID(itemIndex)
 			button.data = item
-			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "")
             button:SetWidth(Professions.scrollFrame.scrollChild:GetWidth())
 
 			if item.isHeader then

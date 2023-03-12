@@ -340,23 +340,24 @@ function Tooltip:AddItems(unitObj, itemID, target, countList)
 		return iCount
 	end
 
-	if target == "bag" or target == "bank" or target == "reagents" then
-		for bagID, bagData in pairs(unitObj.data[target] or {}) do
-			total = total + getTotal(bagData)
+	if unitObj.data[target] then
+		if target == "bag" or target == "bank" or target == "reagents" then
+			for bagID, bagData in pairs(unitObj.data[target] or {}) do
+				total = total + getTotal(bagData)
+			end
+		elseif target == "auction" and BSYC.options.enableAuction then
+			total = getTotal(unitObj.data[target].bag or {})
+
+		elseif target == "mailbox" and BSYC.options.enableMailbox then
+			total = getTotal(unitObj.data[target] or {})
+
+		elseif target == "equip" or target == "void" then
+			total = getTotal(unitObj.data[target] or {})
 		end
-
-	elseif target == "auction" and BSYC.options.enableAuction then
-		total = getTotal((unitObj.data[target] and unitObj.data[target].bag) or {})
-
-	elseif target == "mailbox" and BSYC.options.enableMailbox then
-		total = getTotal(unitObj.data[target] or {})
-
-	elseif target == "equip" or target == "void" then
-		total = getTotal(unitObj.data[target] or {})
-
-	elseif target == "guild" and BSYC.options.enableGuild then
+	end
+	if target == "guild" and BSYC.options.enableGuild then
 		countList.gtab = {}
-		for tabID, tabData in pairs(unitObj.data.tabs) do
+		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
 			local tabCount = getTotal(tabData)
 			if tabCount > 0 then
 				countList.gtab[tabID] = tabCount
@@ -654,6 +655,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	--we do this because the itemID portion can be something like 190368::::::::::::5:8115:7946:6652:7579:1491::::::
 	local shortID = BSYC:GetShortItemID(link)
+	--we want to make sure the origLink for BattlePets is alwayhs the fakeID for parsing through cache below
 	if isBattlePet then origLink = shortID end
 
 	--make sure we have something to work with
@@ -772,11 +774,13 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				end
 			end
 
-			--store it in the cache, copy the tables don't reference them
-			Data.__cache.tooltip[origLink] = Data.__cache.tooltip[origLink] or {}
-			Data.__cache.tooltip[origLink].unitList = CopyTable(unitList)
-			Data.__cache.tooltip[origLink].grandTotal = grandTotal
-
+			--do not cache if we are viewing an advanced search list, otherwise it won't display everything normally
+			if not advUnitList then
+				--store it in the cache, copy the tables don't reference them
+				Data.__cache.tooltip[origLink] = Data.__cache.tooltip[origLink] or {}
+				Data.__cache.tooltip[origLink].unitList = CopyTable(unitList)
+				Data.__cache.tooltip[origLink].grandTotal = grandTotal
+			end
 		else
 			--use the cached results from previous DB searches, copy the table don't reference it
 			unitList = CopyTable(Data.__cache.tooltip[origLink].unitList)

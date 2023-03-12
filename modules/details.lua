@@ -17,6 +17,11 @@ end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
+local function comma_value(n)
+	if not n or not tonumber(n) then return "?" end
+	return tostring(BreakUpLargeNumbers(tonumber(n)))
+end
+
 function Details:OnEnable()
 	local detailsFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")
 	Mixin(detailsFrame, Details) --implement new frame to our parent module Mixin, to have access to parent methods
@@ -24,8 +29,8 @@ function Details:OnEnable()
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncDetailsFrame")
     detailsFrame.TitleText:SetText("BagSync - "..L.Details)
-    detailsFrame:SetHeight(500)
-	detailsFrame:SetWidth(380)
+    detailsFrame:SetHeight(600)
+	detailsFrame:SetWidth(600)
     detailsFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     detailsFrame:EnableMouse(true) --don't allow clickthrough
     detailsFrame:SetMovable(true)
@@ -33,9 +38,17 @@ function Details:OnEnable()
     detailsFrame:SetFrameStrata("DIALOG")
     Details.frame = detailsFrame
 
+	detailsFrame.infoText = detailsFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
+	detailsFrame.infoText:SetText(L.Details)
+	detailsFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
+	detailsFrame.infoText:SetTextColor(1, 165/255, 0)
+	detailsFrame.infoText:SetPoint("LEFT", detailsFrame, "TOPLEFT", 15, -30)
+	detailsFrame.infoText:SetJustifyH("LEFT")
+	detailsFrame.infoText:SetWidth(detailsFrame:GetWidth() - 15)
+
     Details.scrollFrame = _G.CreateFrame("ScrollFrame", nil, detailsFrame, "HybridScrollFrameTemplate")
-    Details.scrollFrame:SetWidth(345)
-    Details.scrollFrame:SetPoint("TOPLEFT", detailsFrame, "TOPLEFT", 6, -30)
+    Details.scrollFrame:SetWidth(565)
+    Details.scrollFrame:SetPoint("TOPLEFT", detailsFrame, "TOPLEFT", 6, -40)
     --set ScrollFrame height by altering the distance from the bottom of the frame
     Details.scrollFrame:SetPoint("BOTTOMLEFT", detailsFrame, "BOTTOMLEFT", -25, 10)
     Details.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Details.scrollFrame, "HybridScrollBarTemplate")
@@ -51,9 +64,11 @@ function Details:OnEnable()
 	detailsFrame:Hide()
 end
 
-function Details:ShowItem(itemID)
+function Details:ShowItem(itemID, text)
 	if not itemID then return end
 	Details.frame:Show()
+	Details.frame.infoText:SetText("|cFFe454fd"..L.Details..":|r "..text)
+
 	Details:CreateList(itemID)
     Details:RefreshList()
 
@@ -93,22 +108,23 @@ function Details:CheckItems(usrData, unitObj, target, itemID, colorized)
 		return iCount
 	end
 
-	if target == "bag" or target == "bank" or target == "reagents" then
-		for bagID, bagData in pairs(unitObj.data[target] or {}) do
-			parseItems(bagData, bagID)
+	if unitObj.data[target] then
+		if target == "bag" or target == "bank" or target == "reagents" then
+			for bagID, bagData in pairs(unitObj.data[target] or {}) do
+				parseItems(bagData, bagID)
+			end
+		elseif target == "auction" and BSYC.options.enableAuction then
+			parseItems((unitObj.data[target] and unitObj.data[target].bag) or {})
+
+		elseif target == "mailbox" and BSYC.options.enableMailbox then
+			parseItems(unitObj.data[target] or {})
+
+		elseif target == "equip" or target == "void" then
+			parseItems(unitObj.data[target] or {})
 		end
-
-	elseif target == "auction" and BSYC.options.enableAuction then
-		parseItems((unitObj.data[target] and unitObj.data[target].bag) or {})
-
-	elseif target == "mailbox" and BSYC.options.enableMailbox then
-		parseItems(unitObj.data[target] or {})
-
-	elseif target == "equip" or target == "void" then
-		parseItems(unitObj.data[target] or {})
-
-	elseif target == "guild" and BSYC.options.enableGuild then
-		for tabID, tabData in pairs(unitObj.tabs or (unitObj.data and unitObj.data.tabs) or {}) do
+	end
+	if target == "guild" and BSYC.options.enableGuild then
+		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
 			parseItems(tabData, tabID)
 		end
 	end
@@ -143,10 +159,23 @@ function Details:CreateList(itemID)
 	if #usrData > 0 then
 
 		--sort order
-		--Realm -> Player -> target type -> tab (if exists) -> slot/index -> count
+		--Realm -> Player -> target type -> tab (if exists) -> slot/index
 
 		table.sort(usrData, function(a, b)
 			if a.realm  == b.realm then
+				if a.name  == b.name then
+					if a.target  == b.target then
+						if a.tab and b.tab then
+							if a.tab == b.tab then
+								return a.slot < b.slot;
+							end
+							return a.tab < b.tab;
+						else
+							return a.slot < b.slot;
+						end
+					end
+					return a.target < b.target;
+				end
 				return a.name < b.name;
 			end
 			return a.realm < b.realm;
@@ -197,7 +226,7 @@ function Details:RefreshList()
 
             button:SetID(itemIndex)
 			button.data = item
-			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "")
             button:SetWidth(Details.scrollFrame.scrollChild:GetWidth())
 
 			if item.isHeader then
@@ -207,12 +236,52 @@ function Details:RefreshList()
 				--button.HeaderHighlight:SetVertexColor(0.8, 0.7, 0, 1)
 				button.HeaderHighlight:SetAlpha(0.75)
 				button.isHeader = true
+				button.Text2:SetJustifyH("RIGHT")
+				button.Text2:SetTextColor(1, 1, 1)
+				button.Text2:SetText("")
 			else
 				button.Text:SetJustifyH("LEFT")
 				button.Text:SetTextColor(0.25, 0.88, 0.82)
-				button.Text:SetText(item.name or "")
+				button.Text:SetText(item.colorized or "")
 				button.HeaderHighlight:SetAlpha(0)
 				button.isHeader = nil
+
+				button.Text2:SetJustifyH("RIGHT")
+				button.Text2:SetTextColor(1, 1, 1)
+
+				local info = ""
+				local dispType = ""
+
+				if BSYC.options.singleCharLocations then
+					dispType = "TooltipSmall_"
+				elseif BSYC.options.useIconLocations then
+					dispType = "TooltipIcon_"
+				else
+					dispType = "Tooltip_"
+				end
+
+				local colorType = Tooltip:GetClassColor(item.unitObj, 2)
+				info = Tooltip:HexColor(BSYC.options.colors.second, comma_value(item.count))
+				info = info.." ("..Tooltip:HexColor(colorType, L[dispType..item.target]).." "
+
+				if item.tab then
+					if item.target ~= "guild" then
+						info = info..Tooltip:HexColor(colorType, L.DetailsBagID).." "..item.tab.." "
+					else
+						info = info..Tooltip:HexColor(colorType, L.DetailsTab).." "..item.tab.." "
+					end
+				end
+				info = info..Tooltip:HexColor(colorType, L.DetailsSlot).." "..item.slot..")"
+
+				--check for battlepet
+				if item.speciesID and item.qOpts and item.qOpts.petdata then
+					local _, level = strsplit(":", item.qOpts.petdata)
+					if tonumber(level) and tonumber(level) > 0 then
+						info = info.." |cFF52D386"..LEVEL..":|r "..level
+					end
+				end
+
+				button.Text2:SetText(info)
 			end
 
 			--while we are updating the scrollframe, is the mouse currently over a button?
@@ -236,14 +305,17 @@ function Details:RefreshList()
 end
 
 function Details:Item_OnEnter(btn)
-    -- if not btn.isHeader then
-	-- 	GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
-	-- 	Tooltip:DetailsTooltip(GameTooltip, btn.data.name, btn.data.icon, btn.data.detailsID)
-	-- 	return
-	-- end
-	-- GameTooltip:Hide()
+    if not btn.isHeader and btn.data.speciesID and btn.data.qOpts and btn.data.qOpts.petdata then
+		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+		local speciesID, level, breedQuality, maxHealth, power, speed = strsplit(":", btn.data.qOpts.petdata)
+		if tonumber(speciesID) and tonumber(level) and tonumber(level) > 0 then
+			BattlePetToolTip_Show(tonumber(speciesID), tonumber(level), tonumber(breedQuality), tonumber(maxHealth), tonumber(power), tonumber(speed), nil)
+		end
+		return
+	end
+	BattlePetTooltip:Hide()
 end
 
 function Details:Item_OnLeave()
-	GameTooltip:Hide()
+	BattlePetTooltip:Hide()
 end
