@@ -3,7 +3,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhCN")
 if not L then return end
 
 --  zhCN client (NGA-[男爵凯恩]补齐)
---  Last update: 20223/2/21
+--  Last update: 20223/3/12
 
 L.Yes = "Yes"
 L.No = "No"
@@ -38,6 +38,10 @@ L.TooltipExpansion = "[来源]:"
 L.TooltipItemType = "[类型]:"
 L.TooltipDelimiter = ", "
 L.TooltipRealmKey = "服务器:"
+L.TooltipDetailsInfo = "物品详细摘要"
+L.DetailsBagID = "背包号:"
+L.DetailsSlot = "格子位:"
+L.DetailsTab = "Tab:"
 L.Debug_DEBUG = "Debug"
 L.Debug_INFO = "信息"
 L.Debug_TRACE = "追踪"
@@ -272,7 +276,7 @@ L.SearchHelp = [[
 
 |cff00ffff<物品名称>|r = |cFF99CC33n|r ; |cFF99CC33name|r | 示例：|cFFFFD580[输入简称]:矿石|r ;  |cFFFFD580[输入全称]:宁铁矿石|r 
 
-|cff00ffff<物品已装备>|r = |cFF99CC33bind|r | 示例|cFFFFD580bind:boe|r ; types (boe, bop, bou, boq) i.e   boe = 专业装备
+|cff00ffff<物品已装备>|r = |cFF99CC33bind|r | 示例|cFFFFD580bind:boe|r ; types (boe, bop, bou, boq) i.e   boe = 已绑定装备
 
 |cff00ffff<品质>|r = |cFF99CC33q|r ; |cFF99CC33quality|r | 示例：|cFFFFD580q:史诗|r 
 
@@ -295,15 +299,23 @@ L.SearchHelp = [[
 |cffff7d0a函数 <op>|r:
 |cFF99CC33:|r | |cFF99CC33=|r | |cFF99CC33==|r | |cFF99CC33!=|r | |cFF99CC33~=|r | |cFF99CC33<|r | |cFF99CC33>|r | |cFF99CC33<=|r | |cFF99CC33>=|r
 
-|cffff7d0a等级搜索|r:
-示例: |cFF99CC33!|r|cFFFFD580boe|r (not boe)
-示例: |cFF99CC33!|r|cFFFFD580boe|r |cFF99CC33&|r |cFFFFD580lvl:>350|r (专业装备和配饰的物品等级大于350)
 
-|cffff7d0a公会搜索 (和搜索):|r
-示例: |cFFFFD580bind:boe|r |cFF99CC33&|r |cFFFFD580lvl:>20|r
+|cffff7d0a否定命令|r:
+示例: |cFF99CC33!|r|cFFFFD580bind:boe|r (不是已绑定装备)
+示例: |cFF99CC33!|r|cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:>20|r (不是已绑定装备且物品等级大于20)
+
+|cffff7d0a联合搜索 (和搜索):|r
+(使用 |cFF99CC33&|r 符号)
+示例: |cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:>20|r  |cFFCF9FFF(不要使用空格!)|r
 
 |cffff7d0a交叉搜索 (或搜索):|r
-示例: |cFFFFD580bind:boe|r |cFF99CC33|||r |cFFFFD580lvl:>20|r
+(使用竖 |cFF99CC33|||r 符号)
+示例: |cFFFFD580bind:boe|r|cFF99CC33|||r|cFFFFD580lvl:>20|r  |cFFCF9FFF(不要使用空格!)|r
+
+|cffff7d0a复杂搜索示例:|r
+(已绑定装备, 物品等级正好是20名字中带有'长袍' 一词)
+|cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:20|r|cFF99CC33&|r|cFFFFD580name:robe|r |cFFCF9FFF(不要使用空格!)|r
+
 ]]
 L.ConfigFAQ= " FAQ / 帮助 "
 L.ConfigFAQHeader = "BagSync 的常见问题和帮助介绍。"
