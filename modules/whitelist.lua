@@ -23,13 +23,19 @@ function Whitelist:OnEnable()
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncWhitelistFrame")
     whitelistFrame.TitleText:SetText("BagSync - "..L.Whitelist)
-    whitelistFrame:SetHeight(500)
+    whitelistFrame:SetHeight(506) --irregular height to allow the scroll frame to fit the bottom most button
 	whitelistFrame:SetWidth(380)
     whitelistFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     whitelistFrame:EnableMouse(true) --don't allow clickthrough
     whitelistFrame:SetMovable(true)
     whitelistFrame:SetResizable(false)
     whitelistFrame:SetFrameStrata("HIGH")
+	whitelistFrame:RegisterForDrag("LeftButton")
+	whitelistFrame:SetClampedToScreen(true)
+	whitelistFrame:SetScript("OnDragStart", whitelistFrame.StartMoving)
+	whitelistFrame:SetScript("OnDragStop", whitelistFrame.StopMovingOrSizing)
+	local closeBtn = CreateFrame("Button", nil, whitelistFrame, "UIPanelCloseButton")
+	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode			
     whitelistFrame:SetScript("OnShow", function() Whitelist:OnShow() end)
     Whitelist.frame = whitelistFrame
 
@@ -57,10 +63,10 @@ function Whitelist:OnEnable()
 	whitelistFrame.infoText:SetWidth(whitelistFrame:GetWidth() - 15)
 
     Whitelist.scrollFrame = _G.CreateFrame("ScrollFrame", nil, whitelistFrame, "HybridScrollFrameTemplate")
-    Whitelist.scrollFrame:SetWidth(345)
-    Whitelist.scrollFrame:SetPoint("TOPLEFT", whitelistFrame, "TOPLEFT", 6, -70)
+    Whitelist.scrollFrame:SetWidth(337)
+    Whitelist.scrollFrame:SetPoint("TOPLEFT", whitelistFrame, "TOPLEFT", 13, -70)
     --set ScrollFrame height by altering the distance from the bottom of the frame
-    Whitelist.scrollFrame:SetPoint("BOTTOMLEFT", whitelistFrame, "BOTTOMLEFT", -25, 10)
+    Whitelist.scrollFrame:SetPoint("BOTTOMLEFT", whitelistFrame, "BOTTOMLEFT", -25, 15)
     Whitelist.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Whitelist.scrollFrame, "HybridScrollBarTemplate")
     Whitelist.scrollFrame.scrollBar:SetPoint("TOPLEFT", Whitelist.scrollFrame, "TOPRIGHT", 1, -16)
     Whitelist.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Whitelist.scrollFrame, "BOTTOMRIGHT", 1, 12)
@@ -300,7 +306,7 @@ end
 
 function Whitelist:Item_OnLeave()
 	GameTooltip:Hide()
-	BattlePetTooltip:Hide()
+	if BattlePetTooltip then BattlePetTooltip:Hide() end
 end
 
 function Whitelist:Item_OnClick(btn)

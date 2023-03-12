@@ -29,28 +29,34 @@ function Details:OnEnable()
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncDetailsFrame")
     detailsFrame.TitleText:SetText("BagSync - "..L.Details)
-    detailsFrame:SetHeight(600)
+    detailsFrame:SetHeight(606)
 	detailsFrame:SetWidth(600)
     detailsFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     detailsFrame:EnableMouse(true) --don't allow clickthrough
     detailsFrame:SetMovable(true)
     detailsFrame:SetResizable(false)
     detailsFrame:SetFrameStrata("DIALOG")
+	detailsFrame:RegisterForDrag("LeftButton")
+	detailsFrame:SetClampedToScreen(true)
+	detailsFrame:SetScript("OnDragStart", detailsFrame.StartMoving)
+	detailsFrame:SetScript("OnDragStop", detailsFrame.StopMovingOrSizing)
+	local closeBtn = CreateFrame("Button", nil, detailsFrame, "UIPanelCloseButton")
+	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode			
     Details.frame = detailsFrame
 
 	detailsFrame.infoText = detailsFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
 	detailsFrame.infoText:SetText(L.Details)
 	detailsFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
 	detailsFrame.infoText:SetTextColor(1, 165/255, 0)
-	detailsFrame.infoText:SetPoint("LEFT", detailsFrame, "TOPLEFT", 15, -30)
+	detailsFrame.infoText:SetPoint("LEFT", detailsFrame, "TOPLEFT", 15, -35)
 	detailsFrame.infoText:SetJustifyH("LEFT")
 	detailsFrame.infoText:SetWidth(detailsFrame:GetWidth() - 15)
 
     Details.scrollFrame = _G.CreateFrame("ScrollFrame", nil, detailsFrame, "HybridScrollFrameTemplate")
-    Details.scrollFrame:SetWidth(565)
-    Details.scrollFrame:SetPoint("TOPLEFT", detailsFrame, "TOPLEFT", 6, -40)
+    Details.scrollFrame:SetWidth(557)
+    Details.scrollFrame:SetPoint("TOPLEFT", detailsFrame, "TOPLEFT", 13, -45)
     --set ScrollFrame height by altering the distance from the bottom of the frame
-    Details.scrollFrame:SetPoint("BOTTOMLEFT", detailsFrame, "BOTTOMLEFT", -25, 10)
+    Details.scrollFrame:SetPoint("BOTTOMLEFT", detailsFrame, "BOTTOMLEFT", -25, 15)
     Details.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Details.scrollFrame, "HybridScrollBarTemplate")
     Details.scrollFrame.scrollBar:SetPoint("TOPLEFT", Details.scrollFrame, "TOPRIGHT", 1, -16)
     Details.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Details.scrollFrame, "BOTTOMRIGHT", 1, 12)
@@ -305,6 +311,11 @@ function Details:RefreshList()
 end
 
 function Details:Item_OnEnter(btn)
+	if btn.isHeader and btn.Highlight:IsVisible() then
+		btn.Highlight:Hide()
+	elseif not btn.isHeader and not btn.Highlight:IsVisible() then
+		btn.Highlight:Show()
+	end
     if not btn.isHeader and btn.data.speciesID and btn.data.qOpts and btn.data.qOpts.petdata then
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		local speciesID, level, breedQuality, maxHealth, power, speed = strsplit(":", btn.data.qOpts.petdata)
@@ -313,9 +324,9 @@ function Details:Item_OnEnter(btn)
 		end
 		return
 	end
-	BattlePetTooltip:Hide()
+	if BattlePetTooltip then BattlePetTooltip:Hide() end
 end
 
 function Details:Item_OnLeave()
-	BattlePetTooltip:Hide()
+	if BattlePetTooltip then BattlePetTooltip:Hide() end
 end

@@ -31,21 +31,27 @@ function Recipes:OnEnable()
     recipesFrame:SetMovable(true)
     recipesFrame:SetResizable(false)
     recipesFrame:SetFrameStrata("HIGH")
+	recipesFrame:RegisterForDrag("LeftButton")
+	recipesFrame:SetClampedToScreen(true)
+	recipesFrame:SetScript("OnDragStart", recipesFrame.StartMoving)
+	recipesFrame:SetScript("OnDragStop", recipesFrame.StopMovingOrSizing)
+	local closeBtn = CreateFrame("Button", nil, recipesFrame, "UIPanelCloseButton")
+	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode			
     Recipes.frame = recipesFrame
 
 	recipesFrame.infoText = recipesFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
 	recipesFrame.infoText:SetText(L.ProfessionInformation)
 	recipesFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
 	recipesFrame.infoText:SetTextColor(1, 165/255, 0)
-	recipesFrame.infoText:SetPoint("LEFT", recipesFrame, "TOPLEFT", 15, -30)
+	recipesFrame.infoText:SetPoint("LEFT", recipesFrame, "TOPLEFT", 15, -35)
 	recipesFrame.infoText:SetJustifyH("CENTER")
 	recipesFrame.infoText:SetWidth(recipesFrame:GetWidth() - 15)
 
     Recipes.scrollFrame = _G.CreateFrame("ScrollFrame", nil, recipesFrame, "HybridScrollFrameTemplate")
-    Recipes.scrollFrame:SetWidth(535)
-    Recipes.scrollFrame:SetPoint("TOPLEFT", recipesFrame, "TOPLEFT", 6, -40)
+    Recipes.scrollFrame:SetWidth(527)
+    Recipes.scrollFrame:SetPoint("TOPLEFT", recipesFrame, "TOPLEFT", 13, -48)
     --set ScrollFrame height by altering the distance from the bottom of the frame
-    Recipes.scrollFrame:SetPoint("BOTTOMLEFT", recipesFrame, "BOTTOMLEFT", -25, 10)
+    Recipes.scrollFrame:SetPoint("BOTTOMLEFT", recipesFrame, "BOTTOMLEFT", -25, 15)
     Recipes.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Recipes.scrollFrame, "HybridScrollBarTemplate")
     Recipes.scrollFrame.scrollBar:SetPoint("TOPLEFT", Recipes.scrollFrame, "TOPRIGHT", 1, -16)
     Recipes.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Recipes.scrollFrame, "BOTTOMRIGHT", 1, 12)
@@ -221,6 +227,11 @@ function Recipes:RefreshList()
 end
 
 function Recipes:Item_OnEnter(btn)
+	if btn.isHeader and btn.Highlight:IsVisible() then
+		btn.Highlight:Hide()
+	elseif not btn.isHeader and not btn.Highlight:IsVisible() then
+		btn.Highlight:Show()
+	end
     if not btn.isHeader then
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		GameTooltip:SetSpellByID(btn.data.recipeID)

@@ -24,13 +24,19 @@ function Professions:OnEnable()
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncProfessionsFrame")
     professionsFrame.TitleText:SetText("BagSync - "..L.Professions)
-    professionsFrame:SetHeight(500)
+    professionsFrame:SetHeight(506) --irregular height to allow the scroll frame to fit the bottom most button
 	professionsFrame:SetWidth(380)
     professionsFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     professionsFrame:EnableMouse(true) --don't allow clickthrough
     professionsFrame:SetMovable(true)
     professionsFrame:SetResizable(false)
     professionsFrame:SetFrameStrata("HIGH")
+	professionsFrame:RegisterForDrag("LeftButton")
+	professionsFrame:SetClampedToScreen(true)
+	professionsFrame:SetScript("OnDragStart", professionsFrame.StartMoving)
+	professionsFrame:SetScript("OnDragStop", professionsFrame.StopMovingOrSizing)
+	local closeBtn = CreateFrame("Button", nil, professionsFrame, "UIPanelCloseButton")
+	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode		
     professionsFrame:SetScript("OnShow", function() Professions:OnShow() end)
     Professions.frame = professionsFrame
 
@@ -38,15 +44,15 @@ function Professions:OnEnable()
 	professionsFrame.infoText:SetText(L.ProfessionInformation)
 	professionsFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
 	professionsFrame.infoText:SetTextColor(1, 165/255, 0)
-	professionsFrame.infoText:SetPoint("LEFT", professionsFrame, "TOPLEFT", 15, -30)
+	professionsFrame.infoText:SetPoint("LEFT", professionsFrame, "TOPLEFT", 15, -35)
 	professionsFrame.infoText:SetJustifyH("LEFT")
 	professionsFrame.infoText:SetWidth(professionsFrame:GetWidth() - 15)
 
     Professions.scrollFrame = _G.CreateFrame("ScrollFrame", nil, professionsFrame, "HybridScrollFrameTemplate")
-    Professions.scrollFrame:SetWidth(345)
-    Professions.scrollFrame:SetPoint("TOPLEFT", professionsFrame, "TOPLEFT", 6, -40)
+    Professions.scrollFrame:SetWidth(337)
+    Professions.scrollFrame:SetPoint("TOPLEFT", professionsFrame, "TOPLEFT", 13, -48)
     --set ScrollFrame height by altering the distance from the bottom of the frame
-    Professions.scrollFrame:SetPoint("BOTTOMLEFT", professionsFrame, "BOTTOMLEFT", -25, 10)
+    Professions.scrollFrame:SetPoint("BOTTOMLEFT", professionsFrame, "BOTTOMLEFT", -25, 15)
     Professions.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Professions.scrollFrame, "HybridScrollBarTemplate")
     Professions.scrollFrame.scrollBar:SetPoint("TOPLEFT", Professions.scrollFrame, "TOPRIGHT", 1, -16)
     Professions.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Professions.scrollFrame, "BOTTOMRIGHT", 1, 12)
@@ -198,6 +204,11 @@ function Professions:RefreshList()
 end
 
 function Professions:Item_OnEnter(btn)
+	if btn.isHeader and btn.Highlight:IsVisible() then
+		btn.Highlight:Hide()
+	elseif not btn.isHeader and not btn.Highlight:IsVisible() then
+		btn.Highlight:Show()
+	end
     if not btn.isHeader then
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		GameTooltip:AddLine("|cFFFFFFFF"..PLAYER..":|r  "..btn.data.colorized)

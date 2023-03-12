@@ -30,6 +30,12 @@ function AdvancedSearch:OnEnable()
     advFrame:SetResizable(false)
     advFrame:SetFrameStrata("HIGH")
 	advFrame.HelpButton:Hide()
+	advFrame:RegisterForDrag("LeftButton")
+	advFrame:SetClampedToScreen(true)
+	advFrame:SetScript("OnDragStart", advFrame.StartMoving)
+	advFrame:SetScript("OnDragStop", advFrame.StopMovingOrSizing)
+	local closeBtn = CreateFrame("Button", nil, advFrame, "UIPanelCloseButton")
+	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode	
     advFrame:SetScript("OnShow", function() AdvancedSearch:OnShow() end)
 	advFrame:SetScript("OnHide", function() AdvancedSearch:OnHide() end)
 	AdvancedSearch.frame = advFrame
@@ -52,8 +58,8 @@ function AdvancedSearch:OnEnable()
 	advFrame.unitTitle:SetWidth(advFrame:GetWidth() - 15)
 
     AdvancedSearch.playerScroll = _G.CreateFrame("ScrollFrame", nil, advFrame, "HybridScrollFrameTemplate")
-    AdvancedSearch.playerScroll:SetWidth(365)
-    AdvancedSearch.playerScroll:SetPoint("TOPLEFT", advFrame, "TOPLEFT", 6, -90)
+    AdvancedSearch.playerScroll:SetWidth(357)
+    AdvancedSearch.playerScroll:SetPoint("TOPLEFT", advFrame, "TOPLEFT", 13, -90)
     --set ScrollFrame height by altering the distance from the bottom of the frame
     AdvancedSearch.playerScroll:SetPoint("BOTTOMLEFT", advFrame, "BOTTOMLEFT", -25, 240)
     AdvancedSearch.playerScroll.scrollBar = CreateFrame("Slider", "$parentscrollBar", AdvancedSearch.playerScroll, "HybridScrollBarTemplate")
@@ -83,8 +89,8 @@ function AdvancedSearch:OnEnable()
 	advFrame.locationInfo:SetWidth(advFrame:GetWidth() - 15)
 
     AdvancedSearch.locationScroll = _G.CreateFrame("ScrollFrame", nil, advFrame, "HybridScrollFrameTemplate")
-    AdvancedSearch.locationScroll:SetWidth(365)
-    AdvancedSearch.locationScroll:SetPoint("TOPLEFT", advFrame, "TOPLEFT", 6, -345)
+    AdvancedSearch.locationScroll:SetWidth(357)
+    AdvancedSearch.locationScroll:SetPoint("TOPLEFT", advFrame, "TOPLEFT", 13, -345)
     --set ScrollFrame height by altering the distance from the bottom of the frame
     AdvancedSearch.locationScroll:SetPoint("BOTTOMLEFT", advFrame, "BOTTOMLEFT", -25, 45)
     AdvancedSearch.locationScroll.scrollBar = CreateFrame("Slider", "$parentscrollBar", AdvancedSearch.locationScroll, "HybridScrollBarTemplate")
@@ -102,7 +108,7 @@ function AdvancedSearch:OnEnable()
 	advFrame.resetButton:SetText(L.Reset)
 	advFrame.resetButton:SetHeight(20)
 	advFrame.resetButton:SetWidth(advFrame.resetButton:GetTextWidth() + 30)
-	advFrame.resetButton:SetPoint("RIGHT", advFrame, "BOTTOMRIGHT", -10, 20)
+	advFrame.resetButton:SetPoint("RIGHT", advFrame, "BOTTOMRIGHT", -10, 23)
 	advFrame.resetButton:SetScript("OnClick", function() AdvancedSearch:Reset() end)
 
 	--Select All button
@@ -110,7 +116,7 @@ function AdvancedSearch:OnEnable()
 	advFrame.selectAllButton:SetText(L.SelectAll)
 	advFrame.selectAllButton:SetHeight(20)
 	advFrame.selectAllButton:SetWidth(advFrame.selectAllButton:GetTextWidth() + 30)
-	advFrame.selectAllButton:SetPoint("LEFT", advFrame, "BOTTOMLEFT", 10, 20)
+	advFrame.selectAllButton:SetPoint("LEFT", advFrame, "BOTTOMLEFT", 13, 23)
 	advFrame.selectAllButton:SetScript("OnClick", function() AdvancedSearch:SelectAll() end)
 
 	advFrame:Hide() --important
@@ -176,6 +182,9 @@ function AdvancedSearch:DoSearch(searchStr)
 end
 
 function AdvancedSearch:CreateLists()
+	AdvancedSearch.playerList = {}
+	AdvancedSearch.locationList = {}
+
 	local playerListTable = {}
 
 	--show simple for ColorizeUnit
@@ -278,10 +287,10 @@ function AdvancedSearch:RefreshPlayerList()
 
 			--while we are updating the scrollframe, is the mouse currently over a button?
 			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
-			-- if GetMouseFocus() == button then
-			-- 	AdvancedSearch:Item_OnLeave() --hide first
-			-- 	AdvancedSearch:Item_OnEnter(button)
-			-- end
+			if GetMouseFocus() == button then
+				AdvancedSearch:Item_OnLeave() --hide first
+				AdvancedSearch:Item_OnEnter(button)
+			end
 
             button:Show()
         else
@@ -393,4 +402,16 @@ end
 
 function AdvancedSearch:SearchBox_OnEnterPressed(text)
 	AdvancedSearch:DoSearch(text)
+end
+
+function AdvancedSearch:Item_OnEnter(btn)
+	if btn.isHeader and btn.Highlight:IsVisible() then
+		btn.Highlight:Hide()
+	elseif not btn.isHeader and not btn.Highlight:IsVisible() then
+		btn.Highlight:Show()
+	end
+end
+
+function AdvancedSearch:Item_OnLeave()
+	GameTooltip:Hide()
 end

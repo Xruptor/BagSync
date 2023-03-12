@@ -34,13 +34,19 @@ function Search:OnEnable()
     searchFrame:SetMovable(true)
     searchFrame:SetResizable(false)
     searchFrame:SetFrameStrata("HIGH")
+	searchFrame:RegisterForDrag("LeftButton")
+	searchFrame:SetClampedToScreen(true)
+	searchFrame:SetScript("OnDragStart", searchFrame.StartMoving)
+	searchFrame:SetScript("OnDragStop", searchFrame.StopMovingOrSizing)
+	local closeBtn = CreateFrame("Button", nil, searchFrame, "UIPanelCloseButton")
+	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode
     searchFrame:SetScript("OnShow", function() Search:OnShow() end)
 	searchFrame:SetScript("OnHide", function() Search:OnHide() end)
     Search.frame = searchFrame
 
     Search.scrollFrame = _G.CreateFrame("ScrollFrame", nil, searchFrame, "HybridScrollFrameTemplate")
-    Search.scrollFrame:SetWidth(365)
-    Search.scrollFrame:SetPoint("TOPLEFT", searchFrame, "TOPLEFT", 6, -60)
+    Search.scrollFrame:SetWidth(357)
+    Search.scrollFrame:SetPoint("TOPLEFT", searchFrame, "TOPLEFT", 13, -60)
     --set ScrollFrame height by altering the distance from the bottom of the frame
     Search.scrollFrame:SetPoint("BOTTOMLEFT", searchFrame, "BOTTOMLEFT", -25, 42)
     Search.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Search.scrollFrame, "HybridScrollBarTemplate")
@@ -66,7 +72,7 @@ function Search:OnEnable()
 	searchFrame.advSearchBtn:SetText(L.AdvancedSearch)
 	searchFrame.advSearchBtn:SetHeight(20)
 	searchFrame.advSearchBtn:SetWidth(searchFrame.advSearchBtn:GetTextWidth() + 30)
-	searchFrame.advSearchBtn:SetPoint("RIGHT", searchFrame, "BOTTOMRIGHT", -10, 20)
+	searchFrame.advSearchBtn:SetPoint("RIGHT", searchFrame, "BOTTOMRIGHT", -10, 23)
 	searchFrame.advSearchBtn:SetScript("OnClick", function() Search:ShowAdvanced() end)
 
 	--Reset button
@@ -465,7 +471,7 @@ end
 
 function Search:Item_OnLeave()
 	GameTooltip:Hide()
-	BattlePetTooltip:Hide()
+	if BattlePetTooltip then BattlePetTooltip:Hide() end
 end
 
 function Search:SearchBox_OnEnterPressed(text)

@@ -24,21 +24,27 @@ function Gold:OnEnable()
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncGoldFrame")
     goldFrame.TitleText:SetText("BagSync - "..L.Gold)
-    goldFrame:SetHeight(500)
+    goldFrame:SetHeight(506)
 	goldFrame:SetWidth(440)
     goldFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     goldFrame:EnableMouse(true) --don't allow clickthrough
     goldFrame:SetMovable(true)
     goldFrame:SetResizable(false)
     goldFrame:SetFrameStrata("HIGH")
+	goldFrame:RegisterForDrag("LeftButton")
+	goldFrame:SetClampedToScreen(true)
+	goldFrame:SetScript("OnDragStart", goldFrame.StartMoving)
+	goldFrame:SetScript("OnDragStop", goldFrame.StopMovingOrSizing)
+	local closeBtn = CreateFrame("Button", nil, goldFrame, "UIPanelCloseButton")
+	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode		
     goldFrame:SetScript("OnShow", function() Gold:OnShow() end)
     Gold.frame = goldFrame
 
     Gold.scrollFrame = _G.CreateFrame("ScrollFrame", nil, goldFrame, "HybridScrollFrameTemplate")
-    Gold.scrollFrame:SetWidth(405)
-    Gold.scrollFrame:SetPoint("TOPLEFT", goldFrame, "TOPLEFT", 6, -22)
+    Gold.scrollFrame:SetWidth(397)
+    Gold.scrollFrame:SetPoint("TOPLEFT", goldFrame, "TOPLEFT", 13, -29)
     --set ScrollFrame height by altering the distance from the bottom of the frame
-    Gold.scrollFrame:SetPoint("BOTTOMLEFT", goldFrame, "BOTTOMLEFT", -25, 40)
+    Gold.scrollFrame:SetPoint("BOTTOMLEFT", goldFrame, "BOTTOMLEFT", -25, 39)
     Gold.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Gold.scrollFrame, "HybridScrollBarTemplate")
     Gold.scrollFrame.scrollBar:SetPoint("TOPLEFT", Gold.scrollFrame, "TOPRIGHT", 1, -16)
     Gold.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Gold.scrollFrame, "BOTTOMRIGHT", 1, 12)
@@ -78,23 +84,13 @@ local function CustomMoneyString(money, separateThousands)
 	local silver = floor((money - (gold * COPPER_PER_SILVER * SILVER_PER_GOLD)) / COPPER_PER_SILVER);
 	local copper = mod(money, COPPER_PER_SILVER);
 
-	if ( CVarCallbackRegistry:GetCVarValueBool("colorblindMode") or ENABLE_COLORBLIND_MODE == "1" ) then
-		if (separateThousands) then
-			goldString = FormatLargeNumber(gold)..GOLD_AMOUNT_SYMBOL;
-		else
-			goldString = gold..GOLD_AMOUNT_SYMBOL;
-		end
-		silverString = silver..SILVER_AMOUNT_SYMBOL;
-		copperString = copper..COPPER_AMOUNT_SYMBOL;
+	if (separateThousands) then
+		goldString = GOLD_AMOUNT_TEXTURE_STRING:format(FormatLargeNumber(gold), 0, 0);
 	else
-		if (separateThousands) then
-			goldString = GOLD_AMOUNT_TEXTURE_STRING:format(FormatLargeNumber(gold), 0, 0);
-		else
-			goldString = GOLD_AMOUNT_TEXTURE:format(gold, 0, 0);
-		end
-		silverString = SILVER_AMOUNT_TEXTURE:format(silver, 0, 0);
-		copperString = COPPER_AMOUNT_TEXTURE:format(copper, 0, 0);
+		goldString = GOLD_AMOUNT_TEXTURE:format(gold, 0, 0);
 	end
+	silverString = SILVER_AMOUNT_TEXTURE:format(silver, 0, 0);
+	copperString = COPPER_AMOUNT_TEXTURE:format(copper, 0, 0);
 
 	local moneyString = "";
 	local separator = "";

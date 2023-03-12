@@ -25,13 +25,19 @@ function Profiles:OnEnable()
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncProfilesFrame")
     profilesFrame.TitleText:SetText("BagSync - "..L.Profiles)
-    profilesFrame:SetHeight(500)
+    profilesFrame:SetHeight(506) --irregular height to allow the scroll frame to fit the bottom most button
 	profilesFrame:SetWidth(440)
     profilesFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     profilesFrame:EnableMouse(true) --don't allow clickthrough
     profilesFrame:SetMovable(true)
     profilesFrame:SetResizable(false)
     profilesFrame:SetFrameStrata("HIGH")
+	profilesFrame:RegisterForDrag("LeftButton")
+	profilesFrame:SetClampedToScreen(true)
+	profilesFrame:SetScript("OnDragStart", profilesFrame.StartMoving)
+	profilesFrame:SetScript("OnDragStop", profilesFrame.StopMovingOrSizing)
+	local closeBtn = CreateFrame("Button", nil, profilesFrame, "UIPanelCloseButton")
+	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode			
     profilesFrame:SetScript("OnShow", function() Profiles:OnShow() end)
     Profiles.frame = profilesFrame
 
@@ -39,15 +45,15 @@ function Profiles:OnEnable()
 	profilesFrame.infoText:SetText(L.DeleteWarning)
 	profilesFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
 	profilesFrame.infoText:SetTextColor(1, 0, 0)
-	profilesFrame.infoText:SetPoint("LEFT", profilesFrame, "TOPLEFT", 15, -30)
+	profilesFrame.infoText:SetPoint("LEFT", profilesFrame, "TOPLEFT", 15, -35)
 	profilesFrame.infoText:SetJustifyH("LEFT")
 	profilesFrame.infoText:SetWidth(profilesFrame:GetWidth() - 15)
 
     Profiles.scrollFrame = _G.CreateFrame("ScrollFrame", nil, profilesFrame, "HybridScrollFrameTemplate")
-    Profiles.scrollFrame:SetWidth(405)
-    Profiles.scrollFrame:SetPoint("TOPLEFT", profilesFrame, "TOPLEFT", 6, -40)
+    Profiles.scrollFrame:SetWidth(397)
+    Profiles.scrollFrame:SetPoint("TOPLEFT", profilesFrame, "TOPLEFT", 13, -48)
     --set ScrollFrame height by altering the distance from the bottom of the frame
-    Profiles.scrollFrame:SetPoint("BOTTOMLEFT", profilesFrame, "BOTTOMLEFT", -25, 10)
+    Profiles.scrollFrame:SetPoint("BOTTOMLEFT", profilesFrame, "BOTTOMLEFT", -25, 15)
     Profiles.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Profiles.scrollFrame, "HybridScrollBarTemplate")
     Profiles.scrollFrame.scrollBar:SetPoint("TOPLEFT", Profiles.scrollFrame, "TOPRIGHT", 1, -16)
     Profiles.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Profiles.scrollFrame, "BOTTOMRIGHT", 1, 12)
@@ -214,6 +220,11 @@ function Profiles:DeleteUnit(entry)
 end
 
 function Profiles:Item_OnEnter(btn)
+	if btn.isHeader and btn.Highlight:IsVisible() then
+		btn.Highlight:Hide()
+	elseif not btn.isHeader and not btn.Highlight:IsVisible() then
+		btn.Highlight:Show()
+	end
     if not btn.isHeader then
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		if not btn.data.unitObj.isGuild then

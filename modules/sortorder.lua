@@ -24,21 +24,27 @@ function SortOrder:OnEnable()
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncSortOrderFrame")
     sortorderFrame.TitleText:SetText("BagSync - "..L.SortOrder)
-    sortorderFrame:SetHeight(500)
+    sortorderFrame:SetHeight(523)
 	sortorderFrame:SetWidth(440)
     sortorderFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     sortorderFrame:EnableMouse(true) --don't allow clickthrough
     sortorderFrame:SetMovable(true)
     sortorderFrame:SetResizable(false)
     sortorderFrame:SetFrameStrata("HIGH")
+	sortorderFrame:RegisterForDrag("LeftButton")
+	sortorderFrame:SetClampedToScreen(true)
+	sortorderFrame:SetScript("OnDragStart", sortorderFrame.StartMoving)
+	sortorderFrame:SetScript("OnDragStop", sortorderFrame.StopMovingOrSizing)
+	local closeBtn = CreateFrame("Button", nil, sortorderFrame, "UIPanelCloseButton")
+	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode		
     sortorderFrame:SetScript("OnShow", function() SortOrder:OnShow() end)
     SortOrder.frame = sortorderFrame
 
     SortOrder.scrollFrame = _G.CreateFrame("ScrollFrame", nil, sortorderFrame, "HybridScrollFrameTemplate")
-    SortOrder.scrollFrame:SetWidth(405)
-    SortOrder.scrollFrame:SetPoint("TOPLEFT", sortorderFrame, "TOPLEFT", 6, -25)
+    SortOrder.scrollFrame:SetWidth(397)
+    SortOrder.scrollFrame:SetPoint("TOPLEFT", sortorderFrame, "TOPLEFT", 13, -29)
     --set ScrollFrame height by altering the distance from the bottom of the frame
-    SortOrder.scrollFrame:SetPoint("BOTTOMLEFT", sortorderFrame, "BOTTOMLEFT", -25, 10)
+    SortOrder.scrollFrame:SetPoint("BOTTOMLEFT", sortorderFrame, "BOTTOMLEFT", -25, 15)
     SortOrder.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", SortOrder.scrollFrame, "HybridScrollBarTemplate")
     SortOrder.scrollFrame.scrollBar:SetPoint("TOPLEFT", SortOrder.scrollFrame, "TOPRIGHT", 1, -16)
     SortOrder.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", SortOrder.scrollFrame, "BOTTOMRIGHT", 1, 12)
@@ -210,6 +216,11 @@ function SortOrder:RefreshList()
 end
 
 function SortOrder:Item_OnEnter(btn)
+	if btn.isHeader and btn.Highlight:IsVisible() then
+		btn.Highlight:Hide()
+	elseif not btn.isHeader and not btn.Highlight:IsVisible() then
+		btn.Highlight:Show()
+	end
     if not btn.isHeader then
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		if not btn.data.unitObj.isGuild then

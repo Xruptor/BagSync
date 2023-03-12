@@ -75,13 +75,11 @@
 				end
 			</OnClick>
 			<OnEnter>
-				if self.isHeader and self.Highlight:IsVisible() then self.Highlight:Hide() end;
 				if self.parentHandler and self.parentHandler.Item_OnEnter then
 					self.parentHandler:Item_OnEnter(self);
 				end
 			</OnEnter>
 			<OnLeave>
-				if not self.isHeader and not self.Highlight:IsVisible() then self.Highlight:Show() end;
 				if self.parentHandler and self.parentHandler.Item_OnLeave then
 					self.parentHandler:Item_OnLeave(self);
 				end
@@ -133,13 +131,11 @@
 				end
 			</OnClick>
 			<OnEnter>
-				if self.isHeader and self.Highlight:IsVisible() then self.Highlight:Hide() end;
 				if self.parentHandler and self.parentHandler.Item_OnEnter then
 					self.parentHandler:Item_OnEnter(self);
 				end
 			</OnEnter>
 			<OnLeave>
-				if not self.isHeader and not self.Highlight:IsVisible() then self.Highlight:Show() end;
 				if self.parentHandler and self.parentHandler.Item_OnLeave then
 					self.parentHandler:Item_OnLeave(self);
 				end
@@ -213,13 +209,11 @@
 				end
 			</OnClick>
 			<OnEnter>
-				if self.isHeader and self.Highlight:IsVisible() then self.Highlight:Hide() end;
 				if self.parentHandler and self.parentHandler.Item_OnEnter then
 					self.parentHandler:Item_OnEnter(self);
 				end
 			</OnEnter>
 			<OnLeave>
-				if not self.isHeader and not self.Highlight:IsVisible() then self.Highlight:Show() end;
 				if self.parentHandler and self.parentHandler.Item_OnLeave then
 					self.parentHandler:Item_OnLeave(self);
 				end
@@ -229,70 +223,100 @@
 
 <!--
 *******************************************************************************
-    Modified version of Blizzard's BagSyncSearchFrameTemplate
-    BagSyncBagSyncSearchFrameTemplate
-	This is an empty frame with a titlebar and a close button.
-	It also contains a Searbox with Search buttons.
 *******************************************************************************
 -->
-	<Frame name="BaseBagSyncSearchFrameTemplate" virtual="true">
+
+	<Frame name="BaseBagSyncFrameTemplate" virtual="true">
 		<Layers>
 			<Layer level="OVERLAY">
-				<Texture parentKey="TopLeftCorner" inherits="UI-Frame-TopLeftCorner">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="-6" y="1"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="TopRightCorner" inherits="UI-Frame-TopCornerRight">
-					<Anchors>
-						<Anchor point="TOPRIGHT" x="0" y="1"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="TopBorder" inherits="_UI-Frame-TitleTile">
-					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.TopLeftCorner" relativePoint="TOPRIGHT"/>
-						<Anchor point="TOPRIGHT" relativeKey="$parent.TopRightCorner" relativePoint="TOPLEFT"/>
-					</Anchors>
-				</Texture>
 				<FontString parentKey="TitleText" inherits="GameFontNormal" text="">
 					<Anchors>
-						<Anchor point="TOP" x="-6" y="-4" />
+						<Anchor point="TOP" x="0" y="-10" />
 					</Anchors>
 				</FontString>
 			</Layer>
-			<Layer level="BORDER">
-				<Texture parentKey="BotLeftCorner" inherits="UI-Frame-BotCornerLeft">
+			<Layer level="BACKGROUND">
+				<Texture parentKey="Bg" file="Interface\Tooltips\UI-Tooltip-Background">
+					<Color r="0" g="0" b="0" a="1"/>
 					<Anchors>
-						<Anchor point="BOTTOMLEFT" x="-6" y="-5"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="BotRightCorner" inherits="UI-Frame-BotCornerRight">
-					<Anchors>
-						<Anchor point="BOTTOMRIGHT" x="0" y="-5"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="BottomBorder" inherits="_UI-Frame-Bot">
-					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BotLeftCorner" relativePoint="BOTTOMRIGHT" y="0"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BotRightCorner" relativePoint="BOTTOMLEFT" y="0"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="LeftBorder" inherits="!UI-Frame-LeftTile">
-					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.TopLeftCorner" relativePoint="BOTTOMLEFT"/>
-						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BotLeftCorner" relativePoint="TOPLEFT"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="RightBorder" inherits="!UI-Frame-RightTile">
-					<Anchors>
-						<Anchor point="TOPRIGHT" relativeKey="$parent.TopRightCorner" relativePoint="BOTTOMRIGHT" x="1"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BotRightCorner" relativePoint="TOPRIGHT"/>
+						<Anchor point="TOPLEFT" x="8" y="-12"/>
+						<Anchor point="BOTTOMRIGHT" x="-6" y="8"/>
 					</Anchors>
 				</Texture>
 			</Layer>
+			<Layer level="BORDER">
+				<Texture parentKey="titleBg" file="Interface\PaperDollInfoFrame\UI-GearManager-Title-Background">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="9" y="-6"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent" relativePoint="TOPRIGHT" x="-28" y="-24"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="topLeft" file="Interface\PaperDollInfoFrame\UI-GearManager-Border">
+					<Size x="64" y="64"/>
+					<Anchors>
+						<Anchor point="TOPLEFT"/>
+					</Anchors>
+					<TexCoords left="0.501953125" right="0.625" top="0" bottom="1"/>
+				</Texture>
+				<Texture parentKey="topRight" file="Interface\PaperDollInfoFrame\UI-GearManager-Border">
+					<Size x="64" y="64"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT"/>
+					</Anchors>
+					<TexCoords left="0.625" right="0.75" top="0" bottom="1"/>
+				</Texture>
+				<Texture parentKey="top" file="Interface\PaperDollInfoFrame\UI-GearManager-Border">
+					<Size y="64"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.topLeft" relativePoint="TOPRIGHT"/>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.topRight" relativePoint="TOPLEFT"/>
+					</Anchors>
+					<TexCoords left="0.25" right="0.369140625" top="0" bottom="1"/>
+				</Texture>
+				<Texture parentKey="bottomLeft" file="Interface\PaperDollInfoFrame\UI-GearManager-Border">
+					<Size x="64" y="64"/>
+					<Anchors>
+						<Anchor point="BOTTOMLEFT"/>
+					</Anchors>
+					<TexCoords left="0.751953125" right="0.875" top="0" bottom="1"/>
+				</Texture>
+				<Texture parentKey="bottomRight" file="Interface\PaperDollInfoFrame\UI-GearManager-Border">
+					<Size x="64" y="64"/>
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT"/>
+					</Anchors>
+					<TexCoords left="0.875" right="1" top="0" bottom="1"/>
+				</Texture>
+				<Texture parentKey="bottom" file="Interface\PaperDollInfoFrame\UI-GearManager-Border">
+					<Size y="64"/>
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.bottomLeft" relativePoint="BOTTOMRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.bottomRight" relativePoint="BOTTOMLEFT"/>
+					</Anchors>
+					<TexCoords left="0.376953125" right="0.498046875" top="0" bottom="1"/>
+				</Texture>
+				<Texture parentKey="left" file="Interface\PaperDollInfoFrame\UI-GearManager-Border">
+					<Size x="64"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.topLeft" relativePoint="BOTTOMLEFT"/>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.bottomLeft" relativePoint="TOPLEFT"/>
+					</Anchors>
+					<TexCoords left="0.001953125" right="0.125" top="0" bottom="1"/>
+				</Texture>
+				<Texture parentKey="right" file="Interface\PaperDollInfoFrame\UI-GearManager-Border">
+					<Size x="64"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT" relativeKey="$parent.topRight" relativePoint="BOTTOMRIGHT"/>
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.bottomRight" relativePoint="TOPRIGHT"/>
+					</Anchors>
+					<TexCoords left="0.1171875" right="0.2421875" top="0" bottom="1"/>
+				</Texture>					
+			</Layer>
 		</Layers>
+	</Frame>
+
+	<Frame name="BagSyncSearchFrameTemplate" inherits="BaseBagSyncFrameTemplate" virtual="true">
 		<Frames>
-			<Button parentKey="CloseButton" inherits="UIPanelCloseButtonDefaultAnchors"/>
 			<EditBox parentKey="SearchBox" enableMouse="true" autoFocus="false" inherits="InputBoxTemplate">
 				<Size x="0" y="24"/>
 				<TextInsets>
@@ -300,8 +324,8 @@
 				</TextInsets>
 				<Anchors>
 					<!-- This is important as it sets the size of the SearchBox to dimentions it can fit on the frame-->
-					<Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="TOPRIGHT" x="-112" y="-28"/>
-					<Anchor point="RIGHT" relativeKey="$parent" relativePoint="LEFT" x="13" y="0"/>
+					<Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="TOPRIGHT" x="-118" y="-30"/>
+					<Anchor point="RIGHT" relativeKey="$parent" relativePoint="LEFT" x="20" y="0"/>
 				</Anchors>
 				<Layers>
 					<Layer level="ARTWORK">
@@ -398,7 +422,7 @@
             <Button parentKey="RefreshButton" inherits="UIPanelButtonTemplate" text="REFRESH">
                 <Size x="80" y="20"/>
                 <Anchors>
-                    <Anchor point="TOPRIGHT" x="-28" y="-30"/>
+                    <Anchor point="TOPRIGHT" x="-28" y="-32"/>
                 </Anchors>
                 <Scripts>
                     <OnClick>
@@ -411,7 +435,7 @@
             <Button parentKey="HelpButton" inherits="UIPanelButtonTemplate" text="?">
                 <Size x="20" y="20"/>
                 <Anchors>
-                    <Anchor point="TOPRIGHT" x="-8" y="-30"/>
+                    <Anchor point="TOPRIGHT" x="-8" y="-32"/>
                 </Anchors>
                 <Scripts>
                     <OnClick>
@@ -421,166 +445,17 @@
                     </OnClick>
                 </Scripts>
             </Button>
-		</Frames>
+		</Frames>		
 	</Frame>
 
-	<Frame name="BagSyncSearchFrameTemplate" inherits="BaseBagSyncSearchFrameTemplate" virtual="true">
-		<Layers>
-			<Layer level="BACKGROUND" textureSubLevel="-1">
-				<Texture parentKey="Bg" file="Interface\Tooltips\UI-Tooltip-Background" horizTile="true" vertTile="true">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="2" y="-21"/>
-						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
-					</Anchors>
-                    <Color r="0" g="0" b="0" a=".75"/>
-				</Texture>
-				<Texture parentKey="TitleBg" inherits="_UI-Frame-TitleTileBg">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="2" y="-1"/>
-						<Anchor point="TOPRIGHT" x="-25" y="-1"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-			<Layer level="BACKGROUND">
-				<Texture parentKey="TopTileStreaks" inherits="_UI-Frame-TopTileStreaks">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="0" y="-21"/>
-						<Anchor point="TOPRIGHT" x="-2" y="-21"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-		</Layers>
-		<Scripts>
-			<OnMouseDown>
-				if ( button == "LeftButton" ) then
-					self:StartMoving();
-					self.isMoving = true;
-				end
-			</OnMouseDown>
-			<OnMouseUp>
-				if ( self.isMoving ) then
-					self:StopMovingOrSizing();
-					self.isMoving = false;
-				end
-			</OnMouseUp>
-		</Scripts>
-	</Frame>
-
-<!--
-*******************************************************************************
-    Modified version of Blizzard's BagSyncFrameTemplate
-    BagSyncBagSyncFrameTemplate
-	This is an empty frame with a titlebar and a close button.
-*******************************************************************************
--->
-	<Frame name="BaseBagSyncFrameTemplate" virtual="true">
-		<Layers>
-			<Layer level="OVERLAY">
-				<Texture parentKey="TopLeftCorner" inherits="UI-Frame-TopLeftCorner">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="-6" y="1"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="TopRightCorner" inherits="UI-Frame-TopCornerRight">
-					<Anchors>
-						<Anchor point="TOPRIGHT" x="0" y="1"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="TopBorder" inherits="_UI-Frame-TitleTile">
-					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.TopLeftCorner" relativePoint="TOPRIGHT"/>
-						<Anchor point="TOPRIGHT" relativeKey="$parent.TopRightCorner" relativePoint="TOPLEFT"/>
-					</Anchors>
-				</Texture>
-				<FontString parentKey="TitleText" inherits="GameFontNormal" text="">
-					<Anchors>
-						<Anchor point="TOP" x="-6" y="-4" />
-					</Anchors>
-				</FontString>
-			</Layer>
-			<Layer level="BORDER">
-				<Texture parentKey="BotLeftCorner" inherits="UI-Frame-BotCornerLeft">
-					<Anchors>
-						<Anchor point="BOTTOMLEFT" x="-6" y="-5"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="BotRightCorner" inherits="UI-Frame-BotCornerRight">
-					<Anchors>
-						<Anchor point="BOTTOMRIGHT" x="0" y="-5"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="BottomBorder" inherits="_UI-Frame-Bot">
-					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BotLeftCorner" relativePoint="BOTTOMRIGHT" y="0"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BotRightCorner" relativePoint="BOTTOMLEFT" y="0"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="LeftBorder" inherits="!UI-Frame-LeftTile">
-					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.TopLeftCorner" relativePoint="BOTTOMLEFT"/>
-						<Anchor point="BOTTOMLEFT" relativeKey="$parent.BotLeftCorner" relativePoint="TOPLEFT"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="RightBorder" inherits="!UI-Frame-RightTile">
-					<Anchors>
-						<Anchor point="TOPRIGHT" relativeKey="$parent.TopRightCorner" relativePoint="BOTTOMRIGHT" x="1"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.BotRightCorner" relativePoint="TOPRIGHT"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-		</Layers>
-		<Frames>
-			<Button parentKey="CloseButton" inherits="UIPanelCloseButtonDefaultAnchors"/>
-		</Frames>
-	</Frame>
-
-	<Frame name="BagSyncFrameTemplate" inherits="BaseBagSyncFrameTemplate" virtual="true">
-		<Layers>
-			<Layer level="BACKGROUND" textureSubLevel="-1">
-				<Texture parentKey="Bg" file="Interface\Tooltips\UI-Tooltip-Background" horizTile="true" vertTile="true">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="2" y="-21"/>
-						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
-					</Anchors>
-                    <Color r="0" g="0" b="0" a=".75"/>
-				</Texture>
-				<Texture parentKey="TitleBg" inherits="_UI-Frame-TitleTileBg">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="2" y="-1"/>
-						<Anchor point="TOPRIGHT" x="-25" y="-1"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-			<Layer level="BACKGROUND">
-				<Texture parentKey="TopTileStreaks" inherits="_UI-Frame-TopTileStreaks">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="0" y="-21"/>
-						<Anchor point="TOPRIGHT" x="-2" y="-21"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-		</Layers>
-		<Scripts>
-			<OnMouseDown>
-				if ( button == "LeftButton" ) then
-					self:StartMoving();
-					self.isMoving = true;
-				end
-			</OnMouseDown>
-			<OnMouseUp>
-				if ( self.isMoving ) then
-					self:StopMovingOrSizing();
-					self.isMoving = false;
-				end
-			</OnMouseUp>
-		</Scripts>
-	</Frame>
+	<Frame name="BagSyncFrameTemplate" inherits="BaseBagSyncFrameTemplate" virtual="true"/>
 
 <!--
 *******************************************************************************
     BagSync Info Tooltip Window Frame Template
 *******************************************************************************
 -->
+
 	<Frame name="BagSyncInfoFrameTemplate" inherits="TooltipBackdropTemplate" virtual="true">
 		<Size x="300" y="300"/>
 		<Anchors>

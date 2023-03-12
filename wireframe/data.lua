@@ -99,6 +99,19 @@ local colorsDefaults = {
 	itemtypes = HexToRGBPerc('ffcccf66'),
 }
 
+local trackingDefaults = {
+	bag = true,
+	bank = true,
+	reagents = true,
+	equip = true,
+	mailbox = true,
+	void = true,
+	auction = true,
+	guild = true,
+	professions = true,
+	currency = true,
+}
+
 Data.__cache = {}
 Data.__cache.items = {}
 Data.__cache.tooltip = {}
@@ -132,6 +145,9 @@ function Data:OnEnable()
 
 	--options DB
 	BSYC:SetDefaults(nil, optionsDefaults)
+
+	--set tracking defaults
+	BSYC:SetDefaults("tracking", trackingDefaults)
 
 	--setup the default colors
 	BSYC:SetDefaults("colors", colorsDefaults)

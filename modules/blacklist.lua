@@ -25,13 +25,19 @@ function Blacklist:OnEnable()
     --Add to special frames so window can be closed when the escape key is pressed.
     tinsert(UISpecialFrames, "BagSyncBlacklistFrame")
     blacklistFrame.TitleText:SetText("BagSync - "..L.Blacklist)
-    blacklistFrame:SetHeight(500)
+    blacklistFrame:SetHeight(506) --irregular height to allow the scroll frame to fit the bottom most button
 	blacklistFrame:SetWidth(380)
     blacklistFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     blacklistFrame:EnableMouse(true) --don't allow clickthrough
     blacklistFrame:SetMovable(true)
     blacklistFrame:SetResizable(false)
     blacklistFrame:SetFrameStrata("HIGH")
+	blacklistFrame:RegisterForDrag("LeftButton")
+	blacklistFrame:SetClampedToScreen(true)
+	blacklistFrame:SetScript("OnDragStart", blacklistFrame.StartMoving)
+	blacklistFrame:SetScript("OnDragStop", blacklistFrame.StopMovingOrSizing)
+	local closeBtn = CreateFrame("Button", nil, blacklistFrame, "UIPanelCloseButton")
+	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode	
     blacklistFrame:SetScript("OnShow", function() Blacklist:UpdateList() end)
     Blacklist.frame = blacklistFrame
 
@@ -74,10 +80,10 @@ function Blacklist:OnEnable()
 	blacklistFrame.infoText:SetWidth(blacklistFrame:GetWidth() - 15)
 
     Blacklist.scrollFrame = _G.CreateFrame("ScrollFrame", nil, blacklistFrame, "HybridScrollFrameTemplate")
-    Blacklist.scrollFrame:SetWidth(345)
-    Blacklist.scrollFrame:SetPoint("TOPLEFT", blacklistFrame, "TOPLEFT", 6, -100)
+    Blacklist.scrollFrame:SetWidth(337)
+    Blacklist.scrollFrame:SetPoint("TOPLEFT", blacklistFrame, "TOPLEFT", 13, -100)
     --set ScrollFrame height by altering the distance from the bottom of the frame
-    Blacklist.scrollFrame:SetPoint("BOTTOMLEFT", blacklistFrame, "BOTTOMLEFT", -25, 10)
+    Blacklist.scrollFrame:SetPoint("BOTTOMLEFT", blacklistFrame, "BOTTOMLEFT", -25, 15)
     Blacklist.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Blacklist.scrollFrame, "HybridScrollBarTemplate")
     Blacklist.scrollFrame.scrollBar:SetPoint("TOPLEFT", Blacklist.scrollFrame, "TOPRIGHT", 1, -16)
     Blacklist.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Blacklist.scrollFrame, "BOTTOMRIGHT", 1, 12)
@@ -316,7 +322,7 @@ end
 
 function Blacklist:Item_OnLeave()
 	GameTooltip:Hide()
-	BattlePetTooltip:Hide()
+	if BattlePetTooltip then BattlePetTooltip:Hide() end
 end
 
 function Blacklist:Item_OnClick(btn)

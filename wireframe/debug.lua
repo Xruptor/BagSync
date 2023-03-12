@@ -12,7 +12,7 @@ local Debug = BSYC:NewModule("Debug")
 
 local xListLen = 500
 local debugWidth = 880
-local debugHeight = 455
+local debugHeight = 462
 
 local function unescape(str)
     str = gsub(str, "|T.-|t", "") --textures in chat like currency coins and such
@@ -35,15 +35,22 @@ function Debug:OnEnable()
     DebugFrame:SetMovable(true)
     DebugFrame:SetResizable(false)
     DebugFrame:SetFrameStrata("BACKGROUND")
+    DebugFrame:SetFrameStrata("HIGH")
+	DebugFrame:RegisterForDrag("LeftButton")
+	DebugFrame:SetClampedToScreen(true)
+	DebugFrame:SetScript("OnDragStart", DebugFrame.StartMoving)
+	DebugFrame:SetScript("OnDragStop", DebugFrame.StopMovingOrSizing)
+	local closeBtn = CreateFrame("Button", nil, DebugFrame, "UIPanelCloseButton")
+	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode		
     DebugFrame:SetScript("OnShow", function() Debug:OnShow() end)
 	DebugFrame:SetScript("OnHide", function() Debug:OnHide() end)
     Debug.frame = DebugFrame
 
     Debug.scrollFrame = _G.CreateFrame("ScrollFrame", nil, DebugFrame, "HybridScrollFrameTemplate")
-    Debug.scrollFrame:SetWidth(debugWidth-35)
-    Debug.scrollFrame:SetPoint("TOPLEFT", DebugFrame, "TOPLEFT", 5, -30)
+    Debug.scrollFrame:SetWidth(debugWidth-44)
+    Debug.scrollFrame:SetPoint("TOPLEFT", DebugFrame, "TOPLEFT", 13, -30)
     --set ScrollFrame height by altering the distance from the bottom of the frame
-    Debug.scrollFrame:SetPoint("BOTTOMLEFT", DebugFrame, "BOTTOMLEFT", -25, 10)
+    Debug.scrollFrame:SetPoint("BOTTOMLEFT", DebugFrame, "BOTTOMLEFT", -25, 15)
     Debug.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Debug.scrollFrame, "HybridScrollBarTemplate")
     Debug.scrollFrame.scrollBar:SetPoint("TOPLEFT", Debug.scrollFrame, "TOPRIGHT", 1, -16)
     Debug.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Debug.scrollFrame, "BOTTOMRIGHT", 1, 12)
@@ -67,14 +74,15 @@ function Debug:OnEnable()
 	}
 
 	optionsFrame:SetHeight(120)
-	optionsFrame:SetWidth(debugWidth)
+	optionsFrame:SetWidth(debugWidth-3)
 	optionsFrame:SetBackdrop(backdrop)
 	optionsFrame:SetBackdropColor(0, 0, 0, 0.6)
-	optionsFrame:SetPoint("TOPLEFT", DebugFrame, "BOTTOMLEFT",0, 0)
+	optionsFrame:SetPoint("TOPLEFT", DebugFrame, "BOTTOMLEFT",2, 5)
 
 	local enableDebugChk = CreateFrame("CheckButton", nil, optionsFrame, "UICheckButtonTemplate")
-	enableDebugChk.Text:SetText(L.DebugEnable)
-	enableDebugChk.Text:SetTextColor(1, 1, 1)
+	local chkText = enableDebugChk.Text or enableDebugChk.text --due to classic servers still using the old format
+	chkText:SetText(L.DebugEnable)
+	chkText:SetTextColor(1, 1, 1)
 	enableDebugChk:SetPoint("TOPLEFT", optionsFrame, "TOPLEFT", 10, -5)
 	enableDebugChk:SetScript("OnClick", function(self)
 		BSYC.options.debug.enable = enableDebugChk:GetChecked()
@@ -100,14 +108,15 @@ function Debug:OnEnable()
 	for k=1, #levels do
 		local tmpLevel = CreateFrame("CheckButton", nil, optionsFrame, "UICheckButtonTemplate")
 		tmpLevel.level = levels[k]
-		tmpLevel.Text:SetText(L["Debug_"..levels[k]])
-		tmpLevel.Text:SetTextColor(1, 1, 1)
+		local tmpText = tmpLevel.Text or tmpLevel.text --due to classic servers still using the old format
+		tmpText:SetText(L["Debug_"..levels[k]])
+		tmpText:SetTextColor(1, 1, 1)
 		if not lastPoint then
 			tmpLevel:SetPoint("BOTTOMLEFT", optionsFrame, "BOTTOMLEFT", 10, 3)
 		else
-			tmpLevel:SetPoint("LEFT", lastPoint.Text, "RIGHT", 10, 0)
+			tmpLevel:SetPoint("LEFT", lastPoint, "RIGHT", 15, 0)
 		end
-		lastPoint = tmpLevel
+		lastPoint = tmpText
 
 		tmpLevel:SetScript("OnClick", function(self)
 			BSYC.options.debug[self.level] = self:GetChecked()
