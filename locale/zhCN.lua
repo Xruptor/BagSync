@@ -314,7 +314,7 @@ L.SearchHelp = [[
 
 |cffff7d0a复杂搜索示例:|r
 (已绑定装备, 物品等级正好是20名字中带有'长袍' 一词)
-|cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:20|r|cFF99CC33&|r|cFFFFD580name:robe|r |cFFCF9FFF(不要使用空格!)|r
+|cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:20|r|cFF99CC33&|r|cFFFFD580长袍|r |cFFCF9FFF(不要使用空格!)|r
 
 ]]
 L.ConfigFAQ= " FAQ / 帮助 "
