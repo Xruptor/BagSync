@@ -27,6 +27,8 @@ libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 libs\LibItemScout-1.0\LibItemScout-1.0.lua
 libs\LibQTip-1.0\LibQTip-1.0.lua
+libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
+libs\LibDDI-1.0\lib.xml
 
 locale\enUS.lua
 locale\deDE.lua

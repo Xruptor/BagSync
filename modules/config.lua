@@ -11,6 +11,8 @@ local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local config = LibStub("AceConfig-3.0")
 local configDialog = LibStub("AceConfigDialog-3.0")
 local MinimapIcon = LibStub("LibDBIcon-1.0")
+local SML = LibStub("LibSharedMedia-3.0")
+local SML_FONT = SML.MediaType and SML.MediaType.FONT or "font"
 
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Config", ...) end
@@ -66,8 +68,10 @@ local function get(info)
 		return BSYC.options.colors[c].r, BSYC.options.colors[c].g, BSYC.options.colors[c].b
 	elseif p == "keybind" then
 		return GetBindingKey(c)
-	elseif c == "tooltipModifer" then
+	elseif c == "tooltipModifer" or c == "extTT_FontOutline" then
 		return BSYC.options[c] or "NONE"
+	elseif c == "extTT_FontSize" then
+		return BSYC.options[c] or 12
 	else
 		if BSYC.options[c] then --if this is nil then it will default to false
 			return BSYC.options[c]
@@ -91,8 +95,6 @@ local function set(info, arg1, arg2, arg3, arg4)
 	   if b2 then SetBinding(b2) end
 	   SetBinding(arg1, c)
 	   SaveBindings(GetCurrentBindingSet())
-	elseif c == "tooltipModifer" then
-		BSYC.options[c] = arg1
 	else
 		BSYC.options[c] = arg1
 
@@ -157,90 +159,188 @@ options.args.main = {
 	name = L.ConfigMain,
 	desc = L.ConfigMainHeader,
 	args = {
-		enablebagsynctooltip = {
+		groupmain = {
+			name = "BagSync",
 			order = 1,
-			type = "toggle",
-			name = L.EnableBagSyncTooltip,
-			width = "full",
+			type = "group",
 			descStyle = "hide",
-			get = get,
-			set = set,
-			arg = "main.enableTooltips",
+			guiInline = true,
+			args = {
+				enablebagsynctooltip = {
+					order = 1,
+					type = "toggle",
+					name = L.EnableBagSyncTooltip,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "main.enableTooltips",
+				},
+				tooltipModifier = {
+					order = 2,
+					type = "select",
+					name = L.ShowOnModifier,
+					desc = L.ShowOnModifierDesc,
+					values = modValues,
+					sorting = modSorting,
+					get = get,
+					set = set,
+					arg = "main.tooltipModifer",
+				},
+				enabletooltipsearchonly = {
+					order = 3,
+					type = "toggle",
+					name = L.DisplayTooltipOnlySearch,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "main.tooltipOnlySearch",
+				},
+				focussearcheditbox = {
+					order = 4,
+					type = "toggle",
+					name = L.FocusSearchEditBox,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "main.focusSearchEditBox",
+				},
+				alwaysshowadvsearch = {
+					order = 5,
+					type = "toggle",
+					name = L.AlwaysShowAdvSearch,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "main.alwaysShowAdvSearch",
+				},
+				enableminimap = {
+					order = 6,
+					type = "toggle",
+					name = L.DisplayMinimap,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "minimap.enableMinimap",
+				},
+				enableversiontext = {
+					order = 7,
+					type = "toggle",
+					name = L.EnableLoginVersionInfo,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "main.enableLoginVersionInfo",
+				},
+			}
 		},
-		tooltipModifier = {
+		groupexternaltooltip = {
+			name = L.ConfigExternalTooltip,
 			order = 2,
-			type = "select",
-			name = L.ShowOnModifier,
-			desc = L.ShowOnModifierDesc,
-			values = modValues,
-			sorting = modSorting,
-			get = get,
-			set = set,
-			arg = "main.tooltipModifer",
+			type = "group",
+			descStyle = "hide",
+			guiInline = true,
+			args = {
+				enableexternaltooltip = {
+					order = 1,
+					type = "toggle",
+					name = L.EnableExtTooltip,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "main.enableExtTooltip",
+					disabled = function() return not BSYC.options["enableTooltips"] end,
+				},
+				font = {
+					type = "select",
+					name = L.ConfigFont,
+					order = 2,
+					values = SML:List(SML_FONT),
+					itemControl = "DDI-Font",
+					get = function()
+						for i, v in next, SML:List(SML_FONT) do
+							if v == BSYC.options["extTT_Font"] then return i end
+						end
+					end,
+					set = function(_, value)
+						local list = SML:List(SML_FONT)
+						BSYC.options["extTT_Font"] = list[value]
+					end,
+				},
+				outline = {
+					type = "select",
+					name = L.ConfigFontOutline,
+					order = 3,
+					values = {
+						NONE = L.ConfigFontOutline_NONE,
+						OUTLINE = L.ConfigFontOutline_OUTLINE,
+						THICKOUTLINE = L.ConfigFontOutline_THICKOUTLINE,
+					},
+					get = get,
+					set = set,
+					arg = "main.extTT_FontOutline",
+				},
+				fontsize = {
+					type = "range",
+					name = L.ConfigFontSize,
+					descStyle = "hide",
+					order = 4,
+					max = 200, softMax = 72,
+					min = 10,
+					step = 1,
+					width = 2,
+					get = get,
+					set = set,
+					arg = "main.extTT_FontSize",
+				},
+				monochrome = {
+					type = "toggle",
+					name = L.ConfigFontMonochrome,
+					descStyle = "hide",
+					order = 5,
+					get = get,
+					set = set,
+					arg = "main.extTT_FontMonochrome",
+				},
+			}
 		},
-		enableexternaltooltip = {
-			order = 3,
-			type = "toggle",
-			name = L.EnableExtTooltip,
+	},
+}
+
+options.args.keybindings = {
+	type = "group",
+	order = 2,
+	name = L.ConfigKeybindings,
+	desc = L.ConfigKeybindingsHeader,
+	args = {
+		keybindsearch = {
+			order = 1,
+			type = "keybinding",
+			name = L.KeybindSearch,
 			width = "full",
 			descStyle = "hide",
 			get = get,
 			set = set,
-			arg = "main.enableExtTooltip",
-			disabled = function() return not BSYC.options["enableTooltips"] end,
+			arg = "keybind.BAGSYNCSEARCH",
 		},
-		enabletooltipsearchonly = {
-			order = 4,
-			type = "toggle",
-			name = L.DisplayTooltipOnlySearch,
+		keybindgold = {
+			order = 2,
+			type = "keybinding",
+			name = L.KeybindGold,
 			width = "full",
 			descStyle = "hide",
 			get = get,
 			set = set,
-			arg = "main.tooltipOnlySearch",
-		},
-		focussearcheditbox = {
-			order = 5,
-			type = "toggle",
-			name = L.FocusSearchEditBox,
-			width = "full",
-			descStyle = "hide",
-			get = get,
-			set = set,
-			arg = "main.focusSearchEditBox",
-		},
-		alwaysshowadvsearch = {
-			order = 6,
-			type = "toggle",
-			name = L.AlwaysShowAdvSearch,
-			width = "full",
-			descStyle = "hide",
-			get = get,
-			set = set,
-			arg = "main.alwaysShowAdvSearch",
-		},
-		enableminimap = {
-			order = 7,
-			type = "toggle",
-			name = L.DisplayMinimap,
-			width = "full",
-			descStyle = "hide",
-			get = get,
-			set = set,
-			arg = "minimap.enableMinimap",
-		},
-		enableversiontext = {
-			order = 8,
-			type = "toggle",
-			name = L.EnableLoginVersionInfo,
-			width = "full",
-			descStyle = "hide",
-			get = get,
-			set = set,
-			arg = "main.enableLoginVersionInfo",
+			arg = "keybind.BAGSYNCGOLD",
 		},
 		keybindblacklist = {
-			order = 9,
+			order = 3,
 			type = "keybinding",
 			name = L.KeybindBlacklist,
 			width = "full",
@@ -250,7 +350,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCBLACKLIST",
 		},
 		keybindwhitelist = {
-			order = 10,
+			order = 4,
 			type = "keybinding",
 			name = L.KeybindWhitelist,
 			width = "full",
@@ -260,7 +360,7 @@ options.args.main = {
 			arg = "keybind.BAGSYNCWHITELIST",
 		},
 		keybindcurrency = {
-			order = 11,
+			order = 5,
 			type = "keybinding",
 			name = L.KeybindCurrency,
 			width = "full",
@@ -270,18 +370,8 @@ options.args.main = {
 			arg = "keybind.BAGSYNCCURRENCY",
 			hidden = function() return not BSYC.IsRetail end,
 		},
-		keybindgold = {
-			order = 12,
-			type = "keybinding",
-			name = L.KeybindGold,
-			width = "full",
-			descStyle = "hide",
-			get = get,
-			set = set,
-			arg = "keybind.BAGSYNCGOLD",
-		},
 		keybindprofessions = {
-			order = 13,
+			order = 6,
 			type = "keybinding",
 			name = L.KeybindProfessions,
 			width = "full",
@@ -292,7 +382,7 @@ options.args.main = {
 			hidden = function() return not BSYC.IsRetail end,
 		},
 		keybindprofiles = {
-			order = 14,
+			order = 7,
 			type = "keybinding",
 			name = L.KeybindProfiles,
 			width = "full",
@@ -300,16 +390,6 @@ options.args.main = {
 			get = get,
 			set = set,
 			arg = "keybind.BAGSYNCPROFILES",
-		},
-		keybindsearch = {
-			order = 15,
-			type = "keybinding",
-			name = L.KeybindSearch,
-			width = "full",
-			descStyle = "hide",
-			get = get,
-			set = set,
-			arg = "keybind.BAGSYNCSEARCH",
 		},
 	},
 }
@@ -1067,6 +1147,10 @@ BSYC.aboutPanel = LoadAboutFrame()
 -- General Options
 config:RegisterOptionsTable("BagSync-General", options.args.main)
 BSYC.blizzPanel = configDialog:AddToBlizOptions("BagSync-General", options.args.main.name, "BagSync")
+
+-- Keybindings Options
+config:RegisterOptionsTable("BagSync-Keybindings", options.args.keybindings)
+configDialog:AddToBlizOptions("BagSync-Keybindings", options.args.keybindings.name, "BagSync")
 
 -- Display Options
 config:RegisterOptionsTable("BagSync-Display", options.args.display)

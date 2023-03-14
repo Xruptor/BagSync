@@ -13,6 +13,8 @@ local Data = BSYC:GetModule("Data")
 local Scanner = BSYC:GetModule("Scanner")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local LibQTip = LibStub("LibQTip-1.0")
+local SML = LibStub("LibSharedMedia-3.0")
+local SML_FONT = SML.MediaType and SML.MediaType.FONT or "font"
 
 --https://github.com/tomrus88/BlizzardInterfaceCode/blob/classic/Interface/GlueXML/CharacterCreate.lua
 RACE_ICON_TCOORDS = {
@@ -486,6 +488,19 @@ function Tooltip:QTipCheck(source, isBattlePet)
 					Tooltip:GetBottomChild()
 				end)
 			end
+
+			local flags = nil
+			if BSYC.options.extTT_FontMonochrome and BSYC.options.extTT_FontOutline ~= "NONE" then
+				flags = "MONOCHROME,"..BSYC.options.extTT_FontOutline
+			elseif BSYC.options.extTT_FontMonochrome then
+				flags = "MONOCHROME"
+			elseif BSYC.options.extTT_FontOutline ~= "NONE" then
+				flags = BSYC.options.extTT_FontOutline
+			end
+			local fontObject = CreateFont("BagSyncExtTT_Font")
+			fontObject:SetFont(SML:Fetch(SML_FONT, BSYC.options.extTT_Font), BSYC.options.extTT_FontSize, flags)
+			Tooltip.qTip:SetFont(fontObject)
+
 			Tooltip.qTip:Clear()
 			showQTip = true
 		end

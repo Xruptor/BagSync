@@ -30,6 +30,9 @@ BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 --BSYC.IsTBC_C = WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC
 BSYC.IsWLK_C = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
 
+--increment forceDBReset to reset the ENTIRE db forcefully
+local forceDBReset = 2
+
 BSYC.FakePetCode = 10000000000
 BSYC_DL = {
 	DEBUG = 1,
@@ -52,6 +55,19 @@ local debugDefaults = {
 	SL1 = false,
 	SL2 = false,
 	SL3 = false,
+}
+
+StaticPopupDialogs["BAGSYNC_RESETDATABASE"] = {
+	text = L.ResetDBInfo,
+	button1 = L.Yes,
+	button2 = L.No,
+	OnAccept = function()
+		BagSyncDB = { ["forceDBReset§"] = forceDBReset }
+		ReloadUI()
+	end,
+	timeout = 0,
+	whileDead = true,
+	hideOnEscape = true,
 }
 
 function BSYC.DEBUG(level, sName, ...)
@@ -384,6 +400,16 @@ BSYC.timerFrame:SetScript("OnUpdate", function(self, elapsed)
         BSYC.timerFrame:Hide()
     end
 end)
+
+function BSYC:CheckDB_Reset()
+	Debug(BSYC_DL.INFO, "CheckDB_Reset")
+	if not BagSyncDB["forceDBReset§"] or BagSyncDB["forceDBReset§"] < forceDBReset then
+		BagSyncDB = { ["forceDBReset§"] = forceDBReset }
+		BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r")
+		C_Timer.After(6, function() BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r") end)
+		return
+	end
+end
 
 --create base DB entries before we load any modules
 function BSYC:OnEnable()

@@ -15,24 +15,9 @@ local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Data", ...) end
 end
 
---increment forceDBReset to reset the ENTIRE db forcefully
-local forceDBReset = 2
 --these just reset individual items in the DB
 local unitDBVersion = {
 	auction = 1,
-}
-
-StaticPopupDialogs["BAGSYNC_RESETDATABASE"] = {
-	text = L.ResetDBInfo,
-	button1 = L.Yes,
-	button2 = L.No,
-	OnAccept = function()
-		BagSyncDB = { ["forceDBReset§"] = forceDBReset }
-		ReloadUI()
-	end,
-	timeout = 0,
-	whileDead = true,
-	hideOnEscape = true,
 }
 
 local function HexToRGBPerc(hex)
@@ -83,6 +68,10 @@ local optionsDefaults = {
 	enableWhitelist = false,
 	enableSourceExpansion = true,
 	enableItemTypes = true,
+	extTT_Font = "Friz Quadrata TT",
+	extTT_FontSize = 12,
+	extTT_FontOutline = "OUTLINE",
+	extTT_FontMonochrome = false,
 }
 
 local colorsDefaults = {
@@ -211,21 +200,6 @@ function Data:ResetColors()
 	Debug(BSYC_DL.INFO, "ResetColors")
 	BSYC.options.colors = nil
 	BSYC:SetDefaults("colors", colorsDefaults)
-end
-
-function Data:CleanDB()
-	Debug(BSYC_DL.INFO, "CleanDB")
-
-	--check for empty table table to prevent loops
-	if next(BagSyncDB) == nil then
-		BagSyncDB["forceDBReset§"] = forceDBReset
-		BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r")
-		return
-	elseif not BagSyncDB["forceDBReset§"] or BagSyncDB["forceDBReset§"] < forceDBReset then
-		BagSyncDB = { ["forceDBReset§"] = forceDBReset }
-		BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r")
-		return
-	end
 end
 
 function Data:FixDB()
