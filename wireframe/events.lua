@@ -147,14 +147,16 @@ function Events:PLAYER_EQUIPMENT_CHANGED(event)
 end
 
 function Events:BAG_UPDATE(event, bagid)
-	Debug(BSYC_DL.SL3, "BAG_UPDATE", bagid)
+	Debug(BSYC_DL.SL3, "BAG_UPDATE", bagid, BSYC.tracking.bag)
+	if not BSYC.tracking.bag then return end
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
 	self.SpamBagQueue[bagid] = true
 	self.SpamBagTotal = (self.SpamBagTotal or 0) + 1
 end
 
 function Events:BAG_UPDATE_DELAYED(event)
-	Debug(BSYC_DL.SL3, "BAG_UPDATE_DELAYED")
+	Debug(BSYC_DL.SL3, "BAG_UPDATE_DELAYED", BSYC.tracking.bag)
+	if not BSYC.tracking.bag then return end
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
 	if not self.SpamBagTotal then self.SpamBagTotal = 0 end
 	--NOTE: BSYC:GetHashTableLen(self.SpamBagQueue) may show more then is actually processed.  Example it has the banks in queue but we aren't at a bank.
@@ -189,8 +191,9 @@ function Events:BAG_UPDATE_DELAYED(event)
 end
 
 function Events:GuildBank_Open()
-	Debug(BSYC_DL.SL3, "GuildBank_Open")
-	if not BSYC.options.enableGuild then return end
+	Debug(BSYC_DL.SL3, "GuildBank_Open", BSYC.tracking.guild)
+	if not BSYC.tracking.guild then return end
+
 	--I used to do one query per server response, but honestly it wasn't much of a difference then just spamming them all
 	for tab=1, GetNumGuildBankTabs() do
 		--permissions issue, only query tabs we can see duh
@@ -202,7 +205,9 @@ function Events:GuildBank_Open()
 end
 
 function Events:GuildBank_Changed()
-	Debug(BSYC_DL.SL3, "GuildBank_Changed")
+	Debug(BSYC_DL.SL3, "GuildBank_Changed", BSYC.tracking.guild)
+	if not BSYC.tracking.guild then return end
+
 	if not Unit.atGuildBank then
 		if self.queryGuild then
 			BSYC:Print(L.ScanGuildBankError)
@@ -210,7 +215,6 @@ function Events:GuildBank_Changed()
 		end
 		return
 	end
-	if not BSYC.options.enableGuild then return end
 
 	if self.queryGuild then
 		self.queryGuild = false

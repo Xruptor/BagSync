@@ -150,8 +150,8 @@ function Tooltip:GetRaceIcon(race, gender, size, xOffset, yOffset, useHiRez)
 end
 
 function Tooltip:GetClassColor(unitObj, switch, bypass, altColor)
-	if not unitObj then return altColor or BSYC.options.colors.first end
-	if not unitObj.data or not unitObj.data.class then return altColor or BSYC.options.colors.first end
+	if not unitObj then return altColor or BSYC.colors.first end
+	if not unitObj.data or not unitObj.data.class then return altColor or BSYC.colors.first end
 
 	local doChk = false
 	if switch == 1 then
@@ -163,7 +163,7 @@ function Tooltip:GetClassColor(unitObj, switch, bypass, altColor)
 	if bypass or ( doChk and RAID_CLASS_COLORS[unitObj.data.class] ) then
 		return RAID_CLASS_COLORS[unitObj.data.class]
 	end
-	return altColor or BSYC.options.colors.first
+	return altColor or BSYC.colors.first
 end
 
 function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET)
@@ -208,7 +208,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET
 
 	else
 		--is guild
-		tmpTag = self:HexColor(BSYC.options.colors.guild, select(2, Unit:GetUnitAddress(unitObj.name)) )
+		tmpTag = self:HexColor(BSYC.colors.guild, select(2, Unit:GetUnitAddress(unitObj.name)) )
 	end
 
 	--add faction icons
@@ -261,14 +261,14 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET
 	if (showXRBNET or BSYC.options.enableBNetAccountItems) and not unitObj.isConnectedRealm then
 		realmTag = (showXRBNET or BSYC.options.enableRealmIDTags) and L.TooltipBattleNetTag..delimiter or ""
 		if string.len(realm) > 0 or string.len(realmTag) > 0 then
-			tmpTag = self:HexColor(BSYC.options.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
+			tmpTag = self:HexColor(BSYC.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
 		end
 	end
 
 	if (showXRBNET or BSYC.options.enableCrossRealmsItems) and unitObj.isConnectedRealm and unitObj.realm ~= player.realm then
 		realmTag = (showXRBNET or BSYC.options.enableRealmIDTags) and L.TooltipCrossRealmTag..delimiter or ""
 		if string.len(realm) > 0 or string.len(realmTag) > 0 then
-			tmpTag = self:HexColor(BSYC.options.colors.cross, "["..realmTag..realm.."]").." "..tmpTag
+			tmpTag = self:HexColor(BSYC.colors.cross, "["..realmTag..realm.."]").." "..tmpTag
 		end
 	end
 
@@ -277,7 +277,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET
 		realmTag = L.TooltipCrossRealmTag
 		if string.len(realm) > 0 or string.len(realmTag) > 0 then
 			--use an asterisk to denote that we are using a XRGuild Tag
-			tmpTag = self:HexColor(BSYC.options.colors.cross, "[*"..realmTag..realm.."]").." "..tmpTag
+			tmpTag = self:HexColor(BSYC.colors.cross, "[*"..realmTag..realm.."]").." "..tmpTag
 		end
 	end
 
@@ -342,22 +342,22 @@ function Tooltip:AddItems(unitObj, itemID, target, countList)
 		return iCount
 	end
 
-	if unitObj.data[target] then
+	if unitObj.data[target] and BSYC.tracking[target] then
 		if target == "bag" or target == "bank" or target == "reagents" then
 			for bagID, bagData in pairs(unitObj.data[target] or {}) do
 				total = total + getTotal(bagData)
 			end
-		elseif target == "auction" and BSYC.options.enableAuction then
+		elseif target == "auction" then
 			total = getTotal(unitObj.data[target].bag or {})
 
-		elseif target == "mailbox" and BSYC.options.enableMailbox then
+		elseif target == "mailbox" then
 			total = getTotal(unitObj.data[target] or {})
 
 		elseif target == "equip" or target == "void" then
 			total = getTotal(unitObj.data[target] or {})
 		end
 	end
-	if target == "guild" and BSYC.options.enableGuild then
+	if target == "guild" and BSYC.tracking.guild then
 		countList.gtab = {}
 		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
 			local tabCount = getTotal(tabData)
@@ -375,7 +375,7 @@ end
 
 function Tooltip:GetCountString(colorType, dispType, srcType, srcCount, addStr)
 	local desc = self:HexColor(colorType, L[dispType..srcType])
-	local count = self:HexColor(BSYC.options.colors.second, comma_value(srcCount))
+	local count = self:HexColor(BSYC.colors.second, comma_value(srcCount))
 	local tmp = string.format("%s: %s", desc, count)..(addStr or "")
 	return tmp
 end
@@ -437,7 +437,7 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 
 			--check for guild tab
 			if string.len(gTabStr) > 0 then
-				gTabStr = self:HexColor(BSYC.options.colors.guildtabs, " ["..L.TooltipGuildTabs.." "..gTabStr.."]")
+				gTabStr = self:HexColor(BSYC.colors.guildtabs, " ["..L.TooltipGuildTabs.." "..gTabStr.."]")
 			end
 		end
 
@@ -453,7 +453,7 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 			tallyString = tallyCount[1]
 		else
 			table.sort(tallyCount)
-			tallyString = self:HexColor(BSYC.options.colors.second, comma_value(total)).." ("..table.concat(tallyCount, L.TooltipDelimiter.." ")..")"
+			tallyString = self:HexColor(BSYC.colors.second, comma_value(total)).." ("..table.concat(tallyCount, L.TooltipDelimiter.." ")..")"
 		end
     end
 	if #tallyCount <= 0 or string.len(tallyString) < 1 then return end
@@ -660,11 +660,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	Tooltip.objTooltip = objTooltip
 
-	local tooltipOwner = objTooltip.GetOwner and objTooltip:GetOwner()
-	local tooltipType = tooltipOwner and tooltipOwner.obj and tooltipOwner.obj.type
-
 	--only show tooltips in search frame if the option is enabled
-	if BSYC.options.tooltipOnlySearch and (not tooltipOwner or not tooltipType or tooltipType ~= "BagSyncInteractiveLabel")  then
+	if BSYC.options.tooltipOnlySearch and not objTooltip.isBSYCSearch then
 		objTooltip:Show()
 		return
 	end
@@ -690,7 +687,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if self.__lastLink and self.__lastLink == origLink then
 		if self.__lastTally and #self.__lastTally > 0 then
 			for i=1, #self.__lastTally do
-				local color = self:GetClassColor(self.__lastTally[i].unitObj, 2, false, BSYC.options.colors.total)
+				local color = self:GetClassColor(self.__lastTally[i].unitObj, 2, false, BSYC.colors.total)
 				if showQTip then
 					local lineNum = Tooltip.qTip:AddLine(self.__lastTally[i].colorized, string.rep(" ", 4), self.__lastTally[i].tallyString)
 					Tooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
@@ -716,14 +713,10 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if shortID and (permIgnore[tonumber(shortID)] or BSYC.db.blacklist[tonumber(shortID)]) then
 		skipTally = true
 	end
-	--check whitelist
+	--check whitelist (only do when we aren't only displaying in search window)
 	if BSYC.options.enableWhitelist then
 		if not BSYC.db.whitelist[tonumber(shortID)] then
 			skipTally = true
-		end
-		--always display if we are showing tooltips in the search window of ANY kind when using whitelist
-		if tooltipType and tooltipType == "BagSyncInteractiveLabel" then
-			skipTally = false
 		end
 	end
 
@@ -815,13 +808,14 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			countList = {}
 			local playerObj = Data:GetCurrentPlayer()
 
+			--grab the equip count as we need that below for an accurate count on the bags, bank and reagents
 			grandTotal = grandTotal + self:AddItems(playerObj, link, "equip", countList)
-			--GetItemCount does not work in the auction, void bank or mailbox, grab manually
+			--GetItemCount does not work in the auction, void bank or mailbox, so grab it manually
 			grandTotal = grandTotal + self:AddItems(playerObj, link, "auction", countList)
 			grandTotal = grandTotal + self:AddItems(playerObj, link, "void", countList)
 			grandTotal = grandTotal + self:AddItems(playerObj, link, "mailbox", countList)
 
-			--GetItemCount does not work on battlepet links
+			--GetItemCount does not work on battlepet links either, grab bag, bank and reagents
 			if isBattlePet then
 				grandTotal = grandTotal + self:AddItems(playerObj, link, "bag", countList)
 				grandTotal = grandTotal + self:AddItems(playerObj, link, "bank", countList)
@@ -847,7 +841,10 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				bankCount = (bankCount - regCount) - carryCount
 				if bankCount < 0 then bankCount = 0 end
 
-				-- --now assign the values
+				-- --now assign the values (check for disabled modules)
+				if not BSYC.tracking.bag then bagCount = 0 end
+				if not BSYC.tracking.bank then bankCount = 0 end
+				if not BSYC.tracking.reagents then regCount = 0 end
 				countList.bag = bagCount
 				countList.bank = bankCount
 				countList.reagents = regCount
@@ -864,7 +861,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--We do this separately so that the guild has it's own line in the unitList and not included inline with the player character
 		--We also want to do this in real time and not cache, otherwise they may put stuff in their guild bank which will not be reflected in a cache
 		-----------------
-		if player.guild then
+		if player.guild and BSYC.tracking.guild then
 			if not advUnitList or (advUnitList and advUnitList[player.guildrealm] and advUnitList[player.guildrealm][player.guild]) then
 				countList = {}
 				local guildObj = Data:GetPlayerGuild()
@@ -892,15 +889,15 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--add a separator after the character list
 		table.insert(unitList, { colorized=" ", tallyString=" "} )
 
-		desc = self:HexColor(BSYC.options.colors.total, L.TooltipTotal)
-		value = self:HexColor(BSYC.options.colors.second, comma_value(grandTotal))
+		desc = self:HexColor(BSYC.colors.total, L.TooltipTotal)
+		value = self:HexColor(BSYC.colors.second, comma_value(grandTotal))
 		table.insert(unitList, { colorized=desc, tallyString=value} )
 	end
 
 	--add ItemID
 	if BSYC.options.enableTooltipItemID and shortID then
-		desc = self:HexColor(BSYC.options.colors.itemid, L.TooltipItemID)
-		value = self:HexColor(BSYC.options.colors.second, shortID)
+		desc = self:HexColor(BSYC.colors.itemid, L.TooltipItemID)
+		value = self:HexColor(BSYC.colors.second, shortID)
 		if isBattlePet then
 			desc = string.format("|cFFCA9BF7%s|r ", L.TooltipFakeID)
 		end
@@ -915,10 +912,10 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if not isBattlePet then
 		--add expansion
 		if BSYC.IsRetail and BSYC.options.enableSourceExpansion and shortID then
-			desc = self:HexColor(BSYC.options.colors.expansion, L.TooltipExpansion)
+			desc = self:HexColor(BSYC.colors.expansion, L.TooltipExpansion)
 
 			local expacID = select(15, GetItemInfo(shortID))
-			value = self:HexColor(BSYC.options.colors.second, (expacID and _G["EXPANSION_NAME"..expacID]) or "?")
+			value = self:HexColor(BSYC.colors.second, (expacID and _G["EXPANSION_NAME"..expacID]) or "?")
 
 			if not addSeparator then
 				table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
@@ -932,8 +929,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			local typeString = Tooltip:GetItemTypeString(itemType, itemSubType, classID, subclassID)
 
 			if typeString then
-				desc = self:HexColor(BSYC.options.colors.itemtypes, L.TooltipItemType)
-				value = self:HexColor(BSYC.options.colors.second, typeString)
+				desc = self:HexColor(BSYC.colors.itemtypes, L.TooltipItemType)
+				value = self:HexColor(BSYC.colors.second, typeString)
 
 				if not addSeparator then
 					table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
@@ -946,8 +943,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	--add debug info
 	if BSYC.options.enableSourceDebugInfo and source then
-		desc = self:HexColor(BSYC.options.colors.debug, L.TooltipDebug)
-		value = self:HexColor(BSYC.options.colors.second, "1;"..source..";"..tostring(shortID or 0)..";"..tostring(isBattlePet or "false"))
+		desc = self:HexColor(BSYC.colors.debug, L.TooltipDebug)
+		value = self:HexColor(BSYC.colors.second, "1;"..source..";"..tostring(shortID or 0)..";"..tostring(isBattlePet or "false"))
 		table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
 		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
 	end
@@ -959,7 +956,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	--finally display it
 	for i=1, #unitList do
-		local color = self:GetClassColor(unitList[i].unitObj, 2, false, BSYC.options.colors.total)
+		local color = self:GetClassColor(unitList[i].unitObj, 2, false, BSYC.colors.total)
 		if showQTip then
 			-- Add an new line, using all columns
 			local lineNum = Tooltip.qTip:AddLine(unitList[i].colorized, string.rep(" ", 4), unitList[i].tallyString)
@@ -988,7 +985,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)
-	Debug(BSYC_DL.INFO, "CurrencyTooltip", currencyName, currencyIcon, currencyID, source)
+	Debug(BSYC_DL.INFO, "CurrencyTooltip", currencyName, currencyIcon, currencyID, source, BSYC.tracking.currency)
+	if not BSYC.tracking.currency then return end
 
 	currencyID = tonumber(currencyID) --make sure it's a number we are working with and not a string
 	if not currencyID then return end
@@ -1037,15 +1035,15 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	end
 
 	if BSYC.options.enableTooltipItemID and currencyID then
-		local desc = self:HexColor(BSYC.options.colors.itemid, L.TooltipCurrencyID)
-		local value = self:HexColor(BSYC.options.colors.second, currencyID)
+		local desc = self:HexColor(BSYC.colors.itemid, L.TooltipCurrencyID)
+		local value = self:HexColor(BSYC.colors.second, currencyID)
 		table.insert(displayList, {" ", " "})
 		table.insert(displayList, {desc, value})
 	end
 
 	if BSYC.options.enableSourceDebugInfo and source then
-		local desc = self:HexColor(BSYC.options.colors.debug, L.TooltipDebug)
-		local value = self:HexColor(BSYC.options.colors.second, "2;"..source..";"..tostring(currencyID or 0)..";"..tostring(currencyIcon or 0))
+		local desc = self:HexColor(BSYC.colors.debug, L.TooltipDebug)
+		local value = self:HexColor(BSYC.colors.second, "2;"..source..";"..tostring(currencyID or 0)..";"..tostring(currencyIcon or 0))
 		table.insert(displayList, {" ", " "})
 		table.insert(displayList, {desc, value})
 	end

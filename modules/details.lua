@@ -114,22 +114,22 @@ function Details:CheckItems(usrData, unitObj, target, itemID, colorized)
 		return iCount
 	end
 
-	if unitObj.data[target] then
+	if unitObj.data[target] and BSYC.tracking[target] then
 		if target == "bag" or target == "bank" or target == "reagents" then
 			for bagID, bagData in pairs(unitObj.data[target] or {}) do
 				parseItems(bagData, bagID)
 			end
-		elseif target == "auction" and BSYC.options.enableAuction then
+		elseif target == "auction" then
 			parseItems((unitObj.data[target] and unitObj.data[target].bag) or {})
 
-		elseif target == "mailbox" and BSYC.options.enableMailbox then
+		elseif target == "mailbox" then
 			parseItems(unitObj.data[target] or {})
 
 		elseif target == "equip" or target == "void" then
 			parseItems(unitObj.data[target] or {})
 		end
 	end
-	if target == "guild" and BSYC.options.enableGuild then
+	if target == "guild" and BSYC.tracking.guild then
 		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
 			parseItems(tabData, tabID)
 		end
@@ -267,7 +267,7 @@ function Details:RefreshList()
 				end
 
 				local colorType = Tooltip:GetClassColor(item.unitObj, 2)
-				info = Tooltip:HexColor(BSYC.options.colors.second, comma_value(item.count))
+				info = Tooltip:HexColor(BSYC.colors.second, comma_value(item.count))
 				info = info.." ("..Tooltip:HexColor(colorType, L[dispType..item.target]).." "
 
 				if item.tab then

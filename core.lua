@@ -9,6 +9,7 @@
 local BAGSYNC, BSYC = ... --grab the addon namespace
 LibStub("AceAddon-3.0"):NewAddon(BSYC, "BagSync", "AceEvent-3.0", "AceConsole-3.0")
 _G[BAGSYNC] = BSYC --add it to the global frame space, otherwise you won't be able to call it
+local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
 local WOW_PROJECT_ID = _G.WOW_PROJECT_ID
 local WOW_PROJECT_MAINLINE = _G.WOW_PROJECT_MAINLINE
@@ -177,6 +178,9 @@ function BSYC:Split(dataStr, skipOpts, mergeOpts)
 end
 
 function BagSync_ShowWindow(windowName)
+	if windowName == "Professions" and not BSYC.tracking.professions then return end
+	if windowName == "Currency" and not BSYC.tracking.currency then return end
+
 	if BSYC:GetModule(windowName).frame:IsVisible() then
 		BSYC:GetModule(windowName).frame:Hide()
 	else

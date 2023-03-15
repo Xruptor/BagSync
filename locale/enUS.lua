@@ -269,6 +269,25 @@ L.ConfigFontOutline_NONE = "None"
 L.ConfigFontOutline_OUTLINE = "Outline"
 L.ConfigFontOutline_THICKOUTLINE = "ThickOutline"
 L.ConfigFontMonochrome = "Monochrome"
+L.ConfigTracking = "Tracking"
+L.ConfigTrackingHeader = "Tracking settings for all stored BagSync database locations."
+L.ConfigTrackingCaution = "Caution"
+L.ConfigTrackingModules = "Modules"
+L.ConfigTrackingInfo = [[
+|cFFDF2B2BNOTE|r: Disabling a module will cause BagSync to stop tracking and storing the module to the database.
+
+Disabled modules will not display in any of the BagSync windows, slash commands, tooltips or minimap button.
+]]
+L.TrackingModule_Bag = "Bags"
+L.TrackingModule_Bank = "Bank"
+L.TrackingModule_Reagents = "Reagent Bank"
+L.TrackingModule_Equip = "Equipped Items"
+L.TrackingModule_Mailbox = "Mailbox"
+L.TrackingModule_Void = "Void Bank"
+L.TrackingModule_Auction = "Auction House"
+L.TrackingModule_Guild = "Guild Bank"
+L.TrackingModule_Professions = "Professions / Tradeskills"
+L.TrackingModule_Currency = "Curency Tokens"
 L.WarningItemSearch = "WARNING: A total of [|cFFFFFFFF%s|r] items were not searched!\n\nBagSync is still waiting for the server/cache to respond.\n\nPress Search or Refresh button."
 L.WarningUpdatedDB = "You have been updated to latest database version!  You will need to rescan all your characters again!|r"
 L.WarningHeader = "Warning!"

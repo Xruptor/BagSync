@@ -112,8 +112,8 @@ function Scanner:StartupScans()
 end
 
 function Scanner:SaveBag(bagtype, bagid)
-	Debug(BSYC_DL.INFO, "SaveBag", bagtype, bagid)
-
+	Debug(BSYC_DL.INFO, "SaveBag", bagtype, bagid, BSYC.tracking.bag)
+	if not BSYC.tracking.bag then return end
 	if not bagtype or not bagid then return end
 	if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
 
@@ -151,7 +151,8 @@ function Scanner:SaveBag(bagtype, bagid)
 end
 
 function Scanner:SaveEquipment()
-	Debug(BSYC_DL.INFO, "SaveEquipment")
+	Debug(BSYC_DL.INFO, "SaveEquipment", BSYC.tracking.equip)
+	if not BSYC.tracking.equip then return end
 
 	if not BSYC.db.player.equip then BSYC.db.player.equip = {} end
 
@@ -196,8 +197,8 @@ function Scanner:SaveEquipment()
 end
 
 function Scanner:SaveBank(rootOnly)
-	Debug(BSYC_DL.INFO, "SaveBank", rootOnly, Unit.atBank)
-	if not Unit.atBank then return end
+	Debug(BSYC_DL.INFO, "SaveBank", rootOnly, Unit.atBank, BSYC.tracking.bank)
+	if not Unit.atBank or not BSYC.tracking.bank then return end
 
 	--force scan of bank bag -1, since blizzard never sends updates for it
 	self:SaveBag("bank", BANK_CONTAINER)
@@ -215,8 +216,8 @@ function Scanner:SaveBank(rootOnly)
 end
 
 function Scanner:SaveReagents()
-	Debug(BSYC_DL.INFO, "SaveReagents", Unit.atBank)
-	if not Unit.atBank then return end
+	Debug(BSYC_DL.INFO, "SaveReagents", Unit.atBank, BSYC.tracking.reagents)
+	if not Unit.atBank or not BSYC.tracking.reagents then return end
 
 	if IsReagentBankUnlocked() then
 		self:SaveBag("reagents", REAGENTBANK_CONTAINER)
@@ -225,8 +226,8 @@ function Scanner:SaveReagents()
 end
 
 function Scanner:SaveVoidBank()
-	Debug(BSYC_DL.INFO, "SaveVoidBank", Unit.atVoidBank)
-	if not Unit.atVoidBank then return end
+	Debug(BSYC_DL.INFO, "SaveVoidBank", Unit.atVoidBank, BSYC.tracking.void)
+	if not Unit.atVoidBank or not BSYC.tracking.void then return end
 	if not BSYC.db.player.void then BSYC.db.player.void = {} end
 
 	local slotItems = {}
@@ -298,6 +299,7 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 end
 
 function Scanner:SaveGuildBank(tabID)
+	if not BSYC.tracking.guild then return end
 	if Scanner.isScanningGuild then return end
 
 	local guildDB = Data:GetGuild()
@@ -360,8 +362,8 @@ function Scanner:SaveGuildBank(tabID)
 end
 
 function Scanner:SaveMailbox(isShow)
-	Debug(BSYC_DL.INFO, "SaveMailbox", isShow, Unit.atMailbox, BSYC.options.enableMailbox, self.isCheckingMail)
-	if not Unit.atMailbox or not BSYC.options.enableMailbox then return end
+	Debug(BSYC_DL.INFO, "SaveMailbox", isShow, Unit.atMailbox, BSYC.tracking.mailbox, self.isCheckingMail)
+	if not Unit.atMailbox or not BSYC.tracking.mailbox then return end
 	if not BSYC.db.player.mailbox then BSYC.db.player.mailbox = {} end
 
 	if self.isCheckingMail then return end --prevent overflow from CheckInbox()
@@ -409,7 +411,8 @@ function Scanner:SaveMailbox(isShow)
 end
 
 function Scanner:SendMail(mailTo, addMail)
-	Debug(BSYC_DL.INFO, "SendMail", mailTo, addMail)
+	Debug(BSYC_DL.INFO, "SendMail", mailTo, addMail, BSYC.tracking.mailbox)
+	if not BSYC.tracking.mailbox then return end
 
 	if not addMail then
 		if not mailTo then return end
@@ -472,8 +475,8 @@ function Scanner:SendMail(mailTo, addMail)
 end
 
 function Scanner:SaveAuctionHouse()
-	Debug(BSYC_DL.INFO, "SaveAuctionHouse", Unit.atAuction, BSYC.options.enableAuction)
-	if not Unit.atAuction or not BSYC.options.enableAuction then return end
+	Debug(BSYC_DL.INFO, "SaveAuctionHouse", Unit.atAuction, BSYC.tracking.auction)
+	if not Unit.atAuction or not BSYC.tracking.auction then return end
 	if not BSYC.db.player.auction then BSYC.db.player.auction = {} end
 
 	local slotItems = {}
@@ -553,7 +556,8 @@ end
 function Scanner:SaveCurrency(showDebug)
 	if not C_CurrencyInfo then return end
 	if Unit:InCombatLockdown() then return end
-	if showDebug then Debug(BSYC_DL.INFO, "SaveCurrency") end --this function gets spammed like crazy sometimes, so only show debug when requested
+	if showDebug then Debug(BSYC_DL.INFO, "SaveCurrency", BSYC.tracking.currency) end --this function gets spammed like crazy sometimes, so only show debug when requested
+	if not BSYC.tracking.currency then return end
 
 	local lastHeader
 	local slotItems = {}
@@ -612,53 +616,10 @@ function Scanner:SaveCurrency(showDebug)
 	self:ResetTooltips()
 end
 
-function Scanner:CleanupBags()
-
-	--this function will cleanup the bags and make sure there are no orphaned bags that shouldn't be there for the player
-	--the purpose of this function is to fix the bag counts that were changed via Dragonflight
-
-	Debug(BSYC_DL.INFO, "CleanupBags")
-
-	local bagtype = ""
-
-	--BAG
-	bagtype = "bag"
-
-	if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
-
-	for bagID, bagData in pairs(BSYC.db.player[bagtype]) do
-		if not self:IsBackpack(bagID) and not self:IsBackpackBag(bagID) and not self:IsKeyring(bagID) then
-			BSYC.db.player[bagtype][bagID] = nil
-		end
-	end
-
-	--BANK
-	bagtype = "bank"
-
-	if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
-
-	for bagID, bagData in pairs(BSYC.db.player[bagtype]) do
-		if not self:IsBank(bagID) and not self:IsBankBag(bagID) then
-			BSYC.db.player[bagtype][bagID] = nil
-		end
-	end
-
-	--REAGENTS
-	bagtype = "reagents"
-
-	if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
-
-	for bagID, bagData in pairs(BSYC.db.player[bagtype]) do
-		if not self:IsReagentBag(bagID) then
-			BSYC.db.player[bagtype][bagID] = nil
-		end
-	end
-
-end
-
 function Scanner:SaveProfessions()
+	Debug(BSYC_DL.INFO, "SaveProfessions", BSYC.tracking.professions)
 	if not BSYC.IsRetail then return end
-	Debug(BSYC_DL.INFO, "SaveProfessions")
+	if not BSYC.tracking.professions then return end
 
 	--we don't want to do linked tradeskills, guild tradeskills, or a tradeskill from an NPC
 	if _G.C_TradeSkillUI.IsTradeSkillLinked() or _G.C_TradeSkillUI.IsTradeSkillGuild() or _G.C_TradeSkillUI.IsNPCCrafting() then return end
@@ -830,8 +791,9 @@ function Scanner:SaveProfessions()
 end
 
 function Scanner:CleanupProfessions()
+	Debug(BSYC_DL.INFO, "CleanupProfessions", BSYC.tracking.professions)
 	if not BSYC.IsRetail then return end
-	Debug(BSYC_DL.INFO, "CleanupProfessions")
+	if not BSYC.tracking.professions then return end
 
 	--lets remove unlearned tradeskills
 	local tmpList = {}

@@ -65,7 +65,9 @@ local function get(info)
 	local p, c = strsplit(".", info.arg)
 
 	if p == "color" then
-		return BSYC.options.colors[c].r, BSYC.options.colors[c].g, BSYC.options.colors[c].b
+		return BSYC.colors[c].r, BSYC.colors[c].g, BSYC.colors[c].b
+	elseif p == "tracking" then
+		return BSYC.tracking[c]
 	elseif p == "keybind" then
 		return GetBindingKey(c)
 	elseif c == "tooltipModifer" or c == "extTT_FontOutline" then
@@ -86,9 +88,15 @@ local function set(info, arg1, arg2, arg3, arg4)
 	local p, c = strsplit(".", info.arg)
 
 	if p == "color" then
-		BSYC.options.colors[c].r = arg1
-		BSYC.options.colors[c].g = arg2
-		BSYC.options.colors[c].b = arg3
+		BSYC.colors[c].r = arg1
+		BSYC.colors[c].g = arg2
+		BSYC.colors[c].b = arg3
+	elseif p == "tracking" then
+		BSYC.tracking[c] = arg1
+		--rebuild the minimap if any options have changed
+		if BSYC:GetModule("DataBroker", true) then
+			BSYC:GetModule("DataBroker"):BuildMinimapDropdown()
+		end
 	elseif p == "keybind" then
 	   local b1, b2 = GetBindingKey(c)
 	   if b1 then SetBinding(b1) end
@@ -128,7 +136,10 @@ local function set(info, arg1, arg2, arg3, arg4)
 	end
 
 	--reset tooltips just in case we changed any options related to it
-	if BSYC:GetModule("Tooltip", true) then BSYC:GetModule("Tooltip"):ResetCache() end
+	if BSYC:GetModule("Tooltip", true) then
+		BSYC:GetModule("Tooltip"):ResetCache()
+		BSYC:GetModule("Tooltip"):ResetLastLink()
+	end
 end
 
 local modValues = {
@@ -315,7 +326,7 @@ options.args.main = {
 
 options.args.keybindings = {
 	type = "group",
-	order = 2,
+	order = 3,
 	name = L.ConfigKeybindings,
 	desc = L.ConfigKeybindingsHeader,
 	args = {
@@ -394,9 +405,143 @@ options.args.keybindings = {
 	},
 }
 
+options.args.tracking = {
+	type = "group",
+	order = 4,
+	name = L.ConfigTracking,
+	desc = L.ConfigTrackingHeader,
+	args = {
+		groupinfo = {
+			name = L.ConfigTrackingCaution,
+			order = 1,
+			type = "group",
+			descStyle = "hide",
+			guiInline = true,
+			args = {
+				infotext = {
+					order = 0,
+					fontSize = "medium",
+					type = "description",
+					name = L.ConfigTrackingInfo,
+				  },
+			}
+		},
+		groupmodules = {
+			name = L.ConfigTrackingModules,
+			order = 1,
+			type = "group",
+			descStyle = "hide",
+			guiInline = true,
+			args = {
+				module_bag = {
+					order = 1,
+					type = "toggle",
+					name = L.TrackingModule_Bag,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "tracking.bag",
+				},
+				module_bank = {
+					order = 2,
+					type = "toggle",
+					name = L.TrackingModule_Bank,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "tracking.bank",
+				},
+				module_reagents = {
+					order = 3,
+					type = "toggle",
+					name = L.TrackingModule_Reagents,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "tracking.reagents",
+				},
+				module_equip = {
+					order = 4,
+					type = "toggle",
+					name = L.TrackingModule_Equip,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "tracking.equip",
+				},
+				module_mailbox = {
+					order = 5,
+					type = "toggle",
+					name = L.TrackingModule_Mailbox,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "tracking.mailbox",
+				},
+				module_void = {
+					order = 6,
+					type = "toggle",
+					name = L.TrackingModule_Void,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "tracking.void",
+				},
+				module_auction = {
+					order = 7,
+					type = "toggle",
+					name = L.TrackingModule_Auction,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "tracking.auction",
+				},
+				module_guild = {
+					order = 8,
+					type = "toggle",
+					name = L.TrackingModule_Guild,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "tracking.guild",
+					hidden = function() return BSYC.IsClassic end,
+				},
+				module_professions = {
+					order = 9,
+					type = "toggle",
+					name = L.TrackingModule_Professions,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "tracking.professions",
+				},
+				module_currency = {
+					order = 10,
+					type = "toggle",
+					name = L.TrackingModule_Currency,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "tracking.currency",
+				},
+			}
+		},
+	},
+}
+
 options.args.display = {
 	type = "group",
-	order = 3,
+	order = 5,
 	name = L.ConfigDisplay,
 	desc = L.ConfigTooltipHeader,
 	args = {
@@ -406,39 +551,8 @@ options.args.display = {
 			name = L.DisplayTooltipStorage,
 			guiInline = true,
 			args = {
-				mailbox = {
-					order = 0,
-					type = "toggle",
-					name = L.DisplayMailbox,
-					width = "full",
-					descStyle = "hide",
-					get = get,
-					set = set,
-					arg = "display.enableMailbox",
-				},
-				auction = {
-					order = 1,
-					type = "toggle",
-					name = L.DisplayAuctionHouse,
-					width = "full",
-					descStyle = "hide",
-					get = get,
-					set = set,
-					arg = "display.enableAuction",
-				},
-				guildbank = {
-					order = 2,
-					type = "toggle",
-					name = L.DisplayGuildBank,
-					width = "full",
-					descStyle = "hide",
-					get = get,
-					set = set,
-					arg = "display.enableGuild",
-					hidden = function() return BSYC.IsClassic end,
-				},
 				accuratebattlepets = {
-					order = 3,
+					order = 1,
 					type = "toggle",
 					name = L.DisplayAccurateBattlePets,
 					width = "full",
@@ -505,7 +619,7 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.showGuildInGoldTooltip",
-					disabled = function() return not BSYC.options["enableGuild"] end,
+					disabled = function() return not BSYC.tracking.guild end,
 				},
 				faction = {
 					order = 5,
@@ -526,7 +640,7 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.showGuildCurrentCharacter",
-					disabled = function() return not BSYC.options["enableGuild"] end,
+					disabled = function() return not BSYC.tracking.guild end,
 					hidden = function() return BSYC.IsClassic end,
 				},
 				guildbanktabs = {
@@ -538,7 +652,7 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.showGuildTabs",
-					disabled = function() return not BSYC.options["enableGuild"] end,
+					disabled = function() return not BSYC.tracking.guild end,
 					hidden = function() return BSYC.IsClassic end,
 				},
 				whitelistonly = {
@@ -825,7 +939,7 @@ options.args.display = {
 
 options.args.color = {
 	type = "group",
-	order = 4,
+	order = 6,
 	name = L.ConfigColor,
 	desc = L.ConfigColorHeader,
 	args = {
@@ -987,7 +1101,7 @@ options.args.color = {
 
 options.args.faq = {
 	type = "group",
-	order = 5,
+	order = 7,
 	name = L.ConfigFAQ,
 	desc = L.ConfigFAQHeader,
 	args = {
@@ -1151,6 +1265,10 @@ BSYC.blizzPanel = configDialog:AddToBlizOptions("BagSync-General", options.args.
 -- Keybindings Options
 config:RegisterOptionsTable("BagSync-Keybindings", options.args.keybindings)
 configDialog:AddToBlizOptions("BagSync-Keybindings", options.args.keybindings.name, "BagSync")
+
+-- Tracking Options
+config:RegisterOptionsTable("BagSync-Tracking", options.args.tracking)
+configDialog:AddToBlizOptions("BagSync-Tracking", options.args.tracking.name, "BagSync")
 
 -- Display Options
 config:RegisterOptionsTable("BagSync-Display", options.args.display)

@@ -238,22 +238,22 @@ function Search:CheckItems(searchStr, unitObj, target, checkList, onlyPlayer)
 		return iCount
 	end
 
-	if unitObj.data[target] then
+	if unitObj.data[target] and BSYC.tracking[target] then
 		if target == "bag" or target == "bank" or target == "reagents" then
 			for bagID, bagData in pairs(unitObj.data[target] or {}) do
 				total = total + parseItems(bagData)
 			end
-		elseif target == "auction" and BSYC.options.enableAuction then
+		elseif target == "auction" then
 			total = parseItems(unitObj.data[target].bag or {})
 
-		elseif target == "mailbox" and BSYC.options.enableMailbox then
+		elseif target == "mailbox" then
 			total = parseItems(unitObj.data[target] or {})
 
 		elseif target == "equip" or target == "void" then
 			total = parseItems(unitObj.data[target] or {})
 		end
 	end
-	if target == "guild" and BSYC.options.enableGuild then
+	if target == "guild" and BSYC.tracking.guild then
 		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
 			local tabCount = parseItems(tabData)
 			total = total + tabCount
@@ -293,7 +293,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch)
 	if not isAdvancedSearch and string.len(searchStr) > 1 then
 		atUserLoc = searchStr:match("@(.+)")
 		--check it to verify it's a valid command
-		if atUserLoc and string.len(atUserLoc) > 0 and (atUserLoc ~= "guild" and not allowList[atUserLoc]) then atUserLoc = nil end
+		if atUserLoc and (string.len(atUserLoc) < 1 or (atUserLoc ~= "guild" and not allowList[atUserLoc])) then atUserLoc = nil end
 	end
 
 	--overwrite the allowlist with the advance one if it isn't empty
@@ -305,7 +305,6 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch)
 			if not unitObj.isGuild then
 				Debug(BSYC_DL.FINE, "Search-IterateUnits", "player", unitObj.name, unitObj.realm)
 				for k, v in pairs(allowList) do
-					Debug(BSYC_DL.FINE, k)
 					countWarning = countWarning + Search:CheckItems(searchStr, unitObj, k, checkList)
 				end
 			else
@@ -323,7 +322,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch)
 		Debug(BSYC_DL.FINE, "Search-atUserLoc", "player", playerObj.name, playerObj.realm, atUserLoc)
 
 		if atUserLoc ~= "guild" then
-			Debug(BSYC_DL.FINE, atUserLoc)
+			Debug(BSYC_DL.FINE, 'atUserLoc', atUserLoc)
 			countWarning = countWarning + Search:CheckItems(searchStr, playerObj, atUserLoc, checkList, true)
 		else
 			--only do guild if we aren't using a custom adllowlist, otherwise it will always show up regardless of what custom field is selected
@@ -458,20 +457,26 @@ end
 function Search:Item_OnEnter(btn)
     if btn.data then
 		if not btn.data.speciesID then
+			GameTooltip.isBSYCSearch = true
 			GameTooltip:SetOwner(btn, "ANCHOR_BOTTOMRIGHT")
 			GameTooltip:SetHyperlink(btn.data.link)
 			GameTooltip:Show()
 		else
 			--BattlePetToolTip_Show uses the previous GameTooltip owner positioning
 			GameTooltip:SetOwner(btn, "ANCHOR_BOTTOMRIGHT")
+			BattlePetTooltip.isBSYCSearch = true
 			BattlePetToolTip_Show(tonumber(btn.data.speciesID), 0, 0, 0, 0, 0, nil)
 		end
 	end
 end
 
 function Search:Item_OnLeave()
+	GameTooltip.isBSYCSearch = nil
 	GameTooltip:Hide()
-	if BattlePetTooltip then BattlePetTooltip:Hide() end
+	if BattlePetTooltip then
+		BattlePetTooltip.isBSYCSearch = nil
+		BattlePetTooltip:Hide()
+	end
 end
 
 function Search:SearchBox_OnEnterPressed(text)

@@ -30,12 +30,9 @@ end
 
 local optionsDefaults = {
 	showTotal = true,
-	enableGuild = true,
-	enableMailbox = true,
 	enableUnitClass = true,
 	enableMinimap = true,
 	enableFaction = true,
-	enableAuction = true,
 	tooltipOnlySearch = false,
 	enableTooltips = true,
 	enableExtTooltip = false,
@@ -137,9 +134,11 @@ function Data:OnEnable()
 
 	--set tracking defaults
 	BSYC:SetDefaults("tracking", trackingDefaults)
+	BSYC.tracking = BSYC.options.tracking
 
 	--setup the default colors
 	BSYC:SetDefaults("colors", colorsDefaults)
+	BSYC.colors = BSYC.options.colors
 
 	--do DB cleanup check by version number
 	if not BSYC.options.addonversion or BSYC.options.addonversion ~= ver then
@@ -198,7 +197,7 @@ end
 
 function Data:ResetColors()
 	Debug(BSYC_DL.INFO, "ResetColors")
-	BSYC.options.colors = nil
+	BSYC.colors = nil
 	BSYC:SetDefaults("colors", colorsDefaults)
 end
 
@@ -206,82 +205,29 @@ function Data:FixDB()
 	Debug(BSYC_DL.INFO, "FixDB")
 
     local storeGuilds = {}
-
 	if not BSYC.options.unitDBVersion then BSYC.options.unitDBVersion = {} end
 
-	local allowList = {
-		bag = true,
-		bank = true,
-		reagents = true,
-		equip = true,
-		mailbox = true,
-		void = true,
-		auction = true,
-		guild = true,
-	}
-
-	--fix old battlepet data
-	local function fixDBEntry(data)
-		if data then
-			for i=1, #data do
-				if data[i] then
-					local link, count = BSYC:Split(data[i], true)
-					if link and tonumber(link) and (tonumber(link) >= BSYC.FakePetCode) and not data[i]:find("petdata") then
-						link = (link - BSYC.FakePetCode) / 100000
-						link = BSYC:CreateFakeID(nil, count, link)
-						data[i] = link
-					end
-				end
-			end
-		end
-	end
-
+	--first grab all active guilds
 	for unitObj in self:IterateUnits(true) do
 		if not unitObj.isGuild then
 			--store only user guild names
 			if unitObj.data.guild and unitObj.data.guildrealm then
 				storeGuilds[unitObj.data.guild..unitObj.data.guildrealm] = true
 			end
-
-			for k, v in pairs(unitObj.data) do
-				if allowList[k] and type(v) == "table" and k ~= "guild" then
-					--bags, bank, reagents
-					if k == "bag" or k == "bank" or k == "reagents" then
-						for bagID, bagData in pairs(v) do
-							fixDBEntry(bagData)
-						end
-					else
-						fixDBEntry(k == "auction" and v.bag or v)
-					end
-				end
-			end
-		else
-			if unitObj.data.bag then unitObj.data.bag = nil end --remove old guild bank storage method
-			if not unitObj.data.tabs then unitObj.data.tabs = {} end --remove old guild bank storage method
-			for tabID, tabData in pairs(unitObj.data.tabs) do
-				fixDBEntry(tabData)
-			end
 		end
 	end
 
-	--cleanup guilds
-	for realm, rd in pairs(BagSyncDB) do
-		--ignore options
-		if not string.match(realm, '§*') then
-			--iterate through realm data
-			for k, v in pairs(rd) do
-				local isGuild = (k:find('©*') and true) or false
-				if isGuild then
-					if not storeGuilds[k..realm] then
-						--remove obsolete guild
-						BagSyncDB[realm][k] = nil
-					end
-				else
-					--users lets do a individual db cleanup if necessary
-					if BSYC.options.unitDBVersion.auction ~= unitDBVersion.auction and v.auction then
-						v.auction = nil
-					end
-				end
+	--now do the cleanup and remove old obsolete guilds
+	for unitObj in self:IterateUnits(true) do
+		if not unitObj.isGuild then
+			--users lets do a individual db cleanup if necessary
+			if BSYC.options.unitDBVersion.auction ~= unitDBVersion.auction and unitObj.data.auction then
+				unitObj.data.auction = nil
+			end
+		else
+			if not storeGuilds[unitObj.name..unitObj.realm] then
+				--remove obsolete guild
+				BagSyncDB[unitObj.realm][unitObj.name] = nil
 			end
 		end
 	end
@@ -292,9 +238,6 @@ function Data:FixDB()
 
 	--update db unit version information
 	BSYC.options.unitDBVersion = unitDBVersion
-
-	--cleanup any old bag issues
-	if BSYC:GetModule("Scanner", true) then BSYC:GetModule("Scanner"):CleanupBags() end
 
 	BSYC:Print("|cFFFF9900"..L.FixDBComplete.."|r")
 end
@@ -347,15 +290,15 @@ function Data:LoadSlashCommand()
 				BSYC:GetModule("Search").frame:Show()
 				return true
 			elseif cmd == L.SlashGold or cmd == L.SlashMoney then
-				BSYC:GetModule("Tooltip"):MoneyTooltip()
+				BSYC:GetModule("Gold").frame:Show()
 				return true
-			elseif cmd == L.SlashCurrency and BSYC.IsRetail then
+			elseif cmd == L.SlashCurrency and BSYC.IsRetail and BSYC.tracking.currency then
 				BSYC:GetModule("Currency").frame:Show()
 				return true
 			elseif cmd == L.SlashProfiles then
 				BSYC:GetModule("Profiles").frame:Show()
 				return true
-			elseif cmd == L.SlashProfessions and BSYC.IsRetail then
+			elseif cmd == L.SlashProfessions and BSYC.IsRetail and BSYC.tracking.professions then
 				BSYC:GetModule("Professions").frame:Show()
 				return true
 			elseif cmd == L.SlashBlacklist then
@@ -406,8 +349,12 @@ function Data:LoadSlashCommand()
 		BSYC:Print("/bgs "..L.SlashGold.." - "..L.HelpGoldTooltip)
 		BSYC:Print("/bgs "..L.SlashProfiles.." - "..L.HelpProfilesWindow)
 		if BSYC.IsRetail then
-			BSYC:Print("/bgs "..L.SlashProfessions.." - "..L.HelpProfessionsWindow)
-			BSYC:Print("/bgs "..L.SlashCurrency.." - "..L.HelpCurrencyWindow)
+			if BSYC.tracking.professions then
+				BSYC:Print("/bgs "..L.SlashProfessions.." - "..L.HelpProfessionsWindow)
+			end
+			if BSYC.tracking.currency then
+				BSYC:Print("/bgs "..L.SlashCurrency.." - "..L.HelpCurrencyWindow)
+			end
 		end
 		BSYC:Print("/bgs "..L.SlashBlacklist.." - "..L.HelpBlacklistWindow)
 		BSYC:Print("/bgs "..L.SlashWhitelist.." - "..L.HelpWhitelistWindow)
@@ -479,7 +426,8 @@ function Data:CacheLink(parseLink)
 end
 
 function Data:CheckExpiredAuctions()
-	Debug(BSYC_DL.INFO, "CheckExpiredAuctions")
+	Debug(BSYC_DL.INFO, "CheckExpiredAuctions", BSYC.tracking.auction)
+	if not BSYC.tracking.auction then return end
 
 	for unitObj in self:IterateUnits(true) do
 		if not unitObj.isGuild and unitObj.data.auction and unitObj.data.auction.count then
@@ -538,9 +486,9 @@ end
 
 function Data:GetPlayerGuild()
 	local player = Unit:GetUnitInfo()
-	Debug(BSYC_DL.TRACE, "GetPlayerGuild", player.guild, BSYC.options.enableGuild)
+	Debug(BSYC_DL.TRACE, "GetPlayerGuild", player.guild, BSYC.tracking.guild)
 	if not player.guild then return end
-	if not BSYC.options.enableGuild then return end
+	if not BSYC.tracking.guild then return end
 
 	local isConnectedRealm = (Unit:isConnectedRealm(player.guildrealm) and true) or false
 	local isXRGuild = (player.guildrealm ~= player.realm) or false
@@ -579,7 +527,7 @@ function Data:IterateUnits(dumpAll, filterList)
 				--if they have guilds enabled, then we should show it anyways, regardless of the XR and BNET options
 				--NOTE: This should ONLY be done if the guild realm is NOT the player realm.  If it's the same realms for both then it would be processed anyways.
 				local isXRGuild = false
-				if BSYC.options.enableGuild and player.guild and not BSYC.options.enableCrossRealmsItems and not BSYC.options.enableBNetAccountItems then
+				if BSYC.tracking.guild and player.guild and not BSYC.options.enableCrossRealmsItems and not BSYC.options.enableBNetAccountItems then
 					isXRGuild = (player.guildrealm and argKey == player.guildrealm and argKey ~= player.realm) or false
 				end
 
@@ -623,7 +571,7 @@ function Data:IterateUnits(dumpAll, filterList)
 						elseif v.faction and (v.faction == BSYC.db.player.faction or BSYC.options.enableFaction) then
 
 							--check for guilds and if we have them merged or not
-							if BSYC.options.enableGuild and isGuild then
+							if BSYC.tracking.guild and isGuild then
 
 								--check for guilds only on current character if enabled and on their current realm
 								if (isXRGuild or BSYC.options.showGuildCurrentCharacter) and player.guild and player.guildrealm then
@@ -638,7 +586,7 @@ function Data:IterateUnits(dumpAll, filterList)
 								--check for the guild blacklist
 								if BSYC.db.blacklist[k..argKey] then skipReturn = true end
 
-							elseif not BSYC.options.enableGuild and isGuild then
+							elseif not BSYC.tracking.guild and isGuild then
 								skipReturn = true
 
 							elseif isXRGuild then

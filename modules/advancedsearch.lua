@@ -225,22 +225,25 @@ function AdvancedSearch:CreateLists()
 	end
 
 	--locations
-	local list = {
-		[1] = { source="bag", 		desc=L.Tooltip_bag },
-		[2] = { source="bank", 		desc=L.Tooltip_bank },
-		[3] = { source="reagents", 	desc=L.Tooltip_reagents },
-		[4] = { source="equip", 	desc=L.Tooltip_equip },
-		[5] = { source="mailbox", 	desc=L.Tooltip_mailbox },
-		[6] = { source="void", 		desc=L.Tooltip_void },
-		[7] = { source="auction", 	desc=L.Tooltip_auction },
+	local allowList = {
+		bag = true,
+		bank = true,
+		reagents = true,
+		equip = true,
+		mailbox = true,
+		void = true,
+		auction = true,
 	}
 
-	for i = 1, #list do
-		table.insert(AdvancedSearch.locationList, {
-			name = list[i].desc,
-			source = list[i].source,
-			isSelected = false
-		})
+	for k, v in pairs(allowList) do
+		if BSYC.tracking[k] then
+			--only add if enabled
+			table.insert(AdvancedSearch.locationList, {
+				name = L["Tooltip_"..k],
+				source = k,
+				isSelected = false
+			})
+		end
 	end
 end
 
