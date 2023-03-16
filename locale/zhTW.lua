@@ -303,19 +303,19 @@ L.SearchHelp = [[
 
 |cffff7d0a反向指令|r:
 範例: |cFF99CC33!|r|cFFFFD580bind:boe|r (不是boe)
-範例: |cFF99CC33!|r|cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:>20|r (不是boe以及物品等級大於20)
+範例: |cFF99CC33!|r|cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r (不是boe以及物品等級大於20)
 
 |cffff7d0a聯合搜尋 (以及搜尋):|r
-(使用以及 |cFF99CC33&|r 標點符號)
-範例: |cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:>20|r  |cFFCF9FFF(不要使用空格！)|r
+(使用以及 |cFF99CC33&&|r 標點符號)
+範例: |cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r
 
 |cffff7d0a交互搜尋 (或搜尋):|r
-(使用分隔 |cFF99CC33|||r 標點符號)
-範例: |cFFFFD580bind:boe|r|cFF99CC33|||r|cFFFFD580lvl:>20|r  |cFFCF9FFF(不要使用空格！)|r
+(使用分隔 |cFF99CC33|||||r 標點符號)
+範例: |cFFFFD580bind:boe|r |cFF99CC33|||||r |cFFFFD580lvl:>20|r
 
 |cffff7d0a複雜搜尋範例:|r
 (boe裝備綁定，裝等正好20且名稱中帶有'robe')
-|cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:20|r|cFF99CC33&|r|cFFFFD580name:robe|r |cFFCF9FFF(不要使用空格！)|r
+|cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:20|r |cFF99CC33&&|r |cFFFFD580name:robe|r
 
 ]]
 L.ConfigFAQ= " FAQ / 幫助 "

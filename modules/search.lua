@@ -206,7 +206,6 @@ function Search:CheckItems(searchStr, unitObj, target, checkList, onlyPlayer)
 					local texture = cacheObj.speciesIcon or cacheObj.itemTexture
 					local itemName = cacheObj.speciesName or cacheObj.itemName
 
-					--we only really want to grab and search the item only once
 					if entry then
 						--perform item search
 						local testMatch = ItemScout:Find(entry, searchStr, cacheObj)
@@ -217,6 +216,7 @@ function Search:CheckItems(searchStr, unitObj, target, checkList, onlyPlayer)
 						end
 
 						checkList[link] = entry
+
 						if testMatch or onlyPlayer then
 							table.insert(Search.items, {
 								name = itemName,
@@ -255,8 +255,7 @@ function Search:CheckItems(searchStr, unitObj, target, checkList, onlyPlayer)
 	end
 	if target == "guild" and BSYC.tracking.guild then
 		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
-			local tabCount = parseItems(tabData)
-			total = total + tabCount
+			total = total + parseItems(tabData)
 		end
 	end
 

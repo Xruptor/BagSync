@@ -302,19 +302,20 @@ L.SearchHelp = [[
 
 |cffff7d0a否定命令|r:
 示例: |cFF99CC33!|r|cFFFFD580bind:boe|r (不是已绑定装备)
-示例: |cFF99CC33!|r|cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:>20|r (不是已绑定装备且物品等级大于20)
+示例: |cFF99CC33!|r|cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r (不是已绑定装备且物品等级大于20)
 
 |cffff7d0a联合搜索 (和搜索):|r
-(使用 |cFF99CC33&|r 符号)
-示例: |cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:>20|r  |cFFCF9FFF(不要使用空格!)|r
+(使用 |cFF99CC33&&|r 符号)
+示例: |cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r
 
 |cffff7d0a交叉搜索 (或搜索):|r
-(使用竖 |cFF99CC33|||r 符号)
-示例: |cFFFFD580bind:boe|r|cFF99CC33|||r|cFFFFD580lvl:>20|r  |cFFCF9FFF(不要使用空格!)|r
+(使用竖 |cFF99CC33|||||r 符号)
+示例: |cFFFFD580bind:boe|r |cFF99CC33|||||r |cFFFFD580lvl:>20|r
 
 |cffff7d0a复杂搜索示例:|r
 (已绑定装备, 物品等级正好是20名字中带有'长袍' 一词)
-|cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:20|r|cFF99CC33&|r|cFFFFD580长袍|r |cFFCF9FFF(不要使用空格!)|r
+|cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:20|r|cFF99CC33&|r|cFFFFD580长袍|r
+|cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:20|r |cFF99CC33&&|r |cFFFFD580name:长袍|r
 
 ]]
 L.ConfigFAQ= " FAQ / 帮助 "

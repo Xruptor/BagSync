@@ -22,8 +22,8 @@
 
 	Grammar:
 	<search> 				:=	<intersect search>
-	<intersect search> 		:=	<union search> & <union search> ; <union search>
-	<union search>			:=	<negatable search>  | <negatable search> ; <negatable search>
+	<intersect search> 		:=	<union search> && <union search> ; <union search>
+	<union search>			:=	<negatable search>  || <negatable search> ; <negatable search>
 	<negatable search> 		:=	!<primitive search> ; <primitive search>
 	<item name search>		:=	n ; name | n:<text> ; name:<text>
 	<item bind search>		:=	bind | bind:<type> ; types (boe, bop, bou, boq) i.e boe = bind on equip
@@ -49,10 +49,15 @@ end
 
 --[[ Locals ]]--
 
-local tonumber, select, split = tonumber, select, strsplit
+local tonumber, select, split, trim = tonumber, select, strsplit, strtrim
 local cache = {}
 local function useful(a) -- check if the search has a decent size
 	return a and #a >= 1
+end
+
+local function dotrim(a)
+	if a then return trim(a) end
+	return a
 end
 
 local function compare(op, a, b)
@@ -101,27 +106,31 @@ function Lib:Find(itemLink, search, cacheObj)
 	if cacheObj then
 		cache = cacheObj
 	end
-	return self:FindUnionSearch(itemLink, split('\124', search:lower()))
+	--\124 ascii code for |
+	return self:FindUnionSearch(itemLink, split('\124\124', search:lower()))
 end
 
 
 --[[ Top-Layer Processing ]]--
 
--- union search: <search>&<search>
+-- union search: <search>&&<search>
 function Lib:FindUnionSearch(item, ...)
 	for i = 1, select('#', ...) do
 		local search = select(i, ...)
-		if useful(search) and self:FindIntersectSearch(item, split('\038', search)) then
+		search = dotrim(search)
+		--\038 ascii code for &
+		if useful(search) and self:FindIntersectSearch(item, split('\038\038', search)) then
 			return true
 		end
 	end
 end
 
 
--- intersect search: <search>|<search>
+-- intersect search: <search>||<search>
 function Lib:FindIntersectSearch(item, ...)
 	for i = 1, select('#', ...) do
 		local search = select(i, ...)
+		search = dotrim(search)
 		if useful(search) and not self:FindNegatableSearch(item, search) then
 			return false
 		end
@@ -134,6 +143,7 @@ end
 function Lib:FindNegatableSearch(item, search)
 	local negatedSearch = search:match('^[!~][%s]*(.+)$')
 	if negatedSearch then
+		negatedSearch = dotrim(negatedSearch)
 		return not self:FindTypedSearch(item, negatedSearch)
 	end
 	return self:FindTypedSearch(item, search, true)

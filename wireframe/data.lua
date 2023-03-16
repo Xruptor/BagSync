@@ -373,6 +373,7 @@ function Data:LoadSlashCommand()
 end
 
 function Data:CacheLink(parseLink)
+	if not parseLink then return {} end
 	local itemObj = {}
 	local speciesID = BSYC:FakeIDToSpeciesID(parseLink)
 
@@ -423,6 +424,96 @@ function Data:CacheLink(parseLink)
 		itemObj = Data.__cache.items[parseLink]
 	end
 	return itemObj
+end
+
+function Data:PopulateItemCache(errorList, errorCount)
+	Debug(BSYC_DL.INFO, "PopulateItemCache", (errorList and #errorList) or errorList, errorCount)
+	local allowList = {
+		bag = true,
+		bank = true,
+		reagents = true,
+		equip = true,
+		mailbox = true,
+		void = true,
+		auction = true,
+	}
+	local tmpList = {}
+	local tmpError = {}
+
+	local function doItem(data)
+		for i=1, #data do
+			if data[i] then
+				local link = BSYC:Split(data[i], true)
+				if BSYC.options.enableShowUniqueItemsTotals and link then link = BSYC:GetShortItemID(link) end
+				if link and not tmpList[link] then
+					local cacheObj = Data:CacheLink(link)
+					local entry = cacheObj.speciesName or cacheObj.itemLink
+					if entry then
+						tmpList[link] = entry
+					else
+						table.insert(tmpError, link)
+					end
+				end
+			end
+		end
+	end
+
+	local function CacheCheck(unitObj, target)
+		if unitObj.data[target] then
+			if target == "bag" or target == "bank" or target == "reagents" then
+				for bagID, bagData in pairs(unitObj.data[target] or {}) do
+					doItem(bagData)
+				end
+			elseif target == "auction" then
+				doItem(unitObj.data[target].bag or {})
+
+			elseif target == "mailbox" then
+				doItem(unitObj.data[target] or {})
+
+			elseif target == "equip" or target == "void" then
+				doItem(unitObj.data[target] or {})
+			end
+		end
+		if target == "guild" then
+			for tabID, tabData in pairs(unitObj.data.tabs or {}) do
+				doItem(tabData)
+			end
+		end
+	end
+
+	--do initial grab before we do a timed loop
+	if not errorList then
+		for unitObj in Data:IterateUnits(true) do
+			if not unitObj.isGuild then
+				for k, v in pairs(allowList) do
+					CacheCheck(unitObj, k)
+				end
+			else
+				CacheCheck(unitObj, "guild")
+			end
+		end
+		--only loop again if we have anything to work with
+		if #tmpError > 0 then
+			C_Timer.After(0.5, function() Data:PopulateItemCache(tmpError, 0) end)
+		end
+		return
+	end
+
+	if #errorList > 0 and errorCount < 15 then
+		errorCount = errorCount + 1
+		for i=1, #errorList do
+			local errObj = Data:CacheLink(errorList[i])
+			local errChk = errObj.speciesName or errObj.itemLink
+			if errChk then
+				--remove it since we have a cached item
+				table.remove(errorList, i)
+			end
+		end
+		if #errorList > 0 then
+			--loop again if we still have something
+			C_Timer.After(0.5, function() Data:PopulateItemCache(errorList, errorCount) end)
+		end
+	end
 end
 
 function Data:CheckExpiredAuctions()

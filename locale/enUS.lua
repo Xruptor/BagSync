@@ -340,19 +340,19 @@ L.SearchHelp = [[
 
 |cffff7d0aNegate Commands|r:
 Example: |cFF99CC33!|r|cFFFFD580bind:boe|r (not boe)
-Example: |cFF99CC33!|r|cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:>20|r (not boe and item level greater than 20)
+Example: |cFF99CC33!|r|cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r (not boe and item level greater than 20)
 
 |cffff7d0aUnion Searches (and searches):|r
-(Use the ampersand |cFF99CC33&|r symbol)
-Example: |cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:>20|r  |cFFCF9FFF(do not use spaces!)|r
+(Use the double ampersand |cFF99CC33&&|r symbol)
+Example: |cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r
 
 |cffff7d0aIntersect Searches (or searches):|r
-(Use the pipe |cFF99CC33|||r symbol)
-Example: |cFFFFD580bind:boe|r|cFF99CC33|||r|cFFFFD580lvl:>20|r  |cFFCF9FFF(do not use spaces!)|r
+(Use the double pipe |cFF99CC33|||||r symbol)
+Example: |cFFFFD580bind:boe|r |cFF99CC33|||||r |cFFFFD580lvl:>20|r
 
 |cffff7d0aComplex Search Example:|r
 (bind on equip, lvl is exactly 20 with the word 'robe' in the name)
-|cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:20|r|cFF99CC33&|r|cFFFFD580name:robe|r |cFFCF9FFF(do not use spaces!)|r
+|cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:20|r |cFF99CC33&&|r |cFFFFD580name:robe|r
 
 ]]
 L.ConfigFAQ= "FAQ / Help"
