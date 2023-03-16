@@ -30,14 +30,15 @@ function SortOrder:OnEnable()
     sortorderFrame:EnableMouse(true) --don't allow clickthrough
     sortorderFrame:SetMovable(true)
     sortorderFrame:SetResizable(false)
-    sortorderFrame:SetFrameStrata("HIGH")
+    sortorderFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 	sortorderFrame:RegisterForDrag("LeftButton")
 	sortorderFrame:SetClampedToScreen(true)
 	sortorderFrame:SetScript("OnDragStart", sortorderFrame.StartMoving)
 	sortorderFrame:SetScript("OnDragStop", sortorderFrame.StopMovingOrSizing)
+	sortorderFrame:SetScript("OnShow", function() SortOrder:OnShow() end)
 	local closeBtn = CreateFrame("Button", nil, sortorderFrame, "UIPanelCloseButton")
 	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode		
-    sortorderFrame:SetScript("OnShow", function() SortOrder:OnShow() end)
+    sortorderFrame.closeBtn = closeBtn
     SortOrder.frame = sortorderFrame
 
     SortOrder.scrollFrame = _G.CreateFrame("ScrollFrame", nil, sortorderFrame, "HybridScrollFrameTemplate")
@@ -62,7 +63,7 @@ function SortOrder:OnEnable()
     warningFrame:EnableMouse(true) --don't allow clickthrough
     warningFrame:SetMovable(false)
 	warningFrame:SetResizable(false)
-    warningFrame:SetFrameStrata("HIGH")
+    warningFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 	warningFrame:ClearAllPoints()
 	warningFrame:SetPoint("TOPLEFT", sortorderFrame, "TOPRIGHT", 5, 0)
 	warningFrame.TitleText:SetText(L.DisplaySortOrderHelp)
@@ -88,6 +89,8 @@ function SortOrder:OnEnable()
 end
 
 function SortOrder:OnShow()
+	BSYC:SetFrameLevel(SortOrder)
+
 	local getStatus = (BSYC.options.sortByCustomOrder and ("|cFF99CC33"..L.ON.."|r")) or ( "|cFFDF2B2B"..L.OFF.."|r")
 	SortOrder.warningFrame.infoText1:SetText(L.DisplaySortOrderStatus:format(getStatus))
 	SortOrder.warningFrame:Show()

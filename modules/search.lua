@@ -18,7 +18,6 @@ local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local ItemScout = LibStub("LibItemScout-1.0")
 
 Search.cacheItems = {}
-Search.warningAutoScan = 0
 
 function Search:OnEnable()
     local searchFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncSearchFrameTemplate")
@@ -33,15 +32,16 @@ function Search:OnEnable()
     searchFrame:EnableMouse(true) --don't allow clickthrough
     searchFrame:SetMovable(true)
     searchFrame:SetResizable(false)
-    searchFrame:SetFrameStrata("HIGH")
+    searchFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 	searchFrame:RegisterForDrag("LeftButton")
 	searchFrame:SetClampedToScreen(true)
 	searchFrame:SetScript("OnDragStart", searchFrame.StartMoving)
 	searchFrame:SetScript("OnDragStop", searchFrame.StopMovingOrSizing)
+	searchFrame:SetScript("OnShow", function() Search:OnShow() end)
+	searchFrame:SetScript("OnHide", function() Search:OnHide() end)
 	local closeBtn = CreateFrame("Button", nil, searchFrame, "UIPanelCloseButton")
 	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode
-    searchFrame:SetScript("OnShow", function() Search:OnShow() end)
-	searchFrame:SetScript("OnHide", function() Search:OnHide() end)
+    searchFrame.closeBtn = closeBtn
     Search.frame = searchFrame
 
     Search.scrollFrame = _G.CreateFrame("ScrollFrame", nil, searchFrame, "HybridScrollFrameTemplate")
@@ -151,6 +151,8 @@ function Search:OnEnable()
 end
 
 function Search:OnShow()
+	BSYC:SetFrameLevel(Search)
+
 	if not BSYC.options.alwaysShowAdvSearch then
 		C_Timer.After(0.5, function()
 			if BSYC.options.focusSearchEditBox then
@@ -167,7 +169,6 @@ end
 function Search:OnHide()
 	Search.warningFrame:Hide()
 	Search.helpFrame:Hide()
-	Search.warningAutoScan = 0
 	Search:ShowAdvanced(false)
 end
 
@@ -202,12 +203,10 @@ function Search:CheckItems(searchStr, unitObj, target, checkList, onlyPlayer)
 				if link and not checkList[link] then
 					--do cache grab
 					local cacheObj = Data:CacheLink(link)
-					local entry = cacheObj.speciesName or cacheObj.itemLink --GetItemInfo does not support battlepet links, use speciesName instead
-					local texture = cacheObj.speciesIcon or cacheObj.itemTexture
-					local itemName = cacheObj.speciesName or cacheObj.itemName
-
-					if entry then
-						--perform item search
+					if cacheObj then
+						local entry = cacheObj.speciesName or cacheObj.itemLink --GetItemInfo does not support battlepet links, use speciesName instead
+						local texture = cacheObj.speciesIcon or cacheObj.itemTexture
+						local itemName = cacheObj.speciesName or cacheObj.itemName
 						local testMatch = ItemScout:Find(entry, searchStr, cacheObj)
 
 						--for debugging purposes only
@@ -262,7 +261,7 @@ function Search:CheckItems(searchStr, unitObj, target, checkList, onlyPlayer)
 	return total
 end
 
-function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch)
+function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch, warnCount)
 
 	--only check for specifics when not using advanced search
 	if not isAdvancedSearch then
@@ -272,7 +271,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch)
 
 	Search.items = {}
 	local checkList = {}
-	local countWarning = 0
+	local warnTotal = 0
 	local atUserLoc
 
 	Search.advUnitList = advUnitList
@@ -297,55 +296,50 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch)
 
 	--overwrite the allowlist with the advance one if it isn't empty
 	allowList = advAllowList or allowList
-	Debug(BSYC_DL.INFO, "init:DoSearch", searchStr, advUnitList, advAllowList, isAdvancedSearch)
+	Debug(BSYC_DL.INFO, "init:DoSearch", searchStr, atUserLoc, advUnitList, advAllowList, isAdvancedSearch, warnCount)
 
 	if not atUserLoc then
 		for unitObj in Data:IterateUnits(false, advUnitList) do
 			if not unitObj.isGuild then
-				Debug(BSYC_DL.FINE, "Search-IterateUnits", "player", unitObj.name, unitObj.realm)
 				for k, v in pairs(allowList) do
-					countWarning = countWarning + Search:CheckItems(searchStr, unitObj, k, checkList)
+					warnTotal = warnTotal + Search:CheckItems(searchStr, unitObj, k, checkList)
 				end
 			else
 				--only do guild if we aren't using a custom adllowlist, otherwise it will always show up regardless of what custom field is selected
 				--obviously guilds can't have stuff stored in AH, Mailbox, Void, etc...
 				if not advAllowList then
-					Debug(BSYC_DL.FINE, "Search-IterateUnits", "guild", unitObj.name, unitObj.realm)
-					countWarning = countWarning + Search:CheckItems(searchStr, unitObj, "guild", checkList)
+					warnTotal = warnTotal + Search:CheckItems(searchStr, unitObj, "guild", checkList)
 				end
 			end
 		end
 	else
 		--player using an @location, so lets only search their database and not IterateUnits
 		local playerObj = Data:GetCurrentPlayer()
-		Debug(BSYC_DL.FINE, "Search-atUserLoc", "player", playerObj.name, playerObj.realm, atUserLoc)
 
 		if atUserLoc ~= "guild" then
-			Debug(BSYC_DL.FINE, 'atUserLoc', atUserLoc)
-			countWarning = countWarning + Search:CheckItems(searchStr, playerObj, atUserLoc, checkList, true)
+			warnTotal = warnTotal + Search:CheckItems(searchStr, playerObj, atUserLoc, checkList, true)
 		else
 			--only do guild if we aren't using a custom adllowlist, otherwise it will always show up regardless of what custom field is selected
 			if playerObj.data.guild and not advAllowList then
 				local guildObj = Data:GetPlayerGuild()
 				if guildObj then
-					Debug(BSYC_DL.FINE, "guild")
-					countWarning = countWarning + Search:CheckItems(searchStr, guildObj, atUserLoc, checkList, true)
+					warnTotal = warnTotal + Search:CheckItems(searchStr, guildObj, atUserLoc, checkList, true)
 				end
 			end
 		end
 	end
 
 	--show warning window if the server hasn't queried all the items yet
-	if countWarning > 0 then
-		Search.warningFrame.infoText1:SetText(L.WarningItemSearch:format(countWarning))
+	if warnTotal > 0 then
+		Search.warningFrame.infoText1:SetText(L.WarningItemSearch:format(warnTotal))
 		Search.warningFrame:Show()
 
 		--lets not do TOO many refreshes
-		if Search.warningAutoScan <= 3 then
+		if not warnCount or warnCount <= 5 then
+			warnCount = (warnCount or 0) + 1
 			C_Timer.After(0.5, function()
-				Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch)
+				Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch, warnCount)
 			end)
-			Search.warningAutoScan = Search.warningAutoScan + 1
 			return
 		end
 	else

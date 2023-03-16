@@ -35,14 +35,16 @@ function Details:OnEnable()
     detailsFrame:EnableMouse(true) --don't allow clickthrough
     detailsFrame:SetMovable(true)
     detailsFrame:SetResizable(false)
-    detailsFrame:SetFrameStrata("DIALOG")
+    detailsFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 	detailsFrame:RegisterForDrag("LeftButton")
 	detailsFrame:SetClampedToScreen(true)
 	detailsFrame:SetScript("OnDragStart", detailsFrame.StartMoving)
 	detailsFrame:SetScript("OnDragStop", detailsFrame.StopMovingOrSizing)
+	detailsFrame:SetScript("OnShow", function() Details:OnShow() end)
 	local closeBtn = CreateFrame("Button", nil, detailsFrame, "UIPanelCloseButton")
 	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode			
-    Details.frame = detailsFrame
+    detailsFrame.closeBtn = closeBtn
+	Details.frame = detailsFrame
 
 	detailsFrame.infoText = detailsFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
 	detailsFrame.infoText:SetText(L.Details)
@@ -68,6 +70,10 @@ function Details:OnEnable()
 	HybridScrollFrame_CreateButtons(Details.scrollFrame, "BagSyncListSimpleItemTemplate")
 
 	detailsFrame:Hide()
+end
+
+function Details:OnShow()
+	BSYC:SetFrameLevel(Details)
 end
 
 function Details:ShowItem(itemID, text)

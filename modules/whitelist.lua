@@ -29,14 +29,15 @@ function Whitelist:OnEnable()
     whitelistFrame:EnableMouse(true) --don't allow clickthrough
     whitelistFrame:SetMovable(true)
     whitelistFrame:SetResizable(false)
-    whitelistFrame:SetFrameStrata("HIGH")
+    whitelistFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 	whitelistFrame:RegisterForDrag("LeftButton")
 	whitelistFrame:SetClampedToScreen(true)
 	whitelistFrame:SetScript("OnDragStart", whitelistFrame.StartMoving)
 	whitelistFrame:SetScript("OnDragStop", whitelistFrame.StopMovingOrSizing)
+	whitelistFrame:SetScript("OnShow", function() Whitelist:OnShow() end)
 	local closeBtn = CreateFrame("Button", nil, whitelistFrame, "UIPanelCloseButton")
 	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode			
-    whitelistFrame:SetScript("OnShow", function() Whitelist:OnShow() end)
+    whitelistFrame.closeBtn = closeBtn
     Whitelist.frame = whitelistFrame
 
 	local itemIDBox = CreateFrame("EditBox", nil, whitelistFrame, "InputBoxTemplate")
@@ -84,7 +85,7 @@ function Whitelist:OnEnable()
     warningFrame:EnableMouse(true) --don't allow clickthrough
     warningFrame:SetMovable(false)
 	warningFrame:SetResizable(false)
-    warningFrame:SetFrameStrata("HIGH")
+    warningFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 	warningFrame:ClearAllPoints()
 	warningFrame:SetPoint("TOPLEFT", whitelistFrame, "TOPRIGHT", 5, 0)
 	warningFrame.TitleText:SetText(L.DisplayWhitelistHelp)
@@ -127,6 +128,8 @@ function Whitelist:OnEnable()
 end
 
 function Whitelist:OnShow()
+	BSYC:SetFrameLevel(Whitelist)
+
 	local getStatus = (BSYC.options.enableWhitelist and ("|cFF99CC33"..L.ON.."|r")) or ( "|cFFDF2B2B"..L.OFF.."|r")
 	Whitelist.warningFrame.infoText1:SetText(L.DisplayWhitelistStatus:format(getStatus))
 	Whitelist.warningFrame:Show()

@@ -30,14 +30,15 @@ function Professions:OnEnable()
     professionsFrame:EnableMouse(true) --don't allow clickthrough
     professionsFrame:SetMovable(true)
     professionsFrame:SetResizable(false)
-    professionsFrame:SetFrameStrata("HIGH")
+    professionsFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 	professionsFrame:RegisterForDrag("LeftButton")
 	professionsFrame:SetClampedToScreen(true)
 	professionsFrame:SetScript("OnDragStart", professionsFrame.StartMoving)
 	professionsFrame:SetScript("OnDragStop", professionsFrame.StopMovingOrSizing)
+	professionsFrame:SetScript("OnShow", function() Professions:OnShow() end)
 	local closeBtn = CreateFrame("Button", nil, professionsFrame, "UIPanelCloseButton")
 	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode		
-    professionsFrame:SetScript("OnShow", function() Professions:OnShow() end)
+    professionsFrame.closeBtn = closeBtn
     Professions.frame = professionsFrame
 
 	professionsFrame.infoText = professionsFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
@@ -67,6 +68,8 @@ function Professions:OnEnable()
 end
 
 function Professions:OnShow()
+	BSYC:SetFrameLevel(Professions)
+
 	Professions:CreateList()
     Professions:RefreshList()
 

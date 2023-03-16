@@ -28,14 +28,15 @@ function AdvancedSearch:OnEnable()
     advFrame:EnableMouse(true) --don't allow clickthrough
     advFrame:SetMovable(true)
     advFrame:SetResizable(false)
-    advFrame:SetFrameStrata("HIGH")
+    advFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 	advFrame.HelpButton:Hide()
 	advFrame:RegisterForDrag("LeftButton")
 	advFrame:SetClampedToScreen(true)
 	advFrame:SetScript("OnDragStart", advFrame.StartMoving)
 	advFrame:SetScript("OnDragStop", advFrame.StopMovingOrSizing)
 	local closeBtn = CreateFrame("Button", nil, advFrame, "UIPanelCloseButton")
-	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode	
+	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode
+	advFrame.closeBtn = closeBtn
     advFrame:SetScript("OnShow", function() AdvancedSearch:OnShow() end)
 	advFrame:SetScript("OnHide", function() AdvancedSearch:OnHide() end)
 	AdvancedSearch.frame = advFrame
@@ -123,6 +124,8 @@ function AdvancedSearch:OnEnable()
 end
 
 function AdvancedSearch:OnShow()
+	BSYC:SetFrameLevel(AdvancedSearch)
+
 	--Hide some of the regular search frame stuff
 	Search.frame.SearchBox:Hide()
 	Search.frame.RefreshButton:Hide()

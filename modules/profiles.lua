@@ -31,14 +31,15 @@ function Profiles:OnEnable()
     profilesFrame:EnableMouse(true) --don't allow clickthrough
     profilesFrame:SetMovable(true)
     profilesFrame:SetResizable(false)
-    profilesFrame:SetFrameStrata("HIGH")
+    profilesFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 	profilesFrame:RegisterForDrag("LeftButton")
 	profilesFrame:SetClampedToScreen(true)
 	profilesFrame:SetScript("OnDragStart", profilesFrame.StartMoving)
 	profilesFrame:SetScript("OnDragStop", profilesFrame.StopMovingOrSizing)
+	profilesFrame:SetScript("OnShow", function() Profiles:OnShow() end)
 	local closeBtn = CreateFrame("Button", nil, profilesFrame, "UIPanelCloseButton")
 	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode			
-    profilesFrame:SetScript("OnShow", function() Profiles:OnShow() end)
+    profilesFrame.closeBtn = closeBtn
     Profiles.frame = profilesFrame
 
 	profilesFrame.infoText = profilesFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
@@ -86,6 +87,8 @@ function Profiles:OnEnable()
 end
 
 function Profiles:OnShow()
+	BSYC:SetFrameLevel(Profiles)
+
 	Profiles:UpdateList()
 end
 

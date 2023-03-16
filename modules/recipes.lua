@@ -30,14 +30,16 @@ function Recipes:OnEnable()
     recipesFrame:EnableMouse(true) --don't allow clickthrough
     recipesFrame:SetMovable(true)
     recipesFrame:SetResizable(false)
-    recipesFrame:SetFrameStrata("HIGH")
+    recipesFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 	recipesFrame:RegisterForDrag("LeftButton")
 	recipesFrame:SetClampedToScreen(true)
 	recipesFrame:SetScript("OnDragStart", recipesFrame.StartMoving)
 	recipesFrame:SetScript("OnDragStop", recipesFrame.StopMovingOrSizing)
+	recipesFrame:SetScript("OnShow", function() Recipes:OnShow() end)
 	local closeBtn = CreateFrame("Button", nil, recipesFrame, "UIPanelCloseButton")
 	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode			
-    Recipes.frame = recipesFrame
+    recipesFrame.closeBtn = closeBtn
+	Recipes.frame = recipesFrame
 
 	recipesFrame.infoText = recipesFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
 	recipesFrame.infoText:SetText(L.ProfessionInformation)
@@ -63,6 +65,10 @@ function Recipes:OnEnable()
 	HybridScrollFrame_CreateButtons(Recipes.scrollFrame, "BagSyncListItemTemplate")
 
 	recipesFrame:Hide()
+end
+
+function Recipes:OnShow()
+	BSYC:SetFrameLevel(Recipes)
 end
 
 function Recipes:ViewRecipes(data)

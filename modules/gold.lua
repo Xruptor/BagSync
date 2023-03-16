@@ -30,14 +30,15 @@ function Gold:OnEnable()
     goldFrame:EnableMouse(true) --don't allow clickthrough
     goldFrame:SetMovable(true)
     goldFrame:SetResizable(false)
-    goldFrame:SetFrameStrata("HIGH")
+    goldFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 	goldFrame:RegisterForDrag("LeftButton")
 	goldFrame:SetClampedToScreen(true)
 	goldFrame:SetScript("OnDragStart", goldFrame.StartMoving)
 	goldFrame:SetScript("OnDragStop", goldFrame.StopMovingOrSizing)
+	goldFrame:SetScript("OnShow", function() Gold:OnShow() end)
 	local closeBtn = CreateFrame("Button", nil, goldFrame, "UIPanelCloseButton")
 	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode		
-    goldFrame:SetScript("OnShow", function() Gold:OnShow() end)
+    goldFrame.closeBtn = closeBtn
     Gold.frame = goldFrame
 
     Gold.scrollFrame = _G.CreateFrame("ScrollFrame", nil, goldFrame, "HybridScrollFrameTemplate")
@@ -68,6 +69,8 @@ function Gold:OnEnable()
 end
 
 function Gold:OnShow()
+	BSYC:SetFrameLevel(Gold)
+
 	Gold:CreateList()
     Gold:RefreshList()
 

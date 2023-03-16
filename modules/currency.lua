@@ -30,14 +30,15 @@ function Currency:OnEnable()
     currencyFrame:EnableMouse(true) --don't allow clickthrough
     currencyFrame:SetMovable(true)
     currencyFrame:SetResizable(false)
-    currencyFrame:SetFrameStrata("HIGH")
+    currencyFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 	currencyFrame:RegisterForDrag("LeftButton")
 	currencyFrame:SetClampedToScreen(true)
 	currencyFrame:SetScript("OnDragStart", currencyFrame.StartMoving)
 	currencyFrame:SetScript("OnDragStop", currencyFrame.StopMovingOrSizing)
+	currencyFrame:SetScript("OnShow", function() Currency:OnShow() end)
 	local closeBtn = CreateFrame("Button", nil, currencyFrame, "UIPanelCloseButton")
 	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode		
-    currencyFrame:SetScript("OnShow", function() Currency:OnShow() end)
+    currencyFrame.closeBtn = closeBtn
     Currency.frame = currencyFrame
 
     Currency.scrollFrame = _G.CreateFrame("ScrollFrame", nil, currencyFrame, "HybridScrollFrameTemplate")
@@ -59,6 +60,8 @@ function Currency:OnEnable()
 end
 
 function Currency:OnShow()
+	BSYC:SetFrameLevel(Currency)
+
 	Currency:CreateList()
     Currency:RefreshList()
 

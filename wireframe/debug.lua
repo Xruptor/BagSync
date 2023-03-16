@@ -35,15 +35,15 @@ function Debug:OnEnable()
     DebugFrame:SetMovable(true)
     DebugFrame:SetResizable(false)
     DebugFrame:SetFrameStrata("BACKGROUND")
-    DebugFrame:SetFrameStrata("HIGH")
 	DebugFrame:RegisterForDrag("LeftButton")
 	DebugFrame:SetClampedToScreen(true)
 	DebugFrame:SetScript("OnDragStart", DebugFrame.StartMoving)
 	DebugFrame:SetScript("OnDragStop", DebugFrame.StopMovingOrSizing)
+	DebugFrame:SetScript("OnShow", function() Debug:OnShow() end)
+	DebugFrame:SetScript("OnHide", function() Debug:OnHide() end)
 	local closeBtn = CreateFrame("Button", nil, DebugFrame, "UIPanelCloseButton")
 	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode		
-    DebugFrame:SetScript("OnShow", function() Debug:OnShow() end)
-	DebugFrame:SetScript("OnHide", function() Debug:OnHide() end)
+    DebugFrame.closeBtn = closeBtn
     Debug.frame = DebugFrame
 
     Debug.scrollFrame = _G.CreateFrame("ScrollFrame", nil, DebugFrame, "HybridScrollFrameTemplate")
@@ -283,7 +283,7 @@ function Debug:OnEnable()
 	exportFrame:EnableMouse(true) --don't allow clickthrough
 	exportFrame:SetMovable(false)
 	exportFrame:SetResizable(false)
-	exportFrame:SetFrameStrata("DIALOG")
+	exportFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 	exportFrame:ClearAllPoints()
 	exportFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 	exportFrame.TitleText:SetText(L.DebugExport)

@@ -242,30 +242,6 @@ function Data:FixDB()
 	BSYC:Print("|cFFFF9900"..L.FixDBComplete.."|r")
 end
 
-function Data:ResetFramePositions()
-	local moduleList = {
-		"Blacklist",
-		"Whitelist",
-		"Currency",
-		"Professions",
-		"Recipes",
-		"Gold",
-		"Profiles",
-		"Search",
-		"AdvancedSearch",
-		"SortOrder",
-		"Debug",
-	}
-
-	for i=1, #moduleList do
-		local mName = moduleList[i]
-		if BSYC:GetModule(mName, true) and BSYC:GetModule(mName).frame then
-			BSYC:GetModule(mName).frame:ClearAllPoints()
-			BSYC:GetModule(mName).frame:SetPoint("CENTER",UIParent,"CENTER",0,0)
-		end
-	end
-end
-
 function Data:LoadSlashCommand()
 	Debug(BSYC_DL.INFO, "LoadSlashCommand")
 
@@ -314,7 +290,7 @@ function Data:LoadSlashCommand()
 				self:FixDB()
 				return true
 			elseif cmd == L.SlashResetPOS then
-				self:ResetFramePositions()
+				BSYC:ResetFramePositions()
 				return true
 			elseif cmd == L.SlashResetDB then
 				StaticPopup_Show("BAGSYNC_RESETDATABASE")
@@ -373,14 +349,18 @@ function Data:LoadSlashCommand()
 end
 
 function Data:CacheLink(parseLink)
-	if not parseLink then return {} end
-	local itemObj = {}
-	local speciesID = BSYC:FakeIDToSpeciesID(parseLink)
+	--we want to store and aquire the cached data for the itemID by it's actual number and not a complex string
+	if not parseLink then return nil end
+	local shortID = tonumber(BSYC:GetShortItemID(parseLink))
+	if not shortID then return nil end
 
-	if not Data.__cache.items[parseLink] then
+	local itemObj = {}
+	local speciesID = BSYC:FakeIDToSpeciesID(shortID)
+
+	if not Data.__cache.items[shortID] then
 		if speciesID then
 			itemObj.itemQuality = 1
-			itemObj.itemLink = parseLink --store the FakeID
+			itemObj.itemLink = shortID --store the FakeID
 			itemObj.speciesID = speciesID
 
 			--https://wowpedia.fandom.com/wiki/API_C_PetJournal.GetPetInfoBySpeciesID
@@ -397,123 +377,38 @@ function Data:CacheLink(parseLink)
 			itemObj.obtainable,
 			itemObj.creatureDisplayID = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
 		else
-			--https://wowpedia.fandom.com/wiki/API_GetItemInfo
-			itemObj.itemName,
-			itemObj.itemLink,
-			itemObj.itemQuality,
-			itemObj.itemLevel,
-			itemObj.itemMinLevel,
-			itemObj.itemType,
-			itemObj.itemSubType,
-			itemObj.itemStackCount,
-			itemObj.itemEquipLoc,
-			itemObj.itemTexture,
-			itemObj.sellPrice,
-			itemObj.classID,
-			itemObj.subclassID,
-			itemObj.bindType,
-			itemObj.expacID,
-			itemObj.setID,
-			itemObj.isCraftingReagent = GetItemInfo("item:"..parseLink)
+			if C_Item.IsItemDataCachedByID(shortID) then
+				--https://wowpedia.fandom.com/wiki/API_GetItemInfo
+				itemObj.itemName,
+				itemObj.itemLink,
+				itemObj.itemQuality,
+				itemObj.itemLevel,
+				itemObj.itemMinLevel,
+				itemObj.itemType,
+				itemObj.itemSubType,
+				itemObj.itemStackCount,
+				itemObj.itemEquipLoc,
+				itemObj.itemTexture,
+				itemObj.sellPrice,
+				itemObj.classID,
+				itemObj.subclassID,
+				itemObj.bindType,
+				itemObj.expacID,
+				itemObj.setID,
+				itemObj.isCraftingReagent = GetItemInfo(shortID)
+			else
+				C_Item.RequestLoadItemDataByID(shortID)
+			end
 		end
 		--add to Cache if we have something to work with
-		if itemObj.speciesName or itemObj.itemName then
-			Data.__cache.items[parseLink] = itemObj
+		if itemObj.speciesName or (itemObj.itemName and itemObj.itemLink) then
+			Data.__cache.items[shortID] = itemObj
+			return itemObj
 		end
 	else
-		itemObj = Data.__cache.items[parseLink]
+		return Data.__cache.items[shortID]
 	end
-	return itemObj
-end
-
-function Data:PopulateItemCache(errorList, errorCount)
-	Debug(BSYC_DL.INFO, "PopulateItemCache", (errorList and #errorList) or errorList, errorCount)
-	local allowList = {
-		bag = true,
-		bank = true,
-		reagents = true,
-		equip = true,
-		mailbox = true,
-		void = true,
-		auction = true,
-	}
-	local tmpList = {}
-	local tmpError = {}
-
-	local function doItem(data)
-		for i=1, #data do
-			if data[i] then
-				local link = BSYC:Split(data[i], true)
-				if BSYC.options.enableShowUniqueItemsTotals and link then link = BSYC:GetShortItemID(link) end
-				if link and not tmpList[link] then
-					local cacheObj = Data:CacheLink(link)
-					local entry = cacheObj.speciesName or cacheObj.itemLink
-					if entry then
-						tmpList[link] = entry
-					else
-						table.insert(tmpError, link)
-					end
-				end
-			end
-		end
-	end
-
-	local function CacheCheck(unitObj, target)
-		if unitObj.data[target] then
-			if target == "bag" or target == "bank" or target == "reagents" then
-				for bagID, bagData in pairs(unitObj.data[target] or {}) do
-					doItem(bagData)
-				end
-			elseif target == "auction" then
-				doItem(unitObj.data[target].bag or {})
-
-			elseif target == "mailbox" then
-				doItem(unitObj.data[target] or {})
-
-			elseif target == "equip" or target == "void" then
-				doItem(unitObj.data[target] or {})
-			end
-		end
-		if target == "guild" then
-			for tabID, tabData in pairs(unitObj.data.tabs or {}) do
-				doItem(tabData)
-			end
-		end
-	end
-
-	--do initial grab before we do a timed loop
-	if not errorList then
-		for unitObj in Data:IterateUnits(true) do
-			if not unitObj.isGuild then
-				for k, v in pairs(allowList) do
-					CacheCheck(unitObj, k)
-				end
-			else
-				CacheCheck(unitObj, "guild")
-			end
-		end
-		--only loop again if we have anything to work with
-		if #tmpError > 0 then
-			C_Timer.After(0.5, function() Data:PopulateItemCache(tmpError, 0) end)
-		end
-		return
-	end
-
-	if #errorList > 0 and errorCount < 15 then
-		errorCount = errorCount + 1
-		for i=1, #errorList do
-			local errObj = Data:CacheLink(errorList[i])
-			local errChk = errObj.speciesName or errObj.itemLink
-			if errChk then
-				--remove it since we have a cached item
-				table.remove(errorList, i)
-			end
-		end
-		if #errorList > 0 then
-			--loop again if we still have something
-			C_Timer.After(0.5, function() Data:PopulateItemCache(errorList, errorCount) end)
-		end
-	end
+	return nil
 end
 
 function Data:CheckExpiredAuctions()

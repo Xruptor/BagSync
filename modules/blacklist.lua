@@ -31,14 +31,15 @@ function Blacklist:OnEnable()
     blacklistFrame:EnableMouse(true) --don't allow clickthrough
     blacklistFrame:SetMovable(true)
     blacklistFrame:SetResizable(false)
-    blacklistFrame:SetFrameStrata("HIGH")
+    blacklistFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 	blacklistFrame:RegisterForDrag("LeftButton")
 	blacklistFrame:SetClampedToScreen(true)
 	blacklistFrame:SetScript("OnDragStart", blacklistFrame.StartMoving)
 	blacklistFrame:SetScript("OnDragStop", blacklistFrame.StopMovingOrSizing)
 	local closeBtn = CreateFrame("Button", nil, blacklistFrame, "UIPanelCloseButton")
-	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode	
-    blacklistFrame:SetScript("OnShow", function() Blacklist:UpdateList() end)
+	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode
+	blacklistFrame.closeBtn = closeBtn
+    blacklistFrame:SetScript("OnShow", function() Blacklist:OnShow() end)
     Blacklist.frame = blacklistFrame
 
 	--guild dropdown
@@ -112,6 +113,11 @@ function Blacklist:OnEnable()
 	}
 
 	blacklistFrame:Hide()
+end
+
+function Blacklist:OnShow()
+	BSYC:SetFrameLevel(Blacklist)
+	Blacklist:UpdateList()
 end
 
 function Blacklist:UpdateList()

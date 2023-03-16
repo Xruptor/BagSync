@@ -365,6 +365,66 @@ function BSYC:SetDefaults(category, defaults)
 	end
 end
 
+function BSYC:ResetFramePositions()
+	local moduleList = {
+		"Blacklist",
+		"Whitelist",
+		"Currency",
+		"Professions",
+		"Recipes",
+		"Gold",
+		"Profiles",
+		"Search",
+		"AdvancedSearch",
+		"SortOrder",
+		"Debug",
+	}
+	for i=1, #moduleList do
+		local mName = moduleList[i]
+		if BSYC:GetModule(mName, true) and BSYC:GetModule(mName).frame then
+			BSYC:GetModule(mName).frame:ClearAllPoints()
+			BSYC:GetModule(mName).frame:SetPoint("CENTER",UIParent,"CENTER", 0, 0)
+		end
+	end
+end
+
+function BSYC:GetBSYC_FrameLevel()
+	local count = 0
+	local moduleList = {
+		"Blacklist",
+		"Whitelist",
+		"Currency",
+		"Professions",
+		"Recipes",
+		"Gold",
+		"Profiles",
+		"Search",
+		"AdvancedSearch",
+		"SortOrder",
+		"Debug",
+	}
+	for i=1, #moduleList do
+		local mName = moduleList[i]
+		if BSYC:GetModule(mName, true) and BSYC:GetModule(mName).frame and BSYC:GetModule(mName).frame:IsVisible() then
+			--10 is a nice healthy number to push the frame in levels, this compensates for frames within the frames that may have varying levels like scrollframes
+			count = count + 10
+		end
+	end
+	return count
+end
+
+function BSYC:SetFrameLevel(module)
+	if module and module.frame then
+		local bsycLVL = self:GetBSYC_FrameLevel()
+		--set the frame level higher than any visible ones to overlap it
+		module.frame:SetFrameLevel(bsycLVL or 1)
+		--check for the closeBtn otherwise it overlaps, because the Blizzard template sets the framelevel to 510 for UIPanelCloseButton
+		if module.frame.closeBtn then
+			module.frame.closeBtn:SetFrameLevel((bsycLVL or 1) + 1) --you have to increment it at least once to draw over our frame background
+		end
+	end
+end
+
 BSYC.timerFrame = CreateFrame("Frame")
 BSYC.timerFrame:Hide()
 BSYC.timers = {}
