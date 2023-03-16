@@ -89,7 +89,7 @@ function SortOrder:OnEnable()
 end
 
 function SortOrder:OnShow()
-	BSYC:SetFrameLevel(SortOrder)
+	BSYC:SetBSYC_FrameLevel(SortOrder)
 
 	local getStatus = (BSYC.options.sortByCustomOrder and ("|cFF99CC33"..L.ON.."|r")) or ( "|cFFDF2B2B"..L.OFF.."|r")
 	SortOrder.warningFrame.infoText1:SetText(L.DisplaySortOrderStatus:format(getStatus))

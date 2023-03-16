@@ -68,7 +68,7 @@ function Recipes:OnEnable()
 end
 
 function Recipes:OnShow()
-	BSYC:SetFrameLevel(Recipes)
+	BSYC:SetBSYC_FrameLevel(Recipes)
 end
 
 function Recipes:ViewRecipes(data)

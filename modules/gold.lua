@@ -69,7 +69,7 @@ function Gold:OnEnable()
 end
 
 function Gold:OnShow()
-	BSYC:SetFrameLevel(Gold)
+	BSYC:SetBSYC_FrameLevel(Gold)
 
 	Gold:CreateList()
     Gold:RefreshList()

@@ -68,7 +68,7 @@ function Professions:OnEnable()
 end
 
 function Professions:OnShow()
-	BSYC:SetFrameLevel(Professions)
+	BSYC:SetBSYC_FrameLevel(Professions)
 
 	Professions:CreateList()
     Professions:RefreshList()

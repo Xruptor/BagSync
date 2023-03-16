@@ -108,6 +108,9 @@ function Scanner:StartupScans()
 	--cleanup any unlearned tradeskills
 	self:CleanupProfessions()
 
+	--populate the cache
+	Data:PopulateItemCache()
+
 	BSYC.startupScanChk = true
 end
 
@@ -463,9 +466,7 @@ function Scanner:SendMail(mailTo, addMail)
 		for i=1, #mailItems do
 			tinsert(unitObj.mailbox, mailItems[i].link)
 			--check the cache and remove it to refresh that item
-			if Data.__cache and Data.__cache and Data.__cache.tooltip and Data.__cache.tooltip[mailItems[i].sendLink] then
-				Data.__cache.tooltip[mailItems[i].sendLink] = nil
-			end
+			Data:RemoveTooltipCacheLink(mailItems[i].sendLink)
 			Debug(BSYC_DL.FINE, "SendMail-Add", mailTo, mailRealm, mailItems[i].name, mailItems[i].itemID, mailItems[i].link)
 		end
 

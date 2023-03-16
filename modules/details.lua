@@ -73,7 +73,7 @@ function Details:OnEnable()
 end
 
 function Details:OnShow()
-	BSYC:SetFrameLevel(Details)
+	BSYC:SetBSYC_FrameLevel(Details)
 end
 
 function Details:ShowItem(itemID, text)

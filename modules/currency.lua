@@ -60,7 +60,7 @@ function Currency:OnEnable()
 end
 
 function Currency:OnShow()
-	BSYC:SetFrameLevel(Currency)
+	BSYC:SetBSYC_FrameLevel(Currency)
 
 	Currency:CreateList()
     Currency:RefreshList()

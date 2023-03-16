@@ -151,7 +151,8 @@ function Search:OnEnable()
 end
 
 function Search:OnShow()
-	BSYC:SetFrameLevel(Search)
+	BSYC:SetBSYC_FrameLevel(Search)
+	Data:PopulateItemCache() --do a bnackground caching of items
 
 	if not BSYC.options.alwaysShowAdvSearch then
 		C_Timer.After(0.5, function()
@@ -452,7 +453,7 @@ function Search:Item_OnEnter(btn)
 		if not btn.data.speciesID then
 			GameTooltip.isBSYCSearch = true
 			GameTooltip:SetOwner(btn, "ANCHOR_BOTTOMRIGHT")
-			GameTooltip:SetHyperlink(btn.data.link)
+			GameTooltip:SetHyperlink("item:"..btn.data.parseLink)
 			GameTooltip:Show()
 		else
 			--BattlePetToolTip_Show uses the previous GameTooltip owner positioning

@@ -124,7 +124,7 @@ function AdvancedSearch:OnEnable()
 end
 
 function AdvancedSearch:OnShow()
-	BSYC:SetFrameLevel(AdvancedSearch)
+	BSYC:SetBSYC_FrameLevel(AdvancedSearch)
 
 	--Hide some of the regular search frame stuff
 	Search.frame.SearchBox:Hide()

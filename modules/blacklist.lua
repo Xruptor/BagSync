@@ -116,7 +116,7 @@ function Blacklist:OnEnable()
 end
 
 function Blacklist:OnShow()
-	BSYC:SetFrameLevel(Blacklist)
+	BSYC:SetBSYC_FrameLevel(Blacklist)
 	Blacklist:UpdateList()
 end
 

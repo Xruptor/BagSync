@@ -378,6 +378,7 @@ function BSYC:ResetFramePositions()
 		"AdvancedSearch",
 		"SortOrder",
 		"Debug",
+		"Details",
 	}
 	for i=1, #moduleList do
 		local mName = moduleList[i]
@@ -402,18 +403,19 @@ function BSYC:GetBSYC_FrameLevel()
 		"AdvancedSearch",
 		"SortOrder",
 		"Debug",
+		"Details",
 	}
 	for i=1, #moduleList do
 		local mName = moduleList[i]
 		if BSYC:GetModule(mName, true) and BSYC:GetModule(mName).frame and BSYC:GetModule(mName).frame:IsVisible() then
-			--10 is a nice healthy number to push the frame in levels, this compensates for frames within the frames that may have varying levels like scrollframes
-			count = count + 10
+			--20 is a nice healthy number to push the frame in levels, this compensates for frames within the frames that may have varying levels like scrollframes
+			count = count + 20
 		end
 	end
 	return count
 end
 
-function BSYC:SetFrameLevel(module)
+function BSYC:SetBSYC_FrameLevel(module)
 	if module and module.frame then
 		local bsycLVL = self:GetBSYC_FrameLevel()
 		--set the frame level higher than any visible ones to overlap it
@@ -431,36 +433,45 @@ BSYC.timers = {}
 
 function BSYC:StartTimer(name, delay, selfObj, func, ...)
 	-- args (...) are passed a variable length arguments in an index table (https://www.lua.org/pil/5.2.html)
-	BSYC.timers[func] = {
+	table.insert(BSYC.timers, {
+		func = func,
 		object = selfObj,
 		delay = delay,
 		name = name,
 		argsCount = select("#", ...),
 		...
-	}
+	})
 	BSYC.timerFrame:Show() --show frame to start the OnUpdate
 end
 
-function BSYC:StopTimer(func)
-    if BSYC.timers[func] then BSYC.timers[func] = nil end
+function BSYC:StopTimer(name)
+	--iterate backwards since we are using table.remove
+	for i=#BSYC.timers, 1, -1 do
+		if BSYC.timers[i] and BSYC.timers[i].name == name then
+			table.remove(BSYC.timers, i)
+		end
+	end
 end
 
 BSYC.timerFrame:SetScript("OnUpdate", function(self, elapsed)
 	local chk = false
-	for k, v in pairs(BSYC.timers) do
-		v.delay = v.delay - elapsed
-        if v.delay < 0 then
-			Debug(BSYC_DL.SL3, "DoTimer", v.name, v.delay, v.object, k, v)
-			if type(k) == "string" and v.object then
-				v.object[k](v.object, unpack(v, 1, v.argsCount))
+	--iterate backwards since we are using table.remove
+	for i=#BSYC.timers, 1, -1 do
+		local tmr = BSYC.timers[i]
+		tmr.delay = tmr.delay - elapsed
+
+        if tmr.delay < 0 then
+			Debug(BSYC_DL.SL3, "DoTimer", tmr.name, tmr.delay, tmr.object, tmr.func)
+			if type(tmr.func) == "string" and tmr.object then
+				tmr.object[tmr.func](tmr.object, unpack(tmr, 1, tmr.argsCount))
 			else
-				k(unpack(v, 1, v.argsCount))
+				tmr.func(unpack(tmr, 1, tmr.argsCount))
 			end
-			BSYC.timers[k] = nil
+			table.remove(BSYC.timers, i)
         end
 		chk = true
 	end
-    if not chk then
+    if not BSYC.timers or #BSYC.timers < 1 or not chk then
         BSYC.timerFrame:Hide()
     end
 end)

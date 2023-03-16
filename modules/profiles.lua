@@ -87,7 +87,7 @@ function Profiles:OnEnable()
 end
 
 function Profiles:OnShow()
-	BSYC:SetFrameLevel(Profiles)
+	BSYC:SetBSYC_FrameLevel(Profiles)
 
 	Profiles:UpdateList()
 end

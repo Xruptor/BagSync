@@ -128,7 +128,7 @@ function Whitelist:OnEnable()
 end
 
 function Whitelist:OnShow()
-	BSYC:SetFrameLevel(Whitelist)
+	BSYC:SetBSYC_FrameLevel(Whitelist)
 
 	local getStatus = (BSYC.options.enableWhitelist and ("|cFF99CC33"..L.ON.."|r")) or ( "|cFFDF2B2B"..L.OFF.."|r")
 	Whitelist.warningFrame.infoText1:SetText(L.DisplayWhitelistStatus:format(getStatus))

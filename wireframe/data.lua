@@ -348,9 +348,17 @@ function Data:LoadSlashCommand()
 
 end
 
+function Data:RemoveTooltipCacheLink(link)
+	if Data.__cache.tooltip[link] then
+		Data.__cache.tooltip[link] = nil
+	end
+end
+
 function Data:CacheLink(parseLink)
 	--we want to store and aquire the cached data for the itemID by it's actual number and not a complex string
 	if not parseLink then return nil end
+	local origLink = parseLink
+
 	local shortID = tonumber(BSYC:GetShortItemID(parseLink))
 	if not shortID then return nil end
 
@@ -362,6 +370,7 @@ function Data:CacheLink(parseLink)
 			itemObj.itemQuality = 1
 			itemObj.itemLink = shortID --store the FakeID
 			itemObj.speciesID = speciesID
+			itemObj.parseLink = origLink
 
 			--https://wowpedia.fandom.com/wiki/API_C_PetJournal.GetPetInfoBySpeciesID
 			itemObj.speciesName,
@@ -378,6 +387,8 @@ function Data:CacheLink(parseLink)
 			itemObj.creatureDisplayID = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
 		else
 			if C_Item.IsItemDataCachedByID(shortID) then
+				itemObj.parseLink = origLink
+
 				--https://wowpedia.fandom.com/wiki/API_GetItemInfo
 				itemObj.itemName,
 				itemObj.itemLink,
@@ -409,6 +420,98 @@ function Data:CacheLink(parseLink)
 		return Data.__cache.items[shortID]
 	end
 	return nil
+end
+
+function Data:PopulateItemCache(errorList, errorCount)
+	if errorList and errorCount then
+		Debug(BSYC_DL.INFO, "PopulateItemCache", #errorList, errorCount)
+	end
+	local allowList = {
+		bag = true,
+		bank = true,
+		reagents = true,
+		equip = true,
+		mailbox = true,
+		void = true,
+		auction = true,
+	}
+	local tmpList = {}
+	local tmpError = {}
+
+	local function doItem(data)
+		for i=1, #data do
+			if data[i] then
+				local link = BSYC:Split(data[i], true)
+				if link and not tmpList[link] then
+					local cacheObj = Data:CacheLink(link)
+					if cacheObj then
+						tmpList[link] = cacheObj
+					else
+						table.insert(tmpError, link)
+					end
+				end
+			end
+		end
+	end
+
+	local function CacheCheck(unitObj, target)
+		if unitObj.data[target] then
+			if target == "bag" or target == "bank" or target == "reagents" then
+				for bagID, bagData in pairs(unitObj.data[target] or {}) do
+					doItem(bagData)
+				end
+			elseif target == "auction" then
+				doItem(unitObj.data[target].bag or {})
+
+			elseif target == "mailbox" then
+				doItem(unitObj.data[target] or {})
+
+			elseif target == "equip" or target == "void" then
+				doItem(unitObj.data[target] or {})
+			end
+		end
+		if target == "guild" then
+			for tabID, tabData in pairs(unitObj.data.tabs or {}) do
+				doItem(tabData)
+			end
+		end
+	end
+
+	--do initial grab before we do a timed loop
+	if not errorList then
+		for unitObj in Data:IterateUnits(true) do
+			if not unitObj.isGuild then
+				for k, v in pairs(allowList) do
+					CacheCheck(unitObj, k)
+				end
+			else
+				CacheCheck(unitObj, "guild")
+			end
+		end
+		--only loop again if we have anything to work with
+		if #tmpError > 0 then
+			BSYC:StartTimer("DataDumpCache", 0.3, Data, "PopulateItemCache", tmpError, 0)
+		end
+		return
+	end
+
+	if #errorList > 0 and errorCount < 20 then
+		errorCount = errorCount + 1
+
+		--iterate backwards since we are using table.remove
+		for i=#errorList, 1, -1 do
+			local errObj = Data:CacheLink(errorList[i])
+			if errObj then
+				--remove it since we have a cached item
+				table.remove(errorList, i)
+			end
+		end
+
+		if #errorList > 0 then
+			--loop again if we still have something
+			BSYC:StartTimer("DataDumpCache", 0.3, Data, "PopulateItemCache", errorList, errorCount)
+		end
+	end
 end
 
 function Data:CheckExpiredAuctions()
