@@ -13,8 +13,6 @@ local Data = BSYC:GetModule("Data")
 local Scanner = BSYC:GetModule("Scanner")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local LibQTip = LibStub("LibQTip-1.0")
-local SML = LibStub("LibSharedMedia-3.0")
-local SML_FONT = SML.MediaType and SML.MediaType.FONT or "font"
 
 --https://github.com/tomrus88/BlizzardInterfaceCode/blob/classic/Interface/GlueXML/CharacterCreate.lua
 RACE_ICON_TCOORDS = {
@@ -350,10 +348,7 @@ function Tooltip:AddItems(unitObj, itemID, target, countList)
 		elseif target == "auction" then
 			total = getTotal(unitObj.data[target].bag or {})
 
-		elseif target == "mailbox" then
-			total = getTotal(unitObj.data[target] or {})
-
-		elseif target == "equip" or target == "void" then
+		elseif target == "equip" or target == "void" or target == "mailbox" then
 			total = getTotal(unitObj.data[target] or {})
 		end
 	end
@@ -488,19 +483,9 @@ function Tooltip:QTipCheck(source, isBattlePet)
 					Tooltip:GetBottomChild()
 				end)
 			end
-
-			local flags = nil
-			if BSYC.options.extTT_FontMonochrome and BSYC.options.extTT_FontOutline ~= "NONE" then
-				flags = "MONOCHROME,"..BSYC.options.extTT_FontOutline
-			elseif BSYC.options.extTT_FontMonochrome then
-				flags = "MONOCHROME"
-			elseif BSYC.options.extTT_FontOutline ~= "NONE" then
-				flags = BSYC.options.extTT_FontOutline
+			if BSYC.__font and BSYC.__fontFlags then
+				Tooltip.qTip:SetFont(BSYC.__font)
 			end
-			local fontObject = CreateFont("BagSyncExtTT_Font")
-			fontObject:SetFont(SML:Fetch(SML_FONT, BSYC.options.extTT_Font), BSYC.options.extTT_FontSize, flags)
-			Tooltip.qTip:SetFont(fontObject)
-
 			Tooltip.qTip:Clear()
 			showQTip = true
 		end
@@ -913,8 +898,12 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--add expansion
 		if BSYC.IsRetail and BSYC.options.enableSourceExpansion and shortID then
 			desc = self:HexColor(BSYC.colors.expansion, L.TooltipExpansion)
-
-			local expacID = select(15, GetItemInfo(shortID))
+			local expacID
+			if Data.__cache.items[shortID] then
+				expacID = Data.__cache.items[shortID].expacID
+			else
+				expacID = select(15, GetItemInfo(shortID))
+			end
 			value = self:HexColor(BSYC.colors.second, (expacID and _G["EXPANSION_NAME"..expacID]) or "?")
 
 			if not addSeparator then
@@ -925,7 +914,15 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		end
 		--add item types
 		if BSYC.options.enableItemTypes and shortID then
-			local itemType, itemSubType, _, _, _, _, classID, subclassID = select(6, GetItemInfo(shortID))
+			local itemType, itemSubType, _, _, _, _, classID, subclassID
+			if Data.__cache.items[shortID] then
+				itemType = Data.__cache.items[shortID].itemType
+				itemSubType = Data.__cache.items[shortID].itemSubType
+				classID = Data.__cache.items[shortID].classID
+				subclassID = Data.__cache.items[shortID].subclassID
+			else
+				itemType, itemSubType, _, _, _, _, classID, subclassID = select(6, GetItemInfo(shortID))
+			end
 			local typeString = Tooltip:GetItemTypeString(itemType, itemSubType, classID, subclassID)
 
 			if typeString then
@@ -939,14 +936,6 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				table.insert(unitList, 1, { colorized=desc, tallyString=value} )
 			end
 		end
-	end
-
-	--add debug info
-	if BSYC.options.enableSourceDebugInfo and source then
-		desc = self:HexColor(BSYC.colors.debug, L.TooltipDebug)
-		value = self:HexColor(BSYC.colors.second, "1;"..source..";"..tostring(shortID or 0)..";"..tostring(isBattlePet or "false"))
-		table.insert(unitList, 1, { colorized=" ", tallyString=" "} )
-		table.insert(unitList, 1, { colorized=desc, tallyString=value} )
 	end
 
 	--add separator if enabled and only if we have something to work with
@@ -1037,13 +1026,6 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	if BSYC.options.enableTooltipItemID and currencyID then
 		local desc = self:HexColor(BSYC.colors.itemid, L.TooltipCurrencyID)
 		local value = self:HexColor(BSYC.colors.second, currencyID)
-		table.insert(displayList, {" ", " "})
-		table.insert(displayList, {desc, value})
-	end
-
-	if BSYC.options.enableSourceDebugInfo and source then
-		local desc = self:HexColor(BSYC.colors.debug, L.TooltipDebug)
-		local value = self:HexColor(BSYC.colors.second, "2;"..source..";"..tostring(currencyID or 0)..";"..tostring(currencyIcon or 0))
 		table.insert(displayList, {" ", " "})
 		table.insert(displayList, {desc, value})
 	end

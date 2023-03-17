@@ -291,7 +291,9 @@ L.TrackingModule_Currency = "Curency Tokens"
 L.WarningItemSearch = "WARNING: A total of [|cFFFFFFFF%s|r] items were not searched!\n\nBagSync is still waiting for the server/cache to respond.\n\nPress Search or Refresh button."
 L.WarningUpdatedDB = "You have been updated to latest database version!  You will need to rescan all your characters again!|r"
 L.WarningHeader = "Warning!"
-L.WarningBagSyncDBReset = "The BagSync Database has been reset to ensure compatibility with recent improvements."
+L.SavedSearch = "Saved Search"
+L.SavedSearch_Add = "Add Search"
+L.SavedSearch_Warn = "You must type something in the search box."
 ---------------------------------------
 --Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  Example: class:<name of class in your locale>
 --This includes name searches like name:<name in your locale>

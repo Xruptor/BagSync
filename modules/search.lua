@@ -152,7 +152,7 @@ end
 
 function Search:OnShow()
 	BSYC:SetBSYC_FrameLevel(Search)
-	Data:PopulateItemCache() --do a bnackground caching of items
+	Data:PopulateItemCache() --do a background caching of items
 
 	if not BSYC.options.alwaysShowAdvSearch then
 		C_Timer.After(0.5, function()
@@ -188,7 +188,7 @@ function Search:ShowAdvanced(visible)
 	end
 end
 
-function Search:CheckItems(searchStr, unitObj, target, checkList, onlyPlayer)
+function Search:CheckItems(searchStr, unitObj, target, checkList, atUserLoc)
 	local total = 0
 	if not unitObj or not target then return total end
 	searchStr = searchStr or ''
@@ -211,13 +211,13 @@ function Search:CheckItems(searchStr, unitObj, target, checkList, onlyPlayer)
 						local testMatch = ItemScout:Find(entry, searchStr, cacheObj)
 
 						--for debugging purposes only
-						if entry and (testMatch or onlyPlayer) then
+						if entry and (testMatch or atUserLoc) then
 							Debug(BSYC_DL.SL1, "FoundItem", searchStr, entry, unitObj.name, unitObj.realm)
 						end
 
 						checkList[link] = entry
 
-						if testMatch or onlyPlayer then
+						if testMatch or atUserLoc then
 							table.insert(Search.items, {
 								name = itemName,
 								parseLink = link,
@@ -246,10 +246,7 @@ function Search:CheckItems(searchStr, unitObj, target, checkList, onlyPlayer)
 		elseif target == "auction" then
 			total = parseItems(unitObj.data[target].bag or {})
 
-		elseif target == "mailbox" then
-			total = parseItems(unitObj.data[target] or {})
-
-		elseif target == "equip" or target == "void" then
+		elseif target == "equip" or target == "void" or target == "mailbox" then
 			total = parseItems(unitObj.data[target] or {})
 		end
 	end
@@ -338,9 +335,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch,
 		--lets not do TOO many refreshes
 		if not warnCount or warnCount <= 5 then
 			warnCount = (warnCount or 0) + 1
-			C_Timer.After(0.5, function()
-				Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch, warnCount)
-			end)
+			BSYC:StartTimer("SearchCacheChk", 0.5, Search, "DoSearch", searchStr, advUnitList, advAllowList, isAdvancedSearch, warnCount)
 			return
 		end
 	else

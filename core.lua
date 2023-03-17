@@ -10,6 +10,8 @@ local BAGSYNC, BSYC = ... --grab the addon namespace
 LibStub("AceAddon-3.0"):NewAddon(BSYC, "BagSync", "AceEvent-3.0", "AceConsole-3.0")
 _G[BAGSYNC] = BSYC --add it to the global frame space, otherwise you won't be able to call it
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
+local SML = LibStub("LibSharedMedia-3.0")
+local SML_FONT = SML.MediaType and SML.MediaType.FONT or "font"
 
 local WOW_PROJECT_ID = _G.WOW_PROJECT_ID
 local WOW_PROJECT_MAINLINE = _G.WOW_PROJECT_MAINLINE
@@ -32,7 +34,7 @@ BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 BSYC.IsWLK_C = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
 
 --increment forceDBReset to reset the ENTIRE db forcefully
-local forceDBReset = 2
+local forceDBReset = 3
 
 BSYC.FakePetCode = 10000000000
 BSYC_DL = {
@@ -69,6 +71,19 @@ StaticPopupDialogs["BAGSYNC_RESETDATABASE"] = {
 	timeout = 0,
 	whileDead = true,
 	hideOnEscape = true,
+}
+
+StaticPopupDialogs["BAGSYNC_RESETDB_INFO"] = {
+	text = L.DatabaseReset,
+	button1 = OKAY,
+	button2 = nil,
+	timeout = 0,
+	OnAccept = function()
+	end,
+	OnCancel = function()
+	end,
+	whileDead = 1,
+	hideOnEscape = 1,
 }
 
 function BSYC.DEBUG(level, sName, ...)
@@ -365,6 +380,24 @@ function BSYC:SetDefaults(category, defaults)
 	end
 end
 
+function BSYC:CreateFonts()
+	if not BSYC.options then return end
+
+	local flags = nil
+	if BSYC.options.extTT_FontMonochrome and BSYC.options.extTT_FontOutline ~= "NONE" then
+		flags = "MONOCHROME,"..BSYC.options.extTT_FontOutline
+	elseif BSYC.options.extTT_FontMonochrome then
+		flags = "MONOCHROME"
+	elseif BSYC.options.extTT_FontOutline ~= "NONE" then
+		flags = BSYC.options.extTT_FontOutline
+	end
+	BSYC.__fontFlags = flags
+
+	local fontObject = CreateFont("BagSyncExtTT_Font")
+	fontObject:SetFont(SML:Fetch(SML_FONT, BSYC.options.extTT_Font), BSYC.options.extTT_FontSize, flags)
+	BSYC.__font = fontObject
+end
+
 function BSYC:ResetFramePositions()
 	local moduleList = {
 		"Blacklist",
@@ -481,7 +514,10 @@ function BSYC:CheckDB_Reset()
 	if not BagSyncDB["forceDBReset§"] or BagSyncDB["forceDBReset§"] < forceDBReset then
 		BagSyncDB = { ["forceDBReset§"] = forceDBReset }
 		BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r")
-		C_Timer.After(6, function() BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r") end)
+		C_Timer.After(6, function()
+			StaticPopup_Show("BAGSYNC_RESETDB_INFO")
+			BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r")
+		end)
 		return
 	end
 end
@@ -491,6 +527,9 @@ function BSYC:OnEnable()
 
 	--initiate database
 	BagSyncDB = BagSyncDB or {}
+
+	--check for resets
+	BSYC:CheckDB_Reset()
 
 	--load the options and blacklist
 	BagSyncDB["options§"] = BagSyncDB["options§"] or {}

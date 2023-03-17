@@ -40,7 +40,6 @@ local optionsDefaults = {
 	enableCrossRealmsItems = true,
 	enableBNetAccountItems = false,
 	enableTooltipItemID = false,
-	enableSourceDebugInfo = false,
 	enableTooltipGreenCheck = true,
 	enableRealmIDTags = true,
 	enableRealmAstrickName = false,
@@ -139,6 +138,9 @@ function Data:OnEnable()
 	--setup the default colors
 	BSYC:SetDefaults("colors", colorsDefaults)
 	BSYC.colors = BSYC.options.colors
+
+	--create any bagsync fonts
+	BSYC:CreateFonts()
 
 	--do DB cleanup check by version number
 	if not BSYC.options.addonversion or BSYC.options.addonversion ~= ver then
@@ -463,10 +465,7 @@ function Data:PopulateItemCache(errorList, errorCount)
 			elseif target == "auction" then
 				doItem(unitObj.data[target].bag or {})
 
-			elseif target == "mailbox" then
-				doItem(unitObj.data[target] or {})
-
-			elseif target == "equip" or target == "void" then
+			elseif target == "equip" or target == "void" or target == "mailbox" then
 				doItem(unitObj.data[target] or {})
 			end
 		end

@@ -74,6 +74,10 @@ local function get(info)
 		return BSYC.options[c] or "NONE"
 	elseif c == "extTT_FontSize" then
 		return BSYC.options[c] or 12
+	elseif c == "extTT_Font" then
+		for i, v in next, SML:List(SML_FONT) do
+			if v == BSYC.options["extTT_Font"] then return i end
+		end
 	else
 		if BSYC.options[c] then --if this is nil then it will default to false
 			return BSYC.options[c]
@@ -103,6 +107,9 @@ local function set(info, arg1, arg2, arg3, arg4)
 	   if b2 then SetBinding(b2) end
 	   SetBinding(arg1, c)
 	   SaveBindings(GetCurrentBindingSet())
+	elseif c == "extTT_Font" then
+		local list = SML:List(SML_FONT)
+		BSYC.options[c] = list[arg1]
 	else
 		BSYC.options[c] = arg1
 
@@ -133,6 +140,11 @@ local function set(info, arg1, arg2, arg3, arg4)
 			BSYC.options["sortByCustomOrder"] = false
 		end
 
+	end
+
+	if p == "font" then
+		--recreate the fonts if we changed anything
+		BSYC:CreateFonts()
 	end
 
 	--reset tooltips just in case we changed any options related to it
@@ -274,15 +286,9 @@ options.args.main = {
 					order = 2,
 					values = SML:List(SML_FONT),
 					itemControl = "DDI-Font",
-					get = function()
-						for i, v in next, SML:List(SML_FONT) do
-							if v == BSYC.options["extTT_Font"] then return i end
-						end
-					end,
-					set = function(_, value)
-						local list = SML:List(SML_FONT)
-						BSYC.options["extTT_Font"] = list[value]
-					end,
+					get = get,
+					set = set,
+					arg = "font.extTT_Font",
 				},
 				outline = {
 					type = "select",
@@ -295,7 +301,7 @@ options.args.main = {
 					},
 					get = get,
 					set = set,
-					arg = "main.extTT_FontOutline",
+					arg = "font.extTT_FontOutline",
 				},
 				fontsize = {
 					type = "range",
@@ -308,7 +314,7 @@ options.args.main = {
 					width = 2,
 					get = get,
 					set = set,
-					arg = "main.extTT_FontSize",
+					arg = "font.extTT_FontSize",
 				},
 				monochrome = {
 					type = "toggle",
@@ -317,7 +323,7 @@ options.args.main = {
 					order = 5,
 					get = get,
 					set = set,
-					arg = "main.extTT_FontMonochrome",
+					arg = "font.extTT_FontMonochrome",
 				},
 			}
 		},
@@ -590,18 +596,8 @@ options.args.display = {
 					set = set,
 					arg = "display.enableTooltipItemID",
 				},
-				sourcedebuginfo = {
-					order = 2,
-					type = "toggle",
-					name = L.DisplaySourceDebugInfo,
-					width = "full",
-					descStyle = "hide",
-					get = get,
-					set = set,
-					arg = "display.enableSourceDebugInfo",
-				},
 				total = {
-					order = 3,
+					order = 2,
 					type = "toggle",
 					name = L.DisplayTotal,
 					width = "full",
@@ -611,7 +607,7 @@ options.args.display = {
 					arg = "display.showTotal",
 				},
 				guildgoldtooltip = {
-					order = 4,
+					order = 3,
 					type = "toggle",
 					name = L.DisplayGuildGoldInGoldWindow,
 					width = "full",
@@ -622,7 +618,7 @@ options.args.display = {
 					disabled = function() return not BSYC.tracking.guild end,
 				},
 				faction = {
-					order = 5,
+					order = 4,
 					type = "toggle",
 					name = L.DisplayFaction..factionSmall,
 					width = "full",
@@ -632,7 +628,7 @@ options.args.display = {
 					arg = "display.enableFaction",
 				},
 				guildcurrentcharacter = {
-					order = 6,
+					order = 5,
 					type = "toggle",
 					name = L.DisplayGuildCurrentCharacter,
 					width = "full",
@@ -644,7 +640,7 @@ options.args.display = {
 					hidden = function() return BSYC.IsClassic end,
 				},
 				guildbanktabs = {
-					order = 7,
+					order = 6,
 					type = "toggle",
 					name = L.DisplayGuildBankTabs,
 					width = "full",
@@ -656,7 +652,7 @@ options.args.display = {
 					hidden = function() return BSYC.IsClassic end,
 				},
 				whitelistonly = {
-					order = 8,
+					order = 7,
 					type = "toggle",
 					name = L.DisplayWhiteListOnly,
 					width = "full",
@@ -666,7 +662,7 @@ options.args.display = {
 					arg = "display.enableWhitelist",
 				},
 				whitelistbutton = {
-					order = 9,
+					order = 8,
 					type = "execute",
 					name = L.Whitelist,
 					func = function()
@@ -675,7 +671,7 @@ options.args.display = {
 					disabled = function() return not BSYC.options["enableWhitelist"] end,
 				},
 				sourceexpansion = {
-					order = 10,
+					order = 9,
 					type = "toggle",
 					name = L.DisplaySourceExpansion,
 					width = "full",
@@ -686,7 +682,7 @@ options.args.display = {
 					hidden = function() return not BSYC.IsRetail end,
 				},
 				itemtypes = {
-					order = 11,
+					order = 10,
 					type = "toggle",
 					name = L.DisplayItemTypes,
 					width = "full",

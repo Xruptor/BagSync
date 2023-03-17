@@ -128,10 +128,7 @@ function Details:CheckItems(usrData, unitObj, target, itemID, colorized)
 		elseif target == "auction" then
 			parseItems((unitObj.data[target] and unitObj.data[target].bag) or {})
 
-		elseif target == "mailbox" then
-			parseItems(unitObj.data[target] or {})
-
-		elseif target == "equip" or target == "void" then
+		elseif target == "equip" or target == "void" or target == "mailbox" then
 			parseItems(unitObj.data[target] or {})
 		end
 	end
