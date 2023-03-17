@@ -129,6 +129,7 @@ function AdvancedSearch:OnShow()
 	--Hide some of the regular search frame stuff
 	Search.frame.SearchBox:Hide()
 	Search.frame.RefreshButton:Hide()
+	Search.frame.PlusButton:Hide()
 	Search.frame.resetButton:Hide()
 
 	C_Timer.After(0.5, function()
@@ -147,6 +148,7 @@ function AdvancedSearch:OnHide()
 	--Show some of the regular search frame stuff
 	Search.frame.SearchBox:Show()
 	Search.frame.RefreshButton:Show()
+	Search.frame.PlusButton:Show()
 	Search.frame.resetButton:Show()
 end
 
@@ -365,6 +367,7 @@ function AdvancedSearch:Reset()
 	AdvancedSearch.frame.SearchBox:SetText("")
 	AdvancedSearch:SelectAll(true)
 	AdvancedSearch.frame.SearchBox.ClearButton:Hide()
+	AdvancedSearch.frame.SearchBox.SearchInfo:Show()
 	Search:Reset()
 end
 
@@ -420,4 +423,8 @@ end
 
 function AdvancedSearch:Item_OnLeave()
 	GameTooltip:Hide()
+end
+
+function AdvancedSearch:PlusClick()
+	Search.savedSearch:SetShown(not Search.savedSearch:IsShown())
 end

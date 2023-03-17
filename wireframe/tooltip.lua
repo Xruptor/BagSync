@@ -728,8 +728,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	}
 
 	--the true option for GetModule is to set it to silent and not return an error if not found
-	--only display advanced search results in the BagSync search window
-	local advUnitList = not skipTally and BSYC:GetModule("Search", true) and BSYC:GetModule("Search").advUnitList
+	--only display advanced search results in the BagSync search window, but make sure to show tooltips regularly outside of that by checking isBSYCSearch
+	local advUnitList = not skipTally and objTooltip.isBSYCSearch and BSYC.advUnitList
 
 	--DB TOOLTIP COUNTS
 	-------------------
@@ -740,7 +740,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--CACHE CHECK
 		--NOTE: This cache check is ONLY for units (guild, players) that isn't related to the current player.  Since that data doesn't really change we can cache those lines
 		--For the player however, we always want to grab the latest information.  So once it's grabbed we can do a small local cache for that using __lastTally
-		if not Data.__cache.tooltip[origLink] then
+		--Advanced Searches should always be processed and not stored in the cache
+		if advUnitList or not Data.__cache.tooltip[origLink] then
 
 			--allow advance search matches if found, no need to set to true as advUnitList will default to dumpAll if found
 			for unitObj in Data:IterateUnits(false, advUnitList) do
@@ -774,13 +775,14 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			end
 
 			--do not cache if we are viewing an advanced search list, otherwise it won't display everything normally
-			if not advUnitList then
+			--finally, only cache if we have something to work with
+			if not advUnitList and grandTotal > 0 then
 				--store it in the cache, copy the tables don't reference them
 				Data.__cache.tooltip[origLink] = Data.__cache.tooltip[origLink] or {}
 				Data.__cache.tooltip[origLink].unitList = CopyTable(unitList)
 				Data.__cache.tooltip[origLink].grandTotal = grandTotal
 			end
-		else
+		elseif Data.__cache.tooltip[origLink] then
 			--use the cached results from previous DB searches, copy the table don't reference it
 			unitList = CopyTable(Data.__cache.tooltip[origLink].unitList)
 			grandTotal = Data.__cache.tooltip[origLink].grandTotal

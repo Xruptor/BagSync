@@ -221,6 +221,63 @@
 		</Scripts>
     </Frame>
 
+    <Frame name="BagSyncSavedListTemplate" virtual="true">
+        <Size x="0" y="22"/>
+        <Layers>
+            <Layer level="BACKGROUND">
+                <Texture parentKey="Background" setAllPoints="true">
+                    <Color r="0" g="0" b="0" a="0"/>
+                </Texture>
+            </Layer>
+            <Layer level="ARTWORK">
+                <FontString parentKey="Text" inherits="GameFontNormal" justifyH="LEFT">
+                    <Anchors>
+                        <Anchor point="LEFT" x="8" y="0"/>
+						<Anchor point="RIGHT" relativeKey="$parent" x="-8" y="0"/>
+                    </Anchors>
+                </FontString>
+            </Layer>
+            <Layer level="OVERLAY">
+                <Texture parentKey="HeaderHighlight" setAllPoints="true" alphaMode="ADD" file="Interface\QuestFrame\UI-QuestTitleHighlight" alpha="0">
+                    <Color r="0.8" g="0.7" b="0" a="1"/>
+                </Texture>
+                <Texture parentKey="DetailsHighlight" setAllPoints="true" alphaMode="ADD" file="Interface\Tooltips\UI-Tooltip-Background" alpha="0">
+                    <Color r="0.4" g="0.2" b="0.5" a="0.2"/>
+                </Texture>
+            </Layer>
+            <Layer level="HIGHLIGHT">
+                <Texture parentKey="Highlight" setAllPoints="true" alphaMode="ADD">
+                    <Color r="0" g="1" b="0" a="0.2"/>
+                </Texture>
+            </Layer>
+        </Layers>
+        <Frames>
+            <Button parentKey="DeleteButton">
+                <Size x="16" y="16"/>
+                <Anchors>
+                    <Anchor point="RIGHT" x="-4" y="0"/>
+                </Anchors>
+                <NormalTexture setAllPoints="true" atlas="transmog-icon-remove"/>
+                <HighlightTexture setAllPoints="true" atlas="transmog-icon-remove" alphaMode="ADD"/>
+                <Scripts>
+                    <OnClick>
+						if self:GetParent().parentHandler and self:GetParent().parentHandler.SavedSearch_Delete then
+							self:GetParent().parentHandler:SavedSearch_Delete(self);
+						end
+                    </OnClick>
+                </Scripts>
+            </Button>
+        </Frames>
+		<Scripts>
+			<OnClick>
+				<!-- self:<scrollframe><parentObject> -->
+				if self.parentHandler and self.parentHandler.SavedSearch_Item_OnClick then
+					self.parentHandler:SavedSearch_Item_OnClick(self);
+				end
+			</OnClick>
+		</Scripts>
+    </Frame>
+
 <!--
 *******************************************************************************
 *******************************************************************************
@@ -324,7 +381,7 @@
 				</TextInsets>
 				<Anchors>
 					<!-- This is important as it sets the size of the SearchBox to dimentions it can fit on the frame-->
-					<Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="TOPRIGHT" x="-118" y="-30"/>
+					<Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="TOPRIGHT" x="-135" y="-30"/>
 					<Anchor point="RIGHT" relativeKey="$parent" relativePoint="LEFT" x="20" y="0"/>
 				</Anchors>
 				<Layers>
@@ -419,6 +476,19 @@
 					</OnTextChanged>
 				</Scripts>
 			</EditBox>
+            <Button parentKey="PlusButton" inherits="UIPanelButtonTemplate" text="+">
+                <Size x="20" y="20"/>
+                <Anchors>
+                    <Anchor point="TOPRIGHT" x="-113" y="-32"/>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+						if self:GetParent().PlusClick then
+							self:GetParent():PlusClick();
+						end
+                    </OnClick>
+                </Scripts>
+            </Button>
             <Button parentKey="RefreshButton" inherits="UIPanelButtonTemplate" text="REFRESH">
                 <Size x="80" y="20"/>
                 <Anchors>

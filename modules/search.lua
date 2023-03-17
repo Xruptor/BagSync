@@ -92,7 +92,7 @@ function Search:OnEnable()
 	warningFrame:SetResizable(false)
     warningFrame:SetFrameStrata("HIGH")
 	warningFrame:ClearAllPoints()
-	warningFrame:SetPoint("TOPLEFT", searchFrame, "TOPRIGHT", 5, 0)
+	warningFrame:SetPoint("BOTTOMLEFT", searchFrame, "BOTTOMRIGHT", 5, 0)
 	warningFrame.TitleText:SetText(L.WarningHeader)
 	warningFrame.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
 	warningFrame.TitleText:SetTextColor(1, 1, 1)
@@ -123,7 +123,7 @@ function Search:OnEnable()
 	helpFrame:SetResizable(false)
     helpFrame:SetFrameStrata("HIGH")
 	helpFrame:ClearAllPoints()
-	helpFrame:SetPoint("TOPLEFT", searchFrame, "TOPRIGHT", 5, 0)
+	helpFrame:SetPoint("BOTTOMLEFT", searchFrame, "BOTTOMRIGHT", 5, 0)
 	helpFrame.TitleText:SetText(L.SearchHelpHeader)
 	helpFrame.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
 	helpFrame.TitleText:SetTextColor(1, 1, 1)
@@ -146,6 +146,45 @@ function Search:OnEnable()
 	helpFrame.EditBox:SetTextColor(1, 1, 1) --set default to white
 	helpFrame.ScrollFrame:EnableMouse(false)
 	Search.helpFrame = helpFrame
+
+	--Saved Search Frame
+	local savedSearch = _G.CreateFrame("Frame", nil, searchFrame, "BagSyncInfoFrameTemplate")
+	savedSearch:Hide()
+	savedSearch:SetHeight(200)
+	savedSearch:SetWidth(400)
+	savedSearch:SetBackdropColor(0, 0, 0, 0.75)
+    savedSearch:EnableMouse(true) --don't allow clickthrough
+    savedSearch:SetMovable(false)
+	savedSearch:SetResizable(false)
+    savedSearch:SetFrameStrata("HIGH")
+	savedSearch:ClearAllPoints()
+	savedSearch:SetPoint("TOPLEFT", searchFrame, "TOPRIGHT", 5, 0)
+	savedSearch.TitleText:SetText(L.SavedSearch)
+	savedSearch.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
+	savedSearch.TitleText:SetTextColor(1, 1, 1)
+	savedSearch:SetScript("OnShow", function() Search:SavedSearch_UpdateList() end)
+	Search.savedSearch = savedSearch
+    savedSearch.scrollFrame = _G.CreateFrame("ScrollFrame", nil, savedSearch, "HybridScrollFrameTemplate")
+    savedSearch.scrollFrame:SetWidth(357)
+    savedSearch.scrollFrame:SetPoint("TOPLEFT", savedSearch, "TOPLEFT", 13, -32)
+    --set ScrollFrame height by altering the distance from the bottom of the frame
+    savedSearch.scrollFrame:SetPoint("BOTTOMLEFT", savedSearch, "BOTTOMLEFT", -25, 36)
+    savedSearch.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", savedSearch.scrollFrame, "HybridScrollBarTemplate")
+    savedSearch.scrollFrame.scrollBar:SetPoint("TOPLEFT", savedSearch.scrollFrame, "TOPRIGHT", 1, -16)
+    savedSearch.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", savedSearch.scrollFrame, "BOTTOMRIGHT", 1, 12)
+	--initiate the scrollFrame
+    --the items we will work with
+    savedSearch.items = {}
+	savedSearch.scrollFrame.update = function() Search:SavedSearch_RefreshList(); end
+    HybridScrollFrame_SetDoNotHideScrollBar(savedSearch.scrollFrame, true)
+	HybridScrollFrame_CreateButtons(savedSearch.scrollFrame, "BagSyncSavedListTemplate")
+	--Add Search Button
+	savedSearch.addSavedBtn = _G.CreateFrame("Button", nil, savedSearch, "UIPanelButtonTemplate")
+	savedSearch.addSavedBtn:SetText(L.SavedSearch_Add)
+	savedSearch.addSavedBtn:SetHeight(20)
+	savedSearch.addSavedBtn:SetWidth(savedSearch.addSavedBtn:GetTextWidth() + 30)
+	savedSearch.addSavedBtn:SetPoint("BOTTOM", savedSearch, "BOTTOM", 0, 5)
+	savedSearch.addSavedBtn:SetScript("OnClick", function() Search:SavedSearch_AddItem() end)
 
 	searchFrame:Hide() --important
 end
@@ -272,7 +311,10 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch,
 	local warnTotal = 0
 	local atUserLoc
 
-	Search.advUnitList = advUnitList
+	--make sure to always be using updated information, especially if processing items from Advanced Frame
+	BSYC:GetModule("Tooltip"):ResetLastLink()
+
+	BSYC.advUnitList = advUnitList
 
 	--items aren't counted into this array, it's just for allowing the search to pass through
 	local allowList = {
@@ -329,6 +371,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch,
 
 	--show warning window if the server hasn't queried all the items yet
 	if warnTotal > 0 then
+		Search.helpFrame:Hide()
 		Search.warningFrame.infoText1:SetText(L.WarningItemSearch:format(warnTotal))
 		Search.warningFrame:Show()
 
@@ -394,7 +437,8 @@ end
 function Search:Reset()
 	Search.frame.SearchBox:SetText("")
 	Search.frame.SearchBox.ClearButton:Hide()
-	Search.advUnitList = nil
+	Search.frame.SearchBox.SearchInfo:Show()
+	BSYC.advUnitList = nil
 	Search.items = {}
 	Search:RefreshList()
 end
@@ -487,4 +531,109 @@ end
 
 function Search:ItemDetails_OnLeave()
 	Search:Item_OnLeave()
+end
+
+function Search:PlusClick()
+	Search.savedSearch:SetShown(not Search.savedSearch:IsShown())
+end
+
+-----------------------------
+--- SAVED SEARCH
+-----------------------------
+
+function Search:SavedSearch_UpdateList()
+	Search:SavedSearch_CreateList()
+	Search:SavedSearch_RefreshList()
+end
+
+function Search:SavedSearch_CreateList()
+	Search.savedSearch.items = {}
+
+	--loop through our blacklist
+	for i=1, #BSYC.db.savedsearch do
+		table.insert(Search.savedSearch.items, {
+			key = i,
+			value = BSYC.db.savedsearch[i]
+		})
+	end
+end
+
+function Search:SavedSearch_RefreshList()
+	local items = Search.savedSearch.items
+    local buttons = HybridScrollFrame_GetButtons(Search.savedSearch.scrollFrame)
+    local offset = HybridScrollFrame_GetOffset(Search.savedSearch.scrollFrame)
+	if not buttons then return end
+
+    for buttonIndex = 1, #buttons do
+        local button = buttons[buttonIndex]
+		button.parentHandler = Search
+
+        local itemIndex = buttonIndex + offset
+
+        if itemIndex <= #items then
+            local item = items[itemIndex]
+
+            button:SetID(itemIndex)
+			button.data = item
+			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "")
+            button:SetWidth(Search.savedSearch.scrollFrame.scrollChild:GetWidth())
+
+			button.Text:SetJustifyH("LEFT")
+			button.Text:SetTextColor(1, 1, 1)
+			button.Text:SetText(item.value or "")
+			button.HeaderHighlight:SetAlpha(0)
+
+            button:Show()
+        else
+            button:Hide()
+        end
+    end
+
+    local buttonHeight = Search.savedSearch.scrollFrame.buttonHeight
+    local totalHeight = #items * buttonHeight
+    local shownHeight = #buttons * buttonHeight
+
+    HybridScrollFrame_Update(Search.savedSearch.scrollFrame, totalHeight, shownHeight)
+end
+
+function Search:SavedSearch_AddItem()
+	local storeText = ""
+	local frame = Search.frame
+
+	if BSYC:GetModule("AdvancedSearch", true) and BSYC:GetModule("AdvancedSearch", true).frame:IsVisible() then
+		frame = BSYC:GetModule("AdvancedSearch", true).frame
+	end
+	storeText = frame.SearchBox:GetText()
+	if not storeText or string.len(storeText) < 1 then
+		BSYC:Print(L.SavedSearch_Warn)
+		return
+	end
+	--store it and update the view list
+	table.insert(BSYC.db.savedsearch, storeText)
+	Search:SavedSearch_UpdateList()
+end
+
+function Search:SavedSearch_Delete(btn)
+	local item = btn:GetParent()
+	table.remove(BSYC.db.savedsearch, item.data.key)
+	Search:SavedSearch_UpdateList()
+end
+
+function Search:SavedSearch_Item_OnClick(btn)
+	local frame = Search.frame
+	local isAdvanced = false
+
+	if BSYC:GetModule("AdvancedSearch", true) and BSYC:GetModule("AdvancedSearch", true).frame:IsVisible() then
+		frame = BSYC:GetModule("AdvancedSearch", true).frame
+		isAdvanced = true
+	end
+
+	frame.SearchBox.SearchInfo:Hide()
+	frame.SearchBox:SetText(btn.data.value)
+
+	if isAdvanced then
+		BSYC:GetModule("AdvancedSearch", true):DoSearch()
+	else
+		Search:DoSearch()
+	end
 end
