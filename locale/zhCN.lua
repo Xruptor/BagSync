@@ -265,7 +265,7 @@ L.ConfigTrackingHeader = "追踪BagSync存储数据库位置的设置。"
 L.ConfigTrackingCaution = "警告"
 L.ConfigTrackingModules = "模块"
 L.ConfigTrackingInfo = [[
-|cFFDF2B2注意|r: 禁用模块会导致BagSync停止追踪并将模块存储到数据库中。
+|cFFDF2B2B注意|r: 禁用模块会导致BagSync停止追踪并将模块存储到数据库中。
 禁用的模块不会在任何BagSync窗口，斜杠命令，鼠标提示或小地图按钮中显示。
 ]]
 L.TrackingModule_Bag = "背包"
