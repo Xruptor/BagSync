@@ -2,7 +2,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhTW")
 if not L then return end
 
 --  zhTW client (三皈依-暗影之月@TW補齊)
---  Last update: 2023/03/13
+--  Last update: 2023/03/18
 
 L.Yes = "是"
 L.No = "否"
@@ -211,7 +211,7 @@ L.DisplayRealmNames = "顯示伺服器名字"
 L.DisplayRealmAstrick = "顯示 [*] 而不是顯示 |cffff7d0a[XR]|r 和 |cff3587ff[BNet]|r"
 L.DisplayShortRealmName = "顯示短位名字 |cffff7d0a[XR]|r 和 |cff3587ff[BNet]|r"
 L.DisplayFactionIcons = "顯示陣營圖案"
-L.DisplayGuildBankTabs = "Display guild bank tabs [1,2,3, etc...] in tooltip."
+L.DisplayGuildBankTabs = "在工具提示中顯示公會銀行標籤 [1,2,3, 等等...]。"
 L.DisplayRaceIcons = "在工具提示中顯示角色種族圖示。"
 L.DisplaySingleCharLocs = "在儲存位置顯示一個單獨角色。"
 L.DisplayIconLocs = "在儲存位置顯示一個圖示。"
@@ -250,10 +250,42 @@ L.ConfigColorHeader = "BagSyn提示訊息的顏色設置"
 L.ConfigMain = "主設置"
 L.ConfigMainHeader = "BagSync的主設置"
 L.ConfigSearch = "搜尋"
+L.ConfigKeybindings = "按鍵綁定"
+L.ConfigKeybindingsHeader = "BagSync功能的按鍵綁定。"
+L.ConfigExternalTooltip = "工具提示外表"								
 L.ConfigSearchHeader = "搜尋視窗的設定"
+L.ConfigFont = "字體"
+L.ConfigFontSize = "字體大小"
+L.ConfigFontOutline = "描邊"
+L.ConfigFontOutline_NONE = "無"
+L.ConfigFontOutline_OUTLINE = "描邊"
+L.ConfigFontOutline_THICKOUTLINE = "粗描邊"
+L.ConfigFontMonochrome = "無鋸齒改善"
+L.ConfigTracking = "追蹤"
+L.ConfigTrackingHeader = "所有已儲存的BagSync資料庫位置的追蹤設定。"
+L.ConfigTrackingCaution = "警告"
+L.ConfigTrackingModules = "模組"
+L.ConfigTrackingInfo = [[
+|cFFDF2B2B注意|r: 禁用模組會導致BagSync停止追踪並將模組存儲到資料庫中。
+
+禁用的模組不會在任何BagSync視窗，指令，工具提示或小地圖按鈕中顯示。
+]]
+L.TrackingModule_Bag = "背包"
+L.TrackingModule_Bank = "銀行"
+L.TrackingModule_Reagents = "材料銀行"
+L.TrackingModule_Equip = "已裝備物品"
+L.TrackingModule_Mailbox = "郵箱"
+L.TrackingModule_Void = "虛空倉庫"
+L.TrackingModule_Auction = "拍賣場"
+L.TrackingModule_Guild = "公會銀行"
+L.TrackingModule_Professions = "專業 / 交易技能"
+L.TrackingModule_Currency = "兌換通貨"
 L.WarningItemSearch = "警告：共有 [|cFFFFFFFF%s|r] 個物品未被搜索！\n\nBagSync 仍在等待伺服器/數據庫響應\n\n按“搜尋”或“更新”按鈕"
 L.WarningUpdatedDB = "您已更新到最新的版本!您將需要再次重新掃描所有角色!|r "
 L.WarningHeader = "警告!"
+L.SavedSearch = "搜尋已儲存"
+L.SavedSearch_Add = "加入搜尋"
+L.SavedSearch_Warn = "你必須在搜尋框中輸入某些東西。"
 ---------------------------------------
 --Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  範例: class:<name of class in your locale>
 --This includes name searches like name:<name in your locale>
