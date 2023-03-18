@@ -555,7 +555,7 @@ function Scanner:SaveAuctionHouse()
 end
 
 function Scanner:SaveCurrency(showDebug)
-	if not C_CurrencyInfo then return end
+	if not BSYC:CanDoCurrency() then return end
 	if Unit:InCombatLockdown() then return end
 	if showDebug then Debug(BSYC_DL.INFO, "SaveCurrency", BSYC.tracking.currency) end --this function gets spammed like crazy sometimes, so only show debug when requested
 	if not BSYC.tracking.currency then return end

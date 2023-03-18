@@ -270,7 +270,7 @@ function Data:LoadSlashCommand()
 			elseif cmd == L.SlashGold or cmd == L.SlashMoney then
 				BSYC:GetModule("Gold").frame:Show()
 				return true
-			elseif cmd == L.SlashCurrency and BSYC.IsRetail and BSYC.tracking.currency then
+			elseif cmd == L.SlashCurrency and BSYC:CanDoCurrency() and BSYC.tracking.currency then
 				BSYC:GetModule("Currency").frame:Show()
 				return true
 			elseif cmd == L.SlashProfiles then
@@ -326,13 +326,11 @@ function Data:LoadSlashCommand()
 		BSYC:Print("/bgs "..L.SlashSearch.." - "..L.HelpSearchWindow)
 		BSYC:Print("/bgs "..L.SlashGold.." - "..L.HelpGoldTooltip)
 		BSYC:Print("/bgs "..L.SlashProfiles.." - "..L.HelpProfilesWindow)
-		if BSYC.IsRetail then
-			if BSYC.tracking.professions then
-				BSYC:Print("/bgs "..L.SlashProfessions.." - "..L.HelpProfessionsWindow)
-			end
-			if BSYC.tracking.currency then
-				BSYC:Print("/bgs "..L.SlashCurrency.." - "..L.HelpCurrencyWindow)
-			end
+		if BSYC.IsRetail and BSYC.tracking.professions then
+			BSYC:Print("/bgs "..L.SlashProfessions.." - "..L.HelpProfessionsWindow)
+		end
+		if BSYC:CanDoCurrency() and BSYC.tracking.currency then
+			BSYC:Print("/bgs "..L.SlashCurrency.." - "..L.HelpCurrencyWindow)
 		end
 		BSYC:Print("/bgs "..L.SlashBlacklist.." - "..L.HelpBlacklistWindow)
 		BSYC:Print("/bgs "..L.SlashWhitelist.." - "..L.HelpWhitelistWindow)

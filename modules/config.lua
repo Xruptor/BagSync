@@ -385,7 +385,7 @@ options.args.keybindings = {
 			get = get,
 			set = set,
 			arg = "keybind.BAGSYNCCURRENCY",
-			hidden = function() return not BSYC.IsRetail end,
+			hidden = function() return not BSYC:CanDoCurrency() end,
 		},
 		keybindprofessions = {
 			order = 6,
@@ -518,7 +518,7 @@ options.args.tracking = {
 					get = get,
 					set = set,
 					arg = "tracking.guild",
-					hidden = function() return BSYC.IsClassic end,
+					hidden = function() return not CanGuildBankRepair end,
 				},
 				module_professions = {
 					order = 9,
@@ -529,6 +529,7 @@ options.args.tracking = {
 					get = get,
 					set = set,
 					arg = "tracking.professions",
+					hidden = function() return not BSYC.IsRetail end,
 				},
 				module_currency = {
 					order = 10,
@@ -539,6 +540,7 @@ options.args.tracking = {
 					get = get,
 					set = set,
 					arg = "tracking.currency",
+					hidden = function() return not BSYC:CanDoCurrency() end,
 				},
 			}
 		},
@@ -556,6 +558,7 @@ options.args.display = {
 			type = "group",
 			name = L.DisplayTooltipStorage,
 			guiInline = true,
+			hidden = function() return not BSYC.IsRetail end,
 			args = {
 				accuratebattlepets = {
 					order = 1,
@@ -566,7 +569,6 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.enableAccurateBattlePets",
-					hidden = function() return not BSYC.IsRetail end,
 				},
 			}
 		},
@@ -637,7 +639,7 @@ options.args.display = {
 					set = set,
 					arg = "display.showGuildCurrentCharacter",
 					disabled = function() return not BSYC.tracking.guild end,
-					hidden = function() return BSYC.IsClassic end,
+					hidden = function() return not CanGuildBankRepair end,
 				},
 				guildbanktabs = {
 					order = 6,
@@ -649,7 +651,7 @@ options.args.display = {
 					set = set,
 					arg = "display.showGuildTabs",
 					disabled = function() return not BSYC.tracking.guild end,
-					hidden = function() return BSYC.IsClassic end,
+					hidden = function() return not CanGuildBankRepair end,
 				},
 				whitelistonly = {
 					order = 7,

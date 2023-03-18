@@ -71,7 +71,7 @@ function Events:OnEnable()
 	end
 
 	--only do currency checks if the server even supports it
-	if C_CurrencyInfo then
+	if BSYC:CanDoCurrency() then
 		self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
 	end
 

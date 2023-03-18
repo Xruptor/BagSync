@@ -43,17 +43,15 @@ function DataBroker:BuildMinimapDropdown()
 			addButton(level, L.Search, nil, 1, nil, 'search', function(frame, ...)
 				BSYC:GetModule("Search").frame:Show()
 			end)
-			if BSYC.IsRetail then
-				if BSYC.tracking.currency then
-					addButton(level, L.Currency, nil, 1, nil, 'currency', function(frame, ...)
-						BSYC:GetModule("Currency").frame:Show()
-					end)
-				end
-				if BSYC.tracking.professions then
-					addButton(level, L.Professions, nil, 1, nil, 'professions', function(frame, ...)
-						BSYC:GetModule("Professions").frame:Show()
-					end)
-				end
+			if BSYC:CanDoCurrency() and BSYC.tracking.currency then
+				addButton(level, L.Currency, nil, 1, nil, 'currency', function(frame, ...)
+					BSYC:GetModule("Currency").frame:Show()
+				end)
+			end
+			if BSYC.IsRetail and BSYC.tracking.professions then
+				addButton(level, L.Professions, nil, 1, nil, 'professions', function(frame, ...)
+					BSYC:GetModule("Professions").frame:Show()
+				end)
 			end
 			addButton(level, L.Blacklist, nil, 1, nil, 'blacklist', function(frame, ...)
 				BSYC:GetModule("Blacklist").frame:Show()

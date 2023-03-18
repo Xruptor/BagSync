@@ -1124,7 +1124,9 @@ function Tooltip:HookTooltip(objTooltip)
 				local currencyID = BSYC:GetShortCurrencyID(link)
 
 				if currencyID then
-					local currencyData = C_CurrencyInfo.GetCurrencyInfo(currencyID)
+					--WOTLK still uses the old API functions, check for it
+					local xGetCurrencyInfo = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo) or GetCurrencyInfo
+					local currencyData = xGetCurrencyInfo(currencyID)
 					if currencyData then
 						Tooltip:CurrencyTooltip(tooltip, currencyData.name, currencyData.iconFileID, currencyID, "OnTooltipSetCurrency")
 					end

@@ -398,6 +398,16 @@ function BSYC:CreateFonts()
 	BSYC.__font = fontObject
 end
 
+function BSYC:CanDoCurrency()
+	--Classic servers do have some implementations of these features installed, so we have to do checks
+	--WOTLK has only a partial implementation of the C_CurrencyInfo API, so we have to check for that as well
+	if C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListInfo then return true end
+	if GetCurrencyListInfo then return true end
+	if C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListLink then return true end
+	if GetCurrencyListLink then return true end
+	return false
+end
+
 function BSYC:ResetFramePositions()
 	local moduleList = {
 		"Blacklist",
