@@ -3,7 +3,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhCN")
 if not L then return end
 
 --  zhCN client (NGA-[男爵凯恩]补齐)
---  Last update: 20223/3/12
+--  Last update: 20223/3/18
 
 L.Yes = "Yes"
 L.No = "No"
@@ -66,7 +66,7 @@ L.AdvancedLocationInformation = "* 选择所有因为无默认"
 L.Units = "名字:"
 L.Locations = "位置:"
 L.Profiles = "信息"
-L.HelpSortOrder = "自定义排序"
+L.SortOrder = "排序"
 L.Professions = "专业"
 L.Currency = "货币"
 L.Blacklist = "黑名单"
@@ -120,7 +120,7 @@ L.KeybindBlacklist = "显示黑名单窗口。"
 L.KeybindWhitelist = "显示白名单窗口。"
 L.KeybindCurrency = "显示货币窗口。"
 L.KeybindGold = "显示金币窗口。"
-L.KeybindProfessions = "显示职业窗口。"
+L.KeybindProfessions = "显示专业窗口。"
 L.KeybindProfiles = "显示配置文件。"
 L.KeybindSearch = "显示搜索窗口。"
 L.ObsoleteWarning = "\n\n注意：过时的物品将继续显示为缺失。 要修复此问题,请再次扫描您的角色以删除过时的物品。\n（背包、银行、虚空银行等 ...)"
@@ -249,10 +249,41 @@ L.ConfigColorHeader = "BagSync 提示信息的颜色设置。"
 L.ConfigMain = "主设置"
 L.ConfigMainHeader = "BagSync 的主设置。"
 L.ConfigSearch = "搜索"
+L.ConfigKeybindings = "快捷键设置"
+L.ConfigKeybindingsHeader = "BagSync 各模块快捷键设置"
+L.ConfigExternalTooltip = "外部鼠标提示"
 L.ConfigSearchHeader = "搜索窗口的设置"
+L.ConfigFont = "字体"
+L.ConfigFontSize = "字体大小"
+L.ConfigFontOutline = "轮廓"
+L.ConfigFontOutline_NONE = "无"
+L.ConfigFontOutline_OUTLINE = "细"
+L.ConfigFontOutline_THICKOUTLINE = "粗"
+L.ConfigFontMonochrome = "单一颜色"
+L.ConfigTracking = "追踪"
+L.ConfigTrackingHeader = "追踪BagSync存储数据库位置的设置。"
+L.ConfigTrackingCaution = "警告"
+L.ConfigTrackingModules = "模块"
+L.ConfigTrackingInfo = [[
+|cFFDF2B2注意|r: 禁用模块会导致BagSync停止追踪并将模块存储到数据库中。
+禁用的模块不会在任何BagSync窗口，斜杠命令，鼠标提示或小地图按钮中显示。
+]]
+L.TrackingModule_Bag = "背包"
+L.TrackingModule_Bank = "银行"
+L.TrackingModule_Reagents = "材料银行"
+L.TrackingModule_Equip = "已装备"
+L.TrackingModule_Mailbox = "信箱"
+L.TrackingModule_Void = "虚空仓库"
+L.TrackingModule_Auction = "拍卖行"
+L.TrackingModule_Guild = "公会银行"
+L.TrackingModule_Professions = "专业"
+L.TrackingModule_Currency = "货币"
 L.WarningItemSearch = "警告：共有 [|cFFFFFFFF%s|r] 个物品未被搜索！\n\nBagSync 仍在等待服务器/数据库响应\n\n按“搜索”或“刷新”按钮。"
 L.WarningUpdatedDB = "您已更新到最新的版本!您将需要再次重新扫描所有角色!|r "
 L.WarningHeader = "警告!"
+L.SavedSearch = "保存的搜索"
+L.SavedSearch_Add = "添加搜索"
+L.SavedSearch_Warn = "您必须在搜索框中输入一些内容。"
 ---------------------------------------
 --Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  Example: class:<name of class in your locale>
 --This includes name searches like name:<name in your locale>
