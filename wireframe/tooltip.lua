@@ -694,11 +694,12 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		[128353] = "Admiral's Compass",
 		[141605] = "Flight Master's Whistle",
 	}
+
 	--check blacklist
 	if shortID and (permIgnore[tonumber(shortID)] or BSYC.db.blacklist[tonumber(shortID)]) then
 		skipTally = true
 	end
-	--check whitelist (only do when we aren't only displaying in search window)
+	--check whitelist
 	if BSYC.options.enableWhitelist then
 		if not BSYC.db.whitelist[tonumber(shortID)] then
 			skipTally = true

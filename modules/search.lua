@@ -9,6 +9,7 @@
 local BSYC = select(2, ...) --grab the addon namespace
 local Search = BSYC:NewModule("Search")
 local Data = BSYC:GetModule("Data")
+local Tooltip = BSYC:GetModule("Tooltip")
 
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Search", ...) end
@@ -312,7 +313,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch,
 	local atUserLoc
 
 	--make sure to always be using updated information, especially if processing items from Advanced Frame
-	BSYC:GetModule("Tooltip"):ResetLastLink()
+	Tooltip:ResetLastLink()
 
 	BSYC.advUnitList = advUnitList
 
@@ -488,6 +489,10 @@ function Search:Item_OnClick(btn)
 end
 
 function Search:Item_OnEnter(btn)
+	if BSYC.advUnitList then
+		--reset the last cache link when using the advanced search to prevent improper listings from being cached
+		Tooltip:ResetLastLink()
+	end
     if btn.data then
 		if not btn.data.speciesID then
 			GameTooltip.isBSYCSearch = true
@@ -504,6 +509,10 @@ function Search:Item_OnEnter(btn)
 end
 
 function Search:Item_OnLeave()
+	if BSYC.advUnitList then
+		--reset the last cache link when using the advanced search to prevent improper listings from being cached
+		Tooltip:ResetLastLink()
+	end
 	GameTooltip.isBSYCSearch = nil
 	GameTooltip:Hide()
 	if BattlePetTooltip then
@@ -600,8 +609,8 @@ function Search:SavedSearch_AddItem()
 	local storeText = ""
 	local frame = Search.frame
 
-	if BSYC:GetModule("AdvancedSearch", true) and BSYC:GetModule("AdvancedSearch", true).frame:IsVisible() then
-		frame = BSYC:GetModule("AdvancedSearch", true).frame
+	if BSYC:GetModule("AdvancedSearch", true) and BSYC:GetModule("AdvancedSearch").frame:IsVisible() then
+		frame = BSYC:GetModule("AdvancedSearch").frame
 	end
 	storeText = frame.SearchBox:GetText()
 	if not storeText or string.len(storeText) < 1 then
@@ -623,8 +632,8 @@ function Search:SavedSearch_Item_OnClick(btn)
 	local frame = Search.frame
 	local isAdvanced = false
 
-	if BSYC:GetModule("AdvancedSearch", true) and BSYC:GetModule("AdvancedSearch", true).frame:IsVisible() then
-		frame = BSYC:GetModule("AdvancedSearch", true).frame
+	if BSYC:GetModule("AdvancedSearch", true) and BSYC:GetModule("AdvancedSearch").frame:IsVisible() then
+		frame = BSYC:GetModule("AdvancedSearch").frame
 		isAdvanced = true
 	end
 
@@ -632,7 +641,7 @@ function Search:SavedSearch_Item_OnClick(btn)
 	frame.SearchBox:SetText(btn.data.value)
 
 	if isAdvanced then
-		BSYC:GetModule("AdvancedSearch", true):DoSearch()
+		BSYC:GetModule("AdvancedSearch"):DoSearch()
 	else
 		Search:DoSearch()
 	end
