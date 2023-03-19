@@ -475,15 +475,30 @@ BSYC.timerFrame:Hide()
 BSYC.timers = {}
 
 function BSYC:StartTimer(name, delay, selfObj, func, ...)
-	-- args (...) are passed a variable length arguments in an index table (https://www.lua.org/pil/5.2.html)
-	table.insert(BSYC.timers, {
-		func = func,
-		object = selfObj,
-		delay = delay,
-		name = name,
-		argsCount = select("#", ...),
-		...
-	})
+	local found = false
+	for i=#BSYC.timers, 1, -1 do
+		local tmr = BSYC.timers[i]
+		if tmr.name == name then
+			BSYC.timers[i].func = func
+			BSYC.timers[i].object = selfObj
+			BSYC.timers[i].delay = delay
+			BSYC.timers[i].argsCount = select("#", ...)
+			BSYC.timers[i].argsList = {...}
+			found = true
+			break
+		end
+	end
+	if not found then
+		-- args (...) are passed a variable length arguments in an index table (https://www.lua.org/pil/5.2.html)
+		table.insert(BSYC.timers, {
+			func = func,
+			object = selfObj,
+			delay = delay,
+			name = name,
+			argsCount = select("#", ...),
+			argsList = {...}
+		})
+	end
 	BSYC.timerFrame:Show() --show frame to start the OnUpdate
 end
 
@@ -506,9 +521,9 @@ BSYC.timerFrame:SetScript("OnUpdate", function(self, elapsed)
         if tmr.delay < 0 then
 			Debug(BSYC_DL.SL3, "DoTimer", tmr.name, tmr.delay, tmr.object, tmr.func)
 			if type(tmr.func) == "string" and tmr.object then
-				tmr.object[tmr.func](tmr.object, unpack(tmr, 1, tmr.argsCount))
+				tmr.object[tmr.func](tmr.object, unpack(tmr.argsList or {}, 1, tmr.argsCount))
 			else
-				tmr.func(unpack(tmr, 1, tmr.argsCount))
+				tmr.func(unpack(tmr.argsList or {}, 1, tmr.argsCount))
 			end
 			table.remove(BSYC.timers, i)
         end

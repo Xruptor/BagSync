@@ -84,7 +84,7 @@ function Professions:CreateList()
 
 	for unitObj in Data:IterateUnits() do
 		if not unitObj.isGuild and unitObj.data.professions then
-			local colorized = Tooltip:ColorizeUnit(unitObj, true)
+			local colorized = Tooltip:ColorizeUnit(unitObj, true, true, true, true)
 
 			for skillID, skillData in pairs(unitObj.data.professions) do
 				if skillData.name then

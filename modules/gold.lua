@@ -45,7 +45,7 @@ function Gold:OnEnable()
     Gold.scrollFrame:SetWidth(397)
     Gold.scrollFrame:SetPoint("TOPLEFT", goldFrame, "TOPLEFT", 13, -29)
     --set ScrollFrame height by altering the distance from the bottom of the frame
-    Gold.scrollFrame:SetPoint("BOTTOMLEFT", goldFrame, "BOTTOMLEFT", -25, 39)
+    Gold.scrollFrame:SetPoint("BOTTOMLEFT", goldFrame, "BOTTOMLEFT", -25, 37)
     Gold.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Gold.scrollFrame, "HybridScrollBarTemplate")
     Gold.scrollFrame.scrollBar:SetPoint("TOPLEFT", Gold.scrollFrame, "TOPRIGHT", 1, -16)
     Gold.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Gold.scrollFrame, "BOTTOMRIGHT", 1, 12)
@@ -124,7 +124,7 @@ function Gold:CreateList()
 			if not unitObj.isGuild or (unitObj.isGuild and BSYC.options.showGuildInGoldTooltip) then
 				table.insert(usrData, {
 					unitObj = unitObj,
-					colorized = Tooltip:ColorizeUnit(unitObj, true),
+					colorized = Tooltip:ColorizeUnit(unitObj, true, true, true, true),
 					sortIndex = Tooltip:GetSortIndex(unitObj),
 					count = unitObj.data.money --we use count because of the DoSort() function
 				})
@@ -176,7 +176,7 @@ function Gold:RefreshList()
 			button.Text:SetWordWrap(false)
 			--set the fontstring size by using multiple setpoints to make the dimensions
 			button.Text:SetPoint("LEFT", 8, 0)
-			button.Text:SetPoint("RIGHT", button, -190, 0)
+			button.Text:SetPoint("RIGHT", button, -150, 0)
 
 			button.Text2:SetJustifyH("RIGHT")
 			button.Text2:SetTextColor(1, 1, 1)

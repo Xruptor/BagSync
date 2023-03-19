@@ -68,6 +68,8 @@ function Events:OnEnable()
 		self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED", function()
 			BSYC:StartTimer("GUILDBANKBAGSLOTS_CHANGED", 1, Events, "GuildBank_Changed")
 		end)
+		self:RegisterEvent("GUILDBANK_UPDATE_MONEY", function() Scanner:SaveGuildBankMoney() end)
+		self:RegisterEvent("GUILDBANK_UPDATE_WITHDRAWMONEY", function() Scanner:SaveGuildBankMoney() end)
 	end
 
 	--only do currency checks if the server even supports it

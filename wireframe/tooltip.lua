@@ -164,7 +164,7 @@ function Tooltip:GetClassColor(unitObj, switch, bypass, altColor)
 	return altColor or BSYC.colors.first
 end
 
-function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET)
+function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd)
 
 	if not unitObj.data then return nil end
 
@@ -173,35 +173,28 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET
 	local realm = unitObj.realm
 	local realmTag = ""
 	local delimiter = " "
-
-	--showSimple: returns only colorized name no images
 	--bypass: shows colorized names, checkmark, and faction icons but no XR or BNET tags
-	--showRealm: adds realm tags forcefully
+	--forceRealm: adds realm tags forcefully
 
 	if not unitObj.isGuild then
 
 		--first colorize by class color
-		tmpTag = self:HexColor(self:GetClassColor(unitObj, 1, (bypass or showSimple)), unitObj.name)
+		tmpTag = self:HexColor(self:GetClassColor(unitObj, 1, bypass), unitObj.name)
 
-		--ignore certain stuff if we only want to return simple colored units
-		if not showSimple then
-
-			--add green checkmark
-			if unitObj.name == player.name and unitObj.realm == player.realm then
-				if bypass or BSYC.options.enableTooltipGreenCheck then
-					local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
-					tmpTag = ReadyCheck.." "..tmpTag
-				end
+		--add green checkmark
+		if unitObj.name == player.name and unitObj.realm == player.realm then
+			if bypass or BSYC.options.enableTooltipGreenCheck then
+				local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
+				tmpTag = ReadyCheck.." "..tmpTag
 			end
+		end
 
-			--add race icons
-			if bypass or BSYC.options.showRaceIcons then
-				local raceIcon = self:GetRaceIcon(unitObj.data.race, unitObj.data.gender, 13, 0, 0)
-				if raceIcon ~= "" then
-					tmpTag = raceIcon.." "..tmpTag
-				end
+		--add race icons
+		if bypass or BSYC.options.showRaceIcons then
+			local raceIcon = self:GetRaceIcon(unitObj.data.race, unitObj.data.gender, 13, 0, 0)
+			if raceIcon ~= "" then
+				tmpTag = raceIcon.." "..tmpTag
 			end
-
 		end
 
 	else
@@ -235,9 +228,9 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET
 	end
 
 	----------------
-	--If we Bypass or showSimple none of the XR or BNET stuff will be shown
+	--If we Bypass none of the XR or BNET stuff will be shown
 	----------------
-	if bypass or showSimple then
+	if bypass and (not forceRealm and not forceXRBNET) then
 		--since we Bypass don't show anything else just return what we got
 		return tmpTag
 	end
@@ -249,24 +242,36 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET
 		realm = "*"
 	elseif BSYC.options.enableRealmShortName then
 		realm = string.sub(unitObj.realm, 1, 5)
-	elseif showRealm then
+	elseif forceRealm then
 		realm = unitObj.realm
 	else
 		realm = ""
 		delimiter = ""
 	end
 
-	if (showXRBNET or BSYC.options.enableBNetAccountItems) and not unitObj.isConnectedRealm then
-		realmTag = (showXRBNET or BSYC.options.enableRealmIDTags) and L.TooltipBattleNetTag..delimiter or ""
+	local addStr = ""
+
+	if (forceXRBNET or BSYC.options.enableBNetAccountItems) and not unitObj.isConnectedRealm then
+		realmTag = (forceXRBNET or BSYC.options.enableRealmIDTags) and L.TooltipBattleNetTag..delimiter or ""
 		if string.len(realm) > 0 or string.len(realmTag) > 0 then
-			tmpTag = self:HexColor(BSYC.colors.bnet, "["..realmTag..realm.."]").." "..tmpTag
+			addStr = self:HexColor(BSYC.colors.bnet, "["..realmTag..realm.."]")
+			if tagAtEnd then
+				tmpTag = tmpTag.." "..addStr
+			else
+				tmpTag = addStr.." "..tmpTag
+			end
 		end
 	end
 
-	if (showXRBNET or BSYC.options.enableCrossRealmsItems) and unitObj.isConnectedRealm and unitObj.realm ~= player.realm then
-		realmTag = (showXRBNET or BSYC.options.enableRealmIDTags) and L.TooltipCrossRealmTag..delimiter or ""
+	if (forceXRBNET or BSYC.options.enableCrossRealmsItems) and unitObj.isConnectedRealm and unitObj.realm ~= player.realm then
+		realmTag = (forceXRBNET or BSYC.options.enableRealmIDTags) and L.TooltipCrossRealmTag..delimiter or ""
 		if string.len(realm) > 0 or string.len(realmTag) > 0 then
-			tmpTag = self:HexColor(BSYC.colors.cross, "["..realmTag..realm.."]").." "..tmpTag
+			addStr = self:HexColor(BSYC.colors.cross, "["..realmTag..realm.."]")
+			if tagAtEnd then
+				tmpTag = tmpTag.." "..addStr
+			else
+				tmpTag = addStr.." "..tmpTag
+			end
 		end
 	end
 
@@ -275,11 +280,18 @@ function Tooltip:ColorizeUnit(unitObj, bypass, showRealm, showSimple, showXRBNET
 		realmTag = L.TooltipCrossRealmTag
 		if string.len(realm) > 0 or string.len(realmTag) > 0 then
 			--use an asterisk to denote that we are using a XRGuild Tag
-			tmpTag = self:HexColor(BSYC.colors.cross, "[*"..realmTag..realm.."]").." "..tmpTag
+			addStr = self:HexColor(BSYC.colors.cross, "[*"..realmTag..realm.."]")
+			if tagAtEnd then
+				tmpTag = tmpTag.." "..addStr
+			else
+				tmpTag = addStr.." "..tmpTag
+			end
 		end
 	end
 
-	Debug(BSYC_DL.INFO, "ColorizeUnit", tmpTag, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, player.realm)
+	if not bypass then
+		Debug(BSYC_DL.INFO, "ColorizeUnit", tmpTag, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, player.realm)
+	end
 	return tmpTag
 end
 
@@ -457,7 +469,7 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 	local doAdv = (advUnitList and true) or false
 	local unitData = {
 		unitObj=unitObj,
-		colorized=self:ColorizeUnit(unitObj, false, doAdv, false, doAdv),
+		colorized=self:ColorizeUnit(unitObj, false, doAdv, doAdv),
 		tallyString=tallyString,
 		sortIndex=self:GetSortIndex(unitObj),
 		count=total
@@ -1008,10 +1020,6 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	local displayList = {}
 	local showQTip = Tooltip:QTipCheck()
 
-	if not showQTip then
-		--add a space at the top of standard gametooltip method
-		table.insert(displayList, {" ", " "})
-	end
 	if currencyName then
 		table.insert(displayList, {string.format("|cff%s%s|r", RGBPercToHex(64/255, 224/255, 208/255), tostring(currencyName)), " "})
 		table.insert(displayList, {" ", " "})

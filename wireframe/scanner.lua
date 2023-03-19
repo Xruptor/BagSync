@@ -364,6 +364,20 @@ function Scanner:SaveGuildBank(tabID)
 	self:ResetTooltips()
 end
 
+function Scanner:SaveGuildBankMoney()
+	if not BSYC.tracking.guild then return end
+	if Scanner.isScanningGuild then return end
+
+	local guildDB = Data:GetGuild()
+	if not guildDB then
+		self:ResetTooltips()
+		return
+	end
+	Debug(BSYC_DL.INFO, "SaveGuildBankMoney", GetGuildBankMoney())
+	guildDB.money = GetGuildBankMoney()
+	self:ResetTooltips()
+end
+
 function Scanner:SaveMailbox(isShow)
 	Debug(BSYC_DL.INFO, "SaveMailbox", isShow, Unit.atMailbox, BSYC.tracking.mailbox, self.isCheckingMail)
 	if not Unit.atMailbox or not BSYC.tracking.mailbox then return end
