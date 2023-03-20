@@ -124,7 +124,7 @@ function Gold:CreateList()
 			if not unitObj.isGuild or (unitObj.isGuild and BSYC.options.showGuildInGoldTooltip) then
 				table.insert(usrData, {
 					unitObj = unitObj,
-					colorized = Tooltip:ColorizeUnit(unitObj, true, true, true, true),
+					colorized = Tooltip:ColorizeUnit(unitObj, true, false, true, true),
 					sortIndex = Tooltip:GetSortIndex(unitObj),
 					count = unitObj.data.money --we use count because of the DoSort() function
 				})

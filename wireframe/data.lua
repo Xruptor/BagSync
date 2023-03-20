@@ -577,7 +577,10 @@ function Data:GetPlayerGuild()
 	if not BSYC.tracking.guild then return end
 
 	local isConnectedRealm = (Unit:isConnectedRealm(player.guildrealm) and true) or false
-	local isXRGuild = (player.guildrealm ~= player.realm) or false
+	local isXRGuild = false
+	if not BSYC.options.enableCrossRealmsItems and not BSYC.options.enableBNetAccountItems then
+		isXRGuild = (player.guildrealm ~= player.realm) or false
+	end
 
 	if not BagSyncDB[player.guildrealm] then return end
 	if not BagSyncDB[player.guildrealm][player.guild] then return end

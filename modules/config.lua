@@ -76,7 +76,7 @@ local function get(info)
 		return BSYC.options[c] or 12
 	elseif c == "extTT_Font" then
 		for i, v in next, SML:List(SML_FONT) do
-			if v == BSYC.options["extTT_Font"] then return i end
+			if v == BSYC.options.extTT_Font then return i end
 		end
 	else
 		if BSYC.options[c] then --if this is nil then it will default to false
@@ -122,22 +122,22 @@ local function set(info, arg1, arg2, arg3, arg4)
 				BSYC.options.minimap.hide = true
 			end
 		elseif c == "enableXR_BNETRealmNames" and arg1 then
-			BSYC.options["enableRealmAstrickName"] = false
-			BSYC.options["enableRealmShortName"] = false
+			BSYC.options.enableRealmAstrickName = false
+			BSYC.options.enableRealmShortName = false
 
 		elseif c == "enableRealmAstrickName" and arg1 then
-			BSYC.options["enableXR_BNETRealmNames"] = false
-			BSYC.options["enableRealmShortName"] = false
+			BSYC.options.enableXR_BNETRealmNames = false
+			BSYC.options.enableRealmShortName = false
 
 		elseif c == "enableRealmShortName" and arg1 then
-			BSYC.options["enableXR_BNETRealmNames"] = false
-			BSYC.options["enableRealmAstrickName"] = false
+			BSYC.options.enableXR_BNETRealmNames = false
+			BSYC.options.enableRealmAstrickName = false
 
 		elseif c == "sortByCustomOrder" and arg1 then
-			BSYC.options["sortTooltipByTotals"] = false
+			BSYC.options.sortTooltipByTotals = false
 
 		elseif c == "sortTooltipByTotals" and arg1 then
-			BSYC.options["sortByCustomOrder"] = false
+			BSYC.options.sortByCustomOrder = false
 		end
 
 	end
@@ -278,7 +278,7 @@ options.args.main = {
 					get = get,
 					set = set,
 					arg = "main.enableExtTooltip",
-					disabled = function() return not BSYC.options["enableTooltips"] end,
+					disabled = function() return not BSYC.options.enableTooltips end,
 				},
 				font = {
 					type = "select",
@@ -670,7 +670,7 @@ options.args.display = {
 					func = function()
 						BSYC:GetModule("Whitelist").frame:Show()
 					end,
-					disabled = function() return not BSYC.options["enableWhitelist"] end,
+					disabled = function() return not BSYC.options.enableWhitelist end,
 				},
 				sourceexpansion = {
 					order = 9,
@@ -711,7 +711,7 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.sortTooltipByTotals",
-					disabled = function() return BSYC.options["sortByCustomOrder"] end,
+					disabled = function() return BSYC.options.sortByCustomOrder end,
 				},
 				sortbycustomsortorder = {
 					order = 1,
@@ -722,7 +722,7 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.sortByCustomOrder",
-					disabled = function() return BSYC.options["sortTooltipByTotals"] end,
+					disabled = function() return BSYC.options.sortTooltipByTotals end,
 				},
 				customsortbutton = {
 					order = 2,
@@ -731,7 +731,7 @@ options.args.display = {
 					func = function()
 						BSYC:GetModule("SortOrder").frame:Show()
 					end,
-					disabled = function() return BSYC.options["sortTooltipByTotals"] or not BSYC.options["sortByCustomOrder"] end,
+					disabled = function() return BSYC.options.sortTooltipByTotals or not BSYC.options.sortByCustomOrder end,
 				},
 			}
 		},
@@ -780,7 +780,7 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.singleCharLocations",
-					disabled = function() return BSYC.options["useIconLocations"] end,
+					disabled = function() return BSYC.options.useIconLocations end,
 				},
 				singlecharlocs_2 = {
 					order = 4,
@@ -797,7 +797,7 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.useIconLocations",
-					disabled = function() return BSYC.options["singleCharLocations"] end,
+					disabled = function() return BSYC.options.singleCharLocations end,
 				},
 				useiconlocs_2 = {
 					order = 6,
@@ -848,7 +848,7 @@ options.args.display = {
 							get = get,
 							set = set,
 							arg = "display.enableRealmIDTags",
-							disabled = function() return not BSYC.options["enableCrossRealmsItems"] and not BSYC.options["enableBNetAccountItems"] end,
+							disabled = function() return not BSYC.options.enableCrossRealmsItems and not BSYC.options.enableBNetAccountItems end,
 						},
 						realmnames = {
 							order = 1,
@@ -860,10 +860,10 @@ options.args.display = {
 							set = set,
 							arg = "display.enableXR_BNETRealmNames",
 							disabled = function()
-								if not BSYC.options["enableCrossRealmsItems"] and not BSYC.options["enableBNetAccountItems"] then
+								if not BSYC.options.enableCrossRealmsItems and not BSYC.options.enableBNetAccountItems then
 									return true
 								end
-								return BSYC.options["enableRealmAstrickName"] or BSYC.options["enableRealmShortName"]
+								return BSYC.options.enableRealmAstrickName or BSYC.options.enableRealmShortName
 							end,
 						},
 						realmastrick = {
@@ -876,10 +876,10 @@ options.args.display = {
 							set = set,
 							arg = "display.enableRealmAstrickName",
 							disabled = function()
-								if not BSYC.options["enableCrossRealmsItems"] and not BSYC.options["enableBNetAccountItems"] then
+								if not BSYC.options.enableCrossRealmsItems and not BSYC.options.enableBNetAccountItems then
 									return true
 								end
-								return BSYC.options["enableXR_BNETRealmNames"] or BSYC.options["enableRealmShortName"]
+								return BSYC.options.enableXR_BNETRealmNames or BSYC.options.enableRealmShortName
 							end,
 						},
 						realmshortname = {
@@ -892,10 +892,10 @@ options.args.display = {
 							set = set,
 							arg = "display.enableRealmShortName",
 							disabled = function()
-								if not BSYC.options["enableCrossRealmsItems"] and not BSYC.options["enableBNetAccountItems"] then
+								if not BSYC.options.enableCrossRealmsItems and not BSYC.options.enableBNetAccountItems then
 									return true
 								end
-								return BSYC.options["enableXR_BNETRealmNames"] or BSYC.options["enableRealmAstrickName"]
+								return BSYC.options.enableXR_BNETRealmNames or BSYC.options.enableRealmAstrickName
 							end,
 						},
 					}

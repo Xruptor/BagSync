@@ -284,9 +284,14 @@ function Details:RefreshList()
 
 				--check for battlepet
 				if item.speciesID and item.qOpts and item.qOpts.petdata then
-					local _, level = strsplit(":", item.qOpts.petdata)
+					local _, level, breedQuality = strsplit(":", item.qOpts.petdata)
+					breedQuality = tonumber(breedQuality) or 0
+					local r, g, b, hex = GetItemQualityColor(breedQuality)
+					--local qStr = _G["ITEM_QUALITY"..breedQuality.."_DESC"]
+					--qStr = "|c"..hex.."["..qStr.."]|r"
+
 					if tonumber(level) and tonumber(level) > 0 then
-						info = info.." |cFF52D386"..LEVEL..":|r "..level
+						info = info.." |c"..hex..LEVEL..":|r "..level
 					end
 				end
 

@@ -70,11 +70,15 @@ function Events:OnEnable()
 		end)
 		self:RegisterEvent("GUILDBANK_UPDATE_MONEY", function() Scanner:SaveGuildBankMoney() end)
 		self:RegisterEvent("GUILDBANK_UPDATE_WITHDRAWMONEY", function() Scanner:SaveGuildBankMoney() end)
+	else
+		BSYC.tracking.guild = false
 	end
 
 	--only do currency checks if the server even supports it
 	if BSYC:CanDoCurrency() then
 		self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
+	else
+		BSYC.tracking.currency = false
 	end
 
 	--Force guild roster update, so we can grab guild name.  Note this is nil on login, have to check for Classic and Retail though
@@ -198,7 +202,7 @@ function Events:GuildBank_Open()
 
 	--I used to do one query per server response, but honestly it wasn't much of a difference then just spamming them all
 	for tab=1, GetNumGuildBankTabs() do
-		--permissions issue, only query tabs we can see duh
+		--permissions issue, only query tabs we can see duh (isViewable)
 		if select(3,GetGuildBankTabInfo(tab)) then
 			QueryGuildBankTab(tab)
 		end

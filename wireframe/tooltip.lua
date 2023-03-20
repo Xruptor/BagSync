@@ -172,7 +172,6 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 	local tmpTag = ""
 	local realm = unitObj.realm
 	local realmTag = ""
-	local delimiter = " "
 	--bypass: shows colorized names, checkmark, and faction icons but no XR or BNET tags
 	--forceRealm: adds realm tags forcefully
 
@@ -222,9 +221,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 			end
 		end
 
-		if FactionIcon ~= "" then
-			tmpTag = FactionIcon.." "..tmpTag
-		end
+		tmpTag = FactionIcon.." "..tmpTag
 	end
 
 	----------------
@@ -246,46 +243,37 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 		realm = unitObj.realm
 	else
 		realm = ""
-		delimiter = ""
 	end
 
 	local addStr = ""
+	local delimiter = (realm ~= "" and " ") or ""
 
-	if (forceXRBNET or BSYC.options.enableBNetAccountItems) and not unitObj.isConnectedRealm then
-		realmTag = (forceXRBNET or BSYC.options.enableRealmIDTags) and L.TooltipBattleNetTag..delimiter or ""
-		if string.len(realm) > 0 or string.len(realmTag) > 0 then
-			addStr = self:HexColor(BSYC.colors.bnet, "["..realmTag..realm.."]")
-			if tagAtEnd then
-				tmpTag = tmpTag.." "..addStr
-			else
-				tmpTag = addStr.." "..tmpTag
+	if not unitObj.isXRGuild then
+		if (forceXRBNET or BSYC.options.enableBNetAccountItems) and not unitObj.isConnectedRealm then
+			realmTag = (BSYC.options.enableRealmIDTags and L.TooltipBattleNetTag..delimiter) or ""
+			if realm ~= "" or realmTag ~= "" then
+				addStr = self:HexColor(BSYC.colors.bnet, "["..realmTag..realm.."]")
 			end
 		end
-	end
 
-	if (forceXRBNET or BSYC.options.enableCrossRealmsItems) and unitObj.isConnectedRealm and unitObj.realm ~= player.realm then
-		realmTag = (forceXRBNET or BSYC.options.enableRealmIDTags) and L.TooltipCrossRealmTag..delimiter or ""
-		if string.len(realm) > 0 or string.len(realmTag) > 0 then
-			addStr = self:HexColor(BSYC.colors.cross, "["..realmTag..realm.."]")
-			if tagAtEnd then
-				tmpTag = tmpTag.." "..addStr
-			else
-				tmpTag = addStr.." "..tmpTag
+		if (forceXRBNET or BSYC.options.enableCrossRealmsItems) and unitObj.isConnectedRealm and unitObj.realm ~= player.realm then
+			realmTag = (BSYC.options.enableRealmIDTags and L.TooltipCrossRealmTag..delimiter) or ""
+			if realm ~= "" or realmTag ~= "" then
+				addStr = self:HexColor(BSYC.colors.cross, "["..realmTag..realm.."]")
 			end
 		end
+	else
+		--if it's a connected realm guild the player belongs to, then show the XR tag.  This option only true if the XR and BNET options are off.
+		realmTag = (BSYC.options.enableRealmIDTags and L.TooltipCrossRealmTag..delimiter) or ""
+		realm = (string.len(realm) > 1 and realm) or "" --lets make sure we have more than just an asterick for the realm name otherwiose it would be [+] we want [+]
+		addStr = self:HexColor(BSYC.colors.cross, "[+"..realmTag..realm.."]")
 	end
-
-	--if it's a connected realm guild the player belongs to, then show the XR tag.  This option only true if the XR and BNET options are off.
-	if unitObj.isXRGuild then
-		realmTag = L.TooltipCrossRealmTag
-		if string.len(realm) > 0 or string.len(realmTag) > 0 then
-			--use an asterisk to denote that we are using a XRGuild Tag
-			addStr = self:HexColor(BSYC.colors.cross, "[*"..realmTag..realm.."]")
-			if tagAtEnd then
-				tmpTag = tmpTag.." "..addStr
-			else
-				tmpTag = addStr.." "..tmpTag
-			end
+	--add the tags if we have anything to work with
+	if addStr ~= "" then
+		if tagAtEnd then
+			tmpTag = tmpTag.." "..addStr
+		else
+			tmpTag = addStr.." "..tmpTag
 		end
 	end
 
@@ -469,7 +457,7 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 	local doAdv = (advUnitList and true) or false
 	local unitData = {
 		unitObj=unitObj,
-		colorized=self:ColorizeUnit(unitObj, false, doAdv, doAdv),
+		colorized=self:ColorizeUnit(unitObj, false, false, doAdv),
 		tallyString=tallyString,
 		sortIndex=self:GetSortIndex(unitObj),
 		count=total
