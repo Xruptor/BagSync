@@ -40,6 +40,11 @@ L.TooltipExpansion = "[확장팩]:"
 L.TooltipItemType = "[아이템유형]:"
 L.TooltipDelimiter = ", "
 L.TooltipRealmKey = "서버키:"
+--[[Translation missing --]]
+L.TooltipDetailsInfo = "Item detailed summary."
+L.DetailsBagID = "Bag:"
+L.DetailsSlot = "Slot:"
+L.DetailsTab = "Tab:"
 L.Debug_DEBUG = "디버그"
 L.Debug_INFO = "정보"
 L.Debug_TRACE = "추적"
@@ -48,6 +53,8 @@ L.Debug_FINE = "이상없음"
 L.Debug_SL1 = "하위레벨1" --sublevel 1
 L.Debug_SL2 = "하위레벨2" --sublevel 2
 L.Debug_SL3 = "하위레벨3" --sublevel 3
+--[[Translation missing --]]
+L.DebugEnable = "Enable Debug"
 L.DebugDumpOptions = "덤프 설정 |cff3587ff[디버그]|r"
 L.DebugIterateUnits = "반복 단위 |cff3587ff[디버그]|r"
 L.DebugDBTotals = "DB 합계 |cff3587ff[디버그]|r"
@@ -66,7 +73,8 @@ L.AdvancedLocationInformation = "* 아무 선택이 없으면 모두 선택한 �
 L.Units = "유닛:"
 L.Locations = "위치:"
 L.Profiles = "프로필"
-L.HelpSortOrder = "사용자 정렬 순서"
+--[[Translation missing --]]
+L.SortOrder = "Sort Order"
 L.Professions = "전문기술"
 L.Currency = "화폐"
 L.Blacklist = "차단목록"
@@ -144,6 +152,8 @@ L.SlashWhitelist = "허가목록"
 L.SlashResetDB = "db초기화"
 L.SlashDebug = "디버그"
 L.SlashResetPOS = "위치초기화"
+--[[Translation missing --]]
+L.SlashSortOrder = "sortorder"
 ------------------------
 -- ----THESE USE THE SLASH OPERATOR COMMANDS FOUND ABOVE
 L.HelpSearchItemName = "빠른 아이템 찾기"
@@ -159,6 +169,7 @@ L.HelpBlacklistWindow = "차단목록 창을 엽니다."
 L.HelpWhitelistWindow = "허가목록 창을 엽니다."
 L.HelpDebug = "BagSync 디버그 창을 엽니다."
 L.HelpResetPOS = "BagSync의 각 모듈에서 사용하는 창을 전체 초기화 합니다."
+L.HelpSortOrder = "사용자 정렬 순서"
 ------------------------
 L.EnableBagSyncTooltip = "BagSync 툴팁 사용"
 L.ShowOnModifier = "BagSync 툴팁 표시 기능키:"
@@ -182,7 +193,9 @@ L.DisplayClassColor = "캐릭터의 이름에 직업 색상을 적용합니다."
 L.DisplayItemTotalsByClassColor = "캐릭터의 직업 색상으로 아이템의 합계를 표시합니다."
 L.DisplayTooltipOnlySearch = "|cFF99CC33(오직)|r 검색 창에만 BagSync 툴팁을 표시합니다."
 L.DisplayLineSeparator = "빈 줄로 분리하여 표시합니다."
-L.DisplayBNET = "Battle.Net 계정 캐릭터의 아이템을 표시합니다. |cff3587ff[BNet]|r |cFFDF2B2B(권장하지 않음)|r."
+--[[Translation missing --]]
+L.DisplayCR = "Display |cffff7d0a[Connected Realm]|r characters. |cffff7d0a[CR]|r"
+L.DisplayBNET = "Display all Battle.Net account characters. |cff3587ff[BNet]|r |cFFDF2B2B(Not Recommended)|r"
 L.DisplayItemID = "툴팁에 아이템ID를 표시합니다."
 L.DisplaySourceDebugInfo = "툴팁에 유용한 [디버그] 정보를 표시합니다."
 L.DisplayWhiteListOnly = "허가목록에 있는 아이템만 툴팁에 수량을 표시합니다."
@@ -227,6 +240,8 @@ L.ColorPrimary = "주 BagSync 툴팁 색상"
 L.ColorSecondary = "보조 BagSync 툴팁 색상"
 L.ColorTotal = "BagSync [총] 툴팁 색상"
 L.ColorGuild = "BagSync [길드] 툴팁 색상"
+--[[Translation missing --]]
+L.ColorCR = "BagSync [Connected Realm] tooltip color."
 L.ColorBNET = "BagSync [Battle.Net] 툴팁 색상"
 L.ColorItemID = "BagSync [아이템ID] 툴팁 색상"
 L.ColorExpansion = "[확장팩] 툴팁 색상"
@@ -240,10 +255,87 @@ L.ConfigColorHeader = "BagSync 툴팁 정보의 색상을 설정합니다."
 L.ConfigMain = "일반"
 L.ConfigMainHeader = "BagSync의 일반 설정입니다."
 L.ConfigSearch = "검색"
+--[[Translation missing --]]
+L.ConfigKeybindings = "Keybindings"
+L.ConfigKeybindingsHeader = "Keybind settings for BagSync features."
+L.ConfigExternalTooltip = "External Tooltip"
 L.ConfigSearchHeader = "검색창에 대한 설정입니다."
+L.ConfigFont = "Font"
+L.ConfigFontSize = "Font Size"
+L.ConfigFontOutline = "Outline"
+L.ConfigFontOutline_NONE = "None"
+L.ConfigFontOutline_OUTLINE = "Outline"
+L.ConfigFontOutline_THICKOUTLINE = "ThickOutline"
+L.ConfigFontMonochrome = "Monochrome"
+L.ConfigTracking = "Tracking"
+L.ConfigTrackingHeader = "Tracking settings for all stored BagSync database locations."
+L.ConfigTrackingCaution = "Caution"
+L.ConfigTrackingModules = "Modules"
+L.ConfigTrackingInfo = [[
+|cFFDF2B2BNOTE|r: Disabling a module will cause BagSync to stop tracking and storing the module to the database.
+Disabled modules will not display in any of the BagSync windows, slash commands, tooltips or minimap button.
+]]
+L.TrackingModule_Bag = "Bags"
+L.TrackingModule_Bank = "Bank"
+L.TrackingModule_Reagents = "Reagent Bank"
+L.TrackingModule_Equip = "Equipped Items"
+L.TrackingModule_Mailbox = "Mailbox"
+L.TrackingModule_Void = "Void Bank"
+L.TrackingModule_Auction = "Auction House"
+L.TrackingModule_Guild = "Guild Bank"
+L.TrackingModule_Professions = "Professions / Tradeskills"
+L.TrackingModule_Currency = "Curency Tokens"
 L.WarningItemSearch = "경고: 총 [|cFFFFFFFF%s|r]개의 아이템이 검색되지 않았습니다!\n\nBagSync는 계속해서 서버/캐시의 응답을 기다립니다.\n\n새로고침 버튼을 누르세요."
 L.WarningUpdatedDB = "최신 데이터베이스 버전으로 갱신했습니다! 당신의 모든 캐릭터를 다시 재탐색해야 합니다!|r"
 L.WarningHeader = "경고!"
+--[[Translation missing --]]
+L.SavedSearch = "Saved Search"
+L.SavedSearch_Add = "Add Search"
+L.SavedSearch_Warn = "You must type something in the search box."
+---------------------------------------
+--Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  Example: class:<name of class in your locale>
+--This includes name searches like name:<name in your locale>
+---------------------------------------
+L.SearchHelpHeader = "Search Help"
+L.SearchHelp = [[
+|cffff7d0aSearch Options|r:
+|cFFDF2B2B(NOTE: All commands are English only!)|r
+|cFF99CC33Character items by location|r:
+@bag
+@bank
+@reagents
+@equip
+@mailbox
+@void
+@auction
+@guild
+|cffff7d0aAdvanced Search|r (|cFF99CC33commands|r | |cFFFFD580example|r):
+|cff00ffff<item name>|r = |cFF99CC33n|r ; |cFF99CC33name|r | |cFFFFD580n:<text>|r ; |cFFFFD580name:<text>|r (n:ore ; name:ore)
+|cff00ffff<item bind>|r = |cFF99CC33bind|r | |cFFFFD580bind:<type>|r ; types (boe, bop, bou, boq) i.e boe = bind on equip
+|cff00ffff<quality>|r = |cFF99CC33q|r ; |cFF99CC33quality|r | |cFFFFD580q<op><text>|r ; |cFFFFD580q<op><digit>|r (q:rare ; q:>2 ; q:>=3)
+|cff00ffff<ilvl>|r = |cFF99CC33l|r ; |cFF99CC33level|r ; |cFF99CC33lvl|r ; |cFF99CC33ilvl|r | |cFFFFD580ilvl<op><number>|r ; |cFFFFD580lvl<op><number>|r (lvl:>5 ; lvl:>=20)
+|cff00ffff<required ilvl>|r = |cFF99CC33r|r ; |cFF99CC33req|r ; |cFF99CC33rl|r ; |cFF99CC33reql|r ; |cFF99CC33reqlvl|r | |cFFFFD580req<op><number>|r ; |cFFFFD580req<op><number>|r (req:>5 ; req:>=20)
+|cff00ffff<type / slot>|r = |cFF99CC33t|r ; |cFF99CC33type|r ; |cFF99CC33slot|r | |cFFFFD580t:<text>|r (slot:head)
+|cff00ffff<tooltip>|r = |cFF99CC33tt|r ; |cFF99CC33tip|r ; |cFF99CC33tooltip|r | |cFFFFD580tt:<text>|r (tt:summon)
+|cff00ffff<item set>|r = |cFF99CC33s|r ; |cFF99CC33set|r | |cFFFFD580s:<setname>|r (setname can be * for all sets)
+|cff00ffff<expansion>|r = |cFF99CC33x|r ; |cFF99CC33xpac|r ; |cFF99CC33expansion|r | |cFFFFD580x:<expacID>|r ; |cFFFFD580x:<expansion name>|r ; |cFFFFD580xpac:<expansion name>|r (xpac:shadow)
+|cff00ffff<keyword>|r = |cFF99CC33k|r ; |cFF99CC33key|r ; |cFF99CC33keyword|r | |cFFFFD580k:<keyword>|r (key:quest) (keywords: soulbound, bound, boe, bop, bou, boa, quest, unique, toy, reagent, crafting, naval, follower, follow, power, apperance)
+|cff00ffff<class>|r = |cFF99CC33c|r ; |cFF99CC33class|r | |cFFFFD580c:<classname>|r ; |cFFFFD580class:<classname>|r (class:shaman)
+|cffff7d0aOperators <op>|r:
+|cFF99CC33:|r | |cFF99CC33=|r | |cFF99CC33==|r | |cFF99CC33!=|r | |cFF99CC33~=|r | |cFF99CC33<|r | |cFF99CC33>|r | |cFF99CC33<=|r | |cFF99CC33>=|r
+|cffff7d0aNegate Commands|r:
+Example: |cFF99CC33!|r|cFFFFD580bind:boe|r (not boe)
+Example: |cFF99CC33!|r|cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r (not boe and item level greater than 20)
+|cffff7d0aUnion Searches (and searches):|r
+(Use the double ampersand |cFF99CC33&&|r symbol)
+Example: |cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r
+|cffff7d0aIntersect Searches (or searches):|r
+(Use the double pipe |cFF99CC33|||||r symbol)
+Example: |cFFFFD580bind:boe|r |cFF99CC33|||||r |cFFFFD580lvl:>20|r
+|cffff7d0aComplex Search Example:|r
+(bind on equip, lvl is exactly 20 with the word 'robe' in the name)
+|cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:20|r |cFF99CC33&&|r |cFFFFD580name:robe|r
+]]
 L.ConfigFAQ= "FAQ / 도움말"
 L.ConfigFAQHeader = "BagSync의 자주 하는 질문 및 도움말 입니다."
 --[[Translation missing --]]
