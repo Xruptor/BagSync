@@ -813,15 +813,15 @@ options.args.display = {
 			name = L.DisplayTooltipAccountWide,
 			guiInline = true,
 			args = {
-				crossrealm = {
+				connectedrealm = {
 					order = 0,
 					type = "toggle",
-					name = L.DisplayCrossRealm,
+					name = L.DisplayCR,
 					width = "full",
 					descStyle = "hide",
 					get = get,
 					set = set,
-					arg = "display.enableCrossRealmsItems",
+					arg = "display.enableCR_Items",
 				},
 				battlenet = {
 					order = 1,
@@ -831,7 +831,7 @@ options.args.display = {
 					descStyle = "hide",
 					get = get,
 					set = set,
-					arg = "display.enableBNetAccountItems",
+					arg = "display.enableBNET_Items",
 				},
 				realmtagsgroups = {
 					name = L.DisplayAccountWideTagOpts,
@@ -848,7 +848,7 @@ options.args.display = {
 							get = get,
 							set = set,
 							arg = "display.enableRealmIDTags",
-							disabled = function() return not BSYC.options.enableCrossRealmsItems and not BSYC.options.enableBNetAccountItems end,
+							disabled = function() return not BSYC.options.enableCR_Items and not BSYC.options.enableBNET_Items end,
 						},
 						realmnames = {
 							order = 1,
@@ -860,7 +860,7 @@ options.args.display = {
 							set = set,
 							arg = "display.enableXR_BNETRealmNames",
 							disabled = function()
-								if not BSYC.options.enableCrossRealmsItems and not BSYC.options.enableBNetAccountItems then
+								if not BSYC.options.enableCR_Items and not BSYC.options.enableBNET_Items then
 									return true
 								end
 								return BSYC.options.enableRealmAstrickName or BSYC.options.enableRealmShortName
@@ -876,7 +876,7 @@ options.args.display = {
 							set = set,
 							arg = "display.enableRealmAstrickName",
 							disabled = function()
-								if not BSYC.options.enableCrossRealmsItems and not BSYC.options.enableBNetAccountItems then
+								if not BSYC.options.enableCR_Items and not BSYC.options.enableBNET_Items then
 									return true
 								end
 								return BSYC.options.enableXR_BNETRealmNames or BSYC.options.enableRealmShortName
@@ -892,7 +892,7 @@ options.args.display = {
 							set = set,
 							arg = "display.enableRealmShortName",
 							disabled = function()
-								if not BSYC.options.enableCrossRealmsItems and not BSYC.options.enableBNetAccountItems then
+								if not BSYC.options.enableCR_Items and not BSYC.options.enableBNET_Items then
 									return true
 								end
 								return BSYC.options.enableXR_BNETRealmNames or BSYC.options.enableRealmAstrickName
@@ -988,7 +988,7 @@ options.args.color = {
 		cross = {
 			order = 5,
 			type = "color",
-			name = L.ColorCrossRealm,
+			name = L.ColorCR,
 			width = "full",
 			hasAlpha = false,
 			descStyle = "hide",

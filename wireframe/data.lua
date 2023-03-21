@@ -37,8 +37,8 @@ local optionsDefaults = {
 	enableTooltips = true,
 	enableExtTooltip = false,
 	enableTooltipSeparator = true,
-	enableCrossRealmsItems = true,
-	enableBNetAccountItems = false,
+	enableCR_Items = true,
+	enableBNET_Items = false,
 	enableTooltipItemID = false,
 	enableTooltipGreenCheck = true,
 	enableRealmIDTags = true,
@@ -578,7 +578,7 @@ function Data:GetPlayerGuild()
 
 	local isConnectedRealm = (Unit:isConnectedRealm(player.guildrealm) and true) or false
 	local isXRGuild = false
-	if not BSYC.options.enableCrossRealmsItems and not BSYC.options.enableBNetAccountItems then
+	if not BSYC.options.enableCR_Items and not BSYC.options.enableBNET_Items then
 		isXRGuild = (player.guildrealm ~= player.realm) or false
 	end
 
@@ -612,11 +612,11 @@ function Data:IterateUnits(dumpAll, filterList)
 			elseif argKey then
 				local isConnectedRealm = (Unit:isConnectedRealm(argKey) and true) or false
 
-				--check to see if a user joined a guild on a connected realm and doesn't have the XR or BNET options on
-				--if they have guilds enabled, then we should show it anyways, regardless of the XR and BNET options
+				--check to see if a user joined a guild on a connected realm and doesn't have the CR or BNET options on
+				--if they have guilds enabled, then we should show it anyways, regardless of the CR and BNET options
 				--NOTE: This should ONLY be done if the guild realm is NOT the player realm.  If it's the same realms for both then it would be processed anyways.
 				local isXRGuild = false
-				if BSYC.tracking.guild and player.guild and not BSYC.options.enableCrossRealmsItems and not BSYC.options.enableBNetAccountItems then
+				if BSYC.tracking.guild and player.guild and not BSYC.options.enableCR_Items and not BSYC.options.enableBNET_Items then
 					isXRGuild = (player.guildrealm and argKey == player.guildrealm and argKey ~= player.realm) or false
 				end
 
@@ -625,8 +625,8 @@ function Data:IterateUnits(dumpAll, filterList)
 					if dumpAll or (filterList and filterList[argKey]) then passChk = true end
 				else
 					if argKey == player.realm or isXRGuild then passChk = true end
-					if isConnectedRealm and BSYC.options.enableCrossRealmsItems then passChk = true end
-					if BSYC.options.enableBNetAccountItems then passChk = true end
+					if isConnectedRealm and BSYC.options.enableCR_Items then passChk = true end
+					if BSYC.options.enableBNET_Items then passChk = true end
 				end
 
 				if passChk then
