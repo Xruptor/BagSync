@@ -260,6 +260,7 @@ L.ConfigKeybindings = "Keybindings"
 L.ConfigKeybindingsHeader = "Keybind settings for BagSync features."
 L.ConfigExternalTooltip = "External Tooltip"
 L.ConfigSearchHeader = "검색창에 대한 설정입니다."
+--[[Translation missing --]]
 L.ConfigFont = "Font"
 L.ConfigFontSize = "Font Size"
 L.ConfigFontOutline = "Outline"
