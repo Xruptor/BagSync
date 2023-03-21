@@ -14,10 +14,6 @@ local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Unit", ...) end
 end
 
-local REALM = GetRealmName()
-local PLAYER = UnitName('player')
-local FACTION = UnitFactionGroup('player')
-
 local BROKEN_REALMS = {
 	['Aggra(Português)'] = 'Aggra (Português)',
 	['AzjolNerub'] = 'Azjol-Nerub',
@@ -30,7 +26,7 @@ local RealmsCR = {}
 local RealmsRWS = {}
 
 if not Realms or #Realms == 0 then
-	Realms = {REALM}
+	Realms = {GetRealmName()}
 end
 
 for i,realm in ipairs(Realms) do
@@ -184,6 +180,9 @@ else
 end
 
 function Unit:GetUnitAddress(unit)
+	local REALM = GetRealmName()
+	local PLAYER = UnitName("player")
+
 	if not unit then
 		return REALM, PLAYER
 	end
@@ -196,6 +195,7 @@ end
 function Unit:GetUnitInfo(shallow)
 	local realm, name, isguild = self:GetUnitAddress(unit)
 	local unit = {}
+	local FACTION = UnitFactionGroup("player")
 
 	unit.faction = FACTION
 	unit.name, unit.realm = name, realm
@@ -206,13 +206,13 @@ function Unit:GetUnitInfo(shallow)
 
 	if not isguild then
 		unit.money = (GetMoney() or 0) - GetCursorMoney() - GetPlayerTradeMoney()
-		unit.class = select(2, UnitClass('player'))
-		unit.race = select(2, UnitRace('player'))
-		unit.guild = GetGuildInfo('player')
+		unit.class = select(2, UnitClass("player"))
+		unit.race = select(2, UnitRace("player"))
+		unit.guild = GetGuildInfo("player")
 		if unit.guild then
-			unit.guildrealm = select(4, GetGuildInfo('player')) or realm
+			unit.guildrealm = select(4, GetGuildInfo("player")) or realm
 		end
-		unit.gender = UnitSex('player')
+		unit.gender = UnitSex("player")
 	end
 
 	unit.guild = unit.guild and (unit.guild..'©')
