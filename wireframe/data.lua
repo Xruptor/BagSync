@@ -37,8 +37,8 @@ local optionsDefaults = {
 	enableTooltips = true,
 	enableExtTooltip = false,
 	enableTooltipSeparator = true,
-	enableCR_Items = true,
-	enableBNET_Items = false,
+	enableCR = true,
+	enableBNET = false,
 	enableTooltipItemID = false,
 	enableTooltipGreenCheck = true,
 	enableRealmIDTags = true,
@@ -47,7 +47,7 @@ local optionsDefaults = {
 	enableLoginVersionInfo = true,
 	enableFactionIcons = false,
 	enableShowUniqueItemsTotals = true,
-	enableXR_BNETRealmNames = true,
+	enableRealmNames = true,
 	showGuildInGoldTooltip = true,
 	showGuildCurrentCharacter = false,
 	focusSearchEditBox = false,
@@ -76,7 +76,7 @@ local colorsDefaults = {
 	total = HexToRGBPerc('FFF4A460'),
 	guild = HexToRGBPerc('FF65B8C0'),
 	debug = HexToRGBPerc('FF4DD827'),
-	cross = HexToRGBPerc('FFFF7D0A'),
+	cr = HexToRGBPerc('FFFF7D0A'),
 	bnet = HexToRGBPerc('FF3588FF'),
 	itemid = HexToRGBPerc('FF52D386'),
 	guildtabs = HexToRGBPerc('FF09DBE0'),
@@ -487,7 +487,7 @@ function Data:PopulateItemCache(errorList, errorCount)
 		end
 		--only loop again if we have anything to work with
 		if #tmpError > 0 then
-			BSYC:StartTimer("DataDumpCache", 0.3, Data, "PopulateItemCache", tmpError, 0)
+			BSYC:StartTimer("DataDumpCache-0", 0.3, Data, "PopulateItemCache", tmpError, 0)
 		end
 		return
 	end
@@ -506,7 +506,7 @@ function Data:PopulateItemCache(errorList, errorCount)
 
 		if #errorList > 0 then
 			--loop again if we still have something
-			BSYC:StartTimer("DataDumpCache", 0.3, Data, "PopulateItemCache", errorList, errorCount)
+			BSYC:StartTimer("DataDumpCache-"..errorCount, 0.3, Data, "PopulateItemCache", errorList, errorCount)
 		end
 	end
 end
@@ -578,7 +578,7 @@ function Data:GetPlayerGuild()
 
 	local isConnectedRealm = (Unit:isConnectedRealm(player.guildrealm) and true) or false
 	local isXRGuild = false
-	if not BSYC.options.enableCR_Items and not BSYC.options.enableBNET_Items then
+	if not BSYC.options.enableCR and not BSYC.options.enableBNET then
 		isXRGuild = (player.guildrealm ~= player.realm) or false
 	end
 
@@ -616,7 +616,7 @@ function Data:IterateUnits(dumpAll, filterList)
 				--if they have guilds enabled, then we should show it anyways, regardless of the CR and BNET options
 				--NOTE: This should ONLY be done if the guild realm is NOT the player realm.  If it's the same realms for both then it would be processed anyways.
 				local isXRGuild = false
-				if BSYC.tracking.guild and player.guild and not BSYC.options.enableCR_Items and not BSYC.options.enableBNET_Items then
+				if BSYC.tracking.guild and player.guild and not BSYC.options.enableCR and not BSYC.options.enableBNET then
 					isXRGuild = (player.guildrealm and argKey == player.guildrealm and argKey ~= player.realm) or false
 				end
 
@@ -625,8 +625,8 @@ function Data:IterateUnits(dumpAll, filterList)
 					if dumpAll or (filterList and filterList[argKey]) then passChk = true end
 				else
 					if argKey == player.realm or isXRGuild then passChk = true end
-					if isConnectedRealm and BSYC.options.enableCR_Items then passChk = true end
-					if BSYC.options.enableBNET_Items then passChk = true end
+					if isConnectedRealm and BSYC.options.enableCR then passChk = true end
+					if BSYC.options.enableBNET then passChk = true end
 				end
 
 				if passChk then

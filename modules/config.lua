@@ -121,16 +121,16 @@ local function set(info, arg1, arg2, arg3, arg4)
 				MinimapIcon:Hide("BagSync")
 				BSYC.options.minimap.hide = true
 			end
-		elseif c == "enableXR_BNETRealmNames" and arg1 then
+		elseif c == "enableRealmNames" and arg1 then
 			BSYC.options.enableRealmAstrickName = false
 			BSYC.options.enableRealmShortName = false
 
 		elseif c == "enableRealmAstrickName" and arg1 then
-			BSYC.options.enableXR_BNETRealmNames = false
+			BSYC.options.enableRealmNames = false
 			BSYC.options.enableRealmShortName = false
 
 		elseif c == "enableRealmShortName" and arg1 then
-			BSYC.options.enableXR_BNETRealmNames = false
+			BSYC.options.enableRealmNames = false
 			BSYC.options.enableRealmAstrickName = false
 
 		elseif c == "sortByCustomOrder" and arg1 then
@@ -821,7 +821,7 @@ options.args.display = {
 					descStyle = "hide",
 					get = get,
 					set = set,
-					arg = "display.enableCR_Items",
+					arg = "display.enableCR",
 				},
 				battlenet = {
 					order = 1,
@@ -831,7 +831,7 @@ options.args.display = {
 					descStyle = "hide",
 					get = get,
 					set = set,
-					arg = "display.enableBNET_Items",
+					arg = "display.enableBNET",
 				},
 				realmtagsgroups = {
 					name = L.DisplayAccountWideTagOpts,
@@ -848,7 +848,7 @@ options.args.display = {
 							get = get,
 							set = set,
 							arg = "display.enableRealmIDTags",
-							disabled = function() return not BSYC.options.enableCR_Items and not BSYC.options.enableBNET_Items end,
+							disabled = function() return not BSYC.options.enableCR and not BSYC.options.enableBNET end,
 						},
 						realmnames = {
 							order = 1,
@@ -858,9 +858,9 @@ options.args.display = {
 							descStyle = "hide",
 							get = get,
 							set = set,
-							arg = "display.enableXR_BNETRealmNames",
+							arg = "display.enableRealmNames",
 							disabled = function()
-								if not BSYC.options.enableCR_Items and not BSYC.options.enableBNET_Items then
+								if not BSYC.options.enableCR and not BSYC.options.enableBNET then
 									return true
 								end
 								return BSYC.options.enableRealmAstrickName or BSYC.options.enableRealmShortName
@@ -876,10 +876,10 @@ options.args.display = {
 							set = set,
 							arg = "display.enableRealmAstrickName",
 							disabled = function()
-								if not BSYC.options.enableCR_Items and not BSYC.options.enableBNET_Items then
+								if not BSYC.options.enableCR and not BSYC.options.enableBNET then
 									return true
 								end
-								return BSYC.options.enableXR_BNETRealmNames or BSYC.options.enableRealmShortName
+								return BSYC.options.enableRealmNames or BSYC.options.enableRealmShortName
 							end,
 						},
 						realmshortname = {
@@ -892,10 +892,10 @@ options.args.display = {
 							set = set,
 							arg = "display.enableRealmShortName",
 							disabled = function()
-								if not BSYC.options.enableCR_Items and not BSYC.options.enableBNET_Items then
+								if not BSYC.options.enableCR and not BSYC.options.enableBNET then
 									return true
 								end
-								return BSYC.options.enableXR_BNETRealmNames or BSYC.options.enableRealmAstrickName
+								return BSYC.options.enableRealmNames or BSYC.options.enableRealmAstrickName
 							end,
 						},
 					}
@@ -985,7 +985,7 @@ options.args.color = {
 			set = set,
 			arg = "color.guild",
 		},
-		cross = {
+		cr = {
 			order = 5,
 			type = "color",
 			name = L.ColorCR,
@@ -994,7 +994,7 @@ options.args.color = {
 			descStyle = "hide",
 			get = get,
 			set = set,
-			arg = "color.cross",
+			arg = "color.cr",
 		},
 		bnet = {
 			order = 6,

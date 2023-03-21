@@ -482,6 +482,7 @@ function BSYC:StartTimer(name, delay, selfObj, func, ...)
 			BSYC.timers[i].func = func
 			BSYC.timers[i].object = selfObj
 			BSYC.timers[i].delay = delay
+			BSYC.timers[i].origDelay = delay
 			BSYC.timers[i].argsCount = select("#", ...)
 			BSYC.timers[i].argsList = {...}
 			found = true
@@ -494,6 +495,7 @@ function BSYC:StartTimer(name, delay, selfObj, func, ...)
 			func = func,
 			object = selfObj,
 			delay = delay,
+			origDelay = delay,
 			name = name,
 			argsCount = select("#", ...),
 			argsList = {...}
@@ -519,7 +521,7 @@ BSYC.timerFrame:SetScript("OnUpdate", function(self, elapsed)
 		tmr.delay = tmr.delay - elapsed
 
         if tmr.delay < 0 then
-			Debug(BSYC_DL.SL3, "DoTimer", tmr.name, tmr.delay, tmr.object, tmr.func)
+			Debug(BSYC_DL.SL3, "DoTimer", tmr.name, tmr.origDelay, tmr.object, tmr.func)
 			if type(tmr.func) == "string" and tmr.object then
 				tmr.object[tmr.func](tmr.object, unpack(tmr.argsList or {}, 1, tmr.argsCount))
 			else
