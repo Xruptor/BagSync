@@ -2,7 +2,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhTW")
 if not L then return end
 
 --  zhTW client (三皈依-暗影之月@TW補齊)
---  Last update: 2023/03/18
+--  Last update: 2023/03/21
 
 L.Yes = "是"
 L.No = "否"
@@ -188,6 +188,7 @@ L.DisplayClassColor = "職業顏色"
 L.DisplayItemTotalsByClassColor = "顯示物品總計根據角色的職業顏色。"
 L.DisplayTooltipOnlySearch = "僅在BagSync搜索視窗內顯示修改過的提示資訊"
 L.DisplayLineSeparator = "顯示空行分割線"
+L.DisplayCR = "顯示 |cffff7d0a[連結伺服器]|r 角色。 |cffff7d0a[CR]|r"																			  
 L.DisplayBNET = "顯示戰網賬號訊息 |cff3587ff[BNet]|r |cFFDF2B2B(不推薦)|r"
 L.DisplayItemID = "顯示 [物品ID] "
 L.DisplaySourceDebugInfo = "在鼠標提示中顯示有用的 [Debug] 訊息."
@@ -235,6 +236,7 @@ L.ColorPrimary = "主要BagSync提示顏色"
 L.ColorSecondary = "輔助BagSync提示顏色"
 L.ColorTotal = "BagSync [總計]提示顏色"
 L.ColorGuild = "BagSync [公會]提示顏色"
+L.ColorCR = "BagSync [連結伺服器] 工具提示顏色。"
 L.ColorBNET = "BagSync [戰網]提示顏色"
 L.ColorItemID = "BagSync [物品ID]提示顏色"
 L.ColorExpansion = "BagSync [資料片] 提示顏色"
