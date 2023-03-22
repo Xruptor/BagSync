@@ -57,6 +57,7 @@ L.Debug_SL1 = "SL1" --sublevel 1
 L.Debug_SL2 = "SL2" --sublevel 2
 L.Debug_SL3 = "SL3" --sublevel 3
 L.DebugEnable = "Enable Debug"
+L.DebugCache = "Disable Cache"
 L.DebugDumpOptions = "Dump Options |cff3587ff[DEBUG]|r"
 L.DebugIterateUnits = "Iterate Units |cff3587ff[DEBUG]|r"
 L.DebugDBTotals = "DB Totals |cff3587ff[DEBUG]|r"

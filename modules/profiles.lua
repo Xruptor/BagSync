@@ -199,10 +199,8 @@ end
 function Profiles:DeleteUnit(entry)
 	if not entry then BSYC:Print(L.ErrorUserNotFound) return end
 
-	local player = Unit:GetUnitInfo(true)
-
 	if not entry.unitObj.isGuild then
-		if entry.unitObj.name == player.name and entry.unitObj.realm == player.realm then
+		if entry.unitObj.data == BSYC.db.player then
 			--it's the current player so we have to do a reloadui
 			BagSyncDB[entry.unitObj.realm][entry.unitObj.name] = nil
 			Data:FixDB()

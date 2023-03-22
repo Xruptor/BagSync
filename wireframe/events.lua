@@ -20,8 +20,8 @@ function Events:OnEnable()
 	Debug(BSYC_DL.INFO, "OnEnable")
 
 	self:RegisterEvent("PLAYER_MONEY")
-	self:RegisterEvent("GUILD_ROSTER_UPDATE")
-	self:RegisterEvent("PLAYER_GUILD_UPDATE")
+	self:RegisterEvent("GUILD_ROSTER_UPDATE", function() Events:UpdateGuildRoster() end)
+	self:RegisterEvent("PLAYER_GUILD_UPDATE", function() Events:UpdateGuildRoster() end)
 
 	self:RegisterEvent("TRADE_SKILL_SHOW")
 	self:RegisterEvent("TRADE_SKILL_LIST_UPDATE")
@@ -55,12 +55,16 @@ function Events:OnEnable()
 			Scanner:SaveReagents()
 		end)
 		self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:SaveReagents() end)
+	else
+		BSYC.tracking.reagents = false
 	end
 
 	--check if voidbank is even enabled on server
 	if CanUseVoidStorage then
 		--scan when transfers of any kind are done at the void storage
 		self:RegisterEvent("VOID_TRANSFER_DONE", function() Scanner:SaveVoidBank() end)
+	else
+		BSYC.tracking.void = false
 	end
 
 	--check to see if guildbanks are even enabled on server
@@ -135,17 +139,7 @@ function Events:BAGSYNC_EVENT_GUILDBANK(event, isOpen)
 end
 
 function Events:PLAYER_MONEY()
-	BSYC.db.player.money = Unit:GetUnitInfo().money
-end
-
-function Events:GUILD_ROSTER_UPDATE()
-	BSYC.db.player.guild = Unit:GetUnitInfo().guild
-	BSYC.db.player.guildrealm = Unit:GetUnitInfo().guildrealm
-end
-
-function Events:PLAYER_GUILD_UPDATE()
-	BSYC.db.player.guild = Unit:GetUnitInfo().guild
-	BSYC.db.player.guildrealm = Unit:GetUnitInfo().guildrealm
+	BSYC.db.player.money = (GetMoney() or 0) - GetCursorMoney() - GetPlayerTradeMoney()
 end
 
 function Events:PLAYER_EQUIPMENT_CHANGED(event)
@@ -194,6 +188,12 @@ function Events:BAG_UPDATE_DELAYED(event)
 	self.SpamBagTotal = 0
 
 	Debug(BSYC_DL.INFO, "SpamBagQueue", "totalProcessed", totalProcessed)
+end
+
+function Events:UpdateGuildRoster()
+	local player = Unit:GetPlayerInfo(true)
+	BSYC.db.player.guild = player.guild
+	BSYC.db.player.guildrealm = player.guildrealm
 end
 
 function Events:GuildBank_Open()

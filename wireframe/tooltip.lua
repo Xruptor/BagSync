@@ -108,9 +108,9 @@ end
 
 function Tooltip:GetSortIndex(unitObj)
 	if unitObj then
-		if not unitObj.isGuild and unitObj.realm == Unit:GetUnitInfo(true).realm then
+		if not unitObj.isGuild and unitObj.realm == _G.GetRealmName() then
 			return 1
-		elseif unitObj.isGuild and unitObj.realm == Unit:GetUnitInfo(true).realm then
+		elseif unitObj.isGuild and unitObj.realm == _G.GetRealmName() then
 			return 2
 		elseif not unitObj.isGuild and unitObj.isConnectedRealm then
 			return 3
@@ -168,7 +168,6 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 
 	if not unitObj.data then return nil end
 
-	local player = Unit:GetUnitInfo(true)
 	local tmpTag = ""
 	local realm = unitObj.realm
 	local realmTag = ""
@@ -181,7 +180,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 		tmpTag = self:HexColor(self:GetClassColor(unitObj, 1, bypass), unitObj.name)
 
 		--add green checkmark
-		if unitObj.name == player.name and unitObj.realm == player.realm then
+		if unitObj.data == BSYC.db.player then
 			if bypass or BSYC.options.enableTooltipGreenCheck then
 				local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
 				tmpTag = ReadyCheck.." "..tmpTag
@@ -256,7 +255,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 			end
 		end
 
-		if (forceXRBNET or BSYC.options.enableCR) and unitObj.isConnectedRealm and unitObj.realm ~= player.realm then
+		if (forceXRBNET or BSYC.options.enableCR) and unitObj.isConnectedRealm and unitObj.realm ~= _G.GetRealmName() then
 			realmTag = (BSYC.options.enableRealmIDTags and L.TooltipCR_Tag..delimiter) or ""
 			if realm ~= "" or realmTag ~= "" then
 				addStr = self:HexColor(BSYC.colors.cr, "["..realmTag..realm.."]")
@@ -278,7 +277,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 	end
 
 	if not bypass then
-		Debug(BSYC_DL.INFO, "ColorizeUnit", tmpTag, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, player.realm)
+		Debug(BSYC_DL.INFO, "ColorizeUnit", tmpTag, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, _G.GetRealmName())
 	end
 	return tmpTag
 end
@@ -463,6 +462,8 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 		count=total
 	}
 	table.insert(unitList, unitData)
+
+	Debug(BSYC_DL.SL2, "UnitTotals", unitObj.name, unitObj.realm, unitData.colorized, unitData.tallyString, total)
 	return unitData
 end
 
@@ -716,7 +717,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local grandTotal = 0
 	local unitList = {}
 	local countList = {}
-	local player = Unit:GetUnitInfo(false)
+	local player = Unit:GetPlayerInfo()
 
 	local allowList = {
 		bag = true,
@@ -731,6 +732,11 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	--the true option for GetModule is to set it to silent and not return an error if not found
 	--only display advanced search results in the BagSync search window, but make sure to show tooltips regularly outside of that by checking isBSYCSearch
 	local advUnitList = not skipTally and objTooltip.isBSYCSearch and BSYC.advUnitList
+	local turnOffCache = (BSYC.options.debug.enable and BSYC.options.debug.cache and true) or false
+	local advPlayerChk = false
+	local advPlayerGuildChk = false
+
+	Debug(BSYC_DL.SL2, "TallyUnits", "|cFFe454fd[Item]|r", link, shortID, origLink, advUnitList, turnOffCache)
 
 	--DB TOOLTIP COUNTS
 	-------------------
@@ -742,7 +748,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--NOTE: This cache check is ONLY for units (guild, players) that isn't related to the current player.  Since that data doesn't really change we can cache those lines
 		--For the player however, we always want to grab the latest information.  So once it's grabbed we can do a small local cache for that using __lastTally
 		--Advanced Searches should always be processed and not stored in the cache
-		if advUnitList or not Data.__cache.tooltip[origLink] then
+		if turnOffCache or advUnitList or not Data.__cache.tooltip[origLink] then
 
 			--allow advance search matches if found, no need to set to true as advUnitList will default to dumpAll if found
 			for unitObj in Data:IterateUnits(false, advUnitList) do
@@ -754,17 +760,21 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 					--The cached item info for the current player would obviously be out of date until they returned to the bank to scan again.
 					--In order to combat this, lets just get the realtime count for the currently logged in player every single time.
 					--This is why we check for player name and realm below, we don't want to do anything in regards to the current player when the Database.
-
-					local isCurrentPlayer = ((unitObj.name == player.name and unitObj.realm == player.realm) and true) or false
-					if not isCurrentPlayer then
+					if unitObj.data ~= BSYC.db.player then
+						Debug(BSYC_DL.SL2, "TallyUnits", "[Unit]", unitObj.name, unitObj.realm)
 						for k, v in pairs(allowList) do
 							grandTotal = grandTotal + self:AddItems(unitObj, link, k, countList)
 						end
+					else
+						advPlayerChk = true
 					end
 				else
 					--don't cache the players guild bank, lets get that in real time in case they put stuff in it
 					if not player.guild or unitObj.realm ~= player.guildrealm or unitObj.name ~= player.guild then
+						Debug(BSYC_DL.SL2, "TallyUnits", "[Guild]", unitObj.name, unitObj.realm)
 						grandTotal = grandTotal + self:AddItems(unitObj, link, "guild", countList)
+					else
+						advPlayerGuildChk = true
 					end
 				end
 
@@ -777,14 +787,16 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 			--do not cache if we are viewing an advanced search list, otherwise it won't display everything normally
 			--finally, only cache if we have something to work with
-			if not advUnitList and grandTotal > 0 then
+			if not turnOffCache and not advUnitList then
 				--store it in the cache, copy the tables don't reference them
 				Data.__cache.tooltip[origLink] = Data.__cache.tooltip[origLink] or {}
-				Data.__cache.tooltip[origLink].unitList = CopyTable(unitList)
+				--only copy table if we have something to work with, otherwise return empty
+				Data.__cache.tooltip[origLink].unitList = (grandTotal > 0 and CopyTable(unitList)) or {}
 				Data.__cache.tooltip[origLink].grandTotal = grandTotal
 			end
 		elseif Data.__cache.tooltip[origLink] then
-			--use the cached results from previous DB searches, copy the table don't reference it
+			--use the cached results from previous DB searches, copy the table don't reference it, 
+			--otherwise we will add to it unintentially below with player data using table.insert()
 			unitList = CopyTable(Data.__cache.tooltip[origLink].unitList)
 			grandTotal = Data.__cache.tooltip[origLink].grandTotal
 			Debug(BSYC_DL.INFO, "TallyUnits", "|cFF09DBE0CacheUsed|r", origLink)
@@ -792,9 +804,10 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 		--CURRENT PLAYER
 		-----------------
-		if not advUnitList or (advUnitList and advUnitList[player.realm] and advUnitList[player.realm][player.name]) then
+		if not advUnitList or advPlayerChk then
 			countList = {}
-			local playerObj = Data:GetCurrentPlayer()
+			local playerObj = Data:GetPlayerObj(player)
+			Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[CurrentPlayer]|r", playerObj.name, playerObj.realm)
 
 			--grab the equip count as we need that below for an accurate count on the bags, bank and reagents
 			grandTotal = grandTotal + self:AddItems(playerObj, link, "equip", countList)
@@ -849,15 +862,14 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--We do this separately so that the guild has it's own line in the unitList and not included inline with the player character
 		--We also want to do this in real time and not cache, otherwise they may put stuff in their guild bank which will not be reflected in a cache
 		-----------------
-		if player.guild and BSYC.tracking.guild then
-			if not advUnitList or (advUnitList and advUnitList[player.guildrealm] and advUnitList[player.guildrealm][player.guild]) then
-				countList = {}
-				local guildObj = Data:GetPlayerGuild()
-				grandTotal = grandTotal + self:AddItems(guildObj, link, "guild", countList)
-				if grandTotal > 0 then
-					--table variables gets passed as byRef
-					self:UnitTotals(guildObj, countList, unitList, advUnitList)
-				end
+		if player.guild and BSYC.tracking.guild and (not advUnitList or advPlayerGuildChk) then
+			Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[CurrentPlayer-Guild]|r", player.guild, player.guildrealm)
+			countList = {}
+			local guildObj = Data:GetPlayerGuildObj(player)
+			grandTotal = grandTotal + self:AddItems(guildObj, link, "guild", countList)
+			if grandTotal > 0 then
+				--table variables gets passed as byRef
+				self:UnitTotals(guildObj, countList, unitList, advUnitList)
 			end
 		end
 
@@ -973,7 +985,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	end
 
 	local WLChk = (BSYC.options.enableWhitelist and "WL-ON") or "WL-OFF"
-	Debug(BSYC_DL.INFO, "TallyUnits", link, shortID, source, isBattlePet, grandTotal, WLChk)
+	Debug(BSYC_DL.INFO, "|cFF52D386TallyUnits|r", link, shortID, source, isBattlePet, grandTotal, WLChk)
 end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)

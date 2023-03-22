@@ -110,7 +110,7 @@ function Data:OnEnable()
 	local ver = GetAddOnMetadata("BagSync","Version") or 0
 
 	--get player information from Unit
-	local player = Unit:GetUnitInfo()
+	local player = Unit:GetPlayerInfo(true)
 
 	Debug(BSYC_DL.DEBUG, "UnitInfo-1", player.name, player.realm)
 	Debug(BSYC_DL.DEBUG, "UnitInfo-2", player.class, player.race, player.gender, player.faction)
@@ -492,7 +492,7 @@ function Data:PopulateItemCache(errorList, errorCount)
 		return
 	end
 
-	if #errorList > 0 and errorCount < 20 then
+	if #errorList > 0 and errorCount < 10 then
 		errorCount = errorCount + 1
 
 		--iterate backwards since we are using table.remove
@@ -544,11 +544,10 @@ function Data:CheckExpiredAuctions()
 	end
 end
 
-function Data:GetGuild(unitObj)
-	if not unitObj and not IsInGuild() then return end
-
-	local unit = unitObj or Unit:GetUnitInfo()
-	Debug(BSYC_DL.INFO, "GetGuild", unit)
+function Data:CheckGuildDB()
+	if not IsInGuild() then return end
+	local unit = Unit:GetPlayerInfo(true)
+	Debug(BSYC_DL.INFO, "CheckGuildDB", unit.name, unit.realm, unit.guild, unit.guildrealm)
 
 	if not unit.guild or not unit.guildrealm then return end
 	if not BagSyncDB[unit.guildrealm] then BagSyncDB[unit.guildrealm] = {} end
@@ -556,10 +555,10 @@ function Data:GetGuild(unitObj)
 	return BagSyncDB[unit.guildrealm][unit.guild]
 end
 
-function Data:GetCurrentPlayer()
-	Debug(BSYC_DL.TRACE, "GetCurrentPlayer")
-	local player = Unit:GetUnitInfo(true)
+function Data:GetPlayerObj(player)
+	if not player then player = Unit:GetPlayerInfo(true) end
 	local isConnectedRealm = (Unit:isConnectedRealm(player.realm) and true) or false
+	Debug(BSYC_DL.TRACE, "GetPlayerObj", player.name, player.realm, isConnectedRealm)
 	return {
 		realm = player.realm,
 		name = player.name,
@@ -570,8 +569,8 @@ function Data:GetCurrentPlayer()
 	}
 end
 
-function Data:GetPlayerGuild()
-	local player = Unit:GetUnitInfo()
+function Data:GetPlayerGuildObj(player)
+	if not player then player = Unit:GetPlayerInfo(true) end
 	Debug(BSYC_DL.TRACE, "GetPlayerGuild", player.guild, BSYC.tracking.guild)
 	if not player.guild then return end
 	if not BSYC.tracking.guild then return end
@@ -599,7 +598,7 @@ end
 function Data:IterateUnits(dumpAll, filterList)
 	Debug(BSYC_DL.INFO, "IterateUnits", dumpAll, filterList)
 
-	local player = Unit:GetUnitInfo()
+	local player = Unit:GetPlayerInfo(true)
 	local argKey, argValue = next(BagSyncDB)
 	local k, v
 

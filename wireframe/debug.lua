@@ -80,15 +80,26 @@ function Debug:OnEnable()
 	optionsFrame:SetPoint("TOPLEFT", DebugFrame, "BOTTOMLEFT",2, 5)
 
 	local enableDebugChk = CreateFrame("CheckButton", nil, optionsFrame, "UICheckButtonTemplate")
-	local chkText = enableDebugChk.Text or enableDebugChk.text --due to classic servers still using the old format
-	chkText:SetText(L.DebugEnable)
-	chkText:SetTextColor(1, 1, 1)
+	local debugChkText = enableDebugChk.Text or enableDebugChk.text --due to classic servers still using the old format
+	debugChkText:SetText(L.DebugEnable)
+	debugChkText:SetTextColor(1, 1, 1)
 	enableDebugChk:SetPoint("TOPLEFT", optionsFrame, "TOPLEFT", 10, -5)
 	enableDebugChk:SetScript("OnClick", function(self)
 		BSYC.options.debug.enable = enableDebugChk:GetChecked()
 	end)
 	enableDebugChk:SetChecked(BSYC.options.debug.enable)
 	optionsFrame.enableDebugChk = enableDebugChk
+
+	local disableCacheChk = CreateFrame("CheckButton", nil, optionsFrame, "UICheckButtonTemplate")
+	local cacheChkText = disableCacheChk.Text or disableCacheChk.text --due to classic servers still using the old format
+	cacheChkText:SetText(L.DebugCache)
+	cacheChkText:SetTextColor(1, 1, 1)
+	disableCacheChk:SetPoint("LEFT", debugChkText, "RIGHT", 15, 0)
+	disableCacheChk:SetScript("OnClick", function(self)
+		BSYC.options.debug.cache = disableCacheChk:GetChecked()
+	end)
+	disableCacheChk:SetChecked(BSYC.options.debug.cache)
+	optionsFrame.disableCacheChk = disableCacheChk
 
 	local levels = {
 		"DEBUG",
@@ -141,7 +152,7 @@ function Debug:OnEnable()
 	iterateUnits:SetWidth(iterateUnits:GetTextWidth() + 30)
 	iterateUnits:SetPoint("LEFT", dumpOptions, "RIGHT", 10, 0)
 	iterateUnits:SetScript("OnClick", function(self)
-		local player = BSYC:GetModule("Unit"):GetUnitInfo()
+		local player = BSYC:GetModule("Unit"):GetPlayerInfo(false, true)
 
 		Debug:AddMessage(1, "IterateUnits", "UnitInfo-1", player.name, player.realm)
 		Debug:AddMessage(1, "IterateUnits", "UnitInfo-2", player.class, player.race, player.gender, player.faction)

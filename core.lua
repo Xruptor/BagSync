@@ -50,6 +50,7 @@ BSYC_DL = {
 
 local debugDefaults = {
 	enable = false,
+	cache = false,
 	DEBUG = false,
 	INFO = true,
 	TRACE = true,

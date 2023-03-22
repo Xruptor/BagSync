@@ -355,14 +355,14 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch,
 		end
 	else
 		--player using an @location, so lets only search their database and not IterateUnits
-		local playerObj = Data:GetCurrentPlayer()
+		local playerObj = Data:GetPlayerObj()
 
 		if atUserLoc ~= "guild" then
 			warnTotal = warnTotal + Search:CheckItems(searchStr, playerObj, atUserLoc, checkList, true)
 		else
 			--only do guild if we aren't using a custom adllowlist, otherwise it will always show up regardless of what custom field is selected
 			if playerObj.data.guild and not advAllowList then
-				local guildObj = Data:GetPlayerGuild()
+				local guildObj = Data:GetPlayerGuildObj()
 				if guildObj then
 					warnTotal = warnTotal + Search:CheckItems(searchStr, guildObj, atUserLoc, checkList, true)
 				end

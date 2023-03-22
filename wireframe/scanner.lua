@@ -305,7 +305,7 @@ function Scanner:SaveGuildBank(tabID)
 	if not BSYC.tracking.guild then return end
 	if Scanner.isScanningGuild then return end
 
-	local guildDB = Data:GetGuild()
+	local guildDB = Data:CheckGuildDB()
 	if not guildDB then
 		--we don't have a guild object to work with
 		Scanner.isScanningGuild = false
@@ -354,7 +354,7 @@ function Scanner:SaveGuildBank(tabID)
 		guildDB.tabs[tab] = slotItems
 	end
 
-	local player = Unit:GetUnitInfo()
+	local player = Unit:GetPlayerInfo()
 	guildDB.money = GetGuildBankMoney()
 	guildDB.faction = player.faction
 	guildDB.realmKey = player.realmKey
@@ -368,7 +368,7 @@ function Scanner:SaveGuildBankMoney()
 	if not BSYC.tracking.guild then return end
 	if Scanner.isScanningGuild then return end
 
-	local guildDB = Data:GetGuild()
+	local guildDB = Data:CheckGuildDB()
 	if not guildDB then
 		self:ResetTooltips()
 		return
@@ -464,7 +464,7 @@ function Scanner:SendMail(mailTo, addMail)
 		mailTo = Scanner.pendingdMail.mailTo
 		local mailItems = Scanner.pendingdMail.items
 
-		local mailRealm = GetRealmName() --get current realm, we will replace if sending to another realm
+		local mailRealm = _G.GetRealmName() --get current realm, we will replace if sending to another realm
 		if mailTo:find("%-") then --check for another realm
 			mailTo, mailRealm = mailTo:match("(.+)-(.+)") --strip the realm
 		end
