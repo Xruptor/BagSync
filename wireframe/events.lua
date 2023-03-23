@@ -139,7 +139,7 @@ function Events:BAGSYNC_EVENT_GUILDBANK(event, isOpen)
 end
 
 function Events:PLAYER_MONEY()
-	BSYC.db.player.money = (GetMoney() or 0) - GetCursorMoney() - GetPlayerTradeMoney()
+	BSYC.db.player.money = (_G.GetMoney() or 0) - _G.GetCursorMoney() - _G.GetPlayerTradeMoney()
 end
 
 function Events:PLAYER_EQUIPMENT_CHANGED(event)
