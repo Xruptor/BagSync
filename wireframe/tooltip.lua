@@ -770,7 +770,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 					end
 				else
 					--don't cache the players guild bank, lets get that in real time in case they put stuff in it
-					if not player.guild or unitObj.realm ~= player.guildrealm or unitObj.name ~= player.guild then
+					if not player.guild or (unitObj.realm ~= player.guildrealm and unitObj.name ~= player.guild) then
 						Debug(BSYC_DL.SL2, "TallyUnits", "[Guild]", unitObj.name, unitObj.realm)
 						grandTotal = grandTotal + self:AddItems(unitObj, link, "guild", countList)
 					else

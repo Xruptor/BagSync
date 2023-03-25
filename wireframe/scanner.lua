@@ -359,6 +359,7 @@ function Scanner:SaveGuildBank(tabID)
 	guildDB.faction = player.faction
 	guildDB.realmKey = player.realmKey
 	guildDB.rwsKey = player.rwsKey
+	guildDB.lowerKey = player.lowerKey
 
 	Scanner.isScanningGuild = false
 	self:ResetTooltips()

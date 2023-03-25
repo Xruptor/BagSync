@@ -12,7 +12,7 @@ local Debug = BSYC:NewModule("Debug")
 
 local xListLen = 500
 local debugWidth = 880
-local debugHeight = 462
+local debugHeight = 465
 
 local function unescape(str)
     str = gsub(str, "|T.-|t", "") --textures in chat like currency coins and such
@@ -159,26 +159,35 @@ function Debug:OnEnable()
 		Debug:AddMessage(1, "IterateUnits", "UnitInfo-3", player.guild, player.guildrealm)
 		Debug:AddMessage(1, "IterateUnits", "RealmKey", player.realmKey)
 		Debug:AddMessage(1, "IterateUnits", "RealmKey_RWS", player.rwsKey)
+		Debug:AddMessage(1, "IterateUnits", "RealmKey_LC", player.lowerKey)
 
 		for unitObj in BSYC:GetModule("Data"):IterateUnits() do
 			if not unitObj.isGuild then
-				Debug:AddMessage(1, "IterateUnits", "player",
+				Debug:AddMessage(1, "IterateUnits", "|cFFFFD580player|r",
 					unitObj.name,
 					unitObj.realm,
 					unitObj.isConnectedRealm,
 					unitObj.data.guild,
-					unitObj.data.guildrealm,
-					unitObj.data.realmKey,
-					unitObj.data.rwsKey
+					unitObj.data.guildrealm
+				)
+				Debug:AddMessage(1, "IterateUnits", "|cFFe454fdPKey|r",
+					unitObj.name,
+					unitObj.data.realmKey, " | ",
+					unitObj.data.rwsKey, " | ",
+					unitObj.data.lowerKey
 				)
 			else
-				Debug:AddMessage(1, "IterateUnits", "guild",
+				Debug:AddMessage(1, "IterateUnits", "|cFFFFD580guild|r",
 					unitObj.name,
 					unitObj.realm,
 					unitObj.isConnectedRealm,
-					unitObj.isXRGuild,
-					unitObj.data.realmKey,
-					unitObj.data.rwsKey
+					unitObj.isXRGuild
+				)
+				Debug:AddMessage(1, "IterateUnits", "|cFFe454fdGKey|r",
+					unitObj.name,
+					unitObj.data.realmKey, " | ",
+					unitObj.data.rwsKey, " | ",
+					unitObj.data.lowerKey
 				)
 			end
 		end

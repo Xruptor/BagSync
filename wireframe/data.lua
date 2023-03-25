@@ -117,6 +117,7 @@ function Data:OnEnable()
 	Debug(BSYC_DL.DEBUG, "UnitInfo-3", player.guild, player.guildrealm)
 	Debug(BSYC_DL.DEBUG, "RealmKey", player.realmKey)
 	Debug(BSYC_DL.DEBUG, "RealmKey_RWS", player.rwsKey)
+	Debug(BSYC_DL.DEBUG, "RealmKey_LC", player.lowerKey)
 
 	--realm DB
 	BagSyncDB[player.realm] = BagSyncDB[player.realm] or {}
@@ -156,6 +157,7 @@ function Data:OnEnable()
 	BSYC.db.player.faction = player.faction
 	BSYC.db.player.realmKey = player.realmKey
 	BSYC.db.player.rwsKey = player.rwsKey
+	BSYC.db.player.lowerKey = player.lowerKey
 
 	--we cannot store guild as on login the guild name returns nil
 	--https://wow.gamepedia.com/API_GetGuildInfo
@@ -232,6 +234,21 @@ function Data:FixDB()
 				BagSyncDB[unitObj.realm][unitObj.name] = nil
 			end
 		end
+	end
+
+	--check for empty realm tables
+	local removeList = {}
+	for k, v in pairs(BagSyncDB) do
+		--only do checks for realms not on options
+		if not string.match(k, '§*') then
+			if BSYC:GetHashTableLen(v) == 0 then
+				--don't remove tables while iterating, that causes complications, do it afterwards
+				table.insert(removeList, k)
+			end
+		end
+	end
+	for i=1, #removeList do
+		if BagSyncDB[removeList[i]] then BagSyncDB[removeList[i]] = nil end
 	end
 
 	if BSYC.options.unitDBVersion.auction ~= unitDBVersion.auction then
@@ -557,7 +574,7 @@ end
 
 function Data:GetPlayerObj(player)
 	if not player then player = Unit:GetPlayerInfo(true) end
-	local isConnectedRealm = (Unit:isConnectedRealm(player.realm) and true) or false
+	local isConnectedRealm = Unit:isConnectedRealm(player.realm)
 	Debug(BSYC_DL.TRACE, "GetPlayerObj", player.name, player.realm, isConnectedRealm)
 	return {
 		realm = player.realm,
@@ -575,7 +592,7 @@ function Data:GetPlayerGuildObj(player)
 	if not player.guild then return end
 	if not BSYC.tracking.guild then return end
 
-	local isConnectedRealm = (Unit:isConnectedRealm(player.guildrealm) and true) or false
+	local isConnectedRealm = Unit:isConnectedRealm(player.guildrealm)
 	local isXRGuild = false
 	if not BSYC.options.enableCR and not BSYC.options.enableBNET then
 		isXRGuild = (player.guildrealm ~= player.realm) or false
@@ -609,7 +626,7 @@ function Data:IterateUnits(dumpAll, filterList)
 				argKey, argValue = next(BagSyncDB, argKey)
 
 			elseif argKey then
-				local isConnectedRealm = (Unit:isConnectedRealm(argKey) and true) or false
+				local isConnectedRealm = Unit:isConnectedRealm(argKey)
 
 				--check to see if a user joined a guild on a connected realm and doesn't have the CR or BNET options on
 				--if they have guilds enabled, then we should show it anyways, regardless of the CR and BNET options

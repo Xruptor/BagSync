@@ -22,26 +22,44 @@ local BROKEN_REALMS = {
 }
 
 local Realms = _G.GetAutoCompleteRealms()
-local RealmsCR = {}
-local RealmsRWS = {}
+local Realms_RWS = {}
+local Realms_LC = {} --lowercase
+
+local RealmChk_CR = {}
+local RealmChk_RWS = {}
+local RealmChk_LC = {}
 
 if not Realms or #Realms == 0 then
 	Realms = {_G.GetRealmName()}
 end
 
-for i,realm in ipairs(Realms) do
+for i, realm in ipairs(Realms) do
 		realm = BROKEN_REALMS[realm] or realm
+
 		realm = realm:gsub('(%l)(%u)', '%1 %2') -- names like Blade'sEdge to Blade's Edge
+		local origRealm = realm
 		Realms[i] = realm
-		RealmsCR[realm] = true
+		RealmChk_CR[realm] = true
+
 		realm = realm:gsub('[%p%c%s]', '') -- remove all punctuation characters, all control characters, and all whitespace characters 
-		RealmsRWS[realm] = true
+		Realms_RWS[i] = realm
+		RealmChk_RWS[realm] = origRealm
+
+		realm = string.lower(realm)
+		Realms_LC[i] = realm
+		RealmChk_LC[realm] = origRealm
 end
 
 --this is used to identify cross servers as a unique key.
 --for example guilds that are on cross servers with players from different servers in same guild
 table.sort(Realms, function(a,b) return (a < b) end) --sort them alphabetically
 local realmKey = table.concat(Realms, ";") --concat them together
+
+table.sort(Realms_RWS, function(a,b) return (a < b) end) --sort them alphabetically
+local rwsKey = table.concat(Realms_RWS, ";") --concat them together
+
+table.sort(Realms_LC, function(a,b) return (a < b) end) --sort them alphabetically
+local lowerKey = table.concat(Realms_LC, ";") --concat them together
 
 if C_PlayerInteractionManager then
 
@@ -206,13 +224,16 @@ function Unit:GetPlayerInfo(bypassDebug)
 	unit.race = select(2, _G.UnitRace("player"))
 	unit.guild = _G.GetGuildInfo("player")
 	if unit.guild then
-		unit.guildrealm = select(4, _G.GetGuildInfo("player")) or REALM
+		--we need to check for Normalized realm names that will cause issues since they are missing spaces and hyphens and won't match GetRealmName()
+		local g_Realm = select(4, _G.GetGuildInfo("player")) or REALM
+		unit.guildrealm = self:GetTrueRealmName(g_Realm)
 	end
 	unit.gender = _G.UnitSex("player")
 
 	unit.guild = unit.guild and (unit.guild..'©')
 	unit.realmKey = realmKey
-	unit.rwsKey = self:GetRealmKey_RWS()
+	unit.rwsKey = rwsKey
+	unit.lowerKey = lowerKey
 
 	if not bypassDebug then
 		Debug(BSYC_DL.TRACE, "GetPlayerInfo", PLAYER, REALM, FACTION, unit.class, unit.race, unit.guild)
@@ -226,12 +247,54 @@ function Unit:isConnectedRealm(realm)
 	realm = BROKEN_REALMS[realm] or realm
 	realm = realm:gsub('(%l)(%u)', '%1 %2') -- names like Blade'sEdge to Blade's Edge
 
-	if not RealmsCR[realm] then
+	if not RealmChk_CR[realm] then
 		--check the stripped whitespace format Removed White Spaces or RWS
 		realm = realm:gsub('[%p%c%s]', '') -- remove all punctuation characters, all control characters, and all whitespace characters 
-		return RealmsRWS[realm]
+		if not RealmChk_RWS[realm] then
+			--check lowercase?
+			realm = string.lower(realm)
+			if not RealmChk_LC[realm] then
+				return false
+			end
+		end
 	end
-	return RealmsCR[realm]
+	return true
+end
+
+function Unit:GetTrueRealmName(realm)
+	if not realm then return "--UNKNOWN--" end
+	--for some reason they occasionally return the Normalized realm name instead of the true realm name. (see ticket #285)
+	--in these situations the guild realms don't match because they may have a space or hyphen or something
+	--we need to do checks for this to ensure we get the appropriate realm name
+
+	if not RealmChk_CR[realm] then
+		--it's not in our standard list of realms, so that is iffy we need to check for Normalized situations
+		--if for some reason we STILL can't find the guild realm, then just store it as UNKNOWN to debug for the future
+
+		--1) lets check for broken realms and incorrect spacing
+		realm = BROKEN_REALMS[realm] or realm
+		realm = realm:gsub('(%l)(%u)', '%1 %2') -- names like Blade'sEdge to Blade's Edge
+		if RealmChk_CR[realm] then
+			return realm
+		end
+
+		--2) lets do a quick RWS check
+		realm = realm:gsub('[%p%c%s]', '') -- remove all punctuation characters, all control characters, and all whitespace characters 
+		if RealmChk_RWS[realm] then
+			return RealmChk_RWS[realm] --return original realm name
+		end
+
+		--3) lets check for lowercase
+		realm = string.lower(realm)
+		if RealmChk_LC[realm] then
+			return RealmChk_LC[realm] --return original realm name
+		end
+
+		--4) something went wrong and we can't find the realm, return unknown
+		return "--UNKNOWN--"
+	end
+
+	return realm
 end
 
 function Unit:GetRealmKey()
@@ -239,15 +302,11 @@ function Unit:GetRealmKey()
 end
 
 function Unit:GetRealmKey_RWS()
-	local rwsKey
-	for k, v in pairs(RealmsRWS) do
-		if not rwsKey then
-			rwsKey = k
-		else
-			rwsKey = rwsKey..";"..k
-		end
-	end
 	return rwsKey
+end
+
+function Unit:GetRealmKey_LC()
+	return lowerKey
 end
 
 function Unit:IsInBG()
