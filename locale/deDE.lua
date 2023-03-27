@@ -19,13 +19,37 @@ L.Tooltip_mailbox = "Post"
 L.Tooltip_void = "Leerenlager"
 L.Tooltip_reagents = "Materiallager"
 L.Tooltip_auction = "AH"
-L.TooltipTotal = "Gesamt:"
+L.TooltipSmall_bag = "P"
+L.TooltipSmall_bank = "B"
+L.TooltipSmall_reagents = "R"
+L.TooltipSmall_equip = "E"
+L.TooltipSmall_guild = "G"
+L.TooltipSmall_mailbox = "M"
+L.TooltipSmall_void = "V"
+L.TooltipSmall_auction = "A"
+--do not touch these unless requiring a new image for a specific localization
+L.TooltipIcon_bag = [[|TInterface\AddOns\BagSync\media\bag:13:13|t]]
+L.TooltipIcon_bank = [[|TInterface\AddOns\BagSync\media\bank:13:13|t]]
+L.TooltipIcon_reagents = [[|TInterface\AddOns\BagSync\media\reagents:13:13|t]]
+L.TooltipIcon_equip = [[|TInterface\AddOns\BagSync\media\equip:13:13|t]]
+L.TooltipIcon_guild = [[|TInterface\AddOns\BagSync\media\guild:13:13|t]]
+L.TooltipIcon_mailbox = [[|TInterface\AddOns\BagSync\media\mailbox:13:13|t]]
+L.TooltipIcon_void = [[|TInterface\AddOns\BagSync\media\void:13:13|t]]
+L.TooltipIcon_auction = [[|TInterface\AddOns\BagSync\media\auction:13:13|t]]
+L.TooltipTotal = "Total:"
+L.TooltipGuildTabs = "T:"
 L.TooltipItemID = "[ItemID]:"
 L.TooltipDebug = "[Debug]:"
 L.TooltipCurrencyID = "[WährungsID]:"
 L.TooltipFakeID = "[FakeID]:"
+L.TooltipExpansion = "[Expansion]:"
+L.TooltipItemType = "[ItemTypes]:"
 L.TooltipDelimiter = ", "
 L.TooltipRealmKey = "RealmKey:"
+L.TooltipDetailsInfo = "Item detailed summary."
+L.DetailsBagID = "Bag:"
+L.DetailsSlot = "Slot:"
+L.DetailsTab = "Tab:"
 L.Debug_DEBUG = "DEBUG"
 L.Debug_INFO = "INFO"
 L.Debug_TRACE = "TRACE"
@@ -35,8 +59,11 @@ L.Debug_SL1 = "SL1" --sublevel 1
 L.Debug_SL2 = "SL2" --sublevel 2
 L.Debug_SL3 = "SL3" --sublevel 3
 L.DebugEnable = "Enable Debug"
+L.DebugCache = "Disable Cache"
 L.DebugDumpOptions = "Dump Options |cff3587ff[DEBUG]|r"
 L.DebugIterateUnits = "Iterate Units |cff3587ff[DEBUG]|r"
+L.DebugDBTotals = "DB Totals |cff3587ff[DEBUG]|r"
+L.DebugAddonList = "Addon List |cff3587ff[DEBUG]|r"
 L.DebugExport = "Export"
 L.DebugWarning = "|cFFDF2B2BWARNING:|R BagSync Debug is currently enabled! |cFFDF2B2B(WILL CAUSE LAG)|r"
 L.Search = "Suche"
@@ -44,17 +71,20 @@ L.Debug = "Debug"
 L.AdvSearchBtn = "Suche/Aktualisierung"
 L.Reset = "Zurücksetzen"
 L.Refresh = "Aktualisierung"
+L.Clear = "Clear"
 L.AdvancedSearch = "Erweiterte Suche"
 L.AdvancedSearchInformation = "* Benutze BagSync |cffff7d0a[CR]|r und |cff3587ff[BNet]|r Einstellungen."
 L.AdvancedLocationInformation = "* Wenn Du keine auswählst, wird standardmäßig ALLE ausgewählt."
 L.Units = "Einheiten:"
 L.Locations = "Standort:"
 L.Profiles = "Profile"
-L.HelpSortOrder = "Benutzerdefinierte Sortierreihenfolge"
+L.SortOrder = "Benutzerdefinierte Sortierreihenfolge"
 L.Professions = "Berufe"
 L.Currency = "Währung"
 L.Blacklist = "Blacklist"
+L.Whitelist = "Whitelist"
 L.Recipes = "Rezepte"
+L.Details = "Details"
 L.Gold = "Gold"
 L.Close = "Schließen"
 L.FixDB = "FixDB"
@@ -62,6 +92,7 @@ L.Config = "Einstellungen"
 L.DeleteWarning = "Wähle ein Profil zum löschen aus. INFO: Dies ist nicht umkehrbar!"
 L.Delete = "Löschen"
 L.Confirm = "Bestätigen"
+L.SelectAll = "Select All"
 L.FixDBComplete = "Die Funktion FixDB wurde ausgeführt! Die Datenbank wurde optimiert!"
 L.ResetDBInfo = "BaySync:\nBist Du sicher, dass Du die Datenbank zurücksetzen möchtest?\nin|cFFDF2B2B HINWEIS: Dies kann nicht rückgängig gemacht werden!|r"
 L.ON = "An"
@@ -85,7 +116,9 @@ L.GuildExist = "Gilde [%s] bereits in Blacklist Datenbank."
 L.GuildAdded = "Gilde [%s] hinzugefügt"
 L.GuildRemoved = "Guilde [%s] entfernt"
 L.BlackListRemove = "[%s] von der Blacklist entfernen?"
+L.WhiteListRemove = "Remove [%s] from the whitelist?"
 L.BlackListErrorRemove = "Fehler beim Löschen von der Blacklist."
+L.WhiteListErrorRemove = "Error deleting from whitelist."
 L.ProfilesRemove = "Entferne [%s][|cFF99CC33%s|r] Profil von BagSync?"
 L.ProfilesErrorRemove = "Fehler beim Löschen aus BagSync."
 L.ProfileBeenRemoved = "[%s][|cFF99CC33%s|r] Profil entfert von BagSync!"
@@ -93,6 +126,7 @@ L.ProfessionsFailedRequest = "[%s] Serveranforderung fehlgeschlagen."
 L.ProfessionHasRecipes = "Klicke mit der linken Maustaste, um Rezepte anzuzeigen."
 L.ProfessionHasNoRecipes = "Hat keine Rezepte zum Anzeigen."
 L.KeybindBlacklist = "Zeige Schwarze Liste Fenster"
+L.KeybindWhitelist = "Show Whitelist window."
 L.KeybindCurrency = "Zeige Währungsfenster"
 L.KeybindGold = "Zeige Gold Tooltip"
 L.KeybindProfessions = "Zeige Berufefenster"
@@ -117,8 +151,11 @@ L.SlashFixDB = "fixdb"
 L.SlashProfiles = "profile"
 L.SlashProfessions = "berufe"
 L.SlashBlacklist = "blacklist"
+L.SlashWhitelist = "whitelist"
 L.SlashResetDB = "resetdb"
 L.SlashDebug = "debug"
+L.SlashResetPOS = "resetpos"
+L.SlashSortOrder = "sortorder"
 ------------------------
 -- ----THESE USE THE SLASH OPERATOR COMMANDS FOUND ABOVE
 L.HelpSearchItemName = "Nach einem Item suchen"
@@ -132,8 +169,16 @@ L.HelpConfigWindow = "Öffnet die Einstellungen für BagSync"
 L.HelpProfessionsWindow = "Öffnet das Berufefenster"
 L.HelpBlacklistWindow = "Öffnet das Schwarze Liste Fenster"
 L.HelpDebug = "Opens the BagSync Debug window."
+L.HelpResetPOS = "Resets all frame positions for each BagSync module."
+L.HelpSortOrder = "Custom Sort Order for characters and guilds."
 ------------------------
 L.EnableBagSyncTooltip = "Aktiviere BagSync Tooltips"
+L.ShowOnModifier = "BagSync tooltip modifier key:"
+L.ShowOnModifierDesc = "Show BagSync Tooltip on modifier key."
+L.ModValue_NONE = "None (Always Show)"
+L.ModValue_ALT = "ALT"
+L.ModValue_CTRL = "CTRL"
+L.ModValue_SHIFT = "SHIFT"
 L.EnableExtTooltip = "Zeige Artikelzähldaten in einer externen QuickInfo an"
 L.EnableLoginVersionInfo = "BagSync Versionsinfo bei der Anmeldung anzeigen"
 L.FocusSearchEditBox = "Suchfeld beim Öffnen des Suchfensters fokussieren"
@@ -146,15 +191,24 @@ L.DisplayAuctionHouse = "Auktionshausgegenstände anzeigen"
 L.DisplayMinimap = "BagSync Minikartensymbol anzeigen"
 L.DisplayFaction = "Gegenstände für beide Fraktionen anzeigen (|cff3587ffAllianz|r/|cFFDF2B2BHorde|r)"
 L.DisplayClassColor = "Klassenfarben für Charaktere anzeigen"
+L.DisplayItemTotalsByClassColor = "Display item totals by character class color."
 L.DisplayTooltipOnlySearch = "BagSync Tooltip |cFF99CC33(NUR)|r im Suchfenster anzeigen"
 L.DisplayLineSeparator = "Aktiviere eine leere Linie als Separator über der BagSync Tooltipanzeige"
 L.DisplayCR = "Aktiviere Gegenstände für |cffff7d0a[Connected Realm]|r Charaktere.  |cffff7d0a[CR]|r"
 L.DisplayBNET = "Aktiviere Battle.net Account Charaktere. |cff3587ff[BNet]|r |cFFDF2B2B(Nicht empfohlen!)|r"
 L.DisplayItemID = "ItemID im Tooltip anzeigen"
 L.DisplaySourceDebugInfo = "Zeigt hilfreiche [Debug] Informationen im Tooltip an"
+L.DisplayWhiteListOnly = "Display tooltip item totals for whitelisted items only."
+L.DisplaySourceExpansion = "Display source expansion for items in tooltip. |cFF99CC33[Retail Only]|r"
+L.DisplayItemTypes = "Display the [Item Type | Sub Type] categories in tooltip."
 L.DisplayTooltipTags = "Tags"
 L.DisplayTooltipStorage = "Lagerung"
 L.DisplayTooltipExtra = "Extra"
+L.DisplaySortOrderHelp = "Sort Order Help"
+L.DisplaySortOrderStatus = "Sort Order is currently: [%s]"
+L.DisplayWhitelistHelp = "Whitelist Help"
+L.DisplayWhitelistStatus = "Whitelist is currently: [%s]"
+L.DisplayWhitelistHelpInfo = "You can only input itemid numbers into the whitelist database. \n\nTo input Battle Pets please use the FakeID and not the ItemID, you can grab the FakeID by enabling ItemID tooltip feature in BagSync config.\n\n|cFFDF2B2BThis will NOT work for the Currency Window.|r"
 L.DisplayTooltipAccountWide = "Accountweit"
 L.DisplayAccountWideTagOpts = "|cFF99CC33Tag Optionen ( |cffff7d0a[CR]|r & |cff3587ff[BNet]|r )|r"
 L.DisplayGreenCheck = "Zeige %s neben dem aktuellen Charakternamen an"
@@ -163,6 +217,11 @@ L.DisplayRealmNames = "Realname anzeigen."
 L.DisplayRealmAstrick = "Zeige [*] anstelle von Realmnamen für |cffff7d0a[CR]|r und |cff3587ff[BNet]|r an"
 L.DisplayShortRealmName = "Kurze Realmnamen für |cffff7d0a[CR]|r und |cff3587ff[BNet]|r anzeigen"
 L.DisplayFactionIcons = "Fraktionssymbole im Tooltip anzeigen"
+L.DisplayGuildBankTabs = "Display guild bank tabs [1,2,3, etc...] in tooltip."
+L.DisplayRaceIcons = "Display character race icons in tooltip."
+L.DisplaySingleCharLocs = "Display a single character for storage locations."
+L.DisplayIconLocs = "Display a icon for storage locations."
+L.DisplayGuildSeparately = "Display [Guild] names and item totals separately from character totals."
 L.DisplayGuildCurrentCharacter = "Zeige [Gilden] Gegenstände nur für den aktuell eingeloggten Charakter"
 L.DisplayGuildBankScanAlert = "Zeigt das Scan Warnfenster der Gildenbank an"
 L.DisplayAccurateBattlePets = "Genaue Kampfhaustiere in der Gildenbank und Mailbox aktivieren. |cFFDF2B2B(Kann zu Verzögerungen führen)|r |cff3587ff[Siehe BagSync FAQ]|r"
@@ -187,6 +246,9 @@ L.ColorGuild = "BagSync [Gilde] Tooltipfarbe"
 L.ColorCR = "BagSync [Connected Realm] Tooltipfarbe"
 L.ColorBNET = "BagSync [Battle.Net] Tooltipfarbe"
 L.ColorItemID = "BagSync [ItemID] Tooltipfarbe"
+L.ColorExpansion = "BagSync [Expansion] tooltip color."
+L.ColorItemTypes = "BagSync [ItemType] tooltip color."
+L.ColorGuildTabs = "Guild Tabs [1,2,3, etc...] tooltip color."
 L.ConfigHeader = "Einstellungen für verschiedene BagSync Funktionen."
 L.ConfigDisplay = "Display"
 L.ConfigTooltipHeader = "Einstellungen für die angezeigten BagSync Tooltip Informationen."
@@ -195,10 +257,106 @@ L.ConfigColorHeader = "Farbeinstellungen für BagSync Tooltip Informationen"
 L.ConfigMain = "Hauptkonfig"
 L.ConfigMainHeader = "Haupteinstellungen von BagSync"
 L.ConfigSearch = "Suche"
-L.ConfigSearchHeader = "Einstellungen für das Suchfenster"
-L.WarningItemSearch = "WARNUNG: Insgesamt [|cFFFFFFFF%s|r] Elemente wurden nicht durchsucht!\n\nBagSync wartet immer noch auf die Antwort des Servers/Cache.\n\nDrücke die Suchen- oder Aktualisieren Taste."
-L.WarningUpdatedDB = "Du wurdest auf die neueste Datenbankversion aktualisiert! Alle Deine Charaktere müssen erneut gescannt werden!|r"
-L.WarningHeader = "Warnung!"
+L.ConfigKeybindings = "Keybindings"
+L.ConfigKeybindingsHeader = "Keybind settings for BagSync features."
+L.ConfigExternalTooltip = "External Tooltip"
+L.ConfigSearchHeader = "Settings for the search window"
+L.ConfigFont = "Font"
+L.ConfigFontSize = "Font Size"
+L.ConfigFontOutline = "Outline"
+L.ConfigFontOutline_NONE = "None"
+L.ConfigFontOutline_OUTLINE = "Outline"
+L.ConfigFontOutline_THICKOUTLINE = "ThickOutline"
+L.ConfigFontMonochrome = "Monochrome"
+L.ConfigTracking = "Tracking"
+L.ConfigTrackingHeader = "Tracking settings for all stored BagSync database locations."
+L.ConfigTrackingCaution = "Caution"
+L.ConfigTrackingModules = "Modules"
+L.ConfigTrackingInfo = [[
+|cFFDF2B2BNOTE|r: Disabling a module will cause BagSync to stop tracking and storing the module to the database.
+
+Disabled modules will not display in any of the BagSync windows, slash commands, tooltips or minimap button.
+]]
+L.TrackingModule_Bag = "Bags"
+L.TrackingModule_Bank = "Bank"
+L.TrackingModule_Reagents = "Reagent Bank"
+L.TrackingModule_Equip = "Equipped Items"
+L.TrackingModule_Mailbox = "Mailbox"
+L.TrackingModule_Void = "Void Bank"
+L.TrackingModule_Auction = "Auction House"
+L.TrackingModule_Guild = "Guild Bank"
+L.TrackingModule_Professions = "Professions / Tradeskills"
+L.TrackingModule_Currency = "Curency Tokens"
+L.WarningItemSearch = "WARNING: A total of [|cFFFFFFFF%s|r] items were not searched!\n\nBagSync is still waiting for the server/cache to respond.\n\nPress Search or Refresh button."
+L.WarningUpdatedDB = "You have been updated to latest database version!  You will need to rescan all your characters again!|r"
+L.WarningHeader = "Warning!"
+L.SavedSearch = "Saved Search"
+L.SavedSearch_Add = "Add Search"
+L.SavedSearch_Warn = "You must type something in the search box."
+---------------------------------------
+--Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  Example: class:<name of class in your locale>
+--This includes name searches like name:<name in your locale>
+---------------------------------------
+L.SearchHelpHeader = "Search Help"
+L.SearchHelp = [[
+|cffff7d0aSearch Options|r:
+|cFFDF2B2B(NOTE: All commands are English only!)|r
+
+|cFF99CC33Character items by location|r:
+@bag
+@bank
+@reagents
+@equip
+@mailbox
+@void
+@auction
+@guild
+
+|cffff7d0aAdvanced Search|r (|cFF99CC33commands|r | |cFFFFD580example|r):
+
+|cff00ffff<item name>|r = |cFF99CC33n|r ; |cFF99CC33name|r | |cFFFFD580n:<text>|r ; |cFFFFD580name:<text>|r (n:ore ; name:ore)
+
+|cff00ffff<item bind>|r = |cFF99CC33bind|r | |cFFFFD580bind:<type>|r ; types (boe, bop, bou, boq) i.e boe = bind on equip
+
+|cff00ffff<quality>|r = |cFF99CC33q|r ; |cFF99CC33quality|r | |cFFFFD580q<op><text>|r ; |cFFFFD580q<op><digit>|r (q:rare ; q:>2 ; q:>=3)
+
+|cff00ffff<ilvl>|r = |cFF99CC33l|r ; |cFF99CC33level|r ; |cFF99CC33lvl|r ; |cFF99CC33ilvl|r | |cFFFFD580ilvl<op><number>|r ; |cFFFFD580lvl<op><number>|r (lvl:>5 ; lvl:>=20)
+
+|cff00ffff<required ilvl>|r = |cFF99CC33r|r ; |cFF99CC33req|r ; |cFF99CC33rl|r ; |cFF99CC33reql|r ; |cFF99CC33reqlvl|r | |cFFFFD580req<op><number>|r ; |cFFFFD580req<op><number>|r (req:>5 ; req:>=20)
+
+|cff00ffff<type / slot>|r = |cFF99CC33t|r ; |cFF99CC33type|r ; |cFF99CC33slot|r | |cFFFFD580t:<text>|r (slot:head)
+
+|cff00ffff<tooltip>|r = |cFF99CC33tt|r ; |cFF99CC33tip|r ; |cFF99CC33tooltip|r | |cFFFFD580tt:<text>|r (tt:summon)
+
+|cff00ffff<item set>|r = |cFF99CC33s|r ; |cFF99CC33set|r | |cFFFFD580s:<setname>|r (setname can be * for all sets)
+
+|cff00ffff<expansion>|r = |cFF99CC33x|r ; |cFF99CC33xpac|r ; |cFF99CC33expansion|r | |cFFFFD580x:<expacID>|r ; |cFFFFD580x:<expansion name>|r ; |cFFFFD580xpac:<expansion name>|r (xpac:shadow)
+
+|cff00ffff<keyword>|r = |cFF99CC33k|r ; |cFF99CC33key|r ; |cFF99CC33keyword|r | |cFFFFD580k:<keyword>|r (key:quest) (keywords: soulbound, bound, boe, bop, bou, boa, quest, unique, toy, reagent, crafting, naval, follower, follow, power, apperance)
+
+|cff00ffff<class>|r = |cFF99CC33c|r ; |cFF99CC33class|r | |cFFFFD580c:<classname>|r ; |cFFFFD580class:<classname>|r (class:shaman)
+
+|cffff7d0aOperators <op>|r:
+|cFF99CC33:|r | |cFF99CC33=|r | |cFF99CC33==|r | |cFF99CC33!=|r | |cFF99CC33~=|r | |cFF99CC33<|r | |cFF99CC33>|r | |cFF99CC33<=|r | |cFF99CC33>=|r
+
+
+|cffff7d0aNegate Commands|r:
+Example: |cFF99CC33!|r|cFFFFD580bind:boe|r (not boe)
+Example: |cFF99CC33!|r|cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r (not boe and item level greater than 20)
+
+|cffff7d0aUnion Searches (and searches):|r
+(Use the double ampersand |cFF99CC33&&|r symbol)
+Example: |cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r
+
+|cffff7d0aIntersect Searches (or searches):|r
+(Use the double pipe |cFF99CC33|||||r symbol)
+Example: |cFFFFD580bind:boe|r |cFF99CC33|||||r |cFFFFD580lvl:>20|r
+
+|cffff7d0aComplex Search Example:|r
+(bind on equip, lvl is exactly 20 with the word 'robe' in the name)
+|cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:20|r |cFF99CC33&&|r |cFFFFD580name:robe|r
+
+]]
 L.ConfigFAQ= "FAQ / Hilfe"
 L.ConfigFAQHeader = "Häufig gestellte Fragen und Hilfebereich für BagSync."
 L.FAQ_Question_1 = "Ich erlebe Ruckeln/Stottern/Verzögerungen bei Tooltips."
