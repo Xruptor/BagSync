@@ -193,6 +193,7 @@ end
 function Search:OnShow()
 	BSYC:SetBSYC_FrameLevel(Search)
 	Data:PopulateItemCache() --do a background caching of items
+	BSYC.advUnitList = nil
 
 	if not BSYC.options.alwaysShowAdvSearch then
 		C_Timer.After(0.5, function()
@@ -210,6 +211,7 @@ end
 function Search:OnHide()
 	Search.warningFrame:Hide()
 	Search.helpFrame:Hide()
+	BSYC.advUnitList = nil
 	Search:ShowAdvanced(false)
 end
 
@@ -439,6 +441,12 @@ function Search:Reset()
 	Search.frame.SearchBox:SetText("")
 	Search.frame.SearchBox.ClearButton:Hide()
 	Search.frame.SearchBox.SearchInfo:Show()
+	BSYC.advUnitList = nil
+	Search.items = {}
+	Search:RefreshList()
+end
+
+function Search:ClearList()
 	BSYC.advUnitList = nil
 	Search.items = {}
 	Search:RefreshList()

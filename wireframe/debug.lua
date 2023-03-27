@@ -142,7 +142,24 @@ function Debug:OnEnable()
 	dumpOptions:SetHeight(30)
 	dumpOptions:SetWidth(dumpOptions:GetTextWidth() + 30)
 	dumpOptions:SetPoint("TOPLEFT", optionsFrame, "TOPLEFT", 10, -43)
-	dumpOptions:SetScript("OnClick", function() BSYC:GetModule("Data"):DebugDumpOptions() end)
+	dumpOptions:SetScript("OnClick", function()
+		Debug:AddMessage(1, "init-DebugDumpOptions")
+		for k, v in pairs(BSYC.options) do
+			if type(v) ~= "table" then
+				Debug:AddMessage(1, "DumpOptions", k, tostring(v))
+			else
+				for x, y in pairs(v) do
+					if type(y) ~= "table" then
+						Debug:AddMessage(1, "DumpOptions", k, tostring(x), tostring(y))
+					else
+						if k == "colors" then
+							Debug:AddMessage(1, "DumpOptions", k, tostring(x), y.r * 255, y.g * 255, y.b * 255)
+						end
+					end
+				end
+			end
+		end
+	end)
 	optionsFrame.dumpOptions = dumpOptions
 
 	--iterate units
@@ -173,9 +190,9 @@ function Debug:OnEnable()
 				Debug:AddMessage(1, "IterateUnits", "|cFFe454fdPKey|r",
 					unitObj.name,
 					unitObj.data.realmKey, " | ",
-					unitObj.data.rwsKey, " | ",
-					unitObj.data.lowerKey
+					unitObj.data.rwsKey
 				)
+				Debug:AddMessage(1, " ") --extra space
 			else
 				Debug:AddMessage(1, "IterateUnits", "|cFFFFD580guild|r",
 					unitObj.name,
@@ -186,9 +203,9 @@ function Debug:OnEnable()
 				Debug:AddMessage(1, "IterateUnits", "|cFFe454fdGKey|r",
 					unitObj.name,
 					unitObj.data.realmKey, " | ",
-					unitObj.data.rwsKey, " | ",
-					unitObj.data.lowerKey
+					unitObj.data.rwsKey
 				)
+				Debug:AddMessage(1, " ") --extra space
 			end
 		end
 	end)

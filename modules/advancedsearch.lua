@@ -368,6 +368,7 @@ function AdvancedSearch:Reset()
 	AdvancedSearch:SelectAll(true)
 	AdvancedSearch.frame.SearchBox.ClearButton:Hide()
 	AdvancedSearch.frame.SearchBox.SearchInfo:Show()
+	BSYC.advUnitList = nil
 	Search:Reset()
 end
 
@@ -407,6 +408,7 @@ function AdvancedSearch:Item_OnClick(btn)
 			btn.Icon:Hide()
 		end
 	end
+	Search:ClearList()
 end
 
 function AdvancedSearch:SearchBox_OnEnterPressed(text)

@@ -180,25 +180,6 @@ function Data:OnEnable()
 	end
 end
 
-function Data:DebugDumpOptions()
-	Debug(BSYC_DL.DEBUG, "init-DebugDumpOptions")
-	for k, v in pairs(BSYC.options) do
-		if type(v) ~= "table" then
-			BSYC.DEBUG(1, "DumpOptions", k, tostring(v))
-		else
-			for x, y in pairs(v) do
-				if type(y) ~= "table" then
-					BSYC.DEBUG(1, "DumpOptions", k, tostring(x), tostring(y))
-				else
-					if k == "colors" then
-						BSYC.DEBUG(1, "DumpOptions", k, tostring(x), y.r * 255, y.g * 255, y.b * 255)
-					end
-				end
-			end
-		end
-	end
-end
-
 function Data:ResetColors()
 	Debug(BSYC_DL.INFO, "ResetColors")
 	BSYC.colors = nil

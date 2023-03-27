@@ -718,6 +718,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local unitList = {}
 	local countList = {}
 	local player = Unit:GetPlayerInfo()
+	local guildObj = Data:GetPlayerGuildObj(player)
 
 	local allowList = {
 		bag = true,
@@ -765,15 +766,15 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 						for k, v in pairs(allowList) do
 							grandTotal = grandTotal + self:AddItems(unitObj, link, k, countList)
 						end
-					else
+					elseif advUnitList then
 						advPlayerChk = true
 					end
 				else
 					--don't cache the players guild bank, lets get that in real time in case they put stuff in it
-					if not player.guild or (unitObj.realm ~= player.guildrealm and unitObj.name ~= player.guild) then
+					if not guildObj or (unitObj.data ~= guildObj.data) then
 						Debug(BSYC_DL.SL2, "TallyUnits", "[Guild]", unitObj.name, unitObj.realm)
 						grandTotal = grandTotal + self:AddItems(unitObj, link, "guild", countList)
-					else
+					elseif advUnitList then
 						advPlayerGuildChk = true
 					end
 				end
@@ -801,6 +802,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			grandTotal = Data.__cache.tooltip[origLink].grandTotal
 			Debug(BSYC_DL.INFO, "TallyUnits", "|cFF09DBE0CacheUsed|r", origLink)
 		end
+
+		Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[AdvChk]|r", advUnitList, advPlayerChk, advPlayerGuildChk)
 
 		--CURRENT PLAYER
 		-----------------
@@ -862,10 +865,9 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--We do this separately so that the guild has it's own line in the unitList and not included inline with the player character
 		--We also want to do this in real time and not cache, otherwise they may put stuff in their guild bank which will not be reflected in a cache
 		-----------------
-		if player.guild and BSYC.tracking.guild and (not advUnitList or advPlayerGuildChk) then
+		if guildObj and (not advUnitList or advPlayerGuildChk) then
 			Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[CurrentPlayer-Guild]|r", player.guild, player.guildrealm)
 			countList = {}
-			local guildObj = Data:GetPlayerGuildObj(player)
 			grandTotal = grandTotal + self:AddItems(guildObj, link, "guild", countList)
 			if grandTotal > 0 then
 				--table variables gets passed as byRef
