@@ -157,7 +157,6 @@ function Data:OnEnable()
 	BSYC.db.player.faction = player.faction
 	BSYC.db.player.realmKey = player.realmKey
 	BSYC.db.player.rwsKey = player.rwsKey
-	BSYC.db.player.lowerKey = player.lowerKey
 
 	--we cannot store guild as on login the guild name returns nil
 	--https://wow.gamepedia.com/API_GetGuildInfo
