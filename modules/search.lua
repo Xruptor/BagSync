@@ -270,7 +270,7 @@ function Search:CheckItems(searchStr, unitObj, target, checkList, atUserLoc)
 								speciesID = BSYC:FakeIDToSpeciesID(link)
 							})
 						end
-					else
+					elseif not Data.__cache.ignore[link] then
 						--add to warning count total if we haven't processed that item
 						iCount = iCount + 1
 					end
