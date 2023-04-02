@@ -29,38 +29,6 @@ local RealmChk_CR = {}
 local RealmChk_RWS = {}
 local RealmChk_LC = {}
 
-if not Realms or #Realms == 0 then
-	Realms = {_G.GetRealmName()}
-end
-
-for i, realm in ipairs(Realms) do
-		realm = BROKEN_REALMS[realm] or realm
-
-		realm = realm:gsub('(%l)(%u)', '%1 %2') -- names like Blade'sEdge to Blade's Edge
-		local origRealm = realm
-		Realms[i] = realm
-		RealmChk_CR[realm] = true
-
-		realm = realm:gsub('[%p%c%s]', '') -- remove all punctuation characters, all control characters, and all whitespace characters 
-		Realms_RWS[i] = realm
-		RealmChk_RWS[realm] = origRealm
-
-		realm = string.lower(realm)
-		Realms_LC[i] = realm
-		RealmChk_LC[realm] = origRealm
-end
-
---this is used to identify cross servers as a unique key.
---for example guilds that are on cross servers with players from different servers in same guild
-table.sort(Realms, function(a,b) return (a < b) end) --sort them alphabetically
-local realmKey = table.concat(Realms, ";") --concat them together
-
-table.sort(Realms_RWS, function(a,b) return (a < b) end) --sort them alphabetically
-local rwsKey = table.concat(Realms_RWS, ";") --concat them together
-
-table.sort(Realms_LC, function(a,b) return (a < b) end) --sort them alphabetically
-local lowerKey = table.concat(Realms_LC, ";") --concat them together
-
 if C_PlayerInteractionManager then
 
 	local InteractType = Enum.PlayerInteractionType
@@ -197,7 +165,51 @@ else
 	end)
 end
 
+function Unit:OnEnable()
+	if not Unit.realmKey then Unit:DoRealmCollection("OnEnable") end
+end
+
+function Unit:DoRealmCollection(source)
+	Debug(BSYC_DL.TRACE, "DoRealmCollection", source)
+
+	Realms = _G.GetAutoCompleteRealms()
+
+	if not Realms or #Realms == 0 then
+		Realms = {_G.GetRealmName()}
+	end
+
+	for i, realm in ipairs(Realms) do
+			realm = BROKEN_REALMS[realm] or realm
+
+			realm = realm:gsub('(%l)(%u)', '%1 %2') -- names like Blade'sEdge to Blade's Edge
+			local origRealm = realm
+			Realms[i] = realm
+			RealmChk_CR[realm] = true
+
+			realm = realm:gsub('[%p%c%s]', '') -- remove all punctuation characters, all control characters, and all whitespace characters 
+			Realms_RWS[i] = realm
+			RealmChk_RWS[realm] = origRealm
+
+			realm = string.lower(realm)
+			Realms_LC[i] = realm
+			RealmChk_LC[realm] = origRealm
+	end
+
+	--this is used to identify cross servers as a unique key.
+	--for example guilds that are on cross servers with players from different servers in same guild
+	table.sort(Realms, function(a,b) return (a < b) end) --sort them alphabetically
+	Unit.realmKey = table.concat(Realms, ";") or "?" --concat them together
+
+	table.sort(Realms_RWS, function(a,b) return (a < b) end) --sort them alphabetically
+	Unit.rwsKey = table.concat(Realms_RWS, ";") or "?" --concat them together
+
+	table.sort(Realms_LC, function(a,b) return (a < b) end) --sort them alphabetically
+	Unit.lowerKey = table.concat(Realms_LC, ";") or "?" --concat them together
+end
+
 function Unit:GetUnitAddress(unit)
+	if not Unit.realmKey then Unit:DoRealmCollection("GetUnitAddress") end
+
 	local REALM = _G.GetRealmName()
 	local PLAYER = _G.UnitName("player")
 
@@ -211,6 +223,8 @@ function Unit:GetUnitAddress(unit)
 end
 
 function Unit:GetPlayerInfo(bypassDebug)
+	if not Unit.realmKey then Unit:DoRealmCollection("GetPlayerInfo") end
+
 	local REALM = _G.GetRealmName()
 	local PLAYER = _G.UnitName("player")
 	local FACTION = _G.UnitFactionGroup("player")
@@ -231,9 +245,9 @@ function Unit:GetPlayerInfo(bypassDebug)
 	unit.gender = _G.UnitSex("player")
 
 	unit.guild = unit.guild and (unit.guild..'©')
-	unit.realmKey = realmKey
-	unit.rwsKey = rwsKey
-	unit.lowerKey = lowerKey
+	unit.realmKey = Unit.realmKey
+	unit.rwsKey = Unit.rwsKey
+	unit.lowerKey = Unit.lowerKey
 
 	if not bypassDebug then
 		Debug(BSYC_DL.TRACE, "GetPlayerInfo", PLAYER, REALM, FACTION, unit.class, unit.race, unit.guild)
@@ -243,6 +257,7 @@ end
 
 function Unit:isConnectedRealm(realm)
 	if not realm then return false end
+	if not Unit.realmKey then Unit:DoRealmCollection("isConnectedRealm") end
 
 	realm = BROKEN_REALMS[realm] or realm
 	realm = realm:gsub('(%l)(%u)', '%1 %2') -- names like Blade'sEdge to Blade's Edge
@@ -263,6 +278,8 @@ end
 
 function Unit:GetTrueRealmName(realm)
 	if not realm then return "--UNKNOWN--" end
+	if not Unit.realmKey then Unit:DoRealmCollection("GetTrueRealmName") end
+
 	--for some reason they occasionally return the Normalized realm name instead of the true realm name. (see ticket #285)
 	--in these situations the guild realms don't match because they may have a space or hyphen or something
 	--we need to do checks for this to ensure we get the appropriate realm name
@@ -295,18 +312,6 @@ function Unit:GetTrueRealmName(realm)
 	end
 
 	return realm
-end
-
-function Unit:GetRealmKey()
-	return realmKey
-end
-
-function Unit:GetRealmKey_RWS()
-	return rwsKey
-end
-
-function Unit:GetRealmKey_LC()
-	return lowerKey
 end
 
 function Unit:IsInBG()

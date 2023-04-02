@@ -231,7 +231,7 @@ function SortOrder:Item_OnEnter(btn)
 		else
 			GameTooltip:AddLine("|cFFFFFFFF"..GUILD..":|r  "..btn.data.colorized)
 			GameTooltip:AddLine("|cFFFFFFFF"..L.Realm.."|r  "..btn.data.realm)
-			GameTooltip:AddLine("|cFFFFFFFF"..L.TooltipRealmKey.."|r "..btn.data.unitObj.data.realmKey)
+			GameTooltip:AddLine("|cFFFFFFFF"..L.TooltipRealmKey.."|r "..(btn.data.unitObj.data.realmKey or "?"))
 		end
 		GameTooltip:Show()
 		return

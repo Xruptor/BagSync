@@ -521,6 +521,7 @@ function Data:PopulateItemCache(errorList, errorCount)
 			if ignoreTotal > 4 then
 				for i=1, #errorList do
 					Data.__cache.ignore[errorList[i]] = errorList[i]
+					Debug(BSYC_DL.WARN, "DataDumpCache-Ignore", errorList[i])
 				end
 				errorList = {}
 				errorCount = -1
@@ -568,7 +569,7 @@ end
 function Data:CheckGuildDB()
 	if not IsInGuild() then return end
 	local unit = Unit:GetPlayerInfo(true)
-	Debug(BSYC_DL.INFO, "CheckGuildDB", unit.name, unit.realm, unit.guild, unit.guildrealm)
+	Debug(BSYC_DL.INFO, "CheckGuildDB", unit.name, unit.realm, unit.guild, unit.guildrealm, unit.realmKey)
 
 	if not unit.guild or not unit.guildrealm then return end
 	if not BagSyncDB[unit.guildrealm] then BagSyncDB[unit.guildrealm] = {} end

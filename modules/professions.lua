@@ -216,7 +216,7 @@ function Professions:Item_OnEnter(btn)
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		GameTooltip:AddLine("|cFFFFFFFF"..PLAYER..":|r  "..btn.data.colorized)
 		GameTooltip:AddLine("|cFFFFFFFF"..L.Realm.."|r  "..btn.data.unitObj.realm)
-		GameTooltip:AddLine("|cFFFFFFFF"..L.TooltipRealmKey.."|r "..btn.data.unitObj.data.realmKey)
+		GameTooltip:AddLine("|cFFFFFFFF"..L.TooltipRealmKey.."|r "..(btn.data.unitObj.data.realmKey or "?"))
 		GameTooltip:AddLine(" ")
 
 		if btn.data.hasRecipes then
