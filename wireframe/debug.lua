@@ -267,7 +267,7 @@ function Debug:OnEnable()
 					if allowList[k] and type(v) == "table" and k ~= "guild" then
 						--bags, bank, reagents are stored in individual bags
 						if k == "bag" or k == "bank" or k == "reagents" then
-							for bagID, bagData in pairs(v) do
+							for bagID, bagData in pairs(v or {}) do
 								toatlItems = toatlItems + (#bagData or 0)
 							end
 						else
@@ -281,7 +281,7 @@ function Debug:OnEnable()
 				end
 			else
 				totalGuilds = totalGuilds + 1
-				for tabID, tabData in pairs(unitObj.data.tabs) do
+				for tabID, tabData in pairs(unitObj.data.tabs or {}) do
 					toatlItems = toatlItems + (#tabData or 0)
 				end
 			end

@@ -384,7 +384,7 @@ end
 function BSYC:CreateFonts()
 	if not BSYC.options then return end
 
-	local flags = nil
+	local flags = ""
 	if BSYC.options.extTT_FontMonochrome and BSYC.options.extTT_FontOutline ~= "NONE" then
 		flags = "MONOCHROME,"..BSYC.options.extTT_FontOutline
 	elseif BSYC.options.extTT_FontMonochrome then
