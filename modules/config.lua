@@ -621,8 +621,18 @@ options.args.display = {
 					arg = "display.showGuildInGoldTooltip",
 					disabled = function() return not BSYC.tracking.guild end,
 				},
-				faction = {
+				gscdisplay = {
 					order = 4,
+					type = "toggle",
+					name = L.Display_GSC,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.enable_GSC_Display",
+				},
+				faction = {
+					order = 5,
 					type = "toggle",
 					name = L.DisplayFaction..factionSmall,
 					width = "full",
@@ -632,7 +642,7 @@ options.args.display = {
 					arg = "display.enableFaction",
 				},
 				guildcurrentcharacter = {
-					order = 5,
+					order = 6,
 					type = "toggle",
 					name = L.DisplayGuildCurrentCharacter,
 					width = "full",
@@ -644,7 +654,7 @@ options.args.display = {
 					hidden = function() return not CanGuildBankRepair end,
 				},
 				guildbanktabs = {
-					order = 6,
+					order = 7,
 					type = "toggle",
 					name = L.DisplayGuildBankTabs,
 					width = "full",
@@ -656,7 +666,7 @@ options.args.display = {
 					hidden = function() return not CanGuildBankRepair end,
 				},
 				whitelistonly = {
-					order = 7,
+					order = 8,
 					type = "toggle",
 					name = L.DisplayWhiteListOnly,
 					width = "full",
@@ -666,7 +676,7 @@ options.args.display = {
 					arg = "display.enableWhitelist",
 				},
 				whitelistbutton = {
-					order = 8,
+					order = 9,
 					type = "execute",
 					name = L.Whitelist,
 					func = function()
@@ -675,7 +685,7 @@ options.args.display = {
 					disabled = function() return not BSYC.options.enableWhitelist end,
 				},
 				sourceexpansion = {
-					order = 9,
+					order = 10,
 					type = "toggle",
 					name = L.DisplaySourceExpansion,
 					width = "full",
@@ -686,7 +696,7 @@ options.args.display = {
 					hidden = function() return not BSYC.IsRetail end,
 				},
 				itemtypes = {
-					order = 10,
+					order = 11,
 					type = "toggle",
 					name = L.DisplayItemTypes,
 					width = "full",

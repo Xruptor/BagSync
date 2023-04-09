@@ -595,6 +595,11 @@ function Search:SavedSearch_RefreshList()
 			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "")
             button:SetWidth(Search.savedSearch.scrollFrame.scrollChild:GetWidth())
 
+			button.Text:SetWordWrap(false)
+			--set the fontstring size by using multiple setpoints to make the dimensions
+			button.Text:SetPoint("LEFT", 8, 0)
+			button.Text:SetPoint("RIGHT", button, -30, 0)
+
 			button.Text:SetJustifyH("LEFT")
 			button.Text:SetTextColor(1, 1, 1)
 			button.Text:SetText(item.value or "")
@@ -653,4 +658,27 @@ function Search:SavedSearch_Item_OnClick(btn)
 	else
 		Search:DoSearch()
 	end
+end
+
+local function splitByChunk(text, chunkSize)
+    local s = {}
+    for i=1, #text, chunkSize do
+        s[#s+1] = text:sub(i,i+chunkSize - 1)
+    end
+    return s
+end
+
+function Search:SavedSearch_Item_OnEnter(btn)
+	GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+	GameTooltip:AddLine("|cFFFFFFFF"..L.SavedSearch.."|r")
+
+	local list = splitByChunk(btn.data.value, 45)
+	for i, v in ipairs(list) do
+	   GameTooltip:AddLine(v)
+	end
+	GameTooltip:Show()
+end
+
+function Search:SavedSearch_Item_OnLeave()
+	GameTooltip:Hide()
 end

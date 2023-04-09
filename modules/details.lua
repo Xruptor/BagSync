@@ -154,7 +154,7 @@ function Details:CreateList(itemID)
 	}
 	if BSYC.options.enableShowUniqueItemsTotals then itemID = BSYC:GetShortItemID(itemID) end
 
-	for unitObj in Data:IterateUnits() do
+	for unitObj in Data:IterateUnits(true) do
 		local colorized = Tooltip:ColorizeUnit(unitObj, true) --if we did this in CheckItems() it would be spammy and call it WAY too much
 		if not unitObj.isGuild then
 			for k, v in pairs(allowList) do
