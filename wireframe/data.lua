@@ -68,6 +68,7 @@ local optionsDefaults = {
 	extTT_FontSize = 12,
 	extTT_FontOutline = "OUTLINE",
 	extTT_FontMonochrome = false,
+	enable_GSC_Display = false,
 }
 
 local colorsDefaults = {

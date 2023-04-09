@@ -275,6 +275,16 @@
 					self.parentHandler:SavedSearch_Item_OnClick(self);
 				end
 			</OnClick>
+			<OnEnter>
+				if self.parentHandler and self.parentHandler.SavedSearch_Item_OnEnter then
+					self.parentHandler:SavedSearch_Item_OnEnter(self);
+				end
+			</OnEnter>
+			<OnLeave>
+				if self.parentHandler and self.parentHandler.SavedSearch_Item_OnLeave then
+					self.parentHandler:SavedSearch_Item_OnLeave(self);
+				end
+			</OnLeave>
 		</Scripts>
     </Frame>
 

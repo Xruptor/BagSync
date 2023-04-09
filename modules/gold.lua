@@ -81,37 +81,41 @@ end
 
 --this is a modified version of GetMoneyString from FormattingUtil.lua found in the Blizzard code
 --I wanted something that only displayed the gold if found, otherwise display the rest
-local function CustomMoneyString(money, separateThousands)
-	local goldString, silverString, copperString;
-	local gold = floor(money / (COPPER_PER_SILVER * SILVER_PER_GOLD));
-	local silver = floor((money - (gold * COPPER_PER_SILVER * SILVER_PER_GOLD)) / COPPER_PER_SILVER);
-	local copper = mod(money, COPPER_PER_SILVER);
+local function CustomMoneyString(money, separateThousands, showAll)
+	local goldString, silverString, copperString
+	local gold = floor(money / (COPPER_PER_SILVER * SILVER_PER_GOLD))
+	local silver = floor((money - (gold * COPPER_PER_SILVER * SILVER_PER_GOLD)) / COPPER_PER_SILVER)
+	local copper = mod(money, COPPER_PER_SILVER)
 
 	if (separateThousands) then
-		goldString = GOLD_AMOUNT_TEXTURE_STRING:format(FormatLargeNumber(gold), 0, 0);
+		goldString = GOLD_AMOUNT_TEXTURE_STRING:format(FormatLargeNumber(gold), 0, 0)
 	else
-		goldString = GOLD_AMOUNT_TEXTURE:format(gold, 0, 0);
+		goldString = GOLD_AMOUNT_TEXTURE:format(gold, 0, 0)
 	end
-	silverString = SILVER_AMOUNT_TEXTURE:format(silver, 0, 0);
-	copperString = COPPER_AMOUNT_TEXTURE:format(copper, 0, 0);
+	silverString = SILVER_AMOUNT_TEXTURE:format(silver, 0, 0)
+	copperString = COPPER_AMOUNT_TEXTURE:format(copper, 0, 0)
 
-	local moneyString = "";
-	local separator = "";
+	local moneyString = ""
+	local separator = ""
 
-	--only return the gold if we have any, otherwise return silver and copper
+	--only return the gold if we have any and we aren't requesting to showAll, otherwise return silver and copper
 	if ( gold > 0 ) then
-		moneyString = goldString;
-		return moneyString
+		moneyString = goldString
+		if not showAll then
+			return moneyString
+		else
+			separator = " "
+		end
 	end
 	if ( silver > 0 ) then
-		moneyString = moneyString..separator..silverString;
-		separator = " ";
+		moneyString = moneyString..separator..silverString
+		separator = " "
 	end
 	if ( copper > 0 or moneyString == "" ) then
-		moneyString = moneyString..separator..copperString;
+		moneyString = moneyString..separator..copperString
 	end
 
-	return moneyString;
+	return moneyString
 end
 
 function Gold:CreateList()
@@ -142,7 +146,7 @@ function Gold:CreateList()
 				colorized = usrData[i].colorized,
 				sortIndex = usrData[i].sortIndex,
 				count = usrData[i].count,
-				moneyString = CustomMoneyString(usrData[i].count, true)
+				moneyString = CustomMoneyString(usrData[i].count, true, BSYC.options.enable_GSC_Display)
 			})
 		end
 
@@ -216,7 +220,7 @@ function Gold:Item_OnEnter(btn)
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		GameTooltip:AddLine(btn.data.colorized or "")
 		GameTooltip:AddLine("|cFFF4A460"..(btn.data.unitObj.realm or "").."|r")
-		GameTooltip:AddLine("|cFFFFFFFF"..GetMoneyString(btn.data.count or 0, true).."|r")
+		GameTooltip:AddLine("|cFFFFFFFF"..CustomMoneyString(btn.data.count or 0, true, true).."|r")
 		GameTooltip:Show()
 		return
 	end
