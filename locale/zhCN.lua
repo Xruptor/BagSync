@@ -3,7 +3,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhCN")
 if not L then return end
 
 --  zhCN client (NGA-[男爵凯恩]补齐)
---  Last update: 20223/3/22
+--  Last update: 20223/4/10
 
 L.Yes = "Yes"
 L.No = "No"
@@ -178,6 +178,7 @@ L.FocusSearchEditBox = "打开搜索窗口时专注搜索框"
 L.AlwaysShowAdvSearch = "始终显示 Bagsync 高级搜索窗口"
 L.DisplayTotal = "显示 [总计] 金额。"
 L.DisplayGuildGoldInGoldWindow = "显示 [公会] 金币总数。"
+L.Display_GSC = "在窗口中显示|cFFFFD700金|r， |cFFC0C0C0银|r 和 |cFFB87333铜|r。"
 L.DisplayGuildBank = "显示公会银行物品。|cFF99CC33(需要扫描公会银行)|r"
 L.DisplayMailbox = "显示信箱内的物品。"
 L.DisplayAuctionHouse = "显示拍卖行物品。"
