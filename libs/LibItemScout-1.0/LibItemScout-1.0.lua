@@ -12,7 +12,8 @@
 	------------------------------
 
 	NOTE: This is an updated/continuation of Tullers original LibItemSearch-1.0 code.  Since there already is a LibItemSearch-1.2, this library was renamed in order to prevent
-	confusion from any future updates to the updated LibItemSearch-1.2 code by Jaliborc.  That way this code can be updated seperatly from LibItemSearch-1.2
+	confusion from any future updates to the updated LibItemSearch-1.2 code by Jaliborc.  That way this code can be updated seperatly from LibItemSearch-1.2 and act as a continuation of the
+	original base code.
 	Original source credit goes to Jaliborc (João Libório), Tuller, Yewbacca (Equipment Set Searching) for the work on the original LibItemSearch-1.0 code.
 	Tuller had given me permission to use this Library to incorporate into BagSync back in 2011-2012.  Original credit goes to Tuller for the original code.
 	https://github.com/Tuller/LibItemSearch-1.0
@@ -83,7 +84,9 @@ end
 local function match(search, ...)
 	for i = 1, select('#', ...) do
 		local text = select(i, ...)
-		if text and text:lower():find(search) then
+		--use plain text search and turn off pattern searching
+		--https://www.lua.org/manual/5.1/manual.html#5.4
+		if text and text:lower():find(search, 1, true) then
 			return true
 		end
 	end
