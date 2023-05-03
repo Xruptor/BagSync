@@ -31,7 +31,7 @@
 	<quality search>		:=	q ; quality | q<op><text> ; q<op><digit> (q:rare ; q:>2 ; q:>=3)
 	<ilvl search>			:=	l ; level ; lvl ; ilvl | ilvl<op><number> ; lvl<op><number> (lvl:>5 ; lvl:>=20)
 	<required ilvl search>	:=	r ; req ; rl ; reql ; reqlvl | req<op><number> ; req<op><number> (req:>5 ; req:>=20)
-	<type / slot search>	:=	t ; type ; slot | t:<text>
+	<type / slot search>	:=	t ; type ; slot | t:<text> ; t:battlepet or t:petcage ; t:head ; t:shoulder; t:armor; t:weapon
 	<tooltip search>		:=	tt ; tip; tooltip | tt:<text>
 	<text search>			:=	<text>
 	<item set search>		:=	s ; set | s:<setname> (setname can be * for all sets)
@@ -303,11 +303,23 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, item, _, search)
-		local type, subType, _, equipSlot
+		local type, subType, equipSlot, classID, subclassID
+
 		if cache.itemType then
-			type, subType, equipSlot = cache.itemType, cache.itemSubType, cache.itemEquipLoc
+			type, subType, equipSlot, classID, subclassID = cache.itemType, cache.itemSubType, cache.itemEquipLoc, cache.classID, cache.subclassID
 		else
-			type, subType, _, equipSlot = select(6, GetItemInfo(item))
+			type, subType, _, equipSlot, _, _, classID, subclassID = select(6, GetItemInfo(item))
+		end
+		--check for battlepets, petcages, companions and such
+		if (search == "battlepet" or search == "petcage") then
+			--subclassID 2 = Companion Pets, requires ClassID 15 of Miscellaneous
+			if (classID and classID == Enum.ItemClass.Miscellaneous) and (subclassID and subclassID == Enum.ItemMiscellaneousSubclass.CompanionPet) then
+				return true
+			end
+			if (cache.speciesID) then
+				return true
+			end
+			return false
 		end
 		return match(search, type, subType, _G[equipSlot])
 	end
