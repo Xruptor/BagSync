@@ -9,7 +9,7 @@
 ## Notes-deDE: BagSync verfolgt die Gegenstände Deiner Charaktere und zeigt sie in Tooltips an.
 ## Author: Xruptor
 ## Version: 19.13
-## IconTexture: Interface\AddOns\BagSync\media\minimap
+## IconTexture: Interface\AddOns\BagSync\media\icon
 ## X-Curse-Project-ID: 22067
 ## X-WoWI-ID: 15351
 ## X-Wago-ID: xZKxjQNk
