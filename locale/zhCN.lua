@@ -3,7 +3,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhCN")
 if not L then return end
 
 --  zhCN client (NGA-[男爵凯恩]补齐)
---  Last update: 20223/4/10
+--  Last update: 2023/05/07
 
 L.Yes = "Yes"
 L.No = "No"
@@ -317,7 +317,7 @@ L.SearchHelp = [[
 
 |cff00ffff<需要的等级><|r = |cFF99CC33r|r ; |cFF99CC33req|r ; |cFF99CC33rl|r ; |cFF99CC33reql|r ; |cFF99CC33reqlvl|r | 示例：|cFFFFD580r:>5|r  ;  |cFFFFD580req:>=20|r 
 
-|cff00ffff<种类/部位>|r = |cFF99CC33t|r ; |cFF99CC33type|r ; 示例：|cFF99CC33饰品|r  ;  |cFFFFD580t:脚|r 
+|cff00ffff<种类/部位>|r = |cFF99CC33t|r ; |cFF99CC33type|r ; 示例：|cFF99CC33饰品|r  ;  |cFFFFD580t:脚|r ; (t:战斗宠物 和 t:宠物笼) (t:护甲) (t:武器)
 
 |cff00ffff<提示>|r = |cFF99CC33tt|r ; |cFF99CC33tip|r ; |cFF99CC33tooltip|r | |cFFFFD580tt:<text>|r (tt:summon)
 
