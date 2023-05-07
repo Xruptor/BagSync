@@ -21,10 +21,12 @@ www.manaflux.com
 
 BagSync embeds the following third-party libraries and code in accordance with their respective licenses:
 
-1. AceAddon-3.0, AceConfig-3.0, AceConsole-3.0, AceEvent-3.0, AceGUI-3.0, AceLocale-3.0, AceTimer-3.0 (https://www.wowace.com/projects/ace3)
+1. Ace3 Libraries (https://www.wowace.com/projects/ace3)
 2. CallbackHandler (https://www.curseforge.com/wow/addons/callbackhandler)
 3. LibDataBroker (https://www.wowace.com/projects/libdatabroker-1-1)
 4. LibDBIcon (https://www.wowace.com/projects/libdbicon-1-0)
 5. LibQTip-1.0 (https://www.wowace.com/projects/libqtip-1-0)
 6. LibStub (https://www.wowace.com/projects/libstub)
 7. LibItemSearch-1.0 (LibItemScout-1.0) (https://github.com/Tuller/LibItemSearch-1.0)
+8. LibDDI-1.0 (https://www.curseforge.com/wow/addons/libddi-1-0)
+9. LibSharedMedia-3.0 (https://www.curseforge.com/wow/addons/libsharedmedia-3-0)

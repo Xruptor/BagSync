@@ -97,6 +97,8 @@ end
 --[[ User API ]]--
 --cache object must use same variable names as --https://wowpedia.fandom.com/wiki/API_GetItemInfo
 --Table Example: {itemName=<name>, itemLink=<link>, itemQuality=<quality>}
+--For battlepets/petcages make sure to include speciesID=<speciesID> as part of the cache object
+--Note: GetItemInfo does not like BattlePet id's, so do not pass that as a link.  Just use the battlepet name instead of a link.)
 function Lib:Find(itemLink, search, cacheObj)
 	if not useful(search) then
 		return true
