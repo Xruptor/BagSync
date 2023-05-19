@@ -299,15 +299,21 @@ function Data:LoadSlashCommand()
 				StaticPopup_Show("BAGSYNC_RESETDATABASE")
 				return true
 			elseif cmd == L.SlashConfig then
-				if not BSYC.IsRetail then
-					--only do this for Expansions less than Retail
-					InterfaceOptionsFrame:Show() --has to be here to load the about frame onLoad
-				else
-					if InCombatLockdown() or GameMenuFrame:IsShown() or InterfaceOptionsFrame then
-						return false
+				if Settings then
+					Settings.OpenToCategory("BagSync")
+				elseif InterfaceOptionsFrame_OpenToCategory then
+
+					if not BSYC.IsRetail then
+						--only do this for Expansions less than Retail
+						InterfaceOptionsFrame:Show() --has to be here to load the about frame onLoad
+					else
+						if InCombatLockdown() or GameMenuFrame:IsShown() or InterfaceOptionsFrame then
+							return false
+						end
 					end
+
+					InterfaceOptionsFrame_OpenToCategory(BSYC.aboutPanel)
 				end
-				InterfaceOptionsFrame_OpenToCategory(BSYC.aboutPanel) --force the panel to show
 				return true
 			elseif cmd == L.SlashDebug then
 				BSYC:GetModule("Debug").frame:Show()

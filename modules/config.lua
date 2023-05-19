@@ -1216,6 +1216,22 @@ options.args.faq = {
 	},
 }
 
+local aboutOptions = {
+	type = "group",
+	args = {
+		version = {
+			order = 1,
+			type = "description",
+			name = function() return GetAddOnMetadata("BagSync", "Notes")..
+				"\n\n\n\n"..
+				"|cFF52D386Version|r: "..GetAddOnMetadata("BagSync", "Version")..
+				"\n\n"..
+				"|cFF52D386Author|r: "..GetAddOnMetadata("BagSync", "Author")
+			end,
+		}
+	},
+}
+
 local function LoadAboutFrame()
 
 	--Code inspired from tekKonfigAboutPanel
@@ -1266,7 +1282,21 @@ local function LoadAboutFrame()
 	return about
 end
 
-BSYC.aboutPanel = LoadAboutFrame()
+local function makeConfigPanel()
+    local frame
+	--this uses the new Settings Panel
+    if _G.Settings and type(_G.Settings) == "table" and _G.Settings.RegisterAddOnCategory then
+		config:RegisterOptionsTable("BagSync", aboutOptions)
+		frame = configDialog:AddToBlizOptions("BagSync", "BagSync")
+    else
+		--this is for the old settings panel system
+        frame = LoadAboutFrame()
+    end
+    frame:Hide()
+    return frame
+end
+
+BSYC.aboutPanel = makeConfigPanel()
 
 -- General Options
 config:RegisterOptionsTable("BagSync-General", options.args.main)

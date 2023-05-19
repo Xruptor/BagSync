@@ -72,15 +72,23 @@ function DataBroker:BuildMinimapDropdown()
 				BSYC:GetModule("Data"):FixDB()
 			end)
 			addButton(level, L.Config, nil, 1, nil, 'config', function(frame, ...)
-				if not BSYC.IsRetail then
-					--only do this for Expansions less than Retail
-					InterfaceOptionsFrame:Show() --has to be here to load the about frame onLoad
-				else
-					if InCombatLockdown() or GameMenuFrame:IsShown() or InterfaceOptionsFrame then
-						return false
+
+				if Settings then
+					Settings.OpenToCategory("BagSync")
+				elseif InterfaceOptionsFrame_OpenToCategory then
+
+					if not BSYC.IsRetail then
+						--only do this for Expansions less than Retail
+						InterfaceOptionsFrame:Show() --has to be here to load the about frame onLoad
+					else
+						if InCombatLockdown() or GameMenuFrame:IsShown() or InterfaceOptionsFrame then
+							return false
+						end
 					end
+
+					InterfaceOptionsFrame_OpenToCategory(BSYC.aboutPanel)
 				end
-				InterfaceOptionsFrame_OpenToCategory(BSYC.aboutPanel) --force the panel to show
+
 			end)
 			addButton(level, "", nil, 1) --space ;)
 			addButton(level, L.Close, nil, 1)
