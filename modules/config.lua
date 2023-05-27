@@ -25,15 +25,15 @@ local factionString = ""
 local factionSmall = " "
 
 if BSYC.IsRetail then
-		factionString = [[|TInterface\FriendsFrame\PlusManz-Horde:20:20|t]]
-		factionString = factionString.." "..[[|TInterface\FriendsFrame\PlusManz-Alliance:20:20|t]]
-		factionSmall = factionString
-		factionString = factionString.." "..[[|TInterface\Icons\Achievement_worldevent_brewmaster:20:20|t]]
+	factionString = [[|TInterface\FriendsFrame\PlusManz-Horde:20:20|t]]
+	factionString = factionString.." "..[[|TInterface\FriendsFrame\PlusManz-Alliance:20:20|t]]
+	factionSmall = factionString
+	factionString = factionString.." "..[[|TInterface\Icons\Achievement_worldevent_brewmaster:20:20|t]]
 
 else
-		factionString = [[|TInterface\FriendsFrame\PlusManz-Horde:20:20|t]]
-		factionString = factionString.." "..[[|TInterface\FriendsFrame\PlusManz-Alliance:20:20|t]]
-		factionSmall = factionString
+	factionString = [[|TInterface\FriendsFrame\PlusManz-Horde:20:20|t]]
+	factionString = factionString.." "..[[|TInterface\FriendsFrame\PlusManz-Alliance:20:20|t]]
+	factionSmall = factionString
 end
 
 local allowList = {
@@ -76,7 +76,7 @@ local function get(info)
 		return BSYC.options[c] or 12
 	elseif c == "extTT_Font" then
 		for i, v in next, SML:List(SML_FONT) do
-			if v == BSYC.options.extTT_Font then return i end
+			if v == (BSYC.options.extTT_Font or "Friz Quadrata TT") then return i end
 		end
 	else
 		if BSYC.options[c] then --if this is nil then it will default to false
