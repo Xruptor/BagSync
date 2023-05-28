@@ -1073,7 +1073,7 @@ function Tooltip:HookTooltip(objTooltip)
 	--https://wowpedia.fandom.com/wiki/Patch_10.0.2/API_changes
 
 	objTooltip:HookScript("OnHide", function(self)
-		objTooltip.__tooltipUpdated = false
+		self.__tooltipUpdated = false
 		--we don't want to Release() the qTip until we aren't using it anymore because they disabled it.  Otherwise just hide it.
 		if Tooltip.qTip then Tooltip.qTip:Hide() end
 	end)
@@ -1081,12 +1081,12 @@ function Tooltip:HookTooltip(objTooltip)
 	if objTooltip ~= BattlePetTooltip and objTooltip ~= FloatingBattlePetTooltip then
 		objTooltip:HookScript("OnTooltipCleared", function(self)
 			--this gets called repeatedly on some occasions. Do not reset Tooltip cache here at all
-			objTooltip.__tooltipUpdated = false
+			self.__tooltipUpdated = false
 		end)
 	else
 		--this is required for the battlepet tooltips, otherwise it will flood the tooltip with data
 		objTooltip:HookScript("OnShow", function(self)
-			if objTooltip.__tooltipUpdated then return end
+			if self.__tooltipUpdated then return end
 		end)
 	end
 
@@ -1184,41 +1184,41 @@ function Tooltip:HookTooltip(objTooltip)
 	else
 
 		objTooltip:HookScript("OnTooltipSetItem", function(self)
-			if objTooltip.__tooltipUpdated then return end
-			local name, link = objTooltip:GetItem()
+			if self.__tooltipUpdated then return end
+			local name, link = self:GetItem()
 			if link then
 				--sometimes the link is an empty link with the name being |h[]|h, its a bug with GetItem()
 				--so lets check for that
 				local linkName = string.match(link, "|h%[(.-)%]|h")
 				if not linkName or string.len(linkName) < 1 then return nil end  -- we don't want to store or process it
 
-				Tooltip:TallyUnits(objTooltip, link, "OnTooltipSetItem")
+				Tooltip:TallyUnits(self, link, "OnTooltipSetItem")
 			end
 		end)
 
 		hooksecurefunc(objTooltip, "SetQuestLogItem", function(self, itemType, index)
-			if objTooltip.__tooltipUpdated then return end
+			if self.__tooltipUpdated then return end
 			local link = GetQuestLogItemLink(itemType, index)
 			if link then
-				Tooltip:TallyUnits(objTooltip, link, "SetQuestLogItem")
+				Tooltip:TallyUnits(self, link, "SetQuestLogItem")
 			end
 		end)
 		hooksecurefunc(objTooltip, "SetQuestItem", function(self, itemType, index)
-			if objTooltip.__tooltipUpdated then return end
+			if self.__tooltipUpdated then return end
 			local link = GetQuestItemLink(itemType, index)
 			if link then
-				Tooltip:TallyUnits(objTooltip, link, "SetQuestItem")
+				Tooltip:TallyUnits(self, link, "SetQuestItem")
 			end
 		end)
 
 		--only parse CraftFrame when it's not the RETAIL but Classic and TBC, because this was changed to TradeSkillUI on retail
 		hooksecurefunc(objTooltip, "SetCraftItem", function(self, index, reagent)
-			if objTooltip.__tooltipUpdated then return end
+			if self.__tooltipUpdated then return end
 			local _, _, count = GetCraftReagentInfo(index, reagent)
 			--YOU NEED to do the above or it will return an empty link!
 			local link = GetCraftReagentItemLink(index, reagent)
 			if link then
-				Tooltip:TallyUnits(objTooltip, link, "SetCraftItem")
+				Tooltip:TallyUnits(self, link, "SetCraftItem")
 			end
 		end)
 
