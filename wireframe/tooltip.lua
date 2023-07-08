@@ -659,6 +659,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	--we do this because the itemID portion can be something like 190368::::::::::::5:8115:7946:6652:7579:1491::::::
 	local shortID = BSYC:GetShortItemID(link)
+
 	--we want to make sure the origLink for BattlePets is alwayhs the fakeID for parsing through cache below
 	if isBattlePet then origLink = shortID end
 
@@ -911,7 +912,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	end
 
 	--don't do expansion or itemtype information for battlepets
-	if not isBattlePet then
+	if not isBattlePet and not BSYC:IsBattlePetFakeID(shortID) then
 		--add expansion
 		if BSYC.IsRetail and BSYC.options.enableSourceExpansion and shortID then
 			desc = self:HexColor(BSYC.colors.expansion, L.TooltipExpansion)

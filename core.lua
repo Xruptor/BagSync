@@ -332,6 +332,16 @@ function BSYC:CreateFakeID(link, count, speciesID, level, breedQuality, maxHealt
 	end
 end
 
+function BSYC:IsBattlePetFakeID(fakeID)
+	if not fakeID or not tonumber(fakeID) then return false end
+	fakeID = tonumber(fakeID)
+
+	if fakeID >= BSYC.FakePetCode then
+		return true
+	end
+	return false
+end
+
 function BSYC:FakeIDToSpeciesID(fakeID)
 	if not fakeID or not tonumber(fakeID) then return end
 	fakeID = tonumber(fakeID)
