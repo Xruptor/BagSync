@@ -1,7 +1,7 @@
-## Interface: 100100
-## Interface-Retail: 100100
+## Interface: 100105
+## Interface-Retail: 100105
 ## Interface-Classic: 11403
-## Interface-Wrath: 30401
+## Interface-Wrath: 30402
 ## Title: BagSync
 ## Notes: BagSync tracks your characters items and displays it within tooltips.
 ## Notes-zhCN: BagSync 是统计您角色内的物品数量并将其显示在工具提示中.
