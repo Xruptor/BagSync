@@ -250,7 +250,7 @@ function Unit:GetPlayerInfo(bypassDebug)
 	unit.lowerKey = Unit.lowerKey
 
 	if not bypassDebug then
-		Debug(BSYC_DL.TRACE, "GetPlayerInfo", PLAYER, REALM, FACTION, unit.class, unit.race, unit.guild)
+		Debug(BSYC_DL.TRACE, "GetPlayerInfo", PLAYER, REALM, FACTION, unit.class, unit.race, unit.guild, unit.guildrealm)
 	end
 	return unit
 end

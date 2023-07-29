@@ -366,6 +366,7 @@ end
 
 function Scanner:SaveGuildBankMoney()
 	if not BSYC.tracking.guild then return end
+	if not Unit.atGuildBank then return end
 	if Scanner.isScanningGuild then return end
 
 	local guildDB = Data:CheckGuildDB()

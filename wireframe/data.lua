@@ -187,6 +187,7 @@ function Data:ResetColors()
 	Debug(BSYC_DL.INFO, "ResetColors")
 	BSYC.colors = nil
 	BSYC:SetDefaults("colors", colorsDefaults)
+	BSYC.colors = BSYC.options.colors
 end
 
 function Data:FixDB()
