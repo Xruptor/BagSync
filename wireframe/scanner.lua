@@ -610,19 +610,41 @@ function Scanner:SaveCurrency(showDebug)
 		end
 
 		for i=1, xGetCurrencyListSize() do
+			local xHeader, xCount, xUseIcon, xIcon1, xIcon2
+
 			local currencyinfo = xGetCurrencyListInfo(i)
 			local link = xGetCurrencyListLink(i)
 			local currencyID = BSYC:GetShortCurrencyID(link)
+			
+			local currName = currencyinfo.name or currencyinfo --classic and wotlk servers don't return an array but a string name instead
+			
+			--classic and wotlk do not use array returns for xGetCurrencyListInfo, so lets compensate for it
+			if not currencyinfo.name then
+				_, xHeader, _, _, _, xCount, xIcon1, xIcon2 = xGetCurrencyListInfo(i)
+				--xIcon1 is actually extraCurrencyType, but for SOME REASON they occasionally pass the iconFileID here rather then in xIcon2.  This is straight from the Wow API Wiki
+				if xIcon1 and tonumber(xIcon1) and tonumber(xIcon1) > 5 then
+					xUseIcon = xIcon1
+				elseif xIcon2 and tonumber(xIcon2) and tonumber(xIcon2) > 5 then
+					xUseIcon = xIcon2
+				else
+					xUseIcon = 134400 --question mark
+				end
+			end
 
-			if currencyinfo.name then
-				if currencyinfo.isHeader then
-					lastHeader = currencyinfo.name
-				elseif not currencyinfo.isHeader and currencyID then
+			local isHeader = not currencyID or currencyinfo.isHeader or xHeader
+			local currQuantity = currencyinfo.quantity or xCount or 0
+			local currIcon = currencyinfo.iconFileID or xUseIcon or 134400 --question mark
+
+			if currName then
+				if isHeader then
+					lastHeader = currName
+				elseif currencyID then
 					slotItems[currencyID] = slotItems[currencyID] or {}
-					slotItems[currencyID].name = currencyinfo.name
+					slotItems[currencyID].name = currName
 					slotItems[currencyID].header = lastHeader
-					slotItems[currencyID].count = currencyinfo.quantity
-					slotItems[currencyID].icon = currencyinfo.iconFileID
+					slotItems[currencyID].count = currQuantity
+					slotItems[currencyID].icon = currIcon
+
 				end
 			end
 		end
