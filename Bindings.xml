@@ -1,23 +1,23 @@
 <Bindings>
-	<Binding name="BAGSYNCBLACKLIST" header="BAGSYNC" category="ADDONS">
+	<Binding name="BAGSYNCBLACKLIST" category="BAGSYNC">
 		BagSync_ShowWindow("Blacklist");
 	</Binding>
-	<Binding name="BAGSYNCWHITELIST" category="ADDONS">
+	<Binding name="BAGSYNCWHITELIST" category="BAGSYNC">
 		BagSync_ShowWindow("Whitelist");
 	</Binding>
-	<Binding name="BAGSYNCCURRENCY" category="ADDONS">
+	<Binding name="BAGSYNCCURRENCY" category="BAGSYNC">
 		BagSync_ShowWindow("Currency");
 	</Binding>
-	<Binding name="BAGSYNCGOLD" category="ADDONS">
+	<Binding name="BAGSYNCGOLD" category="BAGSYNC">
 		BagSync_ShowWindow("Gold");
 	</Binding>
-	<Binding name="BAGSYNCPROFESSIONS" category="ADDONS">
+	<Binding name="BAGSYNCPROFESSIONS" category="BAGSYNC">
 		BagSync_ShowWindow("Professions");
 	</Binding>
-	<Binding name="BAGSYNCPROFILES" category="ADDONS">
+	<Binding name="BAGSYNCPROFILES" category="BAGSYNC">
 		BagSync_ShowWindow("Profiles");
 	</Binding>
-	<Binding name="BAGSYNCSEARCH" category="ADDONS">
+	<Binding name="BAGSYNCSEARCH" category="BAGSYNC">
 		BagSync_ShowWindow("Search");
 	</Binding>
 </Bindings>
