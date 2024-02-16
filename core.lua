@@ -547,18 +547,18 @@ BSYC.timerFrame:SetScript("OnUpdate", function(self, elapsed)
     end
 end)
 
-function BSYC:CheckDB_Reset()
-	Debug(BSYC_DL.INFO, "CheckDB_Reset")
-	if not BagSyncDB["forceDBReset§"] or BagSyncDB["forceDBReset§"] < forceDBReset then
-		BagSyncDB = { ["forceDBReset§"] = forceDBReset }
-		BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r")
-		C_Timer.After(6, function()
-			StaticPopup_Show("BAGSYNC_RESETDB_INFO")
-			BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r")
-		end)
-		return
-	end
-end
+-- function BSYC:CheckDB_Reset()
+-- 	Debug(BSYC_DL.INFO, "CheckDB_Reset")
+-- 	if not BagSyncDB["forceDBReset§"] or BagSyncDB["forceDBReset§"] < forceDBReset then
+-- 		BagSyncDB = { ["forceDBReset§"] = forceDBReset }
+-- 		BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r")
+-- 		C_Timer.After(6, function()
+-- 			StaticPopup_Show("BAGSYNC_RESETDB_INFO")
+--			ReloadUI()
+-- 		end)
+-- 		return
+-- 	end
+-- end
 
 --create base DB entries before we load any modules
 function BSYC:OnEnable()
@@ -566,14 +566,12 @@ function BSYC:OnEnable()
 	--initiate database
 	BagSyncDB = BagSyncDB or {}
 
-	--check for resets
-	BSYC:CheckDB_Reset()
-
 	--load the options and blacklist
 	BagSyncDB["options§"] = BagSyncDB["options§"] or {}
 	BagSyncDB["blacklist§"] = BagSyncDB["blacklist§"] or {}
 	BagSyncDB["whitelist§"] = BagSyncDB["whitelist§"] or {}
 	BagSyncDB["savedsearch§"] = BagSyncDB["savedsearch§"] or {}
+	BagSyncDB["forceDBReset§"] = BagSyncDB["forceDBReset§"] or forceDBReset
 
 	--main DB table
 	BSYC.db = BSYC.db or {}
@@ -583,6 +581,9 @@ function BSYC:OnEnable()
 
 	--setup the debug values since Debug module loads before Data module
 	BSYC.options = BagSyncDB["options§"]
+
+	--check for resets
+	--BSYC:CheckDB_Reset()
 
 	BSYC:SetDefaults("debug", debugDefaults)
 end
