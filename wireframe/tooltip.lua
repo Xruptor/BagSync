@@ -167,6 +167,7 @@ end
 function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd)
 
 	if not unitObj.data then return nil end
+	if BSYC.options.showCurrentPlayerOnly and unitObj.data ~= BSYC.db.player then return nil end
 
 	local tmpTag = ""
 	local realm = unitObj.realm
@@ -232,6 +233,8 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 	end
 	----------------
 
+	local addStr = ""
+
 	if BSYC.options.enableRealmNames then
 		realm = unitObj.realm
 	elseif BSYC.options.enableRealmAstrickName then
@@ -244,7 +247,14 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 		realm = ""
 	end
 
-	local addStr = ""
+	if BSYC.options.enableCurrentRealmName and unitObj.realm == _G.GetRealmName() then
+		realm = unitObj.realm
+		if BSYC.options.enableCurrentRealmShortName then
+			realm = string.sub(realm, 1, 5)
+		end
+		addStr = self:HexColor(BSYC.colors.currentrealm, "["..realm.."]")
+	end
+
 	local delimiter = (realm ~= "" and " ") or ""
 
 	if not unitObj.isXRGuild then
@@ -267,6 +277,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 		realm = (string.len(realm) > 1 and realm) or "" --lets make sure we have more than just an asterick for the realm name otherwiose it would be [+] we want [+]
 		addStr = self:HexColor(BSYC.colors.cr, "[+"..realmTag..realm.."]")
 	end
+
 	--add the tags if we have anything to work with
 	if addStr ~= "" then
 		if tagAtEnd then
@@ -994,6 +1005,7 @@ end
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)
 	Debug(BSYC_DL.INFO, "CurrencyTooltip", currencyName, currencyIcon, currencyID, source, BSYC.tracking.currency)
 	if not BSYC.tracking.currency then return end
+	if not BSYC.options.enableCurrencyWindowTooltipData then return end
 
 	currencyID = tonumber(currencyID) --make sure it's a number we are working with and not a string
 	if not currencyID then return end

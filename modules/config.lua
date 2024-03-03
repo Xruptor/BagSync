@@ -220,8 +220,18 @@ options.args.main = {
 					set = set,
 					arg = "main.tooltipOnlySearch",
 				},
-				focussearcheditbox = {
+				enablecurrencytooltipdata = {
 					order = 4,
+					type = "toggle",
+					name = L.DisplayTooltipCurrencyData,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "main.enableCurrencyWindowTooltipData",
+				},
+				focussearcheditbox = {
+					order = 5,
 					type = "toggle",
 					name = L.FocusSearchEditBox,
 					width = "full",
@@ -231,7 +241,7 @@ options.args.main = {
 					arg = "main.focusSearchEditBox",
 				},
 				alwaysshowadvsearch = {
-					order = 5,
+					order = 6,
 					type = "toggle",
 					name = L.AlwaysShowAdvSearch,
 					width = "full",
@@ -241,7 +251,7 @@ options.args.main = {
 					arg = "main.alwaysShowAdvSearch",
 				},
 				enableminimap = {
-					order = 6,
+					order = 7,
 					type = "toggle",
 					name = L.DisplayMinimap,
 					width = "full",
@@ -251,7 +261,7 @@ options.args.main = {
 					arg = "minimap.enableMinimap",
 				},
 				enableversiontext = {
-					order = 7,
+					order = 8,
 					type = "toggle",
 					name = L.EnableLoginVersionInfo,
 					width = "full",
@@ -819,14 +829,60 @@ options.args.display = {
 				},
 			}
 		},
-		groupaccountwide = {
+		groupcurrentplayer = {
 			order = 5,
+			type = "group",
+			name = L.DisplayCurrentPlayer,
+			guiInline = true,
+			args = {
+				displaycurrentplayeronly = {
+					order = 1,
+					type = "toggle",
+					name = L.DisplayCurrentPlayerOnly,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.showCurrentPlayerOnly",
+				},
+				currentplayeronlywarning = {
+					order = 2,
+					type = "description",
+					name = L.DisplayCurrentPlayerWarn,
+					width = "full",
+				},
+			}
+		},
+		groupaccountwide = {
+			order = 6,
 			type = "group",
 			name = L.DisplayTooltipAccountWide,
 			guiInline = true,
+			hidden = function() return BSYC.options.showCurrentPlayerOnly end,
 			args = {
-				connectedrealm = {
+				currentrealmname = {
 					order = 0,
+					type = "toggle",
+					name = L.DisplayCurrentRealmName,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.enableCurrentRealmName",
+				},
+				currentrealmshortname = {
+					order = 1,
+					type = "toggle",
+					name = L.DisplayCurrentRealmShortName,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.enableCurrentRealmShortName",
+					disabled = function() return not BSYC.options.enableCurrentRealmName end,
+				},
+				connectedrealm = {
+					order = 2,
 					type = "toggle",
 					name = L.DisplayCR,
 					width = "full",
@@ -836,7 +892,7 @@ options.args.display = {
 					arg = "display.enableCR",
 				},
 				battlenet = {
-					order = 1,
+					order = 3,
 					type = "toggle",
 					name = L.DisplayBNET,
 					width = "full",
@@ -847,9 +903,10 @@ options.args.display = {
 				},
 				realmtagsgroups = {
 					name = L.DisplayAccountWideTagOpts,
-					order = 2,
+					order = 4,
 					type = "group",
 					guiInline = true,
+					hidden = function() return BSYC.options.showCurrentPlayerOnly end,
 					args = {
 						realmidtags = {
 							order = 0,
@@ -915,7 +972,7 @@ options.args.display = {
 			}
 		},
 		showuniqueitemsgroup = {
-			order = 6,
+			order = 7,
 			name = L.DisplayShowUniqueItemsTotalsTitle,
 			type = "group",
 			guiInline = true,
@@ -997,8 +1054,19 @@ options.args.color = {
 			set = set,
 			arg = "color.guild",
 		},
-		cr = {
+		currentrealm = {
 			order = 5,
+			type = "color",
+			name = L.ColorCurrentRealm,
+			width = "full",
+			hasAlpha = false,
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "color.currentrealm",
+		},
+		cr = {
+			order = 6,
 			type = "color",
 			name = L.ColorCR,
 			width = "full",
@@ -1009,7 +1077,7 @@ options.args.color = {
 			arg = "color.cr",
 		},
 		bnet = {
-			order = 6,
+			order = 7,
 			type = "color",
 			name = L.ColorBNET,
 			width = "full",
@@ -1020,7 +1088,7 @@ options.args.color = {
 			arg = "color.bnet",
 		},
 		itemid = {
-			order = 7,
+			order = 8,
 			type = "color",
 			name = L.ColorItemID,
 			width = "full",
@@ -1031,7 +1099,7 @@ options.args.color = {
 			arg = "color.itemid",
 		},
 		guildtabs = {
-			order = 8,
+			order = 9,
 			type = "color",
 			name = L.ColorGuildTabs,
 			width = "full",
@@ -1042,7 +1110,7 @@ options.args.color = {
 			arg = "color.guildtabs",
 		},
 		expansion = {
-			order = 9,
+			order = 10,
 			type = "color",
 			name = L.ColorExpansion,
 			width = "full",
@@ -1053,7 +1121,7 @@ options.args.color = {
 			arg = "color.expansion",
 		},
 		itemtypes = {
-			order = 10,
+			order = 11,
 			type = "color",
 			name = L.ColorItemTypes,
 			width = "full",
@@ -1064,7 +1132,7 @@ options.args.color = {
 			arg = "color.itemtypes",
 		},
 		resetcolors = {
-			order = 11,
+			order = 12,
 			type = "execute",
 			name = L.DefaultColors,
 			func = function()
@@ -1073,13 +1141,13 @@ options.args.color = {
 			end,
 		},
 		emptyseparator = {
-			order = 12,
+			order = 13,
 			fontSize = "medium",
 			type = "description",
 			name = " ",
 		},
 		showuniqueitemsgroup = {
-			order = 13,
+			order = 14,
 			name = L.ConfigDisplay,
 			type = "group",
 			guiInline = true,

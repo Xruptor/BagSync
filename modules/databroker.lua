@@ -96,6 +96,7 @@ function DataBroker:BuildMinimapDropdown()
 	end
 
 	DataBroker.dropdown = bgsMinimapDD
+	BSYC.bgsMinimapDD = bgsMinimapDD
 end
 
 function DataBroker:CreatePlugin()

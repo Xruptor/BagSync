@@ -69,6 +69,10 @@ local optionsDefaults = {
 	extTT_FontOutline = "OUTLINE",
 	extTT_FontMonochrome = false,
 	enable_GSC_Display = false,
+	enableCurrentRealmName = false,
+	enableCurrentRealmShortName = false,
+	enableCurrencyWindowTooltipData = true,
+	showCurrentPlayerOnly = false,
 }
 
 local colorsDefaults = {
@@ -83,6 +87,7 @@ local colorsDefaults = {
 	guildtabs = HexToRGBPerc('FF09DBE0'),
 	expansion = HexToRGBPerc('FFCF9FFF'),
 	itemtypes = HexToRGBPerc('ffcccf66'),
+	currentrealm = HexToRGBPerc('ff4CBB17'),
 }
 
 local trackingDefaults = {
