@@ -649,8 +649,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if not CanAccessObject(objTooltip) then return end
 	if Scanner.isScanningGuild then return end --don't tally while we are scanning the Guildbank
 
-	--check for modifier option
-	if not self:CheckModifier() then return end
+	--check for modifier option only in windows that isn't BagSync search
+	if not self:CheckModifier() and not objTooltip.isBSYCSearch then return end
 
 	local showQTip = Tooltip:QTipCheck(source, isBattlePet)
 	local skipTally = false
@@ -1005,7 +1005,10 @@ end
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)
 	Debug(BSYC_DL.INFO, "CurrencyTooltip", currencyName, currencyIcon, currencyID, source, BSYC.tracking.currency)
 	if not BSYC.tracking.currency then return end
-	if not BSYC.options.enableCurrencyWindowTooltipData then return end
+	if not BSYC.options.enableCurrencyWindowTooltipData and source ~= "bagsync_currency" then return end
+
+	--check for modifier option
+	if not self:CheckModifier() and source ~= "bagsync_currency" then return end
 
 	currencyID = tonumber(currencyID) --make sure it's a number we are working with and not a string
 	if not currencyID then return end
@@ -1015,19 +1018,26 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	--loop through our characters
 	local usrData = {}
 
-	local permIgnore ={
-		[2032] = "Trader's Tender", --shared across all characters
-	}
-	if permIgnore[currencyID] then return end
+	-- local permIgnore ={
+	-- 	[2032] = "Trader's Tender", --shared across all characters
+	-- }
+	--if permIgnore[currencyID] then return end
+
+	local tenderCheck = false
 
 	for unitObj in Data:IterateUnits() do
 		if not unitObj.isGuild and unitObj.data.currency and unitObj.data.currency[currencyID] and unitObj.data.currency[currencyID].count > 0 then
-			table.insert(usrData, {
-				unitObj=unitObj,
-				colorized=self:ColorizeUnit(unitObj),
-				sortIndex=self:GetSortIndex(unitObj),
-				count=unitObj.data.currency[currencyID].count
-			})
+			--check for "Trader's Tender" which is currencyID 2032.  Only display it once for the current player.
+			--that currency is account-wide.
+			if currencyID ~= 2032 or (currencyID == 2032 and not tenderCheck and unitObj.data == BSYC.db.player) then
+				table.insert(usrData, {
+					unitObj=unitObj,
+					colorized=self:ColorizeUnit(unitObj),
+					sortIndex=self:GetSortIndex(unitObj),
+					count=unitObj.data.currency[currencyID].count
+				})
+				if currencyID == 2032 and unitObj.data == BSYC.db.player then tenderCheck = true end
+			end
 		end
 	end
 
@@ -1049,6 +1059,11 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	end
 	if #usrData <= 0 then
 		table.insert(displayList, {NONE, " "})
+	end
+
+	--this is for trader tenders since they are account wide, only add them once
+	if currencyID == 2032 then
+		table.insert(displayList, {"|cffff7d0a["..L.DisplayTooltipAccountWide.."]|r", " "})
 	end
 
 	if BSYC.options.enableTooltipItemID and currencyID then

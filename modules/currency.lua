@@ -191,7 +191,7 @@ function Currency:Item_OnEnter(btn)
 	end
     if not btn.isHeader then
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
-		Tooltip:CurrencyTooltip(GameTooltip, btn.data.name, btn.data.icon, btn.data.currencyID)
+		Tooltip:CurrencyTooltip(GameTooltip, btn.data.name, btn.data.icon, btn.data.currencyID, "bagsync_currency")
 		return
 	end
 	GameTooltip:Hide()
