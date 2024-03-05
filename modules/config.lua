@@ -845,12 +845,6 @@ options.args.display = {
 					set = set,
 					arg = "display.showCurrentPlayerOnly",
 				},
-				currentplayeronlywarning = {
-					order = 2,
-					type = "description",
-					name = L.DisplayCurrentPlayerWarn,
-					width = "full",
-				},
 			}
 		},
 		groupaccountwide = {

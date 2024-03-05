@@ -167,7 +167,6 @@ end
 function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd)
 
 	if not unitObj.data then return nil end
-	if BSYC.options.showCurrentPlayerOnly and unitObj.data ~= BSYC.db.player then return nil end
 
 	local tmpTag = ""
 	local realm = unitObj.realm
@@ -761,7 +760,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--NOTE: This cache check is ONLY for units (guild, players) that isn't related to the current player.  Since that data doesn't really change we can cache those lines
 		--For the player however, we always want to grab the latest information.  So once it's grabbed we can do a small local cache for that using __lastTally
 		--Advanced Searches should always be processed and not stored in the cache
-		if turnOffCache or advUnitList or not Data.__cache.tooltip[origLink] then
+		if turnOffCache or advUnitList or (not Data.__cache.tooltip[origLink] and not BSYC.options.showCurrentPlayerOnly) then
 
 			--allow advance search matches if found, no need to set to true as advUnitList will default to dumpAll if found
 			for unitObj in Data:IterateUnits(false, advUnitList) do
@@ -807,7 +806,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				Data.__cache.tooltip[origLink].unitList = (grandTotal > 0 and CopyTable(unitList)) or {}
 				Data.__cache.tooltip[origLink].grandTotal = grandTotal
 			end
-		elseif Data.__cache.tooltip[origLink] then
+		elseif Data.__cache.tooltip[origLink] and not BSYC.options.showCurrentPlayerOnly then
 			--use the cached results from previous DB searches, copy the table don't reference it, 
 			--otherwise we will add to it unintentially below with player data using table.insert()
 			unitList = CopyTable(Data.__cache.tooltip[origLink].unitList)
