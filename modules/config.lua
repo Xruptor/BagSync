@@ -844,6 +844,7 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.showCurrentPlayerOnly",
+					--mint warning |cFF44EE77Mint|r
 				},
 			}
 		},
@@ -852,6 +853,7 @@ options.args.display = {
 			type = "group",
 			name = L.DisplayTooltipAccountWide,
 			guiInline = true,
+			--hidden = function() return BSYC.options.showCurrentPlayerOnly end,
 			args = {
 				currentrealmname = {
 					order = 0,
@@ -899,6 +901,7 @@ options.args.display = {
 					order = 4,
 					type = "group",
 					guiInline = true,
+					--hidden = function() return BSYC.options.showCurrentPlayerOnly end,
 					args = {
 						realmidtags = {
 							order = 0,
