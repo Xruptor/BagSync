@@ -638,7 +638,7 @@ function Scanner:SaveCurrency(showDebug)
 			if currName then
 				if isHeader then
 					lastHeader = currName
-				elseif currencyID then
+				elseif currencyID and not slotItems[currencyID] then --make sure we don't do the same currency twice
 					slotItems[currencyID] = slotItems[currencyID] or {}
 					slotItems[currencyID].name = currName
 					slotItems[currencyID].header = lastHeader
