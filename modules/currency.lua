@@ -79,15 +79,15 @@ function Currency:CreateList()
 		if not unitObj.isGuild and unitObj.data.currency then
 			for k, v in pairs(unitObj.data.currency) do
 				local header = v.header or L.Currency
-				--only do the entry once per heading and name
-				if not tempList[header..v.name]  then
+				--only do the entry once per currencyID
+				if not tempList[k]  then
 					table.insert(usrData, {
 						header = header,
 						name = v.name,
 						icon = v.icon,
 						currencyID = k
 					})
-					tempList[header..v.name] = true
+					tempList[k] = true
 				end
 			end
 		end
