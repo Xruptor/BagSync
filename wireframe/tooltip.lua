@@ -158,8 +158,10 @@ function Tooltip:GetClassColor(unitObj, switch, bypass, altColor)
 		doChk = BSYC.options.itemTotalsByClassColor
 	end
 
-	if bypass or ( doChk and RAID_CLASS_COLORS[unitObj.data.class] ) then
-		return RAID_CLASS_COLORS[unitObj.data.class]
+	--adds support for depricated ClassColors / WeWantBlueShamans   Ticket #331
+	local classColor = CUSTOM_CLASS_COLORS and CUSTOM_CLASS_COLORS[unitObj.data.class] or RAID_CLASS_COLORS[unitObj.data.class]
+	if bypass or ( doChk and classColor ) then
+			return classColor
 	end
 	return altColor or BSYC.colors.first
 end
