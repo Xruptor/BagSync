@@ -52,7 +52,7 @@ jobs:
         uses: BigWigsMods/packager@master
         with:
           args: -g wrath
-		  
+
        # Package and release the Cata version
       - name: Create Cata Package
         uses: BigWigsMods/packager@master
