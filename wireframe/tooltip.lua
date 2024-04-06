@@ -335,14 +335,20 @@ function Tooltip:AddItems(unitObj, itemID, target, countList)
 	if not unitObj or not itemID or not target or not countList then return total end
 	if not unitObj.data then return total end
 
-	local function getTotal(data)
+	local function getTotal(data, doOpts, optObj)
+		local doChk = true
 		local iCount = 0
+		if doOpts then doChk = false end
+
 		for i=1, #data do
 			if data[i] then
-				local link, count = BSYC:Split(data[i], true)
+				local link, count, qOpts = BSYC:Split(data[i], doChk)
 				if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
 				if link then
 					if link == itemID then
+						if not doChk and qOpts and qOpts[doOpts] and optObj then
+							table.insert(optObj, qOpts[doOpts])
+						end
 						iCount = iCount + (count or 1)
 					end
 				end
@@ -360,7 +366,12 @@ function Tooltip:AddItems(unitObj, itemID, target, countList)
 			total = getTotal(unitObj.data[target].bag or {})
 
 		elseif target == "equip" or target == "void" or target == "mailbox" then
-			total = getTotal(unitObj.data[target] or {})
+			if target == "equip" and BSYC.options.showEquipBagSlots then
+				countList.bagslots = {}
+				total = getTotal(unitObj.data[target] or {}, "bagslot", countList.bagslots)
+			else
+				total = getTotal(unitObj.data[target] or {})
+			end
 		end
 	end
 	if target == "guild" and BSYC.tracking.guild then
@@ -414,7 +425,15 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 	end
 	if ((countList["equip"] or 0) > 0) then
 		total = total + countList["equip"]
-		table.insert(tallyCount, self:GetCountString(colorType, dispType, "equip", countList["equip"]))
+		local tmpSlots = ""
+		if BSYC.options.showEquipBagSlots and countList["bagslots"] and #countList["bagslots"] > 0 then
+			for i=1, #countList["bagslots"] do
+				tmpSlots = tmpSlots..","..tostring(countList["bagslots"][i])
+			end
+			tmpSlots = string.sub(tmpSlots, 2)  -- remove comma
+			tmpSlots = self:HexColor(BSYC.colors.bagslots, " ["..L.TooltipBagSlot.." "..tmpSlots.."]")
+		end
+		table.insert(tallyCount, self:GetCountString(colorType, dispType, "equip", countList["equip"], tmpSlots))
 	end
 	if ((countList["mailbox"] or 0) > 0) then
 		total = total + countList["mailbox"]
@@ -672,7 +691,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	--we do this because the itemID portion can be something like 190368::::::::::::5:8115:7946:6652:7579:1491::::::
 	local shortID = BSYC:GetShortItemID(link)
 
-	--we want to make sure the origLink for BattlePets is alwayhs the fakeID for parsing through cache below
+	--we want to make sure the origLink for BattlePets is always the fakeID for parsing through cache below
 	if isBattlePet then origLink = shortID end
 
 	--make sure we have something to work with

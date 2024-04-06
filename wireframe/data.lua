@@ -73,6 +73,7 @@ local optionsDefaults = {
 	enableCurrentRealmShortName = false,
 	enableCurrencyWindowTooltipData = true,
 	showCurrentPlayerOnly = false,
+	showEquipBagSlots = false,
 }
 
 local colorsDefaults = {
@@ -88,6 +89,7 @@ local colorsDefaults = {
 	expansion = HexToRGBPerc('FFCF9FFF'),
 	itemtypes = HexToRGBPerc('ffcccf66'),
 	currentrealm = HexToRGBPerc('ff4CBB17'),
+	bagslots = HexToRGBPerc('ff44EE77'),
 }
 
 local trackingDefaults = {

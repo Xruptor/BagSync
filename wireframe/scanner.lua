@@ -171,6 +171,20 @@ function Scanner:SaveEquipment()
 		end
 	end
 
+	--add the bag slots
+	local minCnt, maxCnt = self:GetBagSlots("bag")
+	for i = minCnt, maxCnt do
+		local invID = C_Container.ContainerIDToInventoryID(i)
+		local bagLink = GetInventoryItemLink("player",invID)
+		if bagLink then
+			local parseLink =  BSYC:ParseItemLink(bagLink)
+			if parseLink then
+				local encodeStr = BSYC:EncodeOpts({bagslot=i}, parseLink)
+				table.insert(slotItems,  encodeStr)
+			end
+		end
+	end
+
 	--check for ProfessionsFrame Inventory Slots
 	if C_TradeSkillUI and C_TradeSkillUI.GetProfessionInventorySlots then
 

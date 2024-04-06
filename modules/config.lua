@@ -715,6 +715,16 @@ options.args.display = {
 					set = set,
 					arg = "display.enableItemTypes",
 				},
+				equipbagslots = {
+					order = 12,
+					type = "toggle",
+					name = L.DisplayEquipBagSlots,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.showEquipBagSlots",
+				},
 			}
 		},
 		groupsorting = {
@@ -1126,8 +1136,19 @@ options.args.color = {
 			set = set,
 			arg = "color.itemtypes",
 		},
-		resetcolors = {
+		bagslots = {
 			order = 12,
+			type = "color",
+			name = L.ColorBagSlots,
+			width = "full",
+			hasAlpha = false,
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "color.bagslots",
+		},
+		resetcolors = {
+			order = 13,
 			type = "execute",
 			name = L.DefaultColors,
 			func = function()
@@ -1136,13 +1157,13 @@ options.args.color = {
 			end,
 		},
 		emptyseparator = {
-			order = 13,
+			order = 14,
 			fontSize = "medium",
 			type = "description",
 			name = " ",
 		},
 		showuniqueitemsgroup = {
-			order = 14,
+			order = 15,
 			name = L.ConfigDisplay,
 			type = "group",
 			guiInline = true,
