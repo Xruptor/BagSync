@@ -153,10 +153,36 @@ function Scanner:SaveBag(bagtype, bagid)
 	self:ResetTooltips()
 end
 
+function Scanner:SaveEquippedBags(bagtype)
+	Debug(BSYC_DL.INFO, "SaveEquippedBags", bagtype, BSYC.options.showEquipBagSlots)
+	if not bagtype then return end
+	if not BSYC.db.player.equipbags then BSYC.db.player.equipbags = {} end
+	if not BSYC.db.player.equipbags.bag then BSYC.db.player.equipbags.bag = {} end
+	if not BSYC.db.player.equipbags.bank then BSYC.db.player.equipbags.bank = {} end
+
+	local slotItems = {}
+
+	--add the bag slots
+	local minCnt, maxCnt = self:GetBagSlots(bagtype)
+	for i = minCnt, maxCnt do
+		local invID = C_Container.ContainerIDToInventoryID(i)
+		local bagLink = GetInventoryItemLink("player",invID)
+		if bagLink then
+			local parseLink =  BSYC:ParseItemLink(bagLink)
+			if parseLink then
+				local encodeStr = BSYC:EncodeOpts({bagslot=i}, parseLink)
+				table.insert(slotItems,  encodeStr)
+			end
+		end
+	end
+
+	BSYC.db.player.equipbags[bagtype] = slotItems
+	self:ResetTooltips()
+end
+
 function Scanner:SaveEquipment()
 	Debug(BSYC_DL.INFO, "SaveEquipment", BSYC.tracking.equip)
 	if not BSYC.tracking.equip then return end
-
 	if not BSYC.db.player.equip then BSYC.db.player.equip = {} end
 
 	local slotItems = {}
@@ -171,19 +197,7 @@ function Scanner:SaveEquipment()
 		end
 	end
 
-	--add the bag slots
-	local minCnt, maxCnt = self:GetBagSlots("bag")
-	for i = minCnt, maxCnt do
-		local invID = C_Container.ContainerIDToInventoryID(i)
-		local bagLink = GetInventoryItemLink("player",invID)
-		if bagLink then
-			local parseLink =  BSYC:ParseItemLink(bagLink)
-			if parseLink then
-				local encodeStr = BSYC:EncodeOpts({bagslot=i}, parseLink)
-				table.insert(slotItems,  encodeStr)
-			end
-		end
-	end
+	self:SaveEquippedBags("bag")
 
 	--check for ProfessionsFrame Inventory Slots
 	if C_TradeSkillUI and C_TradeSkillUI.GetProfessionInventorySlots then
@@ -219,6 +233,8 @@ function Scanner:SaveBank(rootOnly)
 
 	--force scan of bank bag -1, since blizzard never sends updates for it
 	self:SaveBag("bank", BANK_CONTAINER)
+	--save bank bags
+	self:SaveEquippedBags("bank")
 
 	if not rootOnly then
 		local minCnt, maxCnt = self:GetBagSlots("bank")

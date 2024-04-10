@@ -319,6 +319,10 @@ function Search:CheckItems(searchStr, unitObj, target, checkList, atUserLoc)
 			for bagID, bagData in pairs(unitObj.data[target] or {}) do
 				total = total + parseItems(bagData)
 			end
+			--do equipbags
+			if (target == "bag" or target == "bank") and unitObj.data.equipbags then
+				total = total + parseItems(unitObj.data.equipbags[target] or {})
+			end
 		elseif target == "auction" then
 			total = parseItems(unitObj.data[target].bag or {})
 

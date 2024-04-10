@@ -330,25 +330,46 @@ function Tooltip:DoSort(tblData)
 	return tblData
 end
 
-function Tooltip:AddItems(unitObj, itemID, target, countList)
+function Tooltip:GetEquipBags(target, unitObj, itemID, countList)
+	if not unitObj.data.equipbags or not unitObj.data.equipbags[target] then return 0 end
+
+	local iCount = 0
+	local tmpSlots = ""
+
+	for i=1, #unitObj.data.equipbags[target] do
+		local link, count, qOpts = BSYC:Split(unitObj.data.equipbags[target][i], false)
+		if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
+		if link then
+			if link == itemID and qOpts and qOpts.bagslot then
+				tmpSlots = tmpSlots..","..qOpts.bagslot
+				iCount = iCount + (count or 1)
+			end
+		end
+	end
+
+	if iCount > 0 then
+		tmpSlots = string.sub(tmpSlots, 2)  -- remove comma
+		countList[target.."slots"] = self:HexColor(BSYC.colors.bagslots, " <"..tmpSlots..">")
+	elseif countList[target.."slots"] then
+		countList[target.."slots"] = nil
+	end
+
+	return iCount
+end
+
+function Tooltip:AddItems(unitObj, itemID, target, countList, isCurrentPlayer)
 	local total = 0
 	if not unitObj or not itemID or not target or not countList then return total end
 	if not unitObj.data then return total end
 
-	local function getTotal(data, doOpts, optObj)
-		local doChk = true
+	local function getTotal(data, target)
 		local iCount = 0
-		if doOpts then doChk = false end
-
 		for i=1, #data do
 			if data[i] then
-				local link, count, qOpts = BSYC:Split(data[i], doChk)
+				local link, count = BSYC:Split(data[i], true)
 				if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
 				if link then
 					if link == itemID then
-						if not doChk and qOpts and qOpts[doOpts] and optObj then
-							table.insert(optObj, qOpts[doOpts])
-						end
 						iCount = iCount + (count or 1)
 					end
 				end
@@ -360,24 +381,22 @@ function Tooltip:AddItems(unitObj, itemID, target, countList)
 	if unitObj.data[target] and BSYC.tracking[target] then
 		if target == "bag" or target == "bank" or target == "reagents" then
 			for bagID, bagData in pairs(unitObj.data[target] or {}) do
-				total = total + getTotal(bagData)
+				total = total + getTotal(bagData, target)
+			end
+			if target == "bag" or target == "bank" then
+				total = total + self:GetEquipBags(target, unitObj, itemID, countList)
 			end
 		elseif target == "auction" then
-			total = getTotal(unitObj.data[target].bag or {})
+			total = getTotal(unitObj.data[target].bag or {}, target)
 
 		elseif target == "equip" or target == "void" or target == "mailbox" then
-			if target == "equip" and BSYC.options.showEquipBagSlots then
-				countList.bagslots = {}
-				total = getTotal(unitObj.data[target] or {}, "bagslot", countList.bagslots)
-			else
-				total = getTotal(unitObj.data[target] or {})
-			end
+			total = getTotal(unitObj.data[target] or {}, target)
 		end
 	end
 	if target == "guild" and BSYC.tracking.guild then
 		countList.gtab = {}
 		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
-			local tabCount = getTotal(tabData)
+			local tabCount = getTotal(tabData, target)
 			if tabCount > 0 then
 				countList.gtab[tabID] = tabCount
 			end
@@ -413,11 +432,11 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 
 	if ((countList["bag"] or 0) > 0) then
 		total = total + countList["bag"]
-		table.insert(tallyCount, self:GetCountString(colorType, dispType, "bag", countList["bag"]))
+		table.insert(tallyCount, self:GetCountString(colorType, dispType, "bag", countList["bag"], BSYC.options.showEquipBagSlots and countList["bagslots"]))
 	end
 	if ((countList["bank"] or 0) > 0) then
 		total = total + countList["bank"]
-		table.insert(tallyCount, self:GetCountString(colorType, dispType, "bank", countList["bank"]))
+		table.insert(tallyCount, self:GetCountString(colorType, dispType, "bank", countList["bank"], BSYC.options.showEquipBagSlots and countList["bankslots"]))
 	end
 	if ((countList["reagents"] or 0) > 0) then
 		total = total + countList["reagents"]
@@ -425,15 +444,7 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 	end
 	if ((countList["equip"] or 0) > 0) then
 		total = total + countList["equip"]
-		local tmpSlots = ""
-		if BSYC.options.showEquipBagSlots and countList["bagslots"] and #countList["bagslots"] > 0 then
-			for i=1, #countList["bagslots"] do
-				tmpSlots = tmpSlots..","..tostring(countList["bagslots"][i])
-			end
-			tmpSlots = string.sub(tmpSlots, 2)  -- remove comma
-			tmpSlots = self:HexColor(BSYC.colors.bagslots, " ["..L.TooltipBagSlot.." "..tmpSlots.."]")
-		end
-		table.insert(tallyCount, self:GetCountString(colorType, dispType, "equip", countList["equip"], tmpSlots))
+		table.insert(tallyCount, self:GetCountString(colorType, dispType, "equip", countList["equip"]))
 	end
 	if ((countList["mailbox"] or 0) > 0) then
 		total = total + countList["mailbox"]
@@ -881,6 +892,14 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				if not BSYC.tracking.bag then bagCount = 0 end
 				if not BSYC.tracking.bank then bankCount = 0 end
 				if not BSYC.tracking.reagents then regCount = 0 end
+
+				if bagCount > 0 then
+					self:GetEquipBags("bag", playerObj, link, countList)
+				end
+				if bankCount > 0 then
+					self:GetEquipBags("bank", playerObj, link, countList)
+				end
+
 				countList.bag = bagCount
 				countList.bank = bankCount
 				countList.reagents = regCount

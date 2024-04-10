@@ -449,6 +449,7 @@ function Data:PopulateItemCache(errorList, errorCount)
 		mailbox = true,
 		void = true,
 		auction = true,
+		equipbags = true,
 	}
 	local tmpList = {}
 	local tmpError = {}
@@ -478,6 +479,10 @@ function Data:PopulateItemCache(errorList, errorCount)
 				end
 			elseif target == "auction" then
 				doItem(unitObj.data[target].bag or {})
+
+			elseif target == "equipbags" then
+				doItem(unitObj.data[target].bag or {})
+				doItem(unitObj.data[target].bank or {})
 
 			elseif target == "equip" or target == "void" or target == "mailbox" then
 				doItem(unitObj.data[target] or {})

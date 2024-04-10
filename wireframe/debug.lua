@@ -237,6 +237,7 @@ function Debug:OnEnable()
 			void = 0,
 			auction = 0,
 			guild = 0,
+			equipbags = 0,
 		}
 
 		for unitObj in BSYC:GetModule("Data"):IterateUnits(true) do
@@ -262,6 +263,7 @@ function Debug:OnEnable()
 
 			if not unitObj.isGuild then
 				totalUnits = totalUnits + 1
+				local count = 0
 
 				for k, v in pairs(unitObj.data) do
 					if allowList[k] and type(v) == "table" and k ~= "guild" then
@@ -272,7 +274,11 @@ function Debug:OnEnable()
 							end
 						else
 							if k == "auction" then
-								toatlItems = toatlItems + (#v.bag or 0)
+								count = (v.bag and #v.bag) or 0
+								toatlItems = toatlItems + count
+							elseif k == "equipbags" then
+								count = ((v.bag and #v.bag) or 0) + ((v.bank and #v.bank) or 0)
+								toatlItems = toatlItems + count
 							else
 								toatlItems = toatlItems + (#v or 0)
 							end

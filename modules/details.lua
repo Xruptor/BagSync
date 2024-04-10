@@ -92,7 +92,7 @@ end
 function Details:CheckItems(usrData, unitObj, target, itemID, colorized)
 	if not unitObj or not target then return end
 
-	local function parseItems(data, tab)
+	local function parseItems(data, tab, equipped)
 		local iCount = 0
 		for i=1, #data do
 			if data[i] then
@@ -106,7 +106,7 @@ function Details:CheckItems(usrData, unitObj, target, itemID, colorized)
 							realm = unitObj.realm,
 							colorized = colorized,
 							tab = tab,
-							slot = i,
+							slot = (equipped and "E") or i,
 							target = target,
 							link = link,
 							count = count or 1,
@@ -124,6 +124,10 @@ function Details:CheckItems(usrData, unitObj, target, itemID, colorized)
 		if target == "bag" or target == "bank" or target == "reagents" then
 			for bagID, bagData in pairs(unitObj.data[target] or {}) do
 				parseItems(bagData, bagID)
+			end
+			--do equipbags
+			if (target == "bag" or target == "bank") and unitObj.data.equipbags then
+				parseItems(unitObj.data.equipbags[target] or {}, nil, true)
 			end
 		elseif target == "auction" then
 			parseItems((unitObj.data[target] and unitObj.data[target].bag) or {})
