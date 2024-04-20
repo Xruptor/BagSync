@@ -2,7 +2,7 @@
 	debug.lua
 		Provides some debugging information to assist in squashing bugs.
 
-		BagSync - All Rights Reserved - (c) 2006-2023
+		BagSync - All Rights Reserved - (c) 2024
 		License included with addon.
 --]]
 

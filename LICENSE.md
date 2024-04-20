@@ -1,5 +1,5 @@
 All Rights Reserved
-Copyright (c) 2006-2023 Xruptor (Andre)
+Copyright (c) 2024 Xruptor (Andre)
 www.manaflux.com
 
 ## Exceptions:

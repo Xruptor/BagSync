@@ -2,7 +2,7 @@
 	currency.lua
 		A currency frame for BagSync
 
-		BagSync - All Rights Reserved - (c) 2006-2023
+		BagSync - All Rights Reserved - (c) 2024
 		License included with addon.
 --]]
 

@@ -2,7 +2,7 @@
 	scanner.lua
 		Scanner module for BagSync, scans bags, bank, currency, etc...
 
-		BagSync - All Rights Reserved - (c) 2006-2023
+		BagSync - All Rights Reserved - (c) 2024
 		License included with addon.
 --]]
 
