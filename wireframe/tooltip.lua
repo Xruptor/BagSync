@@ -1157,7 +1157,7 @@ function Tooltip:HookTooltip(objTooltip)
 		end)
 	end
 
-	if TooltipDataProcessor then
+	if C_TooltipInfo then
 
 		--Note: tooltip data type corresponds to the Enum.TooltipDataType types
 		--i.e Enum.TooltipDataType.Unit it type 2
