@@ -19,6 +19,7 @@
 
 libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+libs\TaintLess\TaintLess.xml
 libs\AceAddon-3.0\AceAddon-3.0.xml
 libs\AceGUI-3.0\AceGUI-3.0.xml
 libs\AceConfig-3.0\AceConfig-3.0.xml
