@@ -185,11 +185,18 @@ function BSYC:EncodeOpts(tbl, link, removeOpts)
 end
 
 function BSYC:Split(dataStr, skipOpts, mergeOpts)
+	if not dataStr then return nil, nil, {} end
+
 	local qLink, qCount, qOpts = strsplit(";", dataStr)
+	if not qLink or string.len(qLink) < 1 then
+		return nil, nil, {}
+	end
+
 	--only do Opts functions if we need too, otherwise just return the link and count
 	if not skipOpts or mergeOpts then
 		return qLink, qCount, self:DecodeOpts(qOpts, mergeOpts) or {}
 	end
+
 	return qLink, qCount, {}
 end
 
