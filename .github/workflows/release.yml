@@ -47,12 +47,6 @@ jobs:
         with:
           args: -g classic
 
-      # Package and release the wrath version
-      - name: Create Wrath Package
-        uses: BigWigsMods/packager@master
-        with:
-          args: -g wrath
-
        # Package and release the Cata version
       - name: Create Cata Package
         uses: BigWigsMods/packager@master
