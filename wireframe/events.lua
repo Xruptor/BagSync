@@ -166,7 +166,8 @@ function Events:BAG_UPDATE_DELAYED(event)
 
 	for bagid in pairs(self.SpamBagQueue) do
 		local bagname
-
+		
+		Debug(BSYC_DL.SL1, "SpamBagCheck", bagid)
 		if Scanner:IsBackpack(bagid) or Scanner:IsBackpackBag(bagid) or Scanner:IsKeyring(bagid) then
 			bagname = "bag"
 		elseif Scanner:IsBank(bagid) or Scanner:IsBankBag(bagid) then

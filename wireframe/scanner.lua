@@ -70,6 +70,9 @@ end
 
 function Scanner:IsKeyring(bagid)
 	if not bagid then return false end
+	if bagid == KEYRING_CONTAINER and (not HasKey or not HasKey()) then
+		return false
+	end
 	return bagid == KEYRING_CONTAINER
 end
 
@@ -100,6 +103,17 @@ function Scanner:StartupScans()
 		self:SaveBag("bag", i)
 	end
 
+	--check keyring, KEYRING_CONTAINER is nil on servers that have it disabled
+	if KEYRING_CONTAINER and HasKey and HasKey() then
+		self:SaveBag("bag", KEYRING_CONTAINER)
+	else
+		--cleanup old keyring stuff if it's disabled
+		local xKeyRing = KEYRING_CONTAINER or Enum.BagIndex.Keyring
+		if xKeyRing and BSYC.db.player["bag"] and BSYC.db.player["bag"][xKeyRing] then
+			BSYC.db.player["bag"][xKeyRing] = nil
+		end
+	end
+
 	self:SaveCurrency(true)
 
 	--cleanup the auction DB
@@ -123,26 +137,23 @@ function Scanner:SaveBag(bagtype, bagid)
 	local xGetNumSlots = (C_Container and C_Container.GetContainerNumSlots) or GetContainerNumSlots
 	local xGetContainerInfo = (C_Container and C_Container.GetContainerItemInfo) or GetContainerItemInfo
 
-	if xGetNumSlots(bagid) > 0 then
+	local numSlots = xGetNumSlots(bagid)
 
+	if numSlots > 0 then
 		local slotItems = {}
 
-		for slot = 1, xGetNumSlots(bagid) do
-			--apparently they are pushing C_Container to the older content as well, lets check for this
-			if C_Container and C_Container.GetContainerItemInfo then
-				local containerInfo = xGetContainerInfo(bagid, slot)
-				if containerInfo and containerInfo.hyperlink then
-					local tmpItem = BSYC:ParseItemLink(containerInfo.hyperlink, containerInfo.stackCount or 1)
-					Debug(BSYC_DL.FINE, "SaveBag", bagtype, bagid, tmpItem)
-					table.insert(slotItems,  tmpItem)
-				end
-			else
-				local _, count, _,_,_,_, link = xGetContainerInfo(bagid, slot)
-				if link then
-					local tmpItem = BSYC:ParseItemLink(link, count)
-					Debug(BSYC_DL.FINE, "SaveBag", bagtype, bagid, tmpItem)
-					table.insert(slotItems, tmpItem)
-				end
+		for slot = 1, numSlots do
+			local xObj, count, _,_,_,_, link = xGetContainerInfo(bagid, slot)
+
+			--lets check for C_Container
+			if xObj and xObj.hyperlink then
+				link = xObj.hyperlink
+				count = xObj.stackCount or 1
+			end
+			if link then
+				local tmpItem = BSYC:ParseItemLink(link, count)
+				Debug(BSYC_DL.FINE, "SaveBag", bagtype, bagid, tmpItem)
+				table.insert(slotItems, tmpItem)
 			end
 		end
 

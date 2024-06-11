@@ -455,6 +455,9 @@ local function link_FindSearchInTooltip(itemLink, search)
 	return result
 end
 
+--GetItemClassInfo was depreciated in TWW
+local xGetItemClassInfo = (C_Item and C_Item.GetItemClassInfo) or GetItemClassInfo
+
 Lib:RegisterTypedSearch{
 	id = 'keyWord',
 	tags = {'k', 'key', 'keyword'},
@@ -477,7 +480,7 @@ Lib:RegisterTypedSearch{
 		['bou'] = ITEM_BIND_ON_USE,
 		['boa'] = ITEM_BIND_TO_BNETACCOUNT,
 		['quest'] = ITEM_BIND_QUEST,
-		[GetItemClassInfo(Enum.ItemClass.Questitem):lower()] = ITEM_BIND_QUEST,
+		[xGetItemClassInfo(Enum.ItemClass.Questitem):lower()] = ITEM_BIND_QUEST,
 		[QUESTS_LABEL:lower()] = ITEM_BIND_QUEST,
 		['unique'] = ITEM_UNIQUE,
 		[TOY:lower()] = TOY,
