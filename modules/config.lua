@@ -1306,11 +1306,11 @@ local aboutOptions = {
 		version = {
 			order = 1,
 			type = "description",
-			name = function() return GetAddOnMetadata("BagSync", "Notes")..
+			name = function() return C_AddOns.GetAddOnMetadata("BagSync", "Notes")..
 				"\n\n\n\n"..
-				"|cFF52D386Version|r: "..GetAddOnMetadata("BagSync", "Version")..
+				"|cFF52D386Version|r: "..C_AddOns.GetAddOnMetadata("BagSync", "Version")..
 				"\n\n"..
-				"|cFF52D386Author|r: "..GetAddOnMetadata("BagSync", "Author")
+				"|cFF52D386Author|r: "..C_AddOns.GetAddOnMetadata("BagSync", "Author")
 			end,
 		}
 	},
@@ -1324,7 +1324,7 @@ local function LoadAboutFrame()
 	about:Hide()
 
 	local fields = {"Version", "Author"}
-	local notes = GetAddOnMetadata("BagSync", "Notes")
+	local notes = C_AddOns.GetAddOnMetadata("BagSync", "Notes")
 
 	local title = about:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 
@@ -1342,7 +1342,7 @@ local function LoadAboutFrame()
 
 	local anchor
 	for _,field in pairs(fields) do
-		local val = GetAddOnMetadata("BagSync", field)
+		local val = C_AddOns.GetAddOnMetadata("BagSync", field)
 		if val then
 			local title = about:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
 			title:SetWidth(75)
@@ -1361,7 +1361,13 @@ local function LoadAboutFrame()
 		end
 	end
 
-	InterfaceOptions_AddCategory(about)
+	if InterfaceOptions_AddCategory then
+		InterfaceOptions_AddCategory(about)
+	else
+		local category, layout = _G.Settings.RegisterCanvasLayoutCategory(about, about.name);
+		_G.Settings.RegisterAddOnCategory(category);
+		addon.settingsCategory = category
+	end
 
 	return about
 end

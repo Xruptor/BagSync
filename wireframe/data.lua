@@ -118,7 +118,7 @@ local ignoreChk, ignoreTotal = 0, 0
 
 function Data:OnEnable()
 	Debug(BSYC_DL.INFO, "OnEnable")
-	local ver = GetAddOnMetadata("BagSync","Version") or 0
+	local ver = C_AddOns.GetAddOnMetadata("BagSync","Version") or 0
 
 	--get player information from Unit
 	local player = Unit:GetPlayerInfo(true)

@@ -21,7 +21,7 @@ local WOW_PROJECT_WRATH_CLASSIC = _G.WOW_PROJECT_WRATH_CLASSIC
 
 --Get TOC version
 --/dump select(4, GetBuildInfo())
---https://wowpedia.fandom.com/wiki/Template:API_LatestInterface
+--https://warcraft.wiki.gg/wiki/Template:API_LatestInterface
 
 --use the ingame trace tool to debug stuff
 --/etrace or /eventtrace
