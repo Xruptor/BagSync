@@ -194,7 +194,7 @@ function Whitelist:RefreshList()
 			button.Text:SetText(item.value or "")
 			button.HeaderHighlight:SetAlpha(0)
 
-			if GetMouseFocus() == button then
+			if BSYC.GMF() == button then
 				Whitelist:Item_OnLeave() --hide first
 				Whitelist:Item_OnEnter(button)
 			end

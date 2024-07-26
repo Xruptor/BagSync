@@ -33,6 +33,8 @@ BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 --BSYC.IsTBC_C = WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC
 BSYC.IsWLK_C = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
 
+BSYC.GMF = GetMouseFocus or GetMouseFoci
+
 --increment forceDBReset to reset the ENTIRE db forcefully
 local forceDBReset = 3
 
@@ -241,7 +243,7 @@ function BSYC:ParseItemLink(link, count)
 		--sometimes the profession window has a bug for the items it parses, so lets fix it
 		-----------------------------
 		if shortID and tonumber(shortID) == 0 and TradeSkillFrame then
-			local focus = GetMouseFocus():GetName()
+			local focus = BSYC.GMF():GetName()
 
 			if focus == 'TradeSkillSkillIcon' then
 				link = C_TradeSkillUI.GetRecipeItemLink(TradeSkillFrame.selectedSkill)

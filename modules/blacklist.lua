@@ -209,7 +209,7 @@ function Blacklist:RefreshList()
 			button.Text:SetText(item.value or "")
 			button.HeaderHighlight:SetAlpha(0)
 
-			if GetMouseFocus() == button then
+			if BSYC.GMF() == button then
 				Blacklist:Item_OnLeave() --hide first
 				Blacklist:Item_OnEnter(button)
 			end

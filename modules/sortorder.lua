@@ -200,7 +200,7 @@ function SortOrder:RefreshList()
 
 			--while we are updating the scrollframe, is the mouse currently over a button?
 			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
-			if GetMouseFocus() == button then
+			if BSYC.GMF() == button then
 				SortOrder:Item_OnLeave() --hide first
 				SortOrder:Item_OnEnter(button)
 			end
