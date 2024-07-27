@@ -262,13 +262,13 @@ function Blacklist:AddItemID()
 		BSYC.db.blacklist[itemid] = "|cFFCF9FFF"..speciesName.."|r"
 		BSYC:Print(L.ItemIDAdded:format(itemid), speciesName)
 	else
-		if not GetItemInfo(itemid) then
+		if not C_Item.GetItemInfo(itemid) then
 			BSYC:Print(L.ItemIDNotValid:format(itemid))
 			editBox:SetText("")
 			return
 		end
 
-		local dName, dItemLink = GetItemInfo(itemid)
+		local dName, dItemLink = C_Item.GetItemInfo(itemid)
 
 		BSYC.db.blacklist[itemid] = dItemLink
 		BSYC:Print(L.ItemIDAdded:format(itemid), dItemLink)

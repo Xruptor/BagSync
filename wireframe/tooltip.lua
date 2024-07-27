@@ -970,7 +970,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			if Data.__cache.items[shortID] then
 				expacID = Data.__cache.items[shortID].expacID
 			else
-				expacID = select(15, GetItemInfo(shortID))
+				expacID = select(15, C_Item.GetItemInfo(shortID))
 			end
 			value = self:HexColor(BSYC.colors.second, (expacID and _G["EXPANSION_NAME"..expacID]) or "?")
 
@@ -989,7 +989,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				classID = Data.__cache.items[shortID].classID
 				subclassID = Data.__cache.items[shortID].subclassID
 			else
-				itemType, itemSubType, _, _, _, _, classID, subclassID = select(6, GetItemInfo(shortID))
+				itemType, itemSubType, _, _, _, _, classID, subclassID = select(6, C_Item.GetItemInfo(shortID))
 			end
 			local typeString = Tooltip:GetItemTypeString(itemType, itemSubType, classID, subclassID)
 

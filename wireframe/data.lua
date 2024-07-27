@@ -404,7 +404,7 @@ function Data:CacheLink(parseLink)
 			if C_Item.IsItemDataCachedByID(shortID) then
 				itemObj.parseLink = origLink
 
-				--https://wowpedia.fandom.com/wiki/API_GetItemInfo
+				--https://wowpedia.fandom.com/wiki/API_C_Item.GetItemInfo
 				itemObj.itemName,
 				itemObj.itemLink,
 				itemObj.itemQuality,
@@ -421,7 +421,7 @@ function Data:CacheLink(parseLink)
 				itemObj.bindType,
 				itemObj.expacID,
 				itemObj.setID,
-				itemObj.isCraftingReagent = GetItemInfo(shortID)
+				itemObj.isCraftingReagent = C_Item.GetItemInfo(shortID)
 			else
 				C_Item.RequestLoadItemDataByID(shortID)
 			end

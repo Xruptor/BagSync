@@ -95,10 +95,10 @@ end
 
 
 --[[ User API ]]--
---cache object must use same variable names as --https://wowpedia.fandom.com/wiki/API_GetItemInfo
+--cache object must use same variable names as --https://wowpedia.fandom.com/wiki/API_C_Item.GetItemInfo
 --Table Example: {itemName=<name>, itemLink=<link>, itemQuality=<quality>}
 --For battlepets/petcages make sure to include speciesID=<speciesID> as part of the cache object
---Note: GetItemInfo does not like BattlePet id's, so do not pass that as a link.  Just use the battlepet name instead of a link.)
+--Note: C_Item.GetItemInfo does not like BattlePet id's, so do not pass that as a link.  Just use the battlepet name instead of a link.)
 function Lib:Find(itemLink, search, cacheObj)
 	if not useful(search) then
 		return true
@@ -265,7 +265,7 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, item, _, search)
-		return search == (cache.bindType or select(14, GetItemInfo(item)))
+		return search == (cache.bindType or select(14, C_Item.GetItemInfo(item)))
 	end,
 
 	keywords = {
@@ -287,7 +287,7 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, item, _, search)
-		local expacID = (cache.expacID or select(15, GetItemInfo(item)))
+		local expacID = (cache.expacID or select(15, C_Item.GetItemInfo(item)))
 		local xPacName = expacID and _G["EXPANSION_NAME"..expacID]
 		return match(search, expacID and tostring(expacID), xPacName)
 	end
@@ -310,7 +310,7 @@ Lib:RegisterTypedSearch{
 		if cache.itemType then
 			type, subType, equipSlot, classID, subclassID = cache.itemType, cache.itemSubType, cache.itemEquipLoc, cache.classID, cache.subclassID
 		else
-			type, subType, _, equipSlot, _, _, classID, subclassID = select(6, GetItemInfo(item))
+			type, subType, _, equipSlot, _, _, classID, subclassID = select(6, C_Item.GetItemInfo(item))
 		end
 		--check for battlepets, petcages, companions and such
 		if (search == "battlepet" or search == "petcage") then
@@ -349,7 +349,7 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, link, operator, num)
-		local quality = (cache.itemQuality or select(3, GetItemInfo(link)))
+		local quality = (cache.itemQuality or select(3, C_Item.GetItemInfo(link)))
 		return compare(operator, quality, num)
 	end,
 }
@@ -367,7 +367,7 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, link, operator, num)
-		local lvl = (cache.itemLevel or select(4, GetItemInfo(link)))
+		local lvl = (cache.itemLevel or select(4, C_Item.GetItemInfo(link)))
 		if lvl then
 			return compare(operator, lvl, num)
 		end
@@ -386,7 +386,7 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, link, operator, num)
-		local lvl = (cache.itemMinLevel or select(5, GetItemInfo(link)))
+		local lvl = (cache.itemMinLevel or select(5, C_Item.GetItemInfo(link)))
 		if lvl then
 			return compare(operator, lvl, num)
 		end

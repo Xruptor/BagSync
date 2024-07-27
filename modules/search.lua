@@ -281,7 +281,7 @@ function Search:CheckItems(searchStr, unitObj, target, checkList, atUserLoc)
 					--do cache grab
 					local cacheObj = Data:CacheLink(link)
 					if cacheObj then
-						local entry = cacheObj.speciesName or cacheObj.itemLink --GetItemInfo does not support battlepet links, use speciesName instead
+						local entry = cacheObj.speciesName or cacheObj.itemLink --C_Item.GetItemInfo does not support battlepet links, use speciesName instead
 						local texture = cacheObj.speciesIcon or cacheObj.itemTexture
 						local itemName = cacheObj.speciesName or cacheObj.itemName
 						local testMatch = ItemScout:Find(entry, searchStr, cacheObj)
