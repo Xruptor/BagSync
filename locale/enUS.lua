@@ -16,7 +16,8 @@ L.Tooltip_guild = "Guild"
 L.Tooltip_mailbox = "Mail"
 L.Tooltip_void = "Void"
 L.Tooltip_reagents = "Reagent"
-L.Tooltip_auction = "AH"
+L.Tooltip_auction = "Auction"
+L.Tooltip_warband = "Warband"
 L.TooltipSmall_bag = "P"
 L.TooltipSmall_bank = "B"
 L.TooltipSmall_reagents = "R"
@@ -25,6 +26,7 @@ L.TooltipSmall_guild = "G"
 L.TooltipSmall_mailbox = "M"
 L.TooltipSmall_void = "V"
 L.TooltipSmall_auction = "A"
+L.TooltipSmall_warband = "W"
 --do not touch these unless requiring a new image for a specific localization
 L.TooltipIcon_bag = [[|TInterface\AddOns\BagSync\media\bag:13:13|t]]
 L.TooltipIcon_bank = [[|TInterface\AddOns\BagSync\media\bank:13:13|t]]
@@ -34,6 +36,7 @@ L.TooltipIcon_guild = [[|TInterface\AddOns\BagSync\media\guild:13:13|t]]
 L.TooltipIcon_mailbox = [[|TInterface\AddOns\BagSync\media\mailbox:13:13|t]]
 L.TooltipIcon_void = [[|TInterface\AddOns\BagSync\media\void:13:13|t]]
 L.TooltipIcon_auction = [[|TInterface\AddOns\BagSync\media\auction:13:13|t]]
+L.TooltipIcon_warband = [[|TInterface\AddOns\BagSync\media\warband:13:13|t]]
 L.TooltipTotal = "Total:"
 L.TooltipGuildTabs = "T:"
 L.TooltipBagSlot = "S:"
@@ -227,6 +230,7 @@ L.DisplayRealmAstrick = "Display [*] instead of realm names for |cffff7d0a[CR]|r
 L.DisplayShortRealmName = "Display short realm names for |cffff7d0a[CR]|r and |cff3587ff[BNet]|r."
 L.DisplayFactionIcons = "Display faction icons in tooltip."
 L.DisplayGuildBankTabs = "Display guild bank tabs [1,2,3, etc...] in tooltip."
+L.DisplayWarbandBankTabs = "Display warband bank tabs [1,2,3, etc...] in tooltip."
 L.DisplayEquipBagSlots = "Display equipped bag slots <1,2,3, etc...> in tooltip."
 L.DisplayRaceIcons = "Display character race icons in tooltip."
 L.DisplaySingleCharLocs = "Display a single character for storage locations."
@@ -253,6 +257,7 @@ L.ColorPrimary = "Primary BagSync tooltip color."
 L.ColorSecondary = "Secondary BagSync tooltip color."
 L.ColorTotal = "BagSync [Total] tooltip color."
 L.ColorGuild = "BagSync [Guild] tooltip color."
+L.ColorWarband = "BagSync [Warband] tooltip color."
 L.ColorCurrentRealm = "BagSync [Current Realm] tooltip color."
 L.ColorCR = "BagSync [Connected Realm] tooltip color."
 L.ColorBNET = "BagSync [Battle.Net] tooltip color."
@@ -260,6 +265,7 @@ L.ColorItemID = "BagSync [ItemID] tooltip color."
 L.ColorExpansion = "BagSync [Expansion] tooltip color."
 L.ColorItemTypes = "BagSync [ItemType] tooltip color."
 L.ColorGuildTabs = "Guild Tabs [1,2,3, etc...] tooltip color."
+L.ColorWarbandTabs = "Warband Tabs [1,2,3, etc...] tooltip color."
 L.ColorBagSlots = "Bag Slots <1,2,3, etc...> tooltip color."
 L.ConfigHeader = "Settings for various BagSync features."
 L.ConfigDisplay = "Display"
@@ -297,6 +303,7 @@ L.TrackingModule_Mailbox = "Mailbox"
 L.TrackingModule_Void = "Void Bank"
 L.TrackingModule_Auction = "Auction House"
 L.TrackingModule_Guild = "Guild Bank"
+L.TrackingModule_WarbandBank = "Warband Bank (WarBank)"
 L.TrackingModule_Professions = "Professions / Tradeskills"
 L.TrackingModule_Currency = "Curency Tokens"
 L.WarningItemSearch = "WARNING: A total of [|cFFFFFFFF%s|r] items were not searched!\n\nBagSync is still waiting for the server/cache to respond.\n\nPress Search or Refresh button."
@@ -323,6 +330,7 @@ L.SearchHelp = [[
 @void
 @auction
 @guild
+@warband
 
 |cffff7d0aAdvanced Search|r (|cFF99CC33commands|r | |cFFFFD580example|r):
 
