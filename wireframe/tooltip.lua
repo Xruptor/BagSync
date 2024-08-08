@@ -118,9 +118,13 @@ function Tooltip:GetSortIndex(unitObj)
 			return 4
 		elseif not unitObj.isGuild then
 			return 5
+		elseif unitObj.isWarbandBank then
+			--sort warband banks just above other server guilds
+			return 6
 		end
 	end
-	return 6
+	--other server guilds should be sorted last
+	return 7
 end
 
 function Tooltip:GetRaceIcon(race, gender, size, xOffset, yOffset, useHiRez)
@@ -176,7 +180,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 	--bypass: shows colorized names, checkmark, and faction icons but no CR or BNET tags
 	--forceRealm: adds realm tags forcefully
 
-	if not unitObj.isGuild then
+	if not unitObj.isGuild and not unitObj.isWarbandBank then
 
 		--first colorize by class color
 		tmpTag = self:HexColor(self:GetClassColor(unitObj, 1, bypass), unitObj.name)
@@ -197,13 +201,16 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 			end
 		end
 
+	elseif unitObj.isWarbandBank then
+		tmpTag = self:HexColor(BSYC.colors.warband, L.TooltipIcon_warband.." "..L.Tooltip_warband)
+		bypass = true
 	else
 		--is guild
 		tmpTag = self:HexColor(BSYC.colors.guild, select(2, Unit:GetUnitAddress(unitObj.name)) )
 	end
 
 	--add faction icons
-	if bypass or unitObj.isGuild or BSYC.options.enableFactionIcons then
+	if not unitObj.isWarbandBank and (bypass or unitObj.isGuild or BSYC.options.enableFactionIcons) then
 		local FactionIcon = ""
 
 		if BSYC.IsRetail then
@@ -229,6 +236,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 	--If we Bypass none of the CR or BNET stuff will be shown
 	----------------
 	if bypass and (not forceRealm and not forceXRBNET) then
+		Debug(BSYC_DL.INFO, "ColorizeUnit-Bypass", tmpTag)
 		--since we Bypass don't show anything else just return what we got
 		return tmpTag
 	end
@@ -306,7 +314,7 @@ function Tooltip:DoSort(tblData)
 			if a.unitObj.data.SortIndex and b.unitObj.data.SortIndex  then
 				return  a.unitObj.data.SortIndex < b.unitObj.data.SortIndex;
 			else
-				if a.sortIndex  == b.sortIndex then
+				if a.sortIndex == b.sortIndex then
 					if a.unitObj.realm == b.unitObj.realm then
 						return a.unitObj.name < b.unitObj.name;
 					end
@@ -317,7 +325,7 @@ function Tooltip:DoSort(tblData)
 		end)
 	else
 		table.sort(tblData, function(a, b)
-			if a.sortIndex  == b.sortIndex then
+			if a.sortIndex == b.sortIndex then
 				if a.unitObj.realm == b.unitObj.realm then
 					return a.unitObj.name < b.unitObj.name;
 				end
@@ -404,6 +412,17 @@ function Tooltip:AddItems(unitObj, itemID, target, countList, isCurrentPlayer)
 		end
 	end
 
+	if target == "warband" and BSYC.tracking.warband then
+		countList.wtab = {}
+		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
+			local tabCount = getTotal(tabData, target)
+			if tabCount > 0 then
+				countList.wtab[tabID] = tabCount
+			end
+			total = total + tabCount
+		end
+	end
+
 	countList[target] = total
 
 	return total
@@ -478,6 +497,28 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 		end
 
 		table.insert(tallyCount, self:GetCountString(colorType, dispType, "guild", countList["guild"], gTabStr))
+	end
+
+	if ((countList["warband"] or 0) > 0) then
+		total = total + countList["warband"]
+		local wTabStr = ""
+
+		--check for warband tabs first
+		if BSYC.options.showWarbandTabs then
+			table.sort(countList["wtab"], function(a, b) return a < b end)
+
+			for k, v in pairs(countList["wtab"]) do
+				wTabStr = wTabStr..","..tostring(k)
+			end
+			wTabStr = string.sub(wTabStr, 2)  -- remove comma
+
+			--check for warband tab
+			if string.len(wTabStr) > 0 then
+				wTabStr = self:HexColor(BSYC.colors.warbandtabs, " ["..L.TooltipGuildTabs.." "..wTabStr.."]")
+			end
+		end
+
+		table.insert(tallyCount, self:GetCountString(colorType, dispType, "warband", countList["warband"], wTabStr))
 	end
 
 	if total < 1 then return end
@@ -762,6 +803,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local countList = {}
 	local player = Unit:GetPlayerInfo()
 	local guildObj = Data:GetPlayerGuildObj(player)
+	local warbandObj = Data:GetWarbandBankObj()
 
 	local allowList = {
 		bag = true,
@@ -771,6 +813,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		mailbox = true,
 		void = true,
 		auction = true,
+		warband = true,
 	}
 
 	--the true option for GetModule is to set it to silent and not return an error if not found
@@ -857,12 +900,12 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 			--grab the equip count as we need that below for an accurate count on the bags, bank and reagents
 			grandTotal = grandTotal + self:AddItems(playerObj, link, "equip", countList)
-			--GetItemCount does not work in the auction, void bank or mailbox, so grab it manually
+			--C_Item.GetItemCount does not work in the auction, void bank or mailbox, so grab it manually
 			grandTotal = grandTotal + self:AddItems(playerObj, link, "auction", countList)
 			grandTotal = grandTotal + self:AddItems(playerObj, link, "void", countList)
 			grandTotal = grandTotal + self:AddItems(playerObj, link, "mailbox", countList)
 
-			--GetItemCount does not work on battlepet links either, grab bag, bank and reagents
+			--C_Item.GetItemCount does not work on battlepet links either, grab bag, bank and reagents
 			if isBattlePet then
 				grandTotal = grandTotal + self:AddItems(playerObj, link, "bag", countList)
 				grandTotal = grandTotal + self:AddItems(playerObj, link, "bank", countList)
@@ -872,20 +915,20 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				local equipCount = countList["equip"] or 0
 				local carryCount, bagCount, bankCount, regCount = 0, 0, 0, 0
 
-				carryCount = GetItemCount(origLink) or 0 --get the total amount the player is currently carrying (bags + equip)
+				carryCount = C_Item.GetItemCount(origLink) or 0 --get the total amount the player is currently carrying (bags + equip)
 				bagCount = carryCount - equipCount -- subtract the equipment count from the carry amount to get bag count
 
 				if IsReagentBankUnlocked and IsReagentBankUnlocked() then
-					--GetItemCount returns the bag count + reagent regardless of parameters.  So we have to subtract bag and reagents.  This does not include bank totals
-					regCount = GetItemCount(origLink, false, false, true) or 0
+					--C_Item.GetItemCount returns the bag count + reagent regardless of parameters.  So we have to subtract bag and reagents.  This does not include bank totals
+					regCount = C_Item.GetItemCount(origLink, false, false, true) or 0
 					regCount = regCount - carryCount
 					if regCount < 0 then regCount = 0 end
 				end
 
-				--bankCount = GetItemCount returns the bag + bank count + reagent regardless of parameters.  So we have to subtract the carry and reagent totals
-				--it will always add the reagents totals regardless of whatever parameters are passed.  So we have to do some math to adjust for this
-				bankCount = GetItemCount(origLink, true, false, false) or 0
-				bankCount = (bankCount - regCount) - carryCount
+				--bankCount = C_Item.GetItemCount returns the bag + bank count regardless of parameters.  So we have to subtract the carry totals
+				bankCount = C_Item.GetItemCount(origLink, true, false, false) or 0
+				bankCount = (bankCount - carryCount)
+
 				if bankCount < 0 then bankCount = 0 end
 
 				-- --now assign the values (check for disabled modules)
@@ -923,6 +966,17 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			if grandTotal > 0 then
 				--table variables gets passed as byRef
 				self:UnitTotals(guildObj, countList, unitList, advUnitList)
+			end
+		end
+
+		--Warband Bank can updated frequently, so we need to collect in real time and not cached
+		if warbandObj and allowList.warband and not advUnitList then
+			Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[Warband]|r")
+			countList = {}
+			grandTotal = grandTotal + self:AddItems(warbandObj, link, "warband", countList)
+			if grandTotal > 0 then
+				--table variables gets passed as byRef
+				self:UnitTotals(warbandObj, countList, unitList, advUnitList)
 			end
 		end
 

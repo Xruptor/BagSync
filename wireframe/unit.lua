@@ -39,6 +39,7 @@ if C_PlayerInteractionManager then
 		[InteractType.Auctioneer] = true,
 		[InteractType.VoidStorageBanker] = true,
 		[InteractType.GuildBanker] = true,
+		[InteractType.AccountBanker] = true,
 	}
 
 	Unit:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", function(event, winArg)
@@ -64,6 +65,10 @@ if C_PlayerInteractionManager then
 		elseif winArg == InteractType.GuildBanker then
 			Unit.atGuildBank = true
 			Unit:SendMessage('BAGSYNC_EVENT_GUILDBANK', true)
+
+		elseif winArg == InteractType.AccountBanker then
+			Unit.atWarbandBank = true
+			Unit:SendMessage('BAGSYNC_EVENT_WARBANDBANK', true)
 		end
 	end)
 
@@ -91,6 +96,10 @@ if C_PlayerInteractionManager then
 		elseif winArg == InteractType.GuildBanker then
 			Unit.atGuildBank = false
 			Unit:SendMessage('BAGSYNC_EVENT_GUILDBANK')
+
+		elseif winArg == InteractType.AccountBanker then
+			Unit.atWarbandBank = false
+			Unit:SendMessage('BAGSYNC_EVENT_WARBANDBANK')
 		end
 	end)
 else
@@ -141,7 +150,6 @@ else
 			Unit:SendMessage('BAGSYNC_EVENT_GUILDBANK')
 		end)
 	end
-
 end
 
 --these are used to process auction house data when it's ready.  Second variable is true for ready

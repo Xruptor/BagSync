@@ -45,6 +45,7 @@ local allowList = {
 	"mailbox",
 	"void",
 	"auction",
+	"warband",
 }
 
 local charLocations = ""
@@ -554,6 +555,17 @@ options.args.tracking = {
 					arg = "tracking.currency",
 					hidden = function() return not BSYC:CanDoCurrency() end,
 				},
+				module_warband = {
+					order = 11,
+					type = "toggle",
+					name = L.TrackingModule_WarbandBank,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "tracking.warband",
+					hidden = function() return not BSYC.isWarbandActive end,
+				},
 			}
 		},
 	},
@@ -663,20 +675,8 @@ options.args.display = {
 					disabled = function() return not BSYC.tracking.guild end,
 					hidden = function() return not CanGuildBankRepair end,
 				},
-				guildbanktabs = {
-					order = 7,
-					type = "toggle",
-					name = L.DisplayGuildBankTabs,
-					width = "full",
-					descStyle = "hide",
-					get = get,
-					set = set,
-					arg = "display.showGuildTabs",
-					disabled = function() return not BSYC.tracking.guild end,
-					hidden = function() return not CanGuildBankRepair end,
-				},
 				whitelistonly = {
-					order = 8,
+					order = 7,
 					type = "toggle",
 					name = L.DisplayWhiteListOnly,
 					width = "full",
@@ -686,7 +686,7 @@ options.args.display = {
 					arg = "display.enableWhitelist",
 				},
 				whitelistbutton = {
-					order = 9,
+					order = 8,
 					type = "execute",
 					name = L.Whitelist,
 					func = function()
@@ -695,7 +695,7 @@ options.args.display = {
 					disabled = function() return not BSYC.options.enableWhitelist end,
 				},
 				sourceexpansion = {
-					order = 10,
+					order = 9,
 					type = "toggle",
 					name = L.DisplaySourceExpansion,
 					width = "full",
@@ -706,7 +706,7 @@ options.args.display = {
 					hidden = function() return not BSYC.IsRetail end,
 				},
 				itemtypes = {
-					order = 11,
+					order = 10,
 					type = "toggle",
 					name = L.DisplayItemTypes,
 					width = "full",
@@ -715,8 +715,32 @@ options.args.display = {
 					set = set,
 					arg = "display.enableItemTypes",
 				},
-				equipbagslots = {
+				guildbanktabs = {
+					order = 11,
+					type = "toggle",
+					name = L.DisplayGuildBankTabs,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.showGuildTabs",
+					disabled = function() return not BSYC.tracking.guild end,
+					hidden = function() return not CanGuildBankRepair end,
+				},
+				warbandbanktabs = {
 					order = 12,
+					type = "toggle",
+					name = L.DisplayWarbandBankTabs,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.showWarbandTabs",
+					disabled = function() return not BSYC.tracking.warband end,
+					hidden = function() return not BSYC.isWarbandActive end,
+				},
+				equipbagslots = {
+					order = 13,
 					type = "toggle",
 					name = L.DisplayEquipBagSlots,
 					width = "full",
@@ -1059,8 +1083,19 @@ options.args.color = {
 			set = set,
 			arg = "color.guild",
 		},
-		currentrealm = {
+		warband = {
 			order = 5,
+			type = "color",
+			name = L.ColorWarband,
+			width = "full",
+			hasAlpha = false,
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "color.warband",
+		},
+		currentrealm = {
+			order = 6,
 			type = "color",
 			name = L.ColorCurrentRealm,
 			width = "full",
@@ -1071,7 +1106,7 @@ options.args.color = {
 			arg = "color.currentrealm",
 		},
 		cr = {
-			order = 6,
+			order = 7,
 			type = "color",
 			name = L.ColorCR,
 			width = "full",
@@ -1082,7 +1117,7 @@ options.args.color = {
 			arg = "color.cr",
 		},
 		bnet = {
-			order = 7,
+			order = 8,
 			type = "color",
 			name = L.ColorBNET,
 			width = "full",
@@ -1093,7 +1128,7 @@ options.args.color = {
 			arg = "color.bnet",
 		},
 		itemid = {
-			order = 8,
+			order = 9,
 			type = "color",
 			name = L.ColorItemID,
 			width = "full",
@@ -1104,7 +1139,7 @@ options.args.color = {
 			arg = "color.itemid",
 		},
 		guildtabs = {
-			order = 9,
+			order = 10,
 			type = "color",
 			name = L.ColorGuildTabs,
 			width = "full",
@@ -1114,8 +1149,19 @@ options.args.color = {
 			set = set,
 			arg = "color.guildtabs",
 		},
+		warbandtabs = {
+			order = 11,
+			type = "color",
+			name = L.ColorWarbandTabs,
+			width = "full",
+			hasAlpha = false,
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "color.warbandtabs",
+		},
 		expansion = {
-			order = 10,
+			order = 12,
 			type = "color",
 			name = L.ColorExpansion,
 			width = "full",
@@ -1126,7 +1172,7 @@ options.args.color = {
 			arg = "color.expansion",
 		},
 		itemtypes = {
-			order = 11,
+			order = 13,
 			type = "color",
 			name = L.ColorItemTypes,
 			width = "full",
@@ -1137,7 +1183,7 @@ options.args.color = {
 			arg = "color.itemtypes",
 		},
 		bagslots = {
-			order = 12,
+			order = 14,
 			type = "color",
 			name = L.ColorBagSlots,
 			width = "full",
@@ -1148,7 +1194,7 @@ options.args.color = {
 			arg = "color.bagslots",
 		},
 		resetcolors = {
-			order = 13,
+			order = 15,
 			type = "execute",
 			name = L.DefaultColors,
 			func = function()
@@ -1157,13 +1203,13 @@ options.args.color = {
 			end,
 		},
 		emptyseparator = {
-			order = 14,
+			order = 16,
 			fontSize = "medium",
 			type = "description",
 			name = " ",
 		},
 		showuniqueitemsgroup = {
-			order = 15,
+			order = 17,
 			name = L.ConfigDisplay,
 			type = "group",
 			guiInline = true,

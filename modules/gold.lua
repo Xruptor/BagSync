@@ -136,6 +136,17 @@ function Gold:CreateList()
 		end
 	end
 
+	--add warband
+	local warbandObj = Data:GetWarbandBankObj()
+	if warbandObj then
+		table.insert(usrData, {
+			unitObj = warbandObj,
+			colorized = Tooltip:ColorizeUnit(warbandObj, true, false, false, false),
+			sortIndex = Tooltip:GetSortIndex(warbandObj),
+			count = warbandObj.data.money --we use count because of the DoSort() function
+		})
+	end
+
 	if #usrData > 0 then
 		usrData = Tooltip:DoSort(usrData)
 
@@ -219,7 +230,9 @@ function Gold:Item_OnEnter(btn)
     if btn.data then
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		GameTooltip:AddLine(btn.data.colorized or "")
-		GameTooltip:AddLine("|cFFF4A460"..(btn.data.unitObj.realm or "").."|r")
+		if not btn.data.unitObj.isWarbandBank then
+			GameTooltip:AddLine("|cFFF4A460"..(btn.data.unitObj.realm or "").."|r")
+		end
 		GameTooltip:AddLine("|cFFFFFFFF"..CustomMoneyString(btn.data.count or 0, true, true).."|r")
 		GameTooltip:Show()
 		return

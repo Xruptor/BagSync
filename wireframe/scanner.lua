@@ -92,6 +92,12 @@ function Scanner:IsReagentBag(bagid)
 	return bagid == REAGENTBANK_CONTAINER
 end
 
+function Scanner:IsWarbandBank(bagid)
+	if not bagid then return false end
+	if not BSYC.isWarbandActive then return false end
+	return BSYC.WarbandIndex.bags[bagid]
+end
+
 function Scanner:StartupScans()
 	Debug(BSYC_DL.INFO, "StartupScans", BSYC.startupScanChk)
 	if BSYC.startupScanChk then return end --only do this once per load.  Does not include /reloadui
@@ -130,8 +136,8 @@ end
 
 function Scanner:SaveBag(bagtype, bagid)
 	Debug(BSYC_DL.INFO, "SaveBag", bagtype, bagid, BSYC.tracking.bag)
-	if not BSYC.tracking.bag then return end
 	if not bagtype or not bagid then return end
+	if not BSYC.tracking[bagtype] then return end
 	if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
 
 	local xGetNumSlots = (C_Container and C_Container.GetContainerNumSlots) or GetContainerNumSlots
@@ -411,6 +417,86 @@ function Scanner:SaveGuildBankMoney()
 	self:ResetTooltips()
 end
 
+function Scanner:SaveWarbandBank(bagID)
+	Debug(BSYC_DL.INFO, "SaveWarbandBank", Unit.atBank, BSYC.tracking.warband)
+	if not BSYC.isWarbandActive then return end
+	if not Unit.atBank or not BSYC.tracking.warband then return end
+
+	local warbandDB = Data:CheckWarbandBankDB()
+
+	local allTabs = C_Bank.FetchPurchasedBankTabData(Enum.BankType.Account)
+	local xGetNumSlots = (C_Container and C_Container.GetContainerNumSlots) or GetContainerNumSlots
+	local xGetContainerInfo = (C_Container and C_Container.GetContainerItemInfo) or GetContainerItemInfo
+
+	local function doWarbandSlot(bagID, slotID, tabID)
+		if not bagID or not slotID then return end
+		local xObj, count, _,_,_,_, link = xGetContainerInfo(bagID, slotID)
+
+		--lets check for C_Container
+		if xObj and xObj.hyperlink then
+			link = xObj.hyperlink
+			count = xObj.stackCount or 1
+		end
+		if link then
+			local tmpItem = BSYC:ParseItemLink(link, count)
+			Debug(BSYC_DL.FINE, "doWarbandSlot", bagID, slotID, tabID, tmpItem)
+			return tmpItem
+		end
+	end
+
+	if not bagID then
+		--scan everything
+		for tabID, tabData in ipairs(allTabs) do
+			local slotItems = {}
+			if not warbandDB.tabs then warbandDB.tabs = {} end
+
+			if BSYC.WarbandIndex.tabs[tabID] then
+				bagID = BSYC.WarbandIndex.tabs[tabID]
+				local numSlots = xGetNumSlots(bagID)
+				Debug(BSYC_DL.INFO, "SaveWarbandBank", tabID, bagID, numSlots, tabData)
+
+				for slotID = 1, numSlots do
+					local link = doWarbandSlot(bagID, slotID, tabID)
+					table.insert(slotItems, link)
+				end
+			end
+
+			warbandDB.tabs[tabID] = slotItems
+		end
+	else
+		--scan specific bag/tab
+		local slotItems = {}
+		local tabID = BSYC.WarbandIndex.bags[bagID]
+
+		if tabID then
+			if not warbandDB.tabs then warbandDB.tabs = {} end
+			local numSlots = xGetNumSlots(bagID)
+			Debug(BSYC_DL.INFO, "SaveWarbandBank", tabID, bagID, numSlots)
+
+			for slotID = 1, numSlots do
+				local link = doWarbandSlot(bagID, slotID, tabID)
+				table.insert(slotItems, link)
+			end
+
+			warbandDB.tabs[tabID] = slotItems
+		end
+	end
+
+	self:ResetTooltips()
+end
+
+function Scanner:SaveWarbandBankMoney()
+	if not BSYC.tracking.warband then return end
+	if not Unit.atBank then return end
+
+	local warbandDB = Data:CheckWarbandBankDB()
+	local money = C_Bank.FetchDepositedMoney(Enum.BankType.Account)
+
+	Debug(BSYC_DL.INFO, "SaveWarbandBankMoney", money)
+	warbandDB.money = money
+	self:ResetTooltips()
+end
+
 function Scanner:SaveMailbox(isShow)
 	Debug(BSYC_DL.INFO, "SaveMailbox", isShow, Unit.atMailbox, BSYC.tracking.mailbox, self.isCheckingMail)
 	if not Unit.atMailbox or not BSYC.tracking.mailbox then return end
@@ -647,9 +733,9 @@ function Scanner:SaveCurrency(showDebug)
 			local currencyinfo = xGetCurrencyListInfo(i)
 			local link = xGetCurrencyListLink(i)
 			local currencyID = BSYC:GetShortCurrencyID(link)
-			
+
 			local currName = currencyinfo.name or currencyinfo --classic and wotlk servers don't return an array but a string name instead
-			
+
 			--classic and wotlk do not use array returns for xGetCurrencyListInfo, so lets compensate for it
 			if not currencyinfo.name then
 				_, xHeader, _, _, _, xCount, xIcon1, xIcon2 = xGetCurrencyListInfo(i)

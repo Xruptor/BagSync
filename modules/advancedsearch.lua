@@ -23,7 +23,7 @@ function AdvancedSearch:OnEnable()
 	Mixin(advFrame, AdvancedSearch) --implement new frame to our parent module Mixin, to have access to parent methods
     advFrame.TitleText:SetText(L.AdvancedSearch)
 	advFrame:SetWidth(400)
-    advFrame:SetHeight(550)
+    advFrame:SetHeight(570)
     advFrame:SetPoint("TOPRIGHT", Search.frame, "TOPLEFT", -10, 0)
     advFrame:EnableMouse(true) --don't allow clickthrough
     advFrame:SetMovable(true)
@@ -231,21 +231,22 @@ function AdvancedSearch:CreateLists()
 
 	--locations
 	local allowList = {
-		bag = true,
-		bank = true,
-		reagents = true,
-		equip = true,
-		mailbox = true,
-		void = true,
-		auction = true,
+		"bag",
+		"bank",
+		"reagents",
+		"equip",
+		"mailbox",
+		"void",
+		"auction",
+		"warband",
 	}
 
-	for k, v in pairs(allowList) do
-		if BSYC.tracking[k] then
+	for k, v in ipairs(allowList) do
+		if BSYC.tracking[v] then
 			--only add if enabled
 			table.insert(AdvancedSearch.locationList, {
-				name = L["Tooltip_"..k],
-				source = k,
+				name = L["Tooltip_"..v],
+				source = v,
 				isSelected = false
 			})
 		end

@@ -120,6 +120,17 @@ function SortOrder:CreateList()
 		})
 	end
 
+	--add warband
+	local warbandObj = Data:GetWarbandBankObj()
+	if warbandObj then
+		table.insert(usrData, {
+			unitObj = warbandObj,
+			name = warbandObj.name,
+			realm = warbandObj.realm,
+			colorized = Tooltip:ColorizeUnit(warbandObj, true)
+		})
+	end
+
 	if #usrData > 0 then
 		table.sort(usrData, function(a, b)
 			if a.unitObj.data.SortIndex and b.unitObj.data.SortIndex  then
@@ -226,7 +237,10 @@ function SortOrder:Item_OnEnter(btn)
 	end
     if not btn.isHeader then
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
-		if not btn.data.unitObj.isGuild then
+
+		if btn.data.unitObj.isWarbandBank then
+			GameTooltip:AddLine(btn.data.colorized)
+		elseif not btn.data.unitObj.isGuild then
 			GameTooltip:AddLine("|cFFFFFFFF"..PLAYER..":|r  "..btn.data.colorized)
 		else
 			GameTooltip:AddLine("|cFFFFFFFF"..GUILD..":|r  "..btn.data.colorized)

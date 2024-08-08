@@ -141,6 +141,11 @@ function Details:CheckItems(usrData, unitObj, target, itemID, colorized)
 			parseItems(tabData, tabID)
 		end
 	end
+	if target == "warband" and BSYC.tracking.warband then
+		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
+			parseItems(tabData, tabID)
+		end
+	end
 end
 
 function Details:CreateList(itemID)
@@ -155,6 +160,7 @@ function Details:CreateList(itemID)
 		mailbox = true,
 		void = true,
 		auction = true,
+		warband = true,
 	}
 	if BSYC.options.enableShowUniqueItemsTotals then itemID = BSYC:GetShortItemID(itemID) end
 
@@ -167,6 +173,12 @@ function Details:CreateList(itemID)
 		else
 			Details:CheckItems(usrData, unitObj, "guild", itemID, colorized)
 		end
+	end
+
+	local warbandObj = Data:GetWarbandBankObj()
+	if warbandObj and allowList.warband then
+		local colorized = Tooltip:HexColor(BSYC.colors.warband, L.TooltipIcon_warband.." "..L.Tooltip_warband)
+		Details:CheckItems(usrData, warbandObj, "warband", itemID, colorized)
 	end
 
 	if #usrData > 0 then
@@ -278,7 +290,7 @@ function Details:RefreshList()
 				info = info.." ("..Tooltip:HexColor(colorType, L[dispType..item.target]).." "
 
 				if item.tab then
-					if item.target ~= "guild" then
+					if item.target ~= "guild" and item.target ~= "warband"  then
 						info = info..Tooltip:HexColor(colorType, L.DetailsBagID).." "..item.tab.." "
 					else
 						info = info..Tooltip:HexColor(colorType, L.DetailsTab).." "..item.tab.." "

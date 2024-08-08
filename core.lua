@@ -34,6 +34,7 @@ BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 BSYC.IsWLK_C = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
 
 BSYC.GMF = GetMouseFocus or GetMouseFoci
+BSYC.isWarbandActive = C_Bank and C_Bank.FetchPurchasedBankTabData
 
 --increment forceDBReset to reset the ENTIRE db forcefully
 local forceDBReset = 3
@@ -61,6 +62,23 @@ local debugDefaults = {
 	SL1 = false,
 	SL2 = false,
 	SL3 = false,
+}
+
+BSYC.WarbandIndex = {
+	tabs = {
+		Enum.BagIndex.AccountBankTab_1,
+		Enum.BagIndex.AccountBankTab_2,
+		Enum.BagIndex.AccountBankTab_3,
+		Enum.BagIndex.AccountBankTab_4,
+		Enum.BagIndex.AccountBankTab_5,
+	},
+	bags = {
+		[Enum.BagIndex.AccountBankTab_1] = 1,
+		[Enum.BagIndex.AccountBankTab_2] = 2,
+		[Enum.BagIndex.AccountBankTab_3] = 3,
+		[Enum.BagIndex.AccountBankTab_4] = 4,
+		[Enum.BagIndex.AccountBankTab_5] = 5,
+	},
 }
 
 StaticPopupDialogs["BAGSYNC_RESETDATABASE"] = {

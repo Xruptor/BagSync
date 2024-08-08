@@ -335,6 +335,11 @@ function Search:CheckItems(searchStr, unitObj, target, checkList, atUserLoc)
 			total = total + parseItems(tabData)
 		end
 	end
+	if target == "warband" and BSYC.tracking.warband then
+		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
+			total = total + parseItems(tabData)
+		end
+	end
 
 	return total
 end
@@ -366,6 +371,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch,
 		mailbox = true,
 		void = true,
 		auction = true,
+		warband = true,
 	}
 
 	--This is used when a player is requesting to view a custom list, such as @bank, @auction, @bag etc...
@@ -378,6 +384,8 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch,
 	--overwrite the allowlist with the advance one if it isn't empty
 	allowList = advAllowList or allowList
 	Debug(BSYC_DL.INFO, "init:DoSearch", searchStr, atUserLoc, advUnitList, advAllowList, isAdvancedSearch, warnCount)
+
+	local warbandObj = Data:GetWarbandBankObj()
 
 	if not atUserLoc then
 		for unitObj in Data:IterateUnits(false, advUnitList) do
@@ -393,11 +401,16 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch,
 				end
 			end
 		end
+		if warbandObj and allowList.warband then
+			warnTotal = warnTotal + Search:CheckItems(searchStr, warbandObj, "warband", checkList)
+		end
 	else
 		--player using an @location, so lets only search their database and not IterateUnits
 		local playerObj = Data:GetPlayerObj()
 
-		if atUserLoc ~= "guild" then
+		if atUserLoc == "warband" and warbandObj then
+			warnTotal = warnTotal + Search:CheckItems(searchStr, warbandObj, atUserLoc, checkList, true)
+		elseif atUserLoc ~= "guild" then
 			warnTotal = warnTotal + Search:CheckItems(searchStr, playerObj, atUserLoc, checkList, true)
 		else
 			--only do guild if we aren't using a custom adllowlist, otherwise it will always show up regardless of what custom field is selected
