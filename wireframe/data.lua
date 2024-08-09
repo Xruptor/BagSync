@@ -170,6 +170,7 @@ function Data:OnEnable()
 	BSYC.db.player.race = player.race
 	BSYC.db.player.gender = player.gender
 	BSYC.db.player.faction = player.faction
+	BSYC.db.player.guid = player.guid
 	BSYC.db.player.realmKey = player.realmKey
 	BSYC.db.player.rwsKey = player.rwsKey
 
@@ -644,6 +645,16 @@ function Data:GetPlayerGuildObj(player)
 		isConnectedRealm = isConnectedRealm,
 		isXRGuild = isXRGuild
 	}
+end
+
+function Data:GetPlayerCurrencyObj(player, realm)
+	if not player or not realm then return end
+	Debug(BSYC_DL.TRACE, "GetPlayerCurrencyObj", player, realm)
+	if not BSYC.tracking.currency then return end
+
+	if not BagSyncDB[realm] then return end
+	if not BagSyncDB[realm][player] then return end
+	return BagSyncDB[realm][player].currency
 end
 
 function Data:GetWarbandBankObj()

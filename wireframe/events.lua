@@ -91,6 +91,18 @@ function Events:OnEnable()
 	--only do currency checks if the server even supports it
 	if BSYC:CanDoCurrency() then
 		self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
+
+		--check for the ability to do currency transfer
+		if C_CurrencyInfo and C_CurrencyInfo.RequestCurrencyFromAccountCharacter then
+			self:RegisterEvent("CURRENCY_TRANSFER_LOG_UPDATE", function()
+				Scanner:ProcessCurrencyTransfer(true)
+				Scanner.currencyTransferInProgress = false
+			end)
+
+			hooksecurefunc(C_CurrencyInfo, "RequestCurrencyFromAccountCharacter", function(sourceGUID, currencyID, transferAmt)
+				Scanner:ProcessCurrencyTransfer(false, sourceGUID, currencyID, transferAmt)
+			end)
+		end
 	else
 		BSYC.tracking.currency = false
 	end

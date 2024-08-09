@@ -10,6 +10,7 @@ local BSYC = select(2, ...) --grab the addon namespace
 local Scanner = BSYC:NewModule("Scanner")
 local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
+local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Scanner", ...) end
@@ -32,6 +33,8 @@ local MAX_GUILDBANK_SLOTS_PER_TAB = 98
 local FirstEquipped = INVSLOT_FIRST_EQUIPPED
 local LastEquipped = INVSLOT_LAST_EQUIPPED
 
+Scanner.currencyTransferInProgress = false
+Scanner.lastCurrencyID = 0
 Scanner.pendingdMail = {items={}}
 
 function Scanner:ResetTooltips()
@@ -685,6 +688,62 @@ function Scanner:SaveAuctionHouse()
 	BSYC.db.player.auction.count = #slotItems or 0
 	BSYC.db.player.auction.lastscan = time()
 	self:ResetTooltips()
+end
+
+function Scanner:ProcessCurrencyTransfer(doCurrentPlayer, sourceGUID, currencyID, transferAmt)
+	if not BSYC.tracking.currency then return end
+	Debug(BSYC_DL.INFO, "ProcessCurrencyTransfer", doCurrentPlayer, sourceGUID, currencyID, transferAmt)
+
+	--update the source player
+	if not doCurrentPlayer and sourceGUID and not Scanner.currencyTransferInProgress then
+		Scanner.currencyTransferInProgress = true
+		Scanner.lastCurrencyID = currencyID
+
+		local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = GetPlayerInfoByGUID(sourceGUID)
+		if name then
+			local player = Unit:GetPlayerInfo(true)
+			local tmpRealm = player.realm --default to our current realm.  Because GetPlayerInfoByGUID() returns empty realm if sourceGUID is on the same server.
+
+			--lets get the true realm name from localized for our DB
+			--blizzard for some reason sends back an empty string instead of nil, so check for that
+			if realm ~= nil and realm ~= '' then
+				tmpRealm = Unit:GetTrueRealmName(realm)
+			end
+
+			Debug(BSYC_DL.INFO, "CurrencyTransferSourceUpt-1", name, tmpRealm, sourceGUID, currencyID, transferAmt)
+			--lets check to see that the source player even exists
+
+			local currencyObj = Data:GetPlayerCurrencyObj(name, tmpRealm)
+			if currencyObj and currencyObj[currencyID] and currencyObj[currencyID].count then
+				currencyObj[currencyID].count = currencyObj[currencyID].count - transferAmt
+				Debug(BSYC_DL.FINE, "CurrencyTransferSourceUpt-2", name, tmpRealm, sourceGUID, currencyID, transferAmt, currencyObj[currencyID].count)
+			else
+				BSYC:Print(L.WarningCurrencyUpt.." "..name.. " | "..tmpRealm)
+			end
+
+			--do not process below as we wait for the CURRENCY_TRANSFER_LOG_UPDATE to process the player
+			return
+		end
+
+	elseif doCurrentPlayer and Scanner.lastCurrencyID > 0 and Scanner.currencyTransferInProgress then
+		--update the current player
+		local xGetCurrencyInfo = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo) or GetCurrencyInfo
+		local currencyData = xGetCurrencyInfo(Scanner.lastCurrencyID )
+
+		if currencyData then
+			Debug(BSYC_DL.INFO, "CurrencyTransferPlayerUpt", Scanner.lastCurrencyID, currencyData.quantity)
+			--lets try to individually update the currency
+			if BSYC.db.player.currency[Scanner.lastCurrencyID] then
+				BSYC.db.player.currency[Scanner.lastCurrencyID].count = currencyData.quantity
+			else
+				--something went wrong so lets just can the entire thing
+				Scanner:SaveCurrency(false)
+			end
+		end
+	end
+
+	Scanner.currencyTransferInProgress = false
+	Scanner.lastCurrencyID = 0
 end
 
 function Scanner:SaveCurrency(showDebug)

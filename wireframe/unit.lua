@@ -244,6 +244,7 @@ function Unit:GetPlayerInfo(bypassDebug)
 	unit.money = (_G.GetMoney() or 0) - _G.GetCursorMoney() - _G.GetPlayerTradeMoney()
 	unit.class = select(2, _G.UnitClass("player"))
 	unit.race = select(2, _G.UnitRace("player"))
+	unit.guid = _G.UnitGUID("player")
 	unit.guild = _G.GetGuildInfo("player")
 	if unit.guild then
 		--we need to check for Normalized realm names that will cause issues since they are missing spaces and hyphens and won't match GetRealmName()
