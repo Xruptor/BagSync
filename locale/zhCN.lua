@@ -3,7 +3,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhCN")
 if not L then return end
 
 --  zhCN client (NGA-[男爵凯恩])
---  Last update: 2024/8/8
+--  Last update: 2024/8/10
 
 L.Yes = "Yes"
 L.No = "No"
@@ -57,7 +57,7 @@ L.DebugIterateUnits = "重复单位 |cff3587ff[Debug]|r"
 L.DebugDBTotals = "数据库总计 |cff3587ff[Debug]|r"
 L.DebugAddonList = "插件列表 |cff3587ff[Debug]|r"
 L.DebugExport = "导出"
-L.DebugWarning = "|cFFDF2B2B警告:|R BagSync Debug 当前已启用! |cFFDF2B2B(会导致滞后/卡顿)|r"
+L.DebugWarning = "|cFFDF2B2B警告:|R BagSync Debug 当前已启用! |cFFDF2B2B（会导致滞后/卡顿）|r"
 L.Search = "搜索"
 L.Debug = "DeBug"
 L.AdvSearchBtn = "搜索/刷新"
@@ -95,7 +95,7 @@ L.ProfessionInformation = "|cffddff00左键|r |cff00ff00查看专业配方|r"
 L.ClickViewProfession = "点击查看专业: "
 L.ClickHere = "点这里"
 L.ErrorUserNotFound = "BagSync: 错误,未找到用户!"
-L.EnterItemID = "输入物品ID(请用 http://Wowhead.com/ 查询。)"
+L.EnterItemID = "输入物品ID（请用 http://Wowhead.com/ 查询。）"
 L.AddGuild = "添加公会"
 L.AddItemID = "添加物品ID"
 L.RemoveItemID = "移除物品ID"
@@ -133,7 +133,7 @@ L.UnitDBAuctionReset = "所有角色的拍卖数据已重置。 "
 L.ScanGuildBankStart = "公会银行内信息正在查询服务器,请稍候....."
 L.ScanGuildBankDone = "公会银行扫描完成!"
 L.ScanGuildBankError = "警告: 公会银行扫描不完整。"
-L.ScanGuildBankScanInfo = "扫描公会标签 (%s/%s)。"
+L.ScanGuildBankScanInfo = "扫描公会标签（%s/%s）。"
 L.DefaultColors = "默认颜色"
 -- ----THESE ARE FOR SLASH COMMANDS OPERATORS
 L.SlashItemName = "[物品名称]"
@@ -171,7 +171,7 @@ L.HelpSortOrder = "角色和公会的自定义排序。"
 L.EnableBagSyncTooltip = "启用BagSync鼠标提示"
 L.ShowOnModifier = "设置BagSync提示快捷键:"
 L.ShowOnModifierDesc = "显示在BagSync提示上快捷键设置。"
-L.ModValue_NONE = "无 (始终显示)"
+L.ModValue_NONE = "无（始终显示）"
 L.ModValue_ALT = "ALT"
 L.ModValue_CTRL = "CTRL"
 L.ModValue_SHIFT = "SHIFT"
@@ -179,56 +179,56 @@ L.EnableExtTooltip = "在单独窗口上显示物品统计数据"
 L.EnableLoginVersionInfo = "显示BagSync的登录信息"
 L.FocusSearchEditBox = "打开搜索窗口时专注搜索框"
 L.AlwaysShowAdvSearch = "始终显示Bagsync高级搜索窗口"
-L.DisplayTotal = "显示 [总计] 金额。"
-L.DisplayGuildGoldInGoldWindow = "显示 [公会] 金币总数。"
-L.Display_GSC = "显示详细的金额(|cFFFFD700金|r， |cFFC0C0C0银|r 和 |cFFB87333铜|r)。"
-L.DisplayGuildBank = "显示公会银行物品。|cFF99CC33(需要扫描公会银行)|r"
-L.DisplayMailbox = "显示信箱内的物品。"
-L.DisplayAuctionHouse = "显示拍卖行物品。"
-L.DisplayMinimap = "显示小地图图标。"
-L.DisplayFaction = "显示双方阵营的物品 (|cff3587ff联盟|r/|cFFDF2B2B部落|r)。"
+L.DisplayTotal = "显示[总计]金额。"
+L.DisplayGuildGoldInGoldWindow = "显示[公会]金币总数。"
+L.Display_GSC = "显示[详细]金额（|cFFFFD700金|r， |cFFC0C0C0银|r 和 |cFFB87333铜|r）。"
+L.DisplayGuildBank = "显示[公会银行]物品。|cFF99CC33（需要扫描公会银行）|r"
+L.DisplayMailbox = "显示[信箱]物品。"
+L.DisplayAuctionHouse = "显示[拍卖行]物品。"
+L.DisplayMinimap = "显示[小地图图标。"
+L.DisplayFaction = "显示[双方阵营]物品 （|cff3587ff联盟|r/|cFFDF2B2B部落|r）。"
 L.DisplayClassColor = "显示职业颜色。"
 L.DisplayItemTotalsByClassColor = "根据角色的职业颜色显示物品总计。"
-L.DisplayTooltipOnlySearch = "在搜索窗内|cFF99CC33(仅)|r显示BagSync提示。"
+L.DisplayTooltipOnlySearch = "在搜索窗内|cFF99CC33（仅）|r显示BagSync提示。"
 L.DisplayTooltipCurrencyData = "在暴雪货币窗口中显示BagSync数据。"
 L.DisplayLineSeparator = "显示空行分割线。"
 L.DisplayCurrentPlayer = "当前玩家" 
-L.DisplayCurrentPlayerOnly = "|cFFFFD700仅限！|r鼠标提示上显示\"目前\"玩家的BagSync数据 |r |cFFDF2B2B（不推荐）|r"
-L.DisplayCurrentRealmName = "显示玩家的\"目前\"|cFF4CBB17[服务器]|r。"
-L.DisplayCurrentRealmShortName = "为\"目前\"|cFF4CBB17[服务器]|r使用一个简短的名称。"
+L.DisplayCurrentPlayerOnly = "|cFFFFD700仅限！|r鼠标提示上显示\"当前\"玩家的BagSync数据 |r |cFFDF2B2B（不推荐）|r"
+L.DisplayCurrentRealmName = "显示玩家的\"当前\"|cFF4CBB17[服务器]|r。"
+L.DisplayCurrentRealmShortName = "为\"当前\"|cFF4CBB17[服务器]|r使用一个简短的名称。"
 L.DisplayCR = "显示\"合并\"|cffff7d0a[服务器]|r信息。|cffff7d0a[CR]|r"
 L.DisplayBNET = "显示所有[战网账号]信息 。|cff3587ff[BNet]|r |cFFDF2B2B(不推荐)|r"
-L.DisplayItemID = "显示 [物品ID] 。"
-L.DisplaySourceDebugInfo = "在鼠标提示中显示有用的 [Debug] 信息。"
-L.DisplayWhiteListOnly = "在鼠标提示中仅显示 [白名单]的物品。"
-L.DisplaySourceExpansion = "在鼠标提示中显示 [游戏版本] 。 |cFF99CC33[仅正式服]|r"
-L.DisplayItemTypes = "在鼠标提示中显示 [物品类型|子类型] 。"
+L.DisplayItemID = "显示[物品ID]。"
+L.DisplaySourceDebugInfo = "在鼠标提示中显示有用的[Debug]信息。"
+L.DisplayWhiteListOnly = "在鼠标提示中仅显示[白名单]的物品。"
+L.DisplaySourceExpansion = "在鼠标提示中显示[游戏版本]。 |cFF99CC33[仅正式服]|r"
+L.DisplayItemTypes = "在鼠标提示中显示[物品类型|子类型]。"
 L.DisplayTooltipTags = "各标识符号"
 L.DisplayTooltipStorage = "仓库"
 L.DisplayTooltipExtra = "其他统计"
 L.DisplaySortOrderHelp = "排序帮助"
-L.DisplaySortOrderStatus = "目前排序: [%s]"
+L.DisplaySortOrderStatus = "当前排序: [%s]"
 L.DisplayWhitelistHelp = "白名单帮助"
-L.DisplayWhitelistStatus = "目前白名单: [%s]"
+L.DisplayWhitelistStatus = "当前白名单: [%s]"
 L.DisplayWhitelistHelpInfo = "你只能在白名单数据库中输入物品ID. \n\n输入战斗宠物请使用虚拟ID[FakeID]而不是物品ID[ItemID], 你可以通过在BagSync设置内启用鼠标提示物品ID[ItemID]功能来获取虚拟ID[FakeID]。\n\n|cFFDF2B2B这对货币窗口不起作用。|r"
 L.DisplayTooltipAccountWide = "账号信息"
 L.DisplayAccountWideTagOpts = "|cFF99CC33选项 ( |cffff7d0a[CR]|r和|cff3587ff[BNet]|r )|r"
-L.DisplayGreenCheck = "在目前角色名前显示 %s 。"
+L.DisplayGreenCheck = "在当前角色名前显示 %s 。"
 L.DisplayRealmIDTags = "显示 |cffff7d0a[CR]|r和|cff3587ff[BNet]|r 符号。"
-L.DisplayRealmNames = "显示 服务器 名字。"
-L.DisplayRealmAstrick = "显示 [*] 而不是显示 |cffff7d0a[CR]|r和|cff3587ff[BNet]|r。"
+L.DisplayRealmNames = "显示[服务器[名字。"
+L.DisplayRealmAstrick = "显示[*]而不是显示 |cffff7d0a[CR]|r和|cff3587ff[BNet]|r。"
 L.DisplayShortRealmName = "显示短位名字 |cffff7d0a[CR]|r和|cff3587ff[BNet]|r。"
-L.DisplayFactionIcons = "显示 阵营 图标。"
-L.DisplayGuildBankTabs = "在鼠标提示中显示 银行 标签 [1,2,3, 等...]。"
-L.DisplayWarbandBankTabs = "在鼠标提示中显示 战团银行 标签 [1,2,3, 等...]。"
-L.DisplayEquipBagSlots = "在鼠标提示中显示 装备 在背包栏位<1,2,3, 等...>。"
+L.DisplayFactionIcons = "显示[阵营]图标。"
+L.DisplayGuildBankTabs = "在鼠标提示中显示[银行]标签[1,2,3, 等...]。"
+L.DisplayWarbandBankTabs = "在鼠标提示中显示[战团银行]标签[1,2,3, 等...]。"
+L.DisplayEquipBagSlots = "在鼠标提示中显示[装备]背包栏位<1,2,3, 等...>。"
 L.DisplayRaceIcons = "在鼠标提示中显示角色种族图标。"
 L.DisplaySingleCharLocs = "|cff31d54f[简写]|r 显示物品存储的位置。"
 L.DisplayIconLocs = "|cff31d54f[图标]|r 显示物品存储的位置。"
-L.DisplayGuildSeparately = "显示 [公会] 名字和物品总计与角色总计分开。"
-L.DisplayGuildCurrentCharacter = "显示 [公会] 仅限目前的游戏角色。"
+L.DisplayGuildSeparately = "显示[公会]名字和物品总计与角色总计分开。"
+L.DisplayGuildCurrentCharacter = "显示[公会]仅限当前的游戏角色。"
 L.DisplayGuildBankScanAlert = "显示公会银行扫描窗口。"
-L.DisplayAccurateBattlePets = "启用精准扫描公会银行和邮箱中的战斗宠物。|cFFDF2B2B(可能导致滞后/卡顿)|r |cff3587ff[详见 BagSync FAQ]|r"
+L.DisplayAccurateBattlePets = "启用精准扫描公会银行和邮箱中的战斗宠物。|cFFDF2B2B（可能导致滞后/卡顿）|r |cff3587ff[详见 BagSync FAQ]|r"
 L.DisplaySorting = "鼠标提示排序"
 L.DisplaySortInfo = "默认: 鼠标提示排序是根据服务器名的字母顺序，然后是角色名称来排序。"
 L.SortTooltipByTotals = "按照总数进行排序，而不是字母顺序排列。"
@@ -248,7 +248,7 @@ L.ColorSecondary = "BagSync [辅助]  提示颜色。"
 L.ColorTotal = "BagSync [总计] 提示颜色。"
 L.ColorGuild = "BagSync [公会] 提示颜色。"
 L.ColorWarband = "BagSync [战团] 提示颜色"
-L.ColorCurrentRealm = "BagSync \"目前\"[服务器] 提示颜色。"
+L.ColorCurrentRealm = "BagSync \"当前\"[服务器] 提示颜色。"
 L.ColorCR = "BagSync \"合并\"[服务器] 提示颜色。"
 L.ColorBNET = "BagSync [战网] 提示颜色。"
 L.ColorItemID = "BagSync [物品ID] 提示颜色。"
@@ -308,8 +308,8 @@ L.SavedSearch_Warn = "您必须在搜索框中输入一些信息。"
 ---------------------------------------
 L.SearchHelpHeader = "搜索帮助"
 L.SearchHelp = [[
-|cffff7d0a搜索选项|r:
-|cFFDF2B2B(注意: 所有命令及标点符号只能是英文!)|r
+|cffff7d0a搜索选项|r：
+|cFFDF2B2B（注意: 所有命令及标点符号只能是英文！）|r
 
 |cFF99CC33物品在角色位置的顺序|r:
 @bag <背包>
@@ -321,27 +321,27 @@ L.SearchHelp = [[
 @auction <拍卖行>
 @guild <公会>
 
-|cffff7d0a高级搜索|r (|cFF99CC33命令|r | |cFFFFD580示例|r):
+|cffff7d0a高级搜索|r （|cFF99CC33命令|r | |cFFFFD580示例|r）：
 
 |cff00ffff<物品名称>|r = |cFF99CC33n|r ; |cFF99CC33name|r | 示例：|cFFFFD580[输入简称]:矿石|r ;  |cFFFFD580[输入全称]:宁铁矿石|r 
 
-|cff00ffff<物品已装备>|r = |cFF99CC33bind|r | 示例|cFFFFD580bind:boe|r ; types (boe, bop, bou, boq) i.e   boe = 已绑定装备
+|cff00ffff<物品已装备>|r = |cFF99CC33bind|r | 示例|cFFFFD580bind:boe|r ; types（boe, bop, bou, boq）i.e   boe = 已绑定装备
 
 |cff00ffff<品质>|r = |cFF99CC33q|r ; |cFF99CC33quality|r | 示例：|cFFFFD580q:史诗|r 
 
 |cff00ffff<物品等级>|r = |cFF99CC33l|r ; |cFF99CC33level|r ; |cFF99CC33lvl|r ; |cFF99CC33ilvl|r |示例： |cFFFFD580ilvl:382|r  ;  |cFFFFD580lvl:>=370|r 
 
-|cff00ffff<需要的等级><|r = |cFF99CC33r|r ; |cFF99CC33req|r ; |cFF99CC33rl|r ; |cFF99CC33reql|r ; |cFF99CC33reqlvl|r | 示例：|cFFFFD580r:>5|r  ;  |cFFFFD580req:>=20|r 
+|cff00ffff<需要的等级>|r = |cFF99CC33r|r ; |cFF99CC33req|r ; |cFF99CC33rl|r ; |cFF99CC33reql|r ; |cFF99CC33reqlvl|r | 示例：|cFFFFD580r:>5|r  ;  |cFFFFD580req:>=20|r 
 
 |cff00ffff<种类/部位>|r = |cFF99CC33t|r ; |cFF99CC33type|r ; 示例：|cFF99CC33饰品|r  ;  |cFFFFD580t:脚|r 
 
-|cff00ffff<提示>|r = |cFF99CC33tt|r ; |cFF99CC33tip|r ; |cFF99CC33tooltip|r | |cFFFFD580tt:<text>|r (tt:summon)
+|cff00ffff<提示>|r = |cFF99CC33tt|r ; |cFF99CC33tip|r ; |cFF99CC33tooltip|r | |cFFFFD580tt:<text>|r（tt:summon）
 
-|cff00ffff<item set>|r = |cFF99CC33s|r ; |cFF99CC33set|r | |cFFFFD580s:<setname>|r (setname can be * for all sets)
+|cff00ffff<item set>|r = |cFF99CC33s|r ; |cFF99CC33set|r | |cFFFFD580s:<setname>|r（setname can be * for all sets）
 
 |cff00ffff<版本>|r = |cFF99CC33x|r ; |cFF99CC33xpac|r ; |cFF99CC33expansion|r | 示例： |cFFFFD580x:巨龙时代|r  ;   |cFFFFD580xpac:暗影国度|r 
 
-|cff00ffff<关键字>|r = |cFF99CC33k|r ; |cFF99CC33key|r ; |cFF99CC33keyword|r | 示例：|cFFFFD580k:任务|r (关键字: soulbound, bound, boe, bop, bou, boa, quest, unique, toy, reagent, crafting, naval, follower, follow, power, apperance)
+|cff00ffff<关键字>|r = |cFF99CC33k|r ; |cFF99CC33key|r ; |cFF99CC33keyword|r | 示例：|cFFFFD580k:任务|r（关键字: soulbound, bound, boe, bop, bou, boa, quest, unique, toy, reagent, crafting, naval, follower, follow, power, apperance）
 
 |cff00ffff<职业>|r = |cFF99CC33c|r ; |cFF99CC33class|r | 示例：|cFFFFD580class:战士|r  ;  |cFFFFD580c:恶魔猎手|r
 
@@ -350,19 +350,19 @@ L.SearchHelp = [[
 
 
 |cffff7d0a否定命令|r:
-示例: |cFF99CC33!|r|cFFFFD580bind:boe|r (不是已绑定装备)
-示例: |cFF99CC33!|r|cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r (不是已绑定装备且物品等级大于20)
+示例: |cFF99CC33!|r|cFFFFD580bind:boe|r（不是已绑定装备）
+示例: |cFF99CC33!|r|cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r（不是已绑定装备且物品等级大于20）
 
-|cffff7d0a联合搜索 (和搜索):|r
-(使用 |cFF99CC33&&|r 符号)
+|cffff7d0a联合搜索（和搜索）：|r
+（使用 |cFF99CC33&&|r 符号）
 示例: |cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r
 
 |cffff7d0a交叉搜索 (或搜索):|r
-(使用竖 |cFF99CC33|||||r 符号)
+（使用竖 |cFF99CC33|||||r 符号）
 示例: |cFFFFD580bind:boe|r |cFF99CC33|||||r |cFFFFD580lvl:>20|r
 
 |cffff7d0a复杂搜索示例:|r
-(已绑定装备, 物品等级正好是20名字中带有'长袍' 一词)
+（已绑定装备, 物品等级正好是20名字中带有'长袍' 一词）
 |cFFFFD580bind:boe|r|cFF99CC33&|r|cFFFFD580lvl:20|r|cFF99CC33&|r|cFFFFD580长袍|r
 |cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:20|r |cFF99CC33&&|r |cFFFFD580name:长袍|r
 
