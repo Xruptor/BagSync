@@ -39,8 +39,10 @@ if C_PlayerInteractionManager then
 		[InteractType.Auctioneer] = true,
 		[InteractType.VoidStorageBanker] = true,
 		[InteractType.GuildBanker] = true,
-		[InteractType.AccountBanker] = true,
 	}
+	if BSYC.isWarbandActive then
+		showDebug[InteractType.AccountBanker] = true
+	end
 
 	Unit:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", function(event, winArg)
 		if winArg and showDebug[winArg] then
@@ -66,7 +68,7 @@ if C_PlayerInteractionManager then
 			Unit.atGuildBank = true
 			Unit:SendMessage('BAGSYNC_EVENT_GUILDBANK', true)
 
-		elseif winArg == InteractType.AccountBanker then
+		elseif BSYC.isWarbandActive and winArg == InteractType.AccountBanker then
 			Unit.atWarbandBank = true
 			Unit:SendMessage('BAGSYNC_EVENT_WARBANDBANK', true)
 		end
@@ -97,7 +99,7 @@ if C_PlayerInteractionManager then
 			Unit.atGuildBank = false
 			Unit:SendMessage('BAGSYNC_EVENT_GUILDBANK')
 
-		elseif winArg == InteractType.AccountBanker then
+		elseif BSYC.isWarbandActive and winArg == InteractType.AccountBanker then
 			Unit.atWarbandBank = false
 			Unit:SendMessage('BAGSYNC_EVENT_WARBANDBANK')
 		end

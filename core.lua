@@ -64,22 +64,24 @@ local debugDefaults = {
 	SL3 = false,
 }
 
-BSYC.WarbandIndex = {
-	tabs = {
-		Enum.BagIndex.AccountBankTab_1,
-		Enum.BagIndex.AccountBankTab_2,
-		Enum.BagIndex.AccountBankTab_3,
-		Enum.BagIndex.AccountBankTab_4,
-		Enum.BagIndex.AccountBankTab_5,
-	},
-	bags = {
-		[Enum.BagIndex.AccountBankTab_1] = 1,
-		[Enum.BagIndex.AccountBankTab_2] = 2,
-		[Enum.BagIndex.AccountBankTab_3] = 3,
-		[Enum.BagIndex.AccountBankTab_4] = 4,
-		[Enum.BagIndex.AccountBankTab_5] = 5,
-	},
-}
+if BSYC.isWarbandActive then
+	BSYC.WarbandIndex = {
+		tabs = {
+			Enum.BagIndex.AccountBankTab_1,
+			Enum.BagIndex.AccountBankTab_2,
+			Enum.BagIndex.AccountBankTab_3,
+			Enum.BagIndex.AccountBankTab_4,
+			Enum.BagIndex.AccountBankTab_5,
+		},
+		bags = {
+			[Enum.BagIndex.AccountBankTab_1] = 1,
+			[Enum.BagIndex.AccountBankTab_2] = 2,
+			[Enum.BagIndex.AccountBankTab_3] = 3,
+			[Enum.BagIndex.AccountBankTab_4] = 4,
+			[Enum.BagIndex.AccountBankTab_5] = 5,
+		},
+	}
+end
 
 StaticPopupDialogs["BAGSYNC_RESETDATABASE"] = {
 	text = L.ResetDBInfo,
