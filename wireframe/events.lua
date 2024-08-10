@@ -262,6 +262,8 @@ function Events:GuildBank_Changed()
 end
 
 function Events:CURRENCY_DISPLAY_UPDATE()
+	if not BSYC.tracking.currency then return end
+
 	if Unit:InCombatLockdown() then
 		if not self.doCurrencyUpdate then
 			self.doCurrencyUpdate = true
@@ -269,7 +271,7 @@ function Events:CURRENCY_DISPLAY_UPDATE()
 		end
 		return
 	end
-	Scanner:SaveCurrency()
+	BSYC:StartTimer("CURRENCY_DISPLAY_UPDATE", 1, Scanner, "SaveCurrency")
 end
 
 function Events:PLAYER_REGEN_ENABLED()
@@ -277,7 +279,7 @@ function Events:PLAYER_REGEN_ENABLED()
 	if Unit:InCombatLockdown() then return end
 	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
 	self.doCurrencyUpdate = nil
-	Scanner:SaveCurrency()
+	BSYC:StartTimer("CURRENCY_DISPLAY_UPDATE", 1, Scanner, "SaveCurrency")
 end
 
 function Events:TRADE_SKILL_SHOW()
