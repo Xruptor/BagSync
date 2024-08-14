@@ -315,8 +315,6 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 		if BattlePetTooltip then BattlePetTooltip:Hide() end
 		if FloatingBattlePetTooltip then FloatingBattlePetTooltip:Hide() end
 
-		TooltipUtil.SurfaceArgs(data)
-
 		if (data and data.battlePetSpeciesID) then
 			return data.battlePetSpeciesID, data.battlePetLevel, data.battlePetBreedQuality, data.battlePetMaxHealth, data.battlePetPower, data.battlePetSpeed, data.battlePetName
 		end
@@ -421,9 +419,9 @@ function Scanner:SaveGuildBankMoney()
 end
 
 function Scanner:SaveWarbandBank(bagID)
-	Debug(BSYC_DL.INFO, "SaveWarbandBank", Unit.atBank, BSYC.tracking.warband)
+	Debug(BSYC_DL.INFO, "SaveWarbandBank", BSYC.tracking.warband)
 	if not BSYC.isWarbandActive then return end
-	if not Unit.atBank or not BSYC.tracking.warband then return end
+	if not BSYC.tracking.warband then return end
 
 	local warbandDB = Data:CheckWarbandBankDB()
 
