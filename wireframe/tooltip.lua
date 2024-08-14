@@ -608,7 +608,7 @@ function Tooltip:GetBottomChild()
 	end
 
 	--first do TradeSkillMaster
-	if _G.IsAddOnLoaded("TradeSkillMaster") then
+	if C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
         for i=1, 20 do
             local t = _G["TSMExtraTip" .. i]
             if t and t:IsVisible() then
