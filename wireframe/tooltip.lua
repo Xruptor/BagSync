@@ -896,7 +896,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		if not advUnitList or advPlayerChk then
 			countList = {}
 			local playerObj = Data:GetPlayerObj(player)
-			Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[CurrentPlayer]|r", playerObj.name, playerObj.realm)
+			Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[CurrentPlayer]|r", playerObj.name, playerObj.realm, link)
 
 			--grab the equip count as we need that below for an accurate count on the bags, bank and reagents
 			grandTotal = grandTotal + self:AddItems(playerObj, link, "equip", countList)
@@ -917,6 +917,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 				carryCount = C_Item.GetItemCount(origLink) or 0 --get the total amount the player is currently carrying (bags + equip)
 				bagCount = carryCount - equipCount -- subtract the equipment count from the carry amount to get bag count
+				if bagCount < 0 then bagCount = 0 end
 
 				if IsReagentBankUnlocked and IsReagentBankUnlocked() then
 					--C_Item.GetItemCount returns the bag count + reagent regardless of parameters.  So we have to subtract bag and reagents.  This does not include bank totals
@@ -928,7 +929,6 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				--bankCount = C_Item.GetItemCount returns the bag + bank count regardless of parameters.  So we have to subtract the carry totals
 				bankCount = C_Item.GetItemCount(origLink, true, false, false) or 0
 				bankCount = (bankCount - carryCount)
-
 				if bankCount < 0 then bankCount = 0 end
 
 				-- --now assign the values (check for disabled modules)
@@ -1116,20 +1116,36 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	-- }
 	--if permIgnore[currencyID] then return end
 
-	local tenderCheck = false
+	local tenderCheck = currencyID == 2032 or false
 
 	for unitObj in Data:IterateUnits() do
 		if not unitObj.isGuild and unitObj.data.currency and unitObj.data.currency[currencyID] and unitObj.data.currency[currencyID].count > 0 then
 			--check for "Trader's Tender" which is currencyID 2032.  Only display it once for the current player.
 			--that currency is account-wide.
-			if currencyID ~= 2032 or (currencyID == 2032 and not tenderCheck and unitObj.data == BSYC.db.player) then
+			local doTender = (tenderCheck and unitObj.data == BSYC.db.player) or false
+
+			if not tenderCheck or doTender then
+
+				local colorized = self:ColorizeUnit(unitObj)
+				local sortIndex = self:GetSortIndex(unitObj)
+				local count = unitObj.data.currency[currencyID].count
+
+				if doTender then
+					local warbandObj = Data:GetWarbandBankObj()
+					if warbandObj then
+						colorized = Tooltip:ColorizeUnit(warbandObj, true, false, false, false)
+						sortIndex = Tooltip:GetSortIndex(warbandObj)
+						count = L.TooltipIcon_warband.." "..count
+					end
+				end
+
 				table.insert(usrData, {
-					unitObj=unitObj,
-					colorized=self:ColorizeUnit(unitObj),
-					sortIndex=self:GetSortIndex(unitObj),
-					count=unitObj.data.currency[currencyID].count
+					unitObj = unitObj,
+					colorized = colorized,
+					sortIndex = sortIndex,
+					count = count
 				})
-				if currencyID == 2032 and unitObj.data == BSYC.db.player then tenderCheck = true end
+
 			end
 		end
 	end
@@ -1234,7 +1250,7 @@ function Tooltip:HookTooltip(objTooltip)
 
 					if data.id and shortID and data.id ~= shortID then
 						--if the data.id doesn't match the shortID it's probably a pattern, schematic, etc.. 
-						--This is because the hyperlink is overwritten during the args process with TooltipUtil.SurfaceArgs.
+						--This is because the hyperlink is overwritten during the args process.
 						--Pattern hyperlinks are usally args3 but get overwritten when they get to args7 that has the hyperlink of the item being crafted.
 						--Instead the pattern/recipe/schematic is returned in the data.id, because that is the only thing not overwritten
 						link = data.id
