@@ -781,8 +781,15 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	}
 
 	--check blacklist
+	local personalBlacklist = false
 	if shortID and (permIgnore[tonumber(shortID)] or BSYC.db.blacklist[tonumber(shortID)]) then
-		skipTally = true
+		if BSYC.db.blacklist[tonumber(shortID)] then
+			--don't use this on perm ignores only personal blacklist
+			skipTally = not BSYC.options.showBlacklistCurrentPlayerOnly
+			personalBlacklist = true
+		else
+			skipTally = true
+		end
 	end
 	--check whitelist
 	if BSYC.options.enableWhitelist then
@@ -822,8 +829,9 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local turnOffCache = (BSYC.options.debug.enable and BSYC.options.debug.cache and true) or false
 	local advPlayerChk = false
 	local advPlayerGuildChk = false
+	local doCurrentPlayerOnly = BSYC.options.showCurrentPlayerOnly or (BSYC.options.showBlacklistCurrentPlayerOnly and personalBlacklist)
 
-	Debug(BSYC_DL.SL2, "TallyUnits", "|cFFe454fd[Item]|r", link, shortID, origLink, advUnitList, turnOffCache)
+	Debug(BSYC_DL.SL2, "TallyUnits", "|cFFe454fd[Item]|r", link, shortID, origLink, skipTally, advUnitList, turnOffCache, doCurrentPlayerOnly, personalBlacklist)
 
 	--DB TOOLTIP COUNTS
 	-------------------
@@ -835,7 +843,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--NOTE: This cache check is ONLY for units (guild, players) that isn't related to the current player.  Since that data doesn't really change we can cache those lines
 		--For the player however, we always want to grab the latest information.  So once it's grabbed we can do a small local cache for that using __lastTally
 		--Advanced Searches should always be processed and not stored in the cache
-		if turnOffCache or advUnitList or (not Data.__cache.tooltip[origLink] and not BSYC.options.showCurrentPlayerOnly) then
+		if turnOffCache or advUnitList or (not Data.__cache.tooltip[origLink] and not doCurrentPlayerOnly) then
 
 			--allow advance search matches if found, no need to set to true as advUnitList will default to dumpAll if found
 			for unitObj in Data:IterateUnits(false, advUnitList) do
@@ -881,7 +889,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				Data.__cache.tooltip[origLink].unitList = (grandTotal > 0 and CopyTable(unitList)) or {}
 				Data.__cache.tooltip[origLink].grandTotal = grandTotal
 			end
-		elseif Data.__cache.tooltip[origLink] and not BSYC.options.showCurrentPlayerOnly then
+		elseif Data.__cache.tooltip[origLink] and not doCurrentPlayerOnly then
 			--use the cached results from previous DB searches, copy the table don't reference it, 
 			--otherwise we will add to it unintentially below with player data using table.insert()
 			unitList = CopyTable(Data.__cache.tooltip[origLink].unitList)
@@ -984,6 +992,11 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		if #unitList > 0 then
 			unitList = self:DoSort(unitList)
 		end
+	end
+
+	--check for blacklist (showBlacklistCurrentPlayerOnly)
+	if BSYC.options.showBlacklistCurrentPlayerOnly and personalBlacklist then
+		table.insert(unitList, 1, { colorized="|cffff7d0a["..L.Blacklist.."]|r", tallyString=" "} )
 	end
 
 	--EXTRA OPTIONAL DISPLAYS
@@ -1171,9 +1184,9 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	end
 
 	--this is for trader tenders since they are account wide, only add them once
-	if currencyID == 2032 then
-		table.insert(displayList, {"|cffff7d0a["..L.DisplayTooltipAccountWide.."]|r", " "})
-	end
+	-- if currencyID == 2032 then
+	-- 	table.insert(displayList, {"|cffff7d0a["..L.DisplayTooltipAccountWide.."]|r", " "})
+	-- end
 
 	if BSYC.options.enableTooltipItemID and currencyID then
 		local desc = self:HexColor(BSYC.colors.itemid, L.TooltipCurrencyID)

@@ -204,6 +204,7 @@ L.DisplayTooltipCurrencyData = "Display BagSync tooltip data in the Blizzard Cur
 L.DisplayLineSeparator = "Display empty line separator."
 L.DisplayCurrentPlayer = "Current Player"
 L.DisplayCurrentPlayerOnly = "Display BagSync tooltip data for the current player |cFFFFD700ONLY!|r |cFFDF2B2B(Not Recommended)|r"
+L.DisplayBlacklistCurrentPlayerOnly = "Display blacklisted item counts on current player |cFFFFD700ONLY!|r |cFFDF2B2B(Not Recommended)|r"
 L.DisplayCurrentRealmName = "Display the |cFF4CBB17[Current Realm]|r of the player."
 L.DisplayCurrentRealmShortName = "Use a short name for the |cFF4CBB17[Current Realm]|r."
 L.DisplayCR = "Display |cffff7d0a[Connected Realm]|r characters. |cffff7d0a[CR]|r"

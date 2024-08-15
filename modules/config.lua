@@ -880,6 +880,16 @@ options.args.display = {
 					arg = "display.showCurrentPlayerOnly",
 					--mint warning |cFF44EE77Mint|r
 				},
+				displayblacklistcurrentplayeronly = {
+					order = 2,
+					type = "toggle",
+					name = L.DisplayBlacklistCurrentPlayerOnly,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.showBlacklistCurrentPlayerOnly",
+				},
 			}
 		},
 		groupaccountwide = {

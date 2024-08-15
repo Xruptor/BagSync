@@ -75,6 +75,7 @@ local optionsDefaults = {
 	enableCurrencyWindowTooltipData = true,
 	showCurrentPlayerOnly = false,
 	showEquipBagSlots = false,
+	showBlacklistCurrentPlayerOnly = false,
 }
 
 local colorsDefaults = {
