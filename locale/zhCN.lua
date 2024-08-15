@@ -3,7 +3,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhCN")
 if not L then return end
 
 --  zhCN client (NGA-[男爵凯恩])
---  Last update: 2024/8/10
+--  Last update: 2024/8/15
 
 L.Yes = "Yes"
 L.No = "No"
@@ -193,7 +193,8 @@ L.DisplayTooltipOnlySearch = "在搜索窗内|cFF99CC33（仅）|r显示BagSync�
 L.DisplayTooltipCurrencyData = "在暴雪货币窗口中显示BagSync数据。"
 L.DisplayLineSeparator = "显示空行分割线。"
 L.DisplayCurrentPlayer = "当前玩家" 
-L.DisplayCurrentPlayerOnly = "|cFFFFD700仅限！|r鼠标提示上显示\"当前\"玩家的BagSync数据 |r |cFFDF2B2B（不推荐）|r"
+L.DisplayCurrentPlayerOnly = "|cFFFFD700仅限！|r鼠标提示上显示\"当前\"玩家的BagSync数据。|cFFDF2B2B（不推荐）|r"
+L.DisplayBlacklistCurrentPlayerOnly = "|cFFFFD700仅限！|r显示\"当前\"玩家的黑名单物品数量。|cFFDF2B2B（不推荐）|r"
 L.DisplayCurrentRealmName = "显示玩家的\"当前\"|cFF4CBB17[服务器]|r。"
 L.DisplayCurrentRealmShortName = "为\"当前\"|cFF4CBB17[服务器]|r使用一个简短的名称。"
 L.DisplayCR = "显示\"合并\"|cffff7d0a[服务器]|r信息。|cffff7d0a[CR]|r"
