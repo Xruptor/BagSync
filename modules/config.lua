@@ -866,29 +866,29 @@ options.args.display = {
 		groupcurrentplayer = {
 			order = 5,
 			type = "group",
-			name = L.DisplayCurrentPlayer,
+			name = L.DisplayCurrentCharacter,
 			guiInline = true,
 			args = {
-				displaycurrentplayeronly = {
+				DisplayCurrentCharacteronly = {
 					order = 1,
 					type = "toggle",
-					name = L.DisplayCurrentPlayerOnly,
+					name = L.DisplayCurrentCharacterOnly,
 					width = "full",
 					descStyle = "hide",
 					get = get,
 					set = set,
-					arg = "display.showCurrentPlayerOnly",
+					arg = "display.showCurrentCharacterOnly",
 					--mint warning |cFF44EE77Mint|r
 				},
-				displayblacklistcurrentplayeronly = {
+				DisplayBlacklistCurrentCharOnly = {
 					order = 2,
 					type = "toggle",
-					name = L.DisplayBlacklistCurrentPlayerOnly,
+					name = L.DisplayBlacklistCurrentCharOnly,
 					width = "full",
 					descStyle = "hide",
 					get = get,
 					set = set,
-					arg = "display.showBlacklistCurrentPlayerOnly",
+					arg = "display.showBLCurrentCharacterOnly",
 				},
 			}
 		},
@@ -897,7 +897,7 @@ options.args.display = {
 			type = "group",
 			name = L.DisplayTooltipAccountWide,
 			guiInline = true,
-			--hidden = function() return BSYC.options.showCurrentPlayerOnly end,
+			--hidden = function() return BSYC.options.showCurrentCharacterOnly end,
 			args = {
 				currentrealmname = {
 					order = 0,
@@ -945,7 +945,7 @@ options.args.display = {
 					order = 4,
 					type = "group",
 					guiInline = true,
-					--hidden = function() return BSYC.options.showCurrentPlayerOnly end,
+					--hidden = function() return BSYC.options.showCurrentCharacterOnly end,
 					args = {
 						realmidtags = {
 							order = 0,

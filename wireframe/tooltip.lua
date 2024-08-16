@@ -785,7 +785,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if shortID and (permIgnore[tonumber(shortID)] or BSYC.db.blacklist[tonumber(shortID)]) then
 		if BSYC.db.blacklist[tonumber(shortID)] then
 			--don't use this on perm ignores only personal blacklist
-			skipTally = not BSYC.options.showBlacklistCurrentPlayerOnly
+			skipTally = not BSYC.options.showBLCurrentCharacterOnly
 			personalBlacklist = true
 		else
 			skipTally = true
@@ -829,7 +829,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local turnOffCache = (BSYC.options.debug.enable and BSYC.options.debug.cache and true) or false
 	local advPlayerChk = false
 	local advPlayerGuildChk = false
-	local doCurrentPlayerOnly = BSYC.options.showCurrentPlayerOnly or (BSYC.options.showBlacklistCurrentPlayerOnly and personalBlacklist)
+	local doCurrentPlayerOnly = BSYC.options.showCurrentCharacterOnly or (BSYC.options.showBLCurrentCharacterOnly and personalBlacklist)
 
 	Debug(BSYC_DL.SL2, "TallyUnits", "|cFFe454fd[Item]|r", link, shortID, origLink, skipTally, advUnitList, turnOffCache, doCurrentPlayerOnly, personalBlacklist)
 
@@ -994,8 +994,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		end
 	end
 
-	--check for blacklist (showBlacklistCurrentPlayerOnly)
-	if BSYC.options.showBlacklistCurrentPlayerOnly and personalBlacklist then
+	--check for blacklist (showBLCurrentCharacterOnly)
+	if BSYC.options.showBLCurrentCharacterOnly and personalBlacklist then
 		table.insert(unitList, 1, { colorized="|cffff7d0a["..L.Blacklist.."]|r", tallyString=" "} )
 	end
 

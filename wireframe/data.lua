@@ -73,9 +73,9 @@ local optionsDefaults = {
 	enableCurrentRealmName = false,
 	enableCurrentRealmShortName = false,
 	enableCurrencyWindowTooltipData = true,
-	showCurrentPlayerOnly = false,
+	showCurrentCharacterOnly = false,
 	showEquipBagSlots = false,
-	showBlacklistCurrentPlayerOnly = false,
+	showBLCurrentCharacterOnly = false,
 }
 
 local colorsDefaults = {
