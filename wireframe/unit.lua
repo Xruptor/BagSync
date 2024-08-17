@@ -215,6 +215,10 @@ function Unit:DoRealmCollection(source)
 
 	table.sort(Realms_LC, function(a,b) return (a < b) end) --sort them alphabetically
 	Unit.lowerKey = table.concat(Realms_LC, ";") or "?" --concat them together
+
+	Debug(BSYC_DL.TRACE, "DoRealmCollection-realmKey", Unit.realmKey)
+	Debug(BSYC_DL.TRACE, "DoRealmCollection-rwsKey", Unit.rwsKey)
+	Debug(BSYC_DL.TRACE, "DoRealmCollection-lowerKey", Unit.lowerKey)
 end
 
 function Unit:GetUnitAddress(unit)
@@ -239,6 +243,7 @@ function Unit:GetPlayerInfo(bypassDebug)
 	local PLAYER = _G.UnitName("player")
 	local FACTION = _G.UnitFactionGroup("player")
 	local unit = {}
+	local tmpGRealm = select(4, _G.GetGuildInfo("player"))
 
 	unit.faction = FACTION
 	unit.realm = REALM
@@ -250,8 +255,7 @@ function Unit:GetPlayerInfo(bypassDebug)
 	unit.guild = _G.GetGuildInfo("player")
 	if unit.guild then
 		--we need to check for Normalized realm names that will cause issues since they are missing spaces and hyphens and won't match GetRealmName()
-		local g_Realm = select(4, _G.GetGuildInfo("player")) or REALM
-		unit.guildrealm = self:GetTrueRealmName(g_Realm)
+		unit.guildrealm = self:GetTrueRealmName(tmpGRealm or REALM)
 	end
 	unit.gender = _G.UnitSex("player")
 
@@ -261,7 +265,7 @@ function Unit:GetPlayerInfo(bypassDebug)
 	unit.lowerKey = Unit.lowerKey
 
 	if not bypassDebug then
-		Debug(BSYC_DL.TRACE, "GetPlayerInfo", PLAYER, REALM, FACTION, unit.class, unit.race, unit.guild, unit.guildrealm)
+		Debug(BSYC_DL.TRACE, "GetPlayerInfo", PLAYER, REALM, FACTION, unit.class, unit.race, unit.guild, unit.guildrealm, tmpGRealm)
 	end
 	return unit
 end
@@ -296,6 +300,8 @@ function Unit:GetTrueRealmName(realm)
 	--we need to do checks for this to ensure we get the appropriate realm name
 
 	if not RealmChk_CR[realm] then
+		local origRealm = realm
+
 		--it's not in our standard list of realms, so that is iffy we need to check for Normalized situations
 		--if for some reason we STILL can't find the guild realm, then just store it as UNKNOWN to debug for the future
 
@@ -318,11 +324,35 @@ function Unit:GetTrueRealmName(realm)
 			return RealmChk_LC[realm] --return original realm name
 		end
 
-		--4) something went wrong and we can't find the realm, return unknown
-		return "--UNKNOWN--"
+		--4) they must have a guild on another server.  So return the unaltered origRealm
+		return origRealm
 	end
 
 	return realm
+end
+
+function Unit:CompareRealms(sourceRealm, targetRealm)
+	if not sourceRealm or not targetRealm then return false end
+	if sourceRealm == targetRealm then return true end
+
+	--before we do anything lets make everything lowercase
+	sourceRealm = string.lower(sourceRealm)
+	targetRealm = string.lower(targetRealm)
+	if sourceRealm == targetRealm then return true end
+
+	--now check broken realms
+	sourceRealm = BROKEN_REALMS[sourceRealm] or sourceRealm
+	sourceRealm = sourceRealm:gsub('(%l)(%u)', '%1 %2')
+	targetRealm = BROKEN_REALMS[targetRealm] or targetRealm
+	targetRealm = targetRealm:gsub('(%l)(%u)', '%1 %2')
+	if sourceRealm == targetRealm then return true end
+
+	--now lets do RWS checks
+	sourceRealm = sourceRealm:gsub('[%p%c%s]', '')
+	targetRealm = targetRealm:gsub('[%p%c%s]', '')
+	if sourceRealm == targetRealm then return true end
+
+	return false
 end
 
 function Unit:IsInBG()

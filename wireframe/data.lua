@@ -631,7 +631,7 @@ function Data:GetPlayerGuildObj(player)
 	local isConnectedRealm = Unit:isConnectedRealm(player.guildrealm)
 	local isXRGuild = false
 	if not BSYC.options.enableCR and not BSYC.options.enableBNET then
-		isXRGuild = (player.guildrealm ~= player.realm) or false
+		isXRGuild = not Unit:CompareRealms(player.guildrealm, player.realm) or false
 	end
 
 	if not BagSyncDB[player.guildrealm] then return end
@@ -691,7 +691,9 @@ function Data:IterateUnits(dumpAll, filterList)
 				--NOTE: This should ONLY be done if the guild realm is NOT the player realm.  If it's the same realms for both then it would be processed anyways.
 				local isXRGuild = false
 				if BSYC.tracking.guild and player.guild and not BSYC.options.enableCR and not BSYC.options.enableBNET then
-					isXRGuild = (player.guildrealm and argKey == player.guildrealm and argKey ~= player.realm) or false
+					if player.guildrealm and Unit:CompareRealms(argKey, player.guildrealm) then
+						isXRGuild = not Unit:CompareRealms(argKey, player.realm) or false
+					end
 				end
 
 				local passChk = false
@@ -739,7 +741,7 @@ function Data:IterateUnits(dumpAll, filterList)
 								--check for guilds only on current character if enabled and on their current realm
 								if (isXRGuild or BSYC.options.showGuildCurrentCharacter) and player.guild and player.guildrealm then
 									--if we have the same guild realm and same guild name, then let it pass, otherwise skip it
-									if argKey == player.guildrealm and k == player.guild then
+									if Unit:CompareRealms(argKey, player.guildrealm) and k == player.guild then
 										skipReturn = false
 									else
 										skipReturn = true
