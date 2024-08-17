@@ -782,6 +782,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	--check blacklist
 	local personalBlacklist = false
+	local personalWhitelist = false
+
 	if shortID and (permIgnore[tonumber(shortID)] or BSYC.db.blacklist[tonumber(shortID)]) then
 		if BSYC.db.blacklist[tonumber(shortID)] then
 			--don't use this on perm ignores only personal blacklist
@@ -790,11 +792,14 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		else
 			skipTally = true
 		end
+		Debug(BSYC_DL.SL3, "TallyUnits", "|cFFe454fd[Blacklist]|r", link, shortID, personalBlacklist, BSYC.options.showBLCurrentCharacterOnly)
 	end
-	--check whitelist
+	--check whitelist (blocks all items except those found in whitelist)
 	if BSYC.options.enableWhitelist then
 		if not BSYC.db.whitelist[tonumber(shortID)] then
 			skipTally = true
+			personalWhitelist = true
+			Debug(BSYC_DL.SL3, "TallyUnits", "|cFFe454fd[Whitelist]|r", link, shortID, personalWhitelist)
 		end
 	end
 
@@ -831,7 +836,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local advPlayerGuildChk = false
 	local doCurrentPlayerOnly = BSYC.options.showCurrentCharacterOnly or (BSYC.options.showBLCurrentCharacterOnly and personalBlacklist)
 
-	Debug(BSYC_DL.SL2, "TallyUnits", "|cFFe454fd[Item]|r", link, shortID, origLink, skipTally, advUnitList, turnOffCache, doCurrentPlayerOnly, personalBlacklist)
+	Debug(BSYC_DL.SL2, "TallyUnits", "|cFFe454fd[Item]|r", link, shortID, origLink, skipTally, advUnitList, turnOffCache, doCurrentPlayerOnly)
 
 	--DB TOOLTIP COUNTS
 	-------------------
@@ -901,7 +906,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 		--CURRENT PLAYER
 		-----------------
-		if not advUnitList or advPlayerChk then
+		if (not personalWhitelist and not advUnitList) or advPlayerChk then
 			countList = {}
 			local playerObj = Data:GetPlayerObj(player)
 			Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[CurrentPlayer]|r", playerObj.name, playerObj.realm, link)
@@ -967,7 +972,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--We do this separately so that the guild has it's own line in the unitList and not included inline with the player character
 		--We also want to do this in real time and not cache, otherwise they may put stuff in their guild bank which will not be reflected in a cache
 		-----------------
-		if guildObj and (not advUnitList or advPlayerGuildChk) then
+		if not personalWhitelist and guildObj and (not advUnitList or advPlayerGuildChk) then
 			Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[CurrentPlayer-Guild]|r", player.guild, player.guildrealm)
 			countList = {}
 			grandTotal = grandTotal + self:AddItems(guildObj, link, "guild", countList)
@@ -978,7 +983,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		end
 
 		--Warband Bank can updated frequently, so we need to collect in real time and not cached
-		if warbandObj and allowList.warband and not advUnitList then
+		if not personalWhitelist and warbandObj and allowList.warband and not advUnitList then
 			Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[Warband]|r")
 			countList = {}
 			grandTotal = grandTotal + self:AddItems(warbandObj, link, "warband", countList)

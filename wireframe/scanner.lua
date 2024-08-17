@@ -690,14 +690,15 @@ end
 
 function Scanner:ProcessCurrencyTransfer(doCurrentPlayer, sourceGUID, currencyID, transferAmt)
 	if not BSYC.tracking.currency then return end
-	Debug(BSYC_DL.INFO, "ProcessCurrencyTransfer", doCurrentPlayer, sourceGUID, currencyID, transferAmt)
-
+	
 	--update the source player
 	if not doCurrentPlayer and sourceGUID and not Scanner.currencyTransferInProgress then
 		Scanner.currencyTransferInProgress = true
 		Scanner.lastCurrencyID = currencyID
 
 		local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = GetPlayerInfoByGUID(sourceGUID)
+		Debug(BSYC_DL.INFO, "ProcessCurrencyTransfer", doCurrentPlayer, sourceGUID, name, realm, currencyID, transferAmt)
+
 		if name then
 			local player = Unit:GetPlayerInfo(true)
 			local tmpRealm = player.realm --default to our current realm.  Because GetPlayerInfoByGUID() returns empty realm if sourceGUID is on the same server.
@@ -716,7 +717,7 @@ function Scanner:ProcessCurrencyTransfer(doCurrentPlayer, sourceGUID, currencyID
 				currencyObj[currencyID].count = currencyObj[currencyID].count - transferAmt
 				Debug(BSYC_DL.FINE, "CurrencyTransferSourceUpt-2", name, tmpRealm, sourceGUID, currencyID, transferAmt, currencyObj[currencyID].count)
 			else
-				BSYC:Print(L.WarningCurrencyUpt.." "..name.. " | "..tmpRealm)
+				BSYC:Print(L.WarningCurrencyUpt.." "..name.." | "..tmpRealm)
 			end
 
 			--do not process below as we wait for the CURRENCY_TRANSFER_LOG_UPDATE to process the player

@@ -81,6 +81,7 @@ function Whitelist:OnEnable()
 	--Warning Frame
 	local warningFrame = _G.CreateFrame("Frame", nil, whitelistFrame, "BagSyncInfoFrameTemplate")
 	warningFrame:Hide()
+	warningFrame:SetHeight(500)
 	warningFrame:SetBackdropColor(0, 0, 0, 0.75)
     warningFrame:EnableMouse(true) --don't allow clickthrough
     warningFrame:SetMovable(false)
@@ -99,11 +100,11 @@ function Whitelist:OnEnable()
 	warningFrame.infoText1:SetWidth(warningFrame:GetWidth() - 30)
 	warningFrame.infoText1:SetPoint("LEFT", warningFrame, "TOPLEFT", 10, -40)
 	warningFrame.infoText2 = warningFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	warningFrame.infoText2:SetText(L.DisplayWhitelistHelpInfo)
+	warningFrame.infoText2:SetText(L.DisplayWhitelistHelpInfo..L.DisplayWhitelistHelpInfo2)
 	warningFrame.infoText2:SetFont(STANDARD_TEXT_FONT, 14, "")
 	warningFrame.infoText2:SetTextColor(50/255, 165/255, 0)
 	warningFrame.infoText2:SetWidth(warningFrame:GetWidth() - 30)
-	warningFrame.infoText2:SetPoint("LEFT", warningFrame.infoText1, "BOTTOMLEFT", 5, -100)
+	warningFrame.infoText2:SetPoint("LEFT", warningFrame.infoText1, "BOTTOMLEFT", 5, -200)
 	warningFrame.infoText2:SetJustifyH("CENTER")
 	Whitelist.warningFrame = warningFrame
 
