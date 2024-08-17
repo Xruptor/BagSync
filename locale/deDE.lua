@@ -19,6 +19,7 @@ L.Tooltip_mailbox = "Post"
 L.Tooltip_void = "Leerenlager"
 L.Tooltip_reagents = "Materiallager"
 L.Tooltip_auction = "AH"
+L.Tooltip_warband = "Kriegsmeute"
 L.TooltipSmall_bag = "P"
 L.TooltipSmall_bank = "B"
 L.TooltipSmall_reagents = "R"
@@ -27,6 +28,7 @@ L.TooltipSmall_guild = "G"
 L.TooltipSmall_mailbox = "M"
 L.TooltipSmall_void = "V"
 L.TooltipSmall_auction = "A"
+L.TooltipSmall_warband = "W"
 --do not touch these unless requiring a new image for a specific localization
 L.TooltipIcon_bag = [[|TInterface\AddOns\BagSync\media\bag:13:13|t]]
 L.TooltipIcon_bank = [[|TInterface\AddOns\BagSync\media\bank:13:13|t]]
@@ -36,8 +38,10 @@ L.TooltipIcon_guild = [[|TInterface\AddOns\BagSync\media\guild:13:13|t]]
 L.TooltipIcon_mailbox = [[|TInterface\AddOns\BagSync\media\mailbox:13:13|t]]
 L.TooltipIcon_void = [[|TInterface\AddOns\BagSync\media\void:13:13|t]]
 L.TooltipIcon_auction = [[|TInterface\AddOns\BagSync\media\auction:13:13|t]]
+L.TooltipIcon_warband = [[|TInterface\AddOns\BagSync\media\warband:13:13|t]]
 L.TooltipTotal = "Total:"
 L.TooltipGuildTabs = "T:"
+L.TooltipBagSlot = "S:"
 L.TooltipItemID = "[Gegenstands ID]:"
 L.TooltipDebug = "[Debug]:"
 L.TooltipCurrencyID = "[Währungs ID]:"
@@ -188,7 +192,7 @@ L.EnableLoginVersionInfo = "BagSync Versionsinfo bei der Anmeldung anzeigen"
 L.FocusSearchEditBox = "Suchfeld beim Öffnen des Suchfensters fokussieren"
 L.AlwaysShowAdvSearch = "Immer das erweiterte Suchfenster von Bagsync anzeigen."
 L.DisplayTotal = "Anzeige des [Gesamt] Betrags."
-L.DisplayGuildGoldInGoldWindow = "Zeige [Gilde] Goldsummen im Gold Window an"
+L.DisplayGuildGoldInGoldWindow = "Zeige [Gilde] Goldsummen im Gold Fenster an"
 L.Display_GSC = "zeige |cFFFFD700Gold|r, |cFFC0C0C0Silver|r und |cFFB87333Copper|r in dem Goldfenster."
 L.DisplayGuildBank = "Gildenbankgegenstände anzeigen. |cFF99CC33(Aktiviert das Scannen von Gildenbanken)|r"
 L.DisplayMailbox = "Postfachgegenstände anzeigen"
@@ -198,8 +202,14 @@ L.DisplayFaction = "Gegenstände für beide Fraktionen anzeigen (|cff3587ffAllia
 L.DisplayClassColor = "Klassenfarben für Charaktere anzeigen"
 L.DisplayItemTotalsByClassColor = "Gegenstände nach Charakterklassenfarbe anzeigen."
 L.DisplayTooltipOnlySearch = "BagSync Tooltip |cFF99CC33(NUR)|r im Suchfenster anzeigen"
+L.DisplayTooltipCurrencyData = "Zeige BagSync-Tooltip Daten im Blizzard Währungsfenster an."
 L.DisplayLineSeparator = "Aktiviere eine leere Linie als Separator über der BagSync Tooltipanzeige"
-L.DisplayCR = "Aktiviere Gegenstände für |cffff7d0a[Connected Realm]|r Charaktere.  |cffff7d0a[CR]|r"
+L.DisplayCurrentCharacter = "Aktueller Charakter"
+L.DisplayCurrentCharacterOnly = "BagSync Tooltip Daten |cFFFFD700NUR!|r für den aktuellen Charakter anzeigen |cFFDF2B2B (Nicht empfohlen)|r"
+L.DisplayBlacklistCurrentCharOnly = "Zeigt die Anzahl der auf der schwarzen Liste stehenden Elemente |cFFFFD700NUR!|r für den aktuellen Charakter an |cFFDF2B2B (Nicht empfohlen)|r"
+L.DisplayCurrentRealmName = "Zeigt den |cFF4CBB17[Aktuellen Realm]|r des Spielers an."
+L.DisplayCurrentRealmShortName = "Verwenden Sie einen Kurznamen für |cFF4CBB17[Aktueller Realm]|r."
+L.DisplayCR = "Aktiviere Gegenstände für |cffff7d0a[Verbundener Realm]|r Charaktere.  |cffff7d0a[CR]|r"
 L.DisplayBNET = "Aktiviere Battle.net Account Charaktere. |cff3587ff[BNet]|r |cFFDF2B2B(Nicht empfohlen!)|r"
 L.DisplayItemID = "Gegenstands ID im Tooltip anzeigen"
 L.DisplaySourceDebugInfo = "Zeigt hilfreiche [Debug] Informationen im Tooltip an"
@@ -223,12 +233,14 @@ L.DisplayRealmAstrick = "Zeige [*] anstelle von Realmnamen für |cffff7d0a[CR]|r
 L.DisplayShortRealmName = "Kurze Realmnamen für |cffff7d0a[CR]|r und |cff3587ff[BNet]|r anzeigen"
 L.DisplayFactionIcons = "Fraktionssymbole im Tooltip anzeigen"
 L.DisplayGuildBankTabs = "Gildenbank-Reiter [1,2,3, etc...] im Tooltip anzeigen."
+L.DisplayWarbandBankTabs = "Zeigt die Tabs [1, 2, 3 usw.] der Kriegermeuten Bank im Tooltip an."
+L.DisplayEquipBagSlots = "Zeigt die ausgerüsteten Taschenplätze <1,2,3, etc.> im Tooltip an."
 L.DisplayRaceIcons = "Symbole der Charakterrasse im Tooltip anzeigen."
 L.DisplaySingleCharLocs = "Zeige ein einzelnes Zeichen für Speicherorte an."
 L.DisplayIconLocs = "Zeige ein Symbol für Speicherorte an."
-L.DisplayGuildSeparately = "Display [Guild] names and item totals separately from character totals."
+L.DisplayGuildSeparately = "Zeige [Gilden-]Namen und Gegenstandssummen getrennt von den Charaktersummen an."
 L.DisplayGuildCurrentCharacter = "Zeige [Gilden] Gegenstände nur für den aktuell eingeloggten Charakter"
-L.DisplayGuildBankScanAlert = "Zeigt das Skan Warnfenster der Gildenbank an"
+L.DisplayGuildBankScanAlert = "Zeigt das Scan Warnfenster der Gildenbank an"
 L.DisplayAccurateBattlePets = "Genaue Kampfhaustiere in der Gildenbank und Mailbox aktivieren. |cFFDF2B2B(Kann zu Verzögerungen führen)|r |cff3587ff[Siehe BagSync FAQ]|r"
 L.DisplaySorting = "Tooltip Sortierung"
 L.DisplaySortInfo = "Standard: Tooltips werden alphabetisch nach Realm und dann nach Charakternamen sortiert."
@@ -243,19 +255,23 @@ Bestimmte Gegenstände wie |cffff7d0a[Legendäre]|r können den gleichen Namen h
 Wenn Du diese Option deaktivierst, werden die Artikelanzahlen unabhängig angezeigt, da die Artikelstatistiken berücksichtigt werden. Gegenstandssummen werden nur für jeden Charakter angezeigt, der denselben einzigartigen Gegenstand mit exakt denselben Werten hat. |cFFDF2B2B(Nicht empfohlen)|r
 ]]
 L.DisplayShowUniqueItemsTotalsTitle = "QuickInfo Gesamtsummen für einzigartige Gegenstände anzeigen"
-L.DisplayShowUniqueItemsEnableText = "Aktiviere einzigartige Artikelsummen"
+L.DisplayShowUniqueItemsEnableText = "Aktiviere einzigartige Gegenstandsummen"
 L.ColorPrimary = "Primäre BagSync Tooltipfarbe"
 L.ColorSecondary = "Sekundäre BagSync Tooltipfarbe"
 L.ColorTotal = "BagSync [Total] Tooltipfarbe"
 L.ColorGuild = "BagSync [Gilde] Tooltipfarbe"
+L.ColorWarband = "BagSync [Kriegsmeuten] Tooltipfarbe."
+L.ColorCurrentRealm = "BagSync [Aktueller Realm] Tooltipfarbe."
 L.ColorCR = "BagSync [Verbundener Realm] Tooltipfarbe"
 L.ColorBNET = "BagSync [Battle.Net] Tooltipfarbe"
-L.ColorItemID = "BagSync [ItemID] Tooltipfarbe"
-L.ColorExpansion = "BagSync [Erweiterungs] Tooltipfarbe."
-L.ColorItemTypes = "BagSync [ItemType] Tooltipfarbe."
-L.ColorGuildTabs = "Guild Tabs [1,2,3, etc...] Tooltipfarbe."
+L.ColorItemID = "BagSync [GegenstandsID] Tooltipfarbe"
+L.ColorExpansion = "BagSync [Erweiterungen] Tooltipfarbe."
+L.ColorItemTypes = "BagSync [Gegenstandstyp] Tooltipfarbe."
+L.ColorGuildTabs = "Gilden Tabs [1,2,3, etc...] Tooltipfarbe."
+L.ColorWarbandTabs = "Kriegsmeuten Tabs [1,2,3, etc...] Tooltipfarbe."
+L.ColorBagSlots = "Taschen Slots <1,2,3, etc...> Tooltipfarbe."
 L.ConfigHeader = "Einstellungen für verschiedene BagSync Funktionen."
-L.ConfigDisplay = "Display"
+L.ConfigDisplay = "Anzeige"
 L.ConfigTooltipHeader = "Einstellungen für die angezeigten BagSync Tooltip Informationen."
 L.ConfigColor = "Farbe"
 L.ConfigColorHeader = "Farbeinstellungen für BagSync Tooltip Informationen"
@@ -263,7 +279,7 @@ L.ConfigMain = "Hauptkonfig"
 L.ConfigMainHeader = "Haupteinstellungen von BagSync"
 L.ConfigSearch = "Suche"
 L.ConfigKeybindings = "Keybindings"
-L.ConfigKeybindingsHeader = "Keybind settings for BagSync features."
+L.ConfigKeybindingsHeader = "Tastenbelegungseinstellungen für BagSync Funktionen."
 L.ConfigExternalTooltip = "Externer Tooltip"
 L.ConfigSearchHeader = "Einstellungen für das Suchfenster"
 L.ConfigFont = "Schriftart"
@@ -278,9 +294,9 @@ L.ConfigTrackingHeader = "Verfolgungs Einstellungen für alle gespeicherten BagS
 L.ConfigTrackingCaution = "Achtung"
 L.ConfigTrackingModules = "Module"
 L.ConfigTrackingInfo = [[
-|cFFDF2B2BNOTE|r: Disabling a module will cause BagSync to stop tracking and storing the module to the database.
+|cFFDF2B2BNOTE|r: Wenn Du ein Modul deaktivierst, beendet BagSync die Verfolgung und Speicherung des Moduls in der Datenbank.
 
-Disabled modules will not display in any of the BagSync windows, slash commands, tooltips or minimap button.
+Deaktivierte Module werden in keinem der BagSync-Fenster, Schrägstrichbefehle, Tooltips oder Minikartenschaltflächen angezeigt.
 ]]
 L.TrackingModule_Bag = "Taschen"
 L.TrackingModule_Bank = "Bank"
@@ -290,10 +306,12 @@ L.TrackingModule_Mailbox = "Mailbox"
 L.TrackingModule_Void = "Leerenlager"
 L.TrackingModule_Auction = "Auktionshaus"
 L.TrackingModule_Guild = "Gildenbank"
+L.TrackingModule_WarbandBank = "Kriegsmeuten Bank (WarBank)"
 L.TrackingModule_Professions = "Berufe- / Handelsfertigkeiten"
 L.TrackingModule_Currency = "Währungs Tokens"
 L.WarningItemSearch = "WARNUNG: Insgesamt [|cFFFFFFFF%s|r] Elemente wurden nicht durchsucht!\n\nBagSync wartet immer noch auf die Antwort des Servers/Cache.\n\nDrücke die Schaltfläche Suchen oder Aktualisieren."
 L.WarningUpdatedDB = "Du wurdest auf die neueste Datenbankversion aktualisiert! Du musst alle Deine Charaktere erneut scannen!|r"
+L.WarningCurrencyUpt = "Fehler beim Aktualisieren der Währung. Bitte melde Dich mit dem Charakter an: "
 L.WarningHeader = "Warnung!"
 L.SavedSearch = "Gespeicherte Suche"
 L.SavedSearch_Add = "Suche hinzufügen"
@@ -302,12 +320,12 @@ L.SavedSearch_Warn = "Du mußt etwas in das Suchfeld eingeben."
 --Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  Example: class:<name of class in your locale>
 --This includes name searches like name:<name in your locale>
 ---------------------------------------
-L.SearchHelpHeader = "Search Help"
+L.SearchHelpHeader = "Suchhilfe"
 L.SearchHelp = [[
-|cffff7d0aSearch Options|r:
-|cFFDF2B2B(NOTE: All commands are English only!)|r
+|cffff7d0aSuchoptionen|r:
+|cFFDF2B2B(HINWEIS: Alle Befehle sind nur auf Englisch!)|r
 
-|cFF99CC33Character items by location|r:
+|cFF99CC33Charakterelemente nach Standort|r:
 @bag
 @bank
 @reagents
@@ -316,6 +334,7 @@ L.SearchHelp = [[
 @void
 @auction
 @guild
+@warband
 
 |cffff7d0aAdvanced Search|r (|cFF99CC33commands|r | |cFFFFD580example|r):
 
@@ -329,7 +348,7 @@ L.SearchHelp = [[
 
 |cff00ffff<required ilvl>|r = |cFF99CC33r|r ; |cFF99CC33req|r ; |cFF99CC33rl|r ; |cFF99CC33reql|r ; |cFF99CC33reqlvl|r | |cFFFFD580req<op><number>|r ; |cFFFFD580req<op><number>|r (req:>5 ; req:>=20)
 
-|cff00ffff<type / slot>|r = |cFF99CC33t|r ; |cFF99CC33type|r ; |cFF99CC33slot|r | |cFFFFD580t:<text>|r (slot:head)
+|cff00ffff<type / slot>|r = |cFF99CC33t|r ; |cFF99CC33type|r ; |cFF99CC33slot|r | |cFFFFD580t:<text>|r (slot:head) ; (t:battlepet or t:petcage) (t:armor) (t:weapon)
 
 |cff00ffff<tooltip>|r = |cFF99CC33tt|r ; |cFF99CC33tip|r ; |cFF99CC33tooltip|r | |cFFFFD580tt:<text>|r (tt:summon)
 
@@ -345,19 +364,19 @@ L.SearchHelp = [[
 |cFF99CC33:|r | |cFF99CC33=|r | |cFF99CC33==|r | |cFF99CC33!=|r | |cFF99CC33~=|r | |cFF99CC33<|r | |cFF99CC33>|r | |cFF99CC33<=|r | |cFF99CC33>=|r
 
 
-|cffff7d0aNegate Commands|r:
-Example: |cFF99CC33!|r|cFFFFD580bind:boe|r (not boe)
-Example: |cFF99CC33!|r|cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r (not boe and item level greater than 20)
+|cffff7d0aBefehle Negieren|r:
+Beispiel: |cFF99CC33!|r|cFFFFD580bind:boe|r (Kein BoE)
+Beispiel: |cFF99CC33!|r|cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r (kein BoE und Gegenstandsstufe größer als 20)
 
-|cffff7d0aUnion Searches (and searches):|r
-(Use the double ampersand |cFF99CC33&&|r symbol)
-Example: |cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r
+|cffff7d0aUnion-Suchen (und Suchvorgänge):|r
+(Verwenden Sie das doppelte Und |cFF99CC33&&|r symbol)
+Beispiel: |cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r
 
-|cffff7d0aIntersect Searches (or searches):|r
+|cffff7d0aSuchen (oder Suchvorgänge) überschneiden:|r
 (Use the double pipe |cFF99CC33|||||r symbol)
-Example: |cFFFFD580bind:boe|r |cFF99CC33|||||r |cFFFFD580lvl:>20|r
+Beispiel: |cFFFFD580bind:boe|r |cFF99CC33|||||r |cFFFFD580lvl:>20|r
 
-|cffff7d0aComplex Search Example:|r
+|cffff7d0aKomplexes Suchbeispiel:|r
 (bind on equip, lvl is exactly 20 with the word 'robe' in the name)
 |cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:20|r |cFF99CC33&&|r |cFFFFD580name:robe|r
 
