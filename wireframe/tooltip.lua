@@ -1123,6 +1123,7 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 
 	--loop through our characters
 	local usrData = {}
+	local grandTotal = 0
 
 	-- local permIgnore ={
 	-- 	[2032] = "Trader's Tender", --shared across all characters
@@ -1142,6 +1143,7 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 				local colorized = self:ColorizeUnit(unitObj)
 				local sortIndex = self:GetSortIndex(unitObj)
 				local count = unitObj.data.currency[currencyID].count
+				grandTotal = grandTotal + count
 
 				if doTender then
 					local warbandObj = Data:GetWarbandBankObj()
@@ -1169,10 +1171,10 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	local displayList = {}
 	local showQTip = Tooltip:QTipCheck()
 
-	if currencyName then
-		table.insert(displayList, {string.format("|cff%s%s|r", RGBPercToHex(64/255, 224/255, 208/255), tostring(currencyName)), " "})
-		table.insert(displayList, {" ", " "})
-	end
+	-- if currencyName then
+	-- 	table.insert(displayList, {string.format("|cff%s%s|r", RGBPercToHex(64/255, 224/255, 208/255), tostring(currencyName)), " "})
+	-- 	table.insert(displayList, {" ", " "})
+	-- end
 
 	for i=1, #usrData do
 		if usrData[i].count then
@@ -1188,11 +1190,20 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	-- 	table.insert(displayList, {"|cffff7d0a["..L.DisplayTooltipAccountWide.."]|r", " "})
 	-- end
 
+	--add [Total]
+	if BSYC.options.showTotal and grandTotal > 0 and #displayList > 1 then
+		--add a separator
+		table.insert(displayList, {" ", " "})
+		local desc = self:HexColor(BSYC.colors.total, L.TooltipTotal)
+		local value = self:HexColor(BSYC.colors.second, comma_value(grandTotal))
+		table.insert(displayList, {desc, value})
+	end
+
 	if BSYC.options.enableTooltipItemID and currencyID then
 		local desc = self:HexColor(BSYC.colors.itemid, L.TooltipCurrencyID)
 		local value = self:HexColor(BSYC.colors.second, currencyID)
-		table.insert(displayList, {" ", " "})
-		table.insert(displayList, {desc, value})
+		table.insert(displayList, 1, {" ", " "})
+		table.insert(displayList, 1,  {desc, value})
 	end
 
 	--finally display it
