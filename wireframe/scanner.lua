@@ -422,6 +422,7 @@ function Scanner:SaveWarbandBank(bagID)
 	Debug(BSYC_DL.INFO, "SaveWarbandBank", BSYC.tracking.warband)
 	if not BSYC.isWarbandActive then return end
 	if not BSYC.tracking.warband then return end
+	if not Unit.atWarbandBank and not Unit.atBank then return end
 
 	local warbandDB = Data:CheckWarbandBankDB()
 
@@ -488,7 +489,7 @@ end
 
 function Scanner:SaveWarbandBankMoney()
 	if not BSYC.tracking.warband then return end
-	if not Unit.atBank then return end
+	if not Unit.atWarbandBank and not Unit.atBank then return end
 
 	local warbandDB = Data:CheckWarbandBankDB()
 	local money = C_Bank.FetchDepositedMoney(Enum.BankType.Account)

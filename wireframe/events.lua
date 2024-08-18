@@ -48,7 +48,7 @@ function Events:OnEnable()
 	self:RegisterMessage('BAGSYNC_EVENT_AUCTION')
 	self:RegisterMessage('BAGSYNC_EVENT_VOIDBANK')
 	self:RegisterMessage('BAGSYNC_EVENT_GUILDBANK')
-	--self:RegisterMessage('BAGSYNC_EVENT_WARBANDBANK')
+	self:RegisterMessage('BAGSYNC_EVENT_WARBANDBANK')
 
 	--check to see if the ReagentBank is even enabled on server
 	if IsReagentBankUnlocked then
@@ -58,6 +58,7 @@ function Events:OnEnable()
 		self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:SaveReagents() end)
 	else
 		BSYC.tracking.reagents = false
+		Debug(BSYC_DL.WARN, "Module-Inactive", "reagents")
 	end
 
 	--check if voidbank is even enabled on server
@@ -66,6 +67,7 @@ function Events:OnEnable()
 		self:RegisterEvent("VOID_TRANSFER_DONE", function() Scanner:SaveVoidBank() end)
 	else
 		BSYC.tracking.void = false
+		Debug(BSYC_DL.WARN, "Module-Inactive", "void")
 	end
 
 	--check to see if guildbanks are even enabled on server
@@ -77,6 +79,7 @@ function Events:OnEnable()
 		self:RegisterEvent("GUILDBANK_UPDATE_WITHDRAWMONEY", function() Scanner:SaveGuildBankMoney() end)
 	else
 		BSYC.tracking.guild = false
+		Debug(BSYC_DL.WARN, "Module-Inactive", "guild")
 	end
 
 	--check to see if warband banks are even enabled on server
@@ -86,6 +89,7 @@ function Events:OnEnable()
 		self:RegisterEvent("ACCOUNT_MONEY", function() Scanner:SaveWarbandBankMoney() end)
 	else
 		BSYC.tracking.warband = false
+		Debug(BSYC_DL.WARN, "Module-Inactive", "warband")
 	end
 
 	--only do currency checks if the server even supports it
@@ -105,6 +109,7 @@ function Events:OnEnable()
 		end
 	else
 		BSYC.tracking.currency = false
+		Debug(BSYC_DL.WARN, "Module-Inactive", "currency")
 	end
 
 	--Force guild roster update, so we can grab guild name.  Note this is nil on login, have to check for Classic and Retail though
@@ -162,6 +167,14 @@ function Events:BAGSYNC_EVENT_GUILDBANK(event, isOpen)
 	Debug(BSYC_DL.DEBUG, "BAGSYNC_EVENT_GUILDBANK", isOpen)
 	if isOpen then
 		self:GuildBank_Open()
+	end
+end
+
+function Events:BAGSYNC_EVENT_WARBANDBANK(event, isOpen)
+	Debug(BSYC_DL.DEBUG, "BAGSYNC_EVENT_WARBANDBANK", isOpen)
+	if isOpen then
+		Scanner:SaveWarbandBank()
+		Scanner:SaveWarbandBankMoney()
 	end
 end
 

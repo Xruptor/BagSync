@@ -69,6 +69,7 @@ if C_PlayerInteractionManager then
 			Unit:SendMessage('BAGSYNC_EVENT_GUILDBANK', true)
 
 		elseif BSYC.isWarbandActive and winArg == InteractType.AccountBanker then
+			--note: this interaction window only works with the Warband Bank Convergence
 			Unit.atWarbandBank = true
 			Unit:SendMessage('BAGSYNC_EVENT_WARBANDBANK', true)
 		end
@@ -100,6 +101,7 @@ if C_PlayerInteractionManager then
 			Unit:SendMessage('BAGSYNC_EVENT_GUILDBANK')
 
 		elseif BSYC.isWarbandActive and winArg == InteractType.AccountBanker then
+			--note: this interaction window only works with the Warband Bank Convergence
 			Unit.atWarbandBank = false
 			Unit:SendMessage('BAGSYNC_EVENT_WARBANDBANK')
 		end
