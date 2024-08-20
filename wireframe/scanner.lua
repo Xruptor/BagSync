@@ -833,7 +833,7 @@ end
 
 function Scanner:SaveProfessions()
 	Debug(BSYC_DL.INFO, "SaveProfessions", BSYC.tracking.professions)
-	if not BSYC.IsRetail then return end
+	if not BSYC:CanDoProfessions() then return end
 	if not BSYC.tracking.professions then return end
 
 	--we don't want to do linked tradeskills, guild tradeskills, or a tradeskill from an NPC
@@ -1007,7 +1007,7 @@ end
 
 function Scanner:CleanupProfessions()
 	Debug(BSYC_DL.INFO, "CleanupProfessions", BSYC.tracking.professions)
-	if not BSYC.IsRetail then return end
+	if not BSYC:CanDoProfessions() then return end
 	if not BSYC.tracking.professions then return end
 
 	--lets remove unlearned tradeskills

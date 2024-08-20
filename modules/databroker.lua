@@ -48,7 +48,7 @@ function DataBroker:BuildMinimapDropdown()
 					BSYC:GetModule("Currency").frame:Show()
 				end)
 			end
-			if BSYC.IsRetail and BSYC.tracking.professions then
+			if BSYC:CanDoProfessions() and BSYC.tracking.professions then
 				addButton(level, L.Professions, nil, 1, nil, 'professions', function(frame, ...)
 					BSYC:GetModule("Professions").frame:Show()
 				end)

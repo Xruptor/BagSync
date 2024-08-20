@@ -291,7 +291,7 @@ function Data:LoadSlashCommand()
 			elseif cmd == L.SlashProfiles then
 				BSYC:GetModule("Profiles").frame:Show()
 				return true
-			elseif cmd == L.SlashProfessions and BSYC.IsRetail and BSYC.tracking.professions then
+			elseif cmd == L.SlashProfessions and BSYC:CanDoProfessions() and BSYC.tracking.professions then
 				BSYC:GetModule("Professions").frame:Show()
 				return true
 			elseif cmd == L.SlashBlacklist then
@@ -347,7 +347,7 @@ function Data:LoadSlashCommand()
 		BSYC:Print("/bgs "..L.SlashSearch.." - "..L.HelpSearchWindow)
 		BSYC:Print("/bgs "..L.SlashGold.." - "..L.HelpGoldTooltip)
 		BSYC:Print("/bgs "..L.SlashProfiles.." - "..L.HelpProfilesWindow)
-		if BSYC.IsRetail and BSYC.tracking.professions then
+		if BSYC:CanDoProfessions() and BSYC.tracking.professions then
 			BSYC:Print("/bgs "..L.SlashProfessions.." - "..L.HelpProfessionsWindow)
 		end
 		if BSYC:CanDoCurrency() and BSYC.tracking.currency then

@@ -407,7 +407,7 @@ options.args.keybindings = {
 			get = get,
 			set = set,
 			arg = "keybind.BAGSYNCPROFESSIONS",
-			hidden = function() return not BSYC.IsRetail end,
+			hidden = function() return not BSYC:CanDoProfessions() end,
 		},
 		keybindprofiles = {
 			order = 7,
@@ -542,7 +542,7 @@ options.args.tracking = {
 					get = get,
 					set = set,
 					arg = "tracking.professions",
-					hidden = function() return not BSYC.IsRetail end,
+					hidden = function() return not BSYC:CanDoProfessions() end,
 				},
 				module_currency = {
 					order = 10,

@@ -89,6 +89,7 @@ function Recipes:CreateList(data)
 	Recipes.recipesList = {}
 	Recipes.frame.infoText:SetText(data.colorized.." | "..data.skillData.name)
 
+	local xGetSpellInfo = C_Spell and C_Spell.GetSpellInfo or GetSpellInfo
 	local recipeData = {}
 
 	for k, v in pairs(data.skillData.categories) do
@@ -102,7 +103,7 @@ function Recipes:CreateList(data)
 						local recipeName = recipeList[idx]
 						local iconTexture = "Interface\\Icons\\INV_Misc_QuestionMark"
 
-						local gName, _, gIcon = GetSpellInfo(recipeList[idx])
+						local gName, _, gIcon = xGetSpellInfo(recipeList[idx])
 
 						if recipe_info and recipe_info.name then
 							recipeName = recipe_info.name
