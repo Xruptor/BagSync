@@ -74,18 +74,29 @@ function Currency:CreateList()
 	Currency.currencies = {}
 	local usrData = {}
 	local tempList = {}
+	local expansionList = {}
+
+	--lets get an expansion list so we can sort the top part by expansion release
+	for i=0, GetNumExpansions() do
+		local eTmp = _G['EXPANSION_NAME'..i]
+		if eTmp then
+			expansionList[eTmp] = i
+		end
+	end
 
 	for unitObj in Data:IterateUnits() do
 		if not unitObj.isGuild and unitObj.data.currency then
 			for k, v in pairs(unitObj.data.currency) do
 				local header = v.header or L.Currency
+
 				--only do the entry once per currencyID
 				if not tempList[k]  then
 					table.insert(usrData, {
 						header = header,
 						name = v.name,
 						icon = v.icon,
-						currencyID = k
+						currencyID = k,
+						sortIndex = BSYC.options.sortCurrencyByExpansion and expansionList[header] or -100  --we use -100 as a filler for anything that isn't an expansion to be blow lowest possible expansion
 					})
 					tempList[k] = true
 				end
@@ -94,12 +105,15 @@ function Currency:CreateList()
 	end
 
 	if #usrData > 0 then
-		--sort the list by header, name
+
 		table.sort(usrData, function(a, b)
-			if a.header  == b.header then
-				return a.name < b.name;
+			if a.sortIndex == b.sortIndex then
+				if a.header == b.header then
+					return a.name < b.name;
+				end
+				return a.header < b.header;
 			end
-			return a.header < b.header;
+			return a.sortIndex > b.sortIndex;
 		end)
 
 		local lastHeader = ""

@@ -76,6 +76,7 @@ local optionsDefaults = {
 	showCurrentCharacterOnly = false,
 	showEquipBagSlots = false,
 	showBLCurrentCharacterOnly = false,
+	sortCurrencyByExpansion = true,
 }
 
 local colorsDefaults = {

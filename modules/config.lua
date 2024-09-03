@@ -751,15 +751,39 @@ options.args.display = {
 				},
 			}
 		},
-		groupsorting = {
-			name = L.DisplaySorting,
+		currencyopts = {
+			name = L.Currency,
 			order = 3,
 			type = "group",
-			desc = L.DisplaySortInfo,
+			guiInline = true,
+			hidden = function() return not BSYC:CanDoCurrency() end,
+			args = {
+				sortcurrencybyexpansion = {
+					order = 0,
+					type = "toggle",
+					name = L.DisplaySortCurrencyByExpansionFirst,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.sortCurrencyByExpansion",
+				},
+			}
+		},
+		groupsorting = {
+			name = L.DisplaySorting,
+			order = 4,
+			type = "group",
 			guiInline = true,
 			args = {
-				sorttooltipbytotals = {
+				groupsortingdesc = {
 					order = 0,
+					type = "description",
+					name = "|cFFFFD700"..L.DisplaySortInfo.."|r",
+					width = "full",
+				},
+				sorttooltipbytotals = {
+					order = 1,
 					type = "toggle",
 					name = L.SortTooltipByTotals,
 					width = "full",
@@ -770,7 +794,7 @@ options.args.display = {
 					disabled = function() return BSYC.options.sortByCustomOrder end,
 				},
 				sortbycustomsortorder = {
-					order = 1,
+					order = 2,
 					type = "toggle",
 					name = L.SortByCustomSortOrder,
 					width = "full",
@@ -781,7 +805,7 @@ options.args.display = {
 					disabled = function() return BSYC.options.sortTooltipByTotals end,
 				},
 				customsortbutton = {
-					order = 2,
+					order = 3,
 					type = "execute",
 					name = L.SortOrder,
 					func = function()
@@ -792,7 +816,7 @@ options.args.display = {
 			}
 		},
 		grouptags = {
-			order = 4,
+			order = 5,
 			type = "group",
 			name = L.DisplayTooltipTags,
 			guiInline = true,
@@ -864,7 +888,7 @@ options.args.display = {
 			}
 		},
 		groupcurrentplayer = {
-			order = 5,
+			order = 6,
 			type = "group",
 			name = L.DisplayCurrentCharacter,
 			guiInline = true,
@@ -893,7 +917,7 @@ options.args.display = {
 			}
 		},
 		groupaccountwide = {
-			order = 6,
+			order = 7,
 			type = "group",
 			name = L.DisplayTooltipAccountWide,
 			guiInline = true,
@@ -1011,7 +1035,7 @@ options.args.display = {
 			}
 		},
 		showuniqueitemsgroup = {
-			order = 7,
+			order = 8,
 			name = L.DisplayShowUniqueItemsTotalsTitle,
 			type = "group",
 			guiInline = true,
