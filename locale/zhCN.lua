@@ -231,6 +231,7 @@ L.DisplayGuildSeparately = "显示[公会]名字和物品总计与角色总计�
 L.DisplayGuildCurrentCharacter = "显示[公会]仅限当前的游戏角色。"
 L.DisplayGuildBankScanAlert = "显示公会银行扫描窗口。"
 L.DisplayAccurateBattlePets = "启用精准扫描公会银行和邮箱中的战斗宠物。|cFFDF2B2B（可能导致滞后/卡顿）|r |cff3587ff[详见 BagSync FAQ]|r"
+L.DisplaySortCurrencyByExpansionFirst = "BagSync 的货币窗口是依据游戏资料片顺序而不是字母顺序来进行排序。"
 L.DisplaySorting = "鼠标提示排序"
 L.DisplaySortInfo = "默认: 鼠标提示排序是根据服务器名的字母顺序，然后是角色名称来排序。"
 L.SortTooltipByTotals = "按照总数进行排序，而不是字母顺序排列。"
