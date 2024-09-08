@@ -247,7 +247,7 @@ L.DisplaySortInfo = "Default: Tooltips are sorted alphabetically by Realm then C
 L.SortTooltipByTotals = "Sort by totals and not alphabetically."
 L.SortByCustomSortOrder = "Sort by custom sort order."
 L.CustomSortInfo = "List uses an ascending order (1,2,3)"
-L.CustomSortInfoWarn = "|cFF99CC33NOTE: Use numbers only! (-1,0,3,4)|r"
+L.CustomSortInfoWarn = "|cFF99CC33NOTE: Use numbers only! Examples: (-1,0,3,4,37,99,-45)|r"
 L.DisplayShowUniqueItemsTotals = "Enabling this option will allow unique items to be added towards the total item count, regardless of item stats. |cFF99CC33(Recommended)|r."
 L.DisplayShowUniqueItemsTotals_2 = [[
 Certain items like |cffff7d0a[Legendaries]|r can share the same name but have different stats.  Since these items are treated independently from one another, they are sometimes not counted towards the total item count. Enabling this option will completely disregard the unique item stats and treat them all the same, so long as they share the same item name.
