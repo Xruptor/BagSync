@@ -412,5 +412,19 @@ L.FAQ_Question_7 = "What is accurate Battle Pet scanning in Guild Bank & Mailbox
 L.FAQ_Question_7_p1 = [[
 Blizzard does not store Battle Pets in the Guild Bank or Mailbox with a proper ItemID or SpeciesID.  In fact Battle Pets are stored in the Guild Bank and Mailbox as |cFF99CC33[Pet Cage]|r with an ItemID of |cFF99CC3382800|r.  This makes grabbing any data in regards to specific Battle Pets difficult for addon authors.  You can see for yourself in the Guild Bank transaction logs, you'll notice Battle Pets are stored as |cFF99CC33[Pet Cage]|r.  If you link one from a Guild Bank it will also be displayed as |cFF99CC33[Pet Cage]|r.  In order to get by this problem, there are two methods that can be used.  The first method is assigning the Battle Pet to a tooltip and then grabbing the SpeciesID from there.  This requires the server to respond to the WOW client and can potentially lead to massive lag, especially if there is a lot of Battle Pets in the Guild Bank.  The second method uses the iconTexture of the Battle Pet to try to find the SpeciesID.  This is sometimes inaccurate as certain Battle Pets share the same iconTexture.  Example:  Toxic Wasteling shares the same iconTexture as Jade Oozeling.  Enabling this option will force the tooltip scanning method to be as accurate as possible, but it can potentially cause lag.  |cFFDF2B2BThere is no way around this until Blizzard gives us more data to work with.|r
 ]]
+L.BagSyncInfoWindow = [[
+BagSync by default only shows tooltip data from characters on connected realms. ( |cffff7d0a[CR]|r )
+
+Connected Realms ( |cffff7d0a[CR]|r ) are servers that have been linked together.
+
+For a complete list, please visit:
+(|cFF99CC33 https://tinyurl.com/msncc7j6 |r)
 
 
+|cFFfd5c63BagSync will NOT show data from your entire Battle.Net account by default. You will need to enable this!|r
+( |cff3587ff[BNet]|r )
+
+|cFF52D386If you would like to see all your characters across your entire Battle.net account ( |cff3587ff[BNet]|r ), you need to enable the option in the BagSync config window under [Account Wide].|r
+
+The option is labeled as:
+]]
