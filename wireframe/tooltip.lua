@@ -700,6 +700,7 @@ end
 
 function Tooltip:ResetLastLink()
 	self.__lastLink = nil
+	self.__lastCurrencyID = nil
 end
 
 function Tooltip:CheckModifier()
@@ -1114,7 +1115,6 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)
-	Debug(BSYC_DL.INFO, "CurrencyTooltip", currencyName, currencyIcon, currencyID, source, BSYC.tracking.currency)
 	if not BSYC.tracking.currency then return end
 	if not BSYC.options.enableCurrencyWindowTooltipData and source ~= "bagsync_currency" then return end
 
@@ -1124,11 +1124,35 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	currencyID = tonumber(currencyID) --make sure it's a number we are working with and not a string
 	if not currencyID then return end
 
+	local showQTip = Tooltip:QTipCheck()
+
+	--if we already did the currency, then display the previous information, use the unparsed link to verify
+	if self.__lastCurrencyID and self.__lastCurrencyID == currencyID then
+		if self.__lastCurrencyTally and #self.__lastCurrencyTally > 0 then
+			for i=1, #self.__lastCurrencyTally do
+				if showQTip then
+					local lineNum = Tooltip.qTip:AddLine(self.__lastCurrencyTally[i][1], string.rep(" ", 4), self.__lastCurrencyTally[i][2])
+				else
+					objTooltip:AddDoubleLine(self.__lastCurrencyTally[i][1], self.__lastCurrencyTally[i][2], 1, 1, 1, 1, 1, 1)
+				end
+			end
+			objTooltip:Show()
+			if showQTip then Tooltip.qTip:Show() end
+		end
+		objTooltip.__tooltipUpdated = true
+		return
+	end
+
+	Debug(BSYC_DL.INFO, "CurrencyTooltip", currencyName, currencyIcon, currencyID, source, BSYC.tracking.currency)
+
 	Tooltip.objTooltip = objTooltip
 
 	--loop through our characters
 	local usrData = {}
 	local grandTotal = 0
+
+	self.__lastCurrencyID = currencyID
+	self.__lastCurrencyTally = {}
 
 	-- local permIgnore ={
 	-- 	[2032] = "Trader's Tender", --shared across all characters
@@ -1219,6 +1243,8 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 			objTooltip:AddDoubleLine(displayList[i][1], displayList[i][2], 1, 1, 1, 1, 1, 1)
 		end
 	end
+
+	self.__lastCurrencyTally = displayList
 
 	objTooltip.__tooltipUpdated = true
 	objTooltip:Show()

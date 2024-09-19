@@ -77,6 +77,7 @@ local optionsDefaults = {
 	showEquipBagSlots = false,
 	showBLCurrentCharacterOnly = false,
 	sortCurrencyByExpansion = true,
+	showBNETCRInfoWindow = true,
 }
 
 local colorsDefaults = {
@@ -188,6 +189,9 @@ function Data:OnEnable()
 	--load the slash commands
 	self:LoadSlashCommand()
 
+	--show the info window if enabled
+	self:ShowInfoWindow()
+
 	if BSYC.options.enableLoginVersionInfo then
 		BSYC:Print("[v|cFF20ff20"..ver.."|r] /bgs, /bagsync")
 	end
@@ -195,6 +199,40 @@ function Data:OnEnable()
 		BSYC:Print(L.DebugWarning)
 		C_Timer.After(6, function() BSYC:Print(L.DebugWarning) end)
 	end
+end
+
+function Data:ShowInfoWindow()
+	if not BSYC.options.showBNETCRInfoWindow then return end
+
+	local bgsInfoWindow = _G.CreateFrame("Frame", nil, UIParent, "BagSyncInfoFrameTemplate")
+	bgsInfoWindow:SetHeight(500)
+	bgsInfoWindow:SetWidth(500)
+	bgsInfoWindow:SetBackdropColor(0, 0, 0, 0.75)
+	bgsInfoWindow:EnableMouse(true) --don't allow clickthrough
+	bgsInfoWindow:SetMovable(false)
+	bgsInfoWindow:SetResizable(false)
+	bgsInfoWindow:SetFrameStrata("FULLSCREEN_DIALOG")
+	bgsInfoWindow:ClearAllPoints()
+	bgsInfoWindow:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+	bgsInfoWindow.TitleText:SetText("BagSync")
+	bgsInfoWindow.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
+	bgsInfoWindow.TitleText:SetTextColor(1, 1, 1)
+	bgsInfoWindow.infoText1 = bgsInfoWindow:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
+	bgsInfoWindow.infoText1:SetText(L.BagSyncInfoWindow.."\n"..L.DisplayBNET)
+	bgsInfoWindow.infoText1:SetFont(STANDARD_TEXT_FONT, 14, "")
+	bgsInfoWindow.infoText1:SetTextColor(1, 1, 1)
+	bgsInfoWindow.infoText1:SetJustifyH("CENTER")
+	bgsInfoWindow.infoText1:SetWidth(bgsInfoWindow:GetWidth() - 30)
+	bgsInfoWindow.infoText1:SetPoint("CENTER", bgsInfoWindow, "CENTER", 0, 0)
+	bgsInfoWindow.okBTN = _G.CreateFrame("Button", nil, bgsInfoWindow, "UIPanelButtonTemplate")
+	bgsInfoWindow.okBTN:SetText(OKAY)
+	bgsInfoWindow.okBTN:SetWidth(100)
+	bgsInfoWindow.okBTN:SetHeight(30)
+	bgsInfoWindow.okBTN:SetPoint("RIGHT", bgsInfoWindow, "BOTTOMRIGHT", -10, 23)
+	bgsInfoWindow.okBTN:SetScript("OnClick", function() BSYC.options.showBNETCRInfoWindow = false; bgsInfoWindow:Hide()  end)
+
+	bgsInfoWindow.CloseButton:Hide()
+	bgsInfoWindow:Show()
 end
 
 function Data:ResetColors()

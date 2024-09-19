@@ -569,18 +569,20 @@ BSYC.timerFrame:SetScript("OnUpdate", function(self, elapsed)
 	--iterate backwards since we are using table.remove
 	for i=#BSYC.timers, 1, -1 do
 		local tmr = BSYC.timers[i]
-		tmr.delay = tmr.delay - elapsed
+		if tmr then
+			tmr.delay = tmr.delay - elapsed
 
-        if tmr.delay < 0 then
-			Debug(BSYC_DL.SL3, "DoTimer", tmr.name, tmr.origDelay, tmr.object, tmr.func)
-			if type(tmr.func) == "string" and tmr.object then
-				tmr.object[tmr.func](tmr.object, unpack(tmr.argsList or {}, 1, tmr.argsCount))
-			else
-				tmr.func(unpack(tmr.argsList or {}, 1, tmr.argsCount))
+			if tmr.delay < 0 then
+				Debug(BSYC_DL.SL3, "DoTimer", tmr.name, tmr.origDelay, tmr.object, tmr.func)
+				if type(tmr.func) == "string" and tmr.object then
+					tmr.object[tmr.func](tmr.object, unpack(tmr.argsList or {}, 1, tmr.argsCount))
+				else
+					tmr.func(unpack(tmr.argsList or {}, 1, tmr.argsCount))
+				end
+				table.remove(BSYC.timers, i)
 			end
-			table.remove(BSYC.timers, i)
-        end
-		chk = true
+			chk = true
+		end
 	end
     if not BSYC.timers or #BSYC.timers < 1 or not chk then
         BSYC.timerFrame:Hide()

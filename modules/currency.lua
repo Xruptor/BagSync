@@ -96,7 +96,7 @@ function Currency:CreateList()
 						name = v.name,
 						icon = v.icon,
 						currencyID = k,
-						sortIndex = BSYC.options.sortCurrencyByExpansion and expansionList[header] or -100  --we use -100 as a filler for anything that isn't an expansion to be blow lowest possible expansion
+						sortIndex = BSYC.options.sortCurrencyByExpansion and expansionList[header] or -100  --we use -100 as a filler for anything that isn't an expansion to be below lowest possible expansion
 					})
 					tempList[k] = true
 				end

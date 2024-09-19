@@ -191,6 +191,8 @@ function Events:BAG_UPDATE(event, bagid)
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
 	self.SpamBagQueue[bagid] = true
 	self.SpamBagTotal = (self.SpamBagTotal or 0) + 1
+	--this will act as a failsafe in case BAG_UPDATE_DELAYED doesn't get fired for some weird reason on a faulty server
+	BSYC:StartTimer("BagUpdateFailsafe", 3, Events, "BAG_UPDATE_DELAYED")
 end
 
 function Events:BAG_UPDATE_DELAYED(event)
@@ -199,6 +201,9 @@ function Events:BAG_UPDATE_DELAYED(event)
 	if not self.SpamBagTotal then self.SpamBagTotal = 0 end
 	--NOTE: BSYC:GetHashTableLen(self.SpamBagQueue) may show more then is actually processed.  Example it has the banks in queue but we aren't at a bank.
 	Debug(BSYC_DL.INFO, "SpamBagQueue", self.SpamBagTotal)
+
+	--stop failsafe timer
+	BSYC:StopTimer("BagUpdateFailsafe")
 
 	local totalProcessed = 0
 

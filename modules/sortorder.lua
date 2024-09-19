@@ -269,6 +269,7 @@ function SortOrder:SortBox_OnEnterPressed(text, editbox)
 		SortOrder:UpdateList()
 		--reset tooltip cache since we have moved around the units to display
 		Tooltip:ResetCache()
+		Tooltip:ResetLastLink()
 	else
 		--reset to one already stored or 0
 		if btn.data.unitObj.data.SortIndex then

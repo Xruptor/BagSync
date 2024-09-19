@@ -744,6 +744,7 @@ function Scanner:ProcessCurrencyTransfer(doCurrentPlayer, sourceGUID, currencyID
 
 	Scanner.currencyTransferInProgress = false
 	Scanner.lastCurrencyID = 0
+	self:ResetTooltips()
 end
 
 function Scanner:SaveCurrency(showDebug)
