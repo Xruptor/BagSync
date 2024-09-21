@@ -409,6 +409,7 @@ L.BagSyncInfoWindow = [[
 如需详细的合并服务器列表信息，请访问：
 (|cFF99CC33 https://tinyurl.com/msncc7j6 |r)
 
+
 |cFFfd5c63默认情况下，BagSync 不会显示您战网( |cff3587ff[BNet]|r )所有帐号的数据。您需要启用此功能！
 |r( |cff3587ff[BNet]|r )
 
