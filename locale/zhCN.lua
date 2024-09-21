@@ -413,7 +413,7 @@ L.BagSyncInfoWindow = [[
 |cFFfd5c63默认情况下，BagSync 不会显示您所有战网( |cff3587ff[BNet]|r )帐号的数据。您需要启用此功能！|r
 ( |cff3587ff[BNet]|r )
 
-|cFF52D386如果您想在查看整个战网内所有的角色( |cff3587ff[BNet]|r )，则需要在BagSync的“显示”选项里面启用[所有战网]选项。|r
+|cFF52D386如果您想在查看整个战网内所有的角色( |cff3587ff[BNet]|r )，则需要在BagSync的\"显示\"选项里面启用[所有战网]选项。|r
 
 该选项标记为：
 ]]
