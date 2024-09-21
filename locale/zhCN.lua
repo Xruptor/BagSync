@@ -404,16 +404,14 @@ L.FAQ_Question_7_p1 = [[
 L.BagSyncInfoWindow = [[
 在默认情况下，BagSync 只显示来自合并服务器角色的数据。( |cffff7d0a[CR]|r )
 
-合并服务器( |cffff7d0a[CR]|r )是指互通在一起服务器内玩家的角色
+合并服务器( |cffff7d0a[CR]|r )是指数据互通服务器的角色
 
 如需详细的合并服务器列表信息，请访问：
 (|cFF99CC33 https://tinyurl.com/msncc7j6 |r)
 
+|cFFfd5c63默认情况下，BagSync 不会显示您战网( |cff3587ff[BNet]|r )所有帐号的数据。您需要启用此功能！
+|r( |cff3587ff[BNet]|r )
 
-|cFFfd5c63默认情况下，BagSync 不会显示您所有战网( |cff3587ff[BNet]|r )帐号的数据。您需要启用此功能！|r
-( |cff3587ff[BNet]|r )
-
-|cFF52D386如果您想在查看整个战网内所有的角色( |cff3587ff[BNet]|r )，则需要在BagSync的\"显示\"选项里面启用[所有战网]选项。|r
-
+|cFF52D386如果您想查看整个战网内所有的角色( |cff3587ff[BNet]|r )，则需要在BagSync的“显示”选项里面启用[所有战网]选项。|r
 该选项标记为：
 ]]
