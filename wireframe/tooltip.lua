@@ -783,7 +783,6 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	--check blacklist
 	local personalBlacklist = false
-	local personalWhitelist = false
 
 	if shortID and (permIgnore[tonumber(shortID)] or BSYC.db.blacklist[tonumber(shortID)]) then
 		if BSYC.db.blacklist[tonumber(shortID)] then
@@ -799,8 +798,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if BSYC.options.enableWhitelist then
 		if not BSYC.db.whitelist[tonumber(shortID)] then
 			skipTally = true
-			personalWhitelist = true
-			Debug(BSYC_DL.SL3, "TallyUnits", "|cFFe454fd[Whitelist]|r", link, shortID, personalWhitelist)
+			Debug(BSYC_DL.SL3, "TallyUnits", "|cFFe454fd[Whitelist]|r", link, shortID)
 		end
 	end
 
@@ -907,7 +905,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 		--CURRENT PLAYER
 		-----------------
-		if (not personalWhitelist and not advUnitList) or advPlayerChk then
+		if not advUnitList or advPlayerChk then
 			countList = {}
 			local playerObj = Data:GetPlayerObj(player)
 			Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[CurrentPlayer]|r", playerObj.name, playerObj.realm, link)
@@ -931,17 +929,18 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 				carryCount = C_Item.GetItemCount(origLink) or 0 --get the total amount the player is currently carrying (bags + equip)
 				bagCount = carryCount - equipCount -- subtract the equipment count from the carry amount to get bag count
+
 				if bagCount < 0 then bagCount = 0 end
 
 				if IsReagentBankUnlocked and IsReagentBankUnlocked() then
 					--C_Item.GetItemCount returns the bag count + reagent regardless of parameters.  So we have to subtract bag and reagents.  This does not include bank totals
-					regCount = C_Item.GetItemCount(origLink, false, false, true) or 0
+					regCount = C_Item.GetItemCount(origLink, false, false, true, false) or 0
 					regCount = regCount - carryCount
 					if regCount < 0 then regCount = 0 end
 				end
 
 				--bankCount = C_Item.GetItemCount returns the bag + bank count regardless of parameters.  So we have to subtract the carry totals
-				bankCount = C_Item.GetItemCount(origLink, true, false, false) or 0
+				bankCount = C_Item.GetItemCount(origLink, true, false, false, false) or 0
 				bankCount = (bankCount - carryCount)
 				if bankCount < 0 then bankCount = 0 end
 
@@ -973,7 +972,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--We do this separately so that the guild has it's own line in the unitList and not included inline with the player character
 		--We also want to do this in real time and not cache, otherwise they may put stuff in their guild bank which will not be reflected in a cache
 		-----------------
-		if not personalWhitelist and guildObj and (not advUnitList or advPlayerGuildChk) then
+		if guildObj and (not advUnitList or advPlayerGuildChk) then
 			Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[CurrentPlayer-Guild]|r", player.guild, player.guildrealm)
 			countList = {}
 			grandTotal = grandTotal + self:AddItems(guildObj, link, "guild", countList)
@@ -984,10 +983,23 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		end
 
 		--Warband Bank can updated frequently, so we need to collect in real time and not cached
-		if not personalWhitelist and warbandObj and allowList.warband and not advUnitList then
+		if warbandObj and allowList.warband and not advUnitList then
 			Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[Warband]|r")
 			countList = {}
-			grandTotal = grandTotal + self:AddItems(warbandObj, link, "warband", countList)
+
+			if isBattlePet then
+				grandTotal = grandTotal + self:AddItems(warbandObj, link, "warband", countList)
+
+			elseif not isBattlePet then
+				local carryCount = C_Item.GetItemCount(origLink) or 0 --get the total amount the player is currently carrying (bags + equip)
+				local warbandCount = C_Item.GetItemCount(origLink, false, false, false, true) or 0
+				warbandCount = warbandCount - carryCount
+
+				if not BSYC.tracking.warband then warbandCount = 0 end
+				countList.warband = warbandCount
+				grandTotal = grandTotal + warbandCount
+			end
+
 			if grandTotal > 0 then
 				--table variables gets passed as byRef
 				self:UnitTotals(warbandObj, countList, unitList, advUnitList)
