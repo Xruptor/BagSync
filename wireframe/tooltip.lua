@@ -504,7 +504,7 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 		local wTabStr = ""
 
 		--check for warband tabs first
-		if BSYC.options.showWarbandTabs then
+		if BSYC.options.showWarbandTabs and countList["wtab"] then
 			table.sort(countList["wtab"], function(a, b) return a < b end)
 
 			for k, v in pairs(countList["wtab"]) do
@@ -991,11 +991,16 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				grandTotal = grandTotal + self:AddItems(warbandObj, link, "warband", countList)
 
 			elseif not isBattlePet then
+				if BSYC.options.showWarbandTabs then
+					--we do this so we can grab the wtabs, even if we use a real time count from GetItemCount.
+					self:AddItems(warbandObj, link, "warband", countList)
+				end
 				local carryCount = C_Item.GetItemCount(origLink) or 0 --get the total amount the player is currently carrying (bags + equip)
 				local warbandCount = C_Item.GetItemCount(origLink, false, false, false, true) or 0
 				warbandCount = warbandCount - carryCount
 
 				if not BSYC.tracking.warband then warbandCount = 0 end
+				--overwride the countList if we are grabbing tabs
 				countList.warband = warbandCount
 				grandTotal = grandTotal + warbandCount
 			end
