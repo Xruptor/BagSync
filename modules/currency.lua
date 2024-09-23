@@ -70,6 +70,23 @@ function Currency:OnShow()
 	Currency.scrollFrame.scrollBar:SetValue(0)
 end
 
+function Currency:DoSortFilters(expName)
+	if not expName then return end
+
+	expName = expName:gsub('(%l)(%u)', '%1 %2')
+	expName = expName:gsub('[%p%c%s]', '') -- remove all punctuation characters, all control characters, and all whitespace characters 
+	expName = string.lower(expName)
+
+	--now do our localized filters
+	if L.CurrencySortFilters and type(L.CurrencySortFilters) == "table" then
+		for e=1, #L.CurrencySortFilters do
+			expName = expName:gsub("^"..L.CurrencySortFilters[e], "")
+		end
+	end
+
+	return expName
+end
+
 function Currency:CreateList()
 	Currency.currencies = {}
 	local usrData = {}
@@ -79,6 +96,8 @@ function Currency:CreateList()
 	--lets get an expansion list so we can sort the top part by expansion release
 	for i=0, GetNumExpansions() do
 		local eTmp = _G['EXPANSION_NAME'..i]
+		eTmp = self:DoSortFilters(eTmp)
+
 		if eTmp then
 			expansionList[eTmp] = i
 		end
@@ -91,12 +110,14 @@ function Currency:CreateList()
 
 				--only do the entry once per currencyID
 				if not tempList[k]  then
+					local sortHeader = self:DoSortFilters(header)
+
 					table.insert(usrData, {
 						header = header,
 						name = v.name,
 						icon = v.icon,
 						currencyID = k,
-						sortIndex = BSYC.options.sortCurrencyByExpansion and expansionList[header] or -100  --we use -100 as a filler for anything that isn't an expansion to be below lowest possible expansion
+						sortIndex = sortHeader and BSYC.options.sortCurrencyByExpansion and expansionList[sortHeader] or -100  --we use -100 as a filler for anything that isn't an expansion to be below lowest possible expansion
 					})
 					tempList[k] = true
 				end
