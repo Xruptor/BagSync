@@ -195,7 +195,6 @@ L.AlwaysShowAdvSearch = "Toujours afficher la fenêtre de recherche avancée de 
 L.DisplayTotal = "Afficher le montant [Total]."
 L.DisplayGuildGoldInGoldWindow = "Afficher les totaux d'or de [Guilde] dans l'infobulle de l'or."
 L.Display_GSC = "Display |cFFFFD700Gold|r, |cFFC0C0C0Silver|r and |cFFB87333Copper|r in the Gold Window."
-L.DisplayGuildBank = "Afficher les objets de la banque de guilde. |cFF99CC33(Active l'analyse de la banque de guilde)|r"
 L.DisplayMailbox = "Afficher les objets de la boîte aux lettres."
 L.DisplayAuctionHouse = "Afficher les objets de la salle des ventes."
 L.DisplayMinimap = "Afficher le bouton de minimap de BagSync."

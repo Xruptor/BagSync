@@ -125,7 +125,7 @@ function Gold:CreateList()
 
 	for unitObj in Data:IterateUnits() do
 		if unitObj.data.money and unitObj.data.money > 0 then
-			if not unitObj.isGuild or (unitObj.isGuild and BSYC.options.showGuildInGoldTooltip) then
+			if not unitObj.isGuild or (unitObj.isGuild and BSYC.tracking.guild and BSYC.options.showGuildInGoldTooltip) then
 				table.insert(usrData, {
 					unitObj = unitObj,
 					colorized = Tooltip:ColorizeUnit(unitObj, true, false, true, true),

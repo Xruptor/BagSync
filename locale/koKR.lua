@@ -184,7 +184,6 @@ L.FocusSearchEditBox = "검색 창을 열면 검색 입력창에 위치합니다
 L.AlwaysShowAdvSearch = "아이템 검색시 항상 심화 검색창을 같이 표시합니다."
 L.DisplayTotal = "[총] 수량을 표시합니다."
 L.DisplayGuildGoldInGoldWindow = "소지금 툴팁에 [길드]의 총 골드를 표시합니다."
-L.DisplayGuildBank = "길드은행의 아이템을 표시합니다. |cFF99CC33(길드 은행 스캐닝을 사용한 경우)|r"
 L.DisplayMailbox = "우편함의 아이템을 표시합니다."
 L.DisplayAuctionHouse = "경매장 아이템을 표시합니다."
 L.DisplayMinimap = "BagSync 미니맵 버튼을 표시합니다."
