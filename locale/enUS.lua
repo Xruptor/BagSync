@@ -324,7 +324,7 @@ L.SavedSearch_Warn = "You must type something in the search box."
 --3) Use the filter below to remove any other additional words in the name to match it to the currency/token window.
 --
 --Example: "The War Within" and "War Within" gets matched as "warwithin".  "Battle for Azeroth" gets matched as "battleforazeroth"
---You can add as many words as you want below, just make sure to follow each entry with a comma
+--You can add as many words as you want below, just make sure it's lowercase, no spaces or symbols and to follow each entry with a comma
 ---------------------------------------
 L.CurrencySortFilters = {
     "the",

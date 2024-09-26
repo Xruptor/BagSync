@@ -284,34 +284,36 @@ function BSYC:ParseItemLink(link, count)
 		if result then
 			--https://wowpedia.fandom.com/wiki/ItemLink
 
-			--split everything into a table so we can count up to the bonusID portion
-			local countSplit = {strsplit(":", result)}
+			local linkSplit = {strsplit(":", result)}
 			result = shortID --set this to default shortID, if we have something we will replace it below
 
-			--make sure we have a bonusID count
-			if countSplit and #countSplit > 13 then
-				local bonusCount = countSplit[13] or 0 -- do we have a bonusID number count?
+			if linkSplit then
+				--Remove  (enchantID : gemID1 : gemID2 : gemID3 : gemID4: suffixID : uniqueID : linkLevel : specializationID : modifiersMask : itemContext)
+				for i = 2, 12 do
+					linkSplit[i] = ""
+				end
+
+				--check for bonusID, we do this by checking 13th marker value
+				local bonusCount = linkSplit[13] or 0 -- do we have a bonusID number count?
 				bonusCount = bonusCount == "" and 0 or bonusCount --make sure we have a count if not default to zero
 				bonusCount = tonumber(bonusCount)
 
-				--check if we have even anything to work with for the amount of bonusID's
-				--btw any numbers after the bonus ID are either upgradeValue which we don't care about or unknown use right now
-				--http://wow.gamepedia.com/ItemString
-				if bonusCount > 0 and countSplit[1] then
-					--return the string with just the bonusID's in it
-					local newItemStr = ""
-
-					--11th place because 13 is bonus ID, one less from 13 (12) would be technically correct, but we have to compensate for ItemID we added in front so substract another one (11).
-					newItemStr = countSplit[1]..":::::::::::"
-
-					--lets add the bonusID's, ignore the end past bonusID's
-					for i=13, (13 + bonusCount) do
-						newItemStr = newItemStr..":"..countSplit[i]
+				if bonusCount and bonusCount > 0 then
+					--empty out everything after the bonusIDs, so starting at 14 + the bonusCount
+					--example 138823::::::::::::1:664::::::::, 664 is 14th slot, but we want to start emptying after that so it would be 15th or 14th + bonusCount
+					--example 36374::::::::::::2:6654:1708:::::::::: 6654 is 14th slot, but we want 14th slot and 15th slot, so 14th + bonusCount (which is 2) would be 16th slot.
+					for i = 14 + bonusCount, #linkSplit do
+						linkSplit[i] = ""
 					end
-
-					--add the unknowns at the end, upgradeValue doesn't always have to be supplied.
-					result = newItemStr.."::::::" --replace the default shortid with our new corrected one (total 19 variables in https://wowpedia.fandom.com/wiki/ItemLink)
+				else
+					--we don't have a bonusID so empty out the rest of the itemlink including the bonusID slot
+					for i = 13, #linkSplit do
+						linkSplit[i] = ""
+					end
 				end
+
+				--put everything together
+				result = table.concat(linkSplit, ":")
 			end
 		end
 
@@ -331,6 +333,8 @@ function BSYC:CreateFakeID(link, count, speciesID, level, breedQuality, maxHealt
 	if not BattlePetTooltip then return end
 	Debug(BSYC_DL.DEBUG, "CreateFakeID", link, count, speciesID, level, breedQuality, maxHealth, power, speed, name)
 	--https://github.com/tomrus88/BlizzardInterfaceCode/blob/8633e552f3335b8c66b1fbcea6760a5cd8bcc06b/Interface/FrameXML/BattlePetTooltip.lua
+	--this does not work with 82800 pet cages, it will return nil
+	--local speciesID, level, breedQuality, maxHealth, power, speed, name = BattlePetToolTip_UnpackBattlePetLink(battlePetLink)
 
 	local petData
 

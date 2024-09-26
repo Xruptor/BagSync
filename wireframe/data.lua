@@ -663,9 +663,9 @@ end
 
 function Data:GetPlayerGuildObj(player)
 	if not player then player = Unit:GetPlayerInfo(true) end
-	Debug(BSYC_DL.TRACE, "GetPlayerGuild", player.guild, BSYC.tracking.guild)
 	if not player.guild then return end
 	if not BSYC.tracking.guild then return end
+	Debug(BSYC_DL.TRACE, "GetPlayerGuild", player.guild, BSYC.tracking.guild)
 
 	local isConnectedRealm = Unit:isConnectedRealm(player.guildrealm)
 	local isXRGuild = false
@@ -689,8 +689,8 @@ end
 
 function Data:GetPlayerCurrencyObj(player, realm)
 	if not player or not realm then return end
-	Debug(BSYC_DL.TRACE, "GetPlayerCurrencyObj", player, realm)
 	if not BSYC.tracking.currency then return end
+	Debug(BSYC_DL.TRACE, "GetPlayerCurrencyObj", player, realm)
 
 	if not BagSyncDB[realm] then return end
 	if not BagSyncDB[realm][player] then return end
@@ -699,8 +699,9 @@ end
 
 function Data:GetWarbandBankObj()
 	if not BSYC.tracking.warband then return end
-
 	if not BagSyncDB["warband§"] then return end
+	Debug(BSYC_DL.TRACE, "GetWarbandBankObj")
+
 	return {
 		realm = L.Tooltip_warband,
 		name = L.Tooltip_warband,
