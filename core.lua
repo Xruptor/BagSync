@@ -285,35 +285,31 @@ function BSYC:ParseItemLink(link, count)
 			--https://wowpedia.fandom.com/wiki/ItemLink
 
 			local linkSplit = {strsplit(":", result)}
-			result = shortID --set this to default shortID, if we have something we will replace it below
+			result = shortID --set this to default shortID, if we have something in the bonusID we will replace it below
 
-			if linkSplit then
-				--Remove  (enchantID : gemID1 : gemID2 : gemID3 : gemID4: suffixID : uniqueID : linkLevel : specializationID : modifiersMask : itemContext)
-				for i = 2, 12 do
-					linkSplit[i] = ""
-				end
+			if linkSplit and #linkSplit > 13 then
 
 				--check for bonusID, we do this by checking 13th marker value
 				local bonusCount = linkSplit[13] or 0 -- do we have a bonusID number count?
 				bonusCount = bonusCount == "" and 0 or bonusCount --make sure we have a count if not default to zero
 				bonusCount = tonumber(bonusCount)
 
+				--if we don't have a bonusCount than just stick to use the shortID from the result above
 				if bonusCount and bonusCount > 0 then
-					--empty out everything after the bonusIDs, so starting at 14 + the bonusCount
-					--example 138823::::::::::::1:664::::::::, 664 is 14th slot, but we want to start emptying after that so it would be 15th or 14th + bonusCount
-					--example 36374::::::::::::2:6654:1708:::::::::: 6654 is 14th slot, but we want 14th slot and 15th slot, so 14th + bonusCount (which is 2) would be 16th slot.
-					for i = 14 + bonusCount, #linkSplit do
-						linkSplit[i] = ""
-					end
-				else
-					--we don't have a bonusID so empty out the rest of the itemlink including the bonusID slot
-					for i = 13, #linkSplit do
-						linkSplit[i] = ""
-					end
-				end
+					--empty out everything after the bonusIDs, so starting at 13 + the bonusCount
+					--example 138823::::::::::::1:664::::::::, 664 is 14th slot, but we want to start emptying after that so it would be > 13th slot + bonusCount, so > 14 or 15
+					--example 36374::::::::::::2:6654:1708:::::::::: 6654 is 14th slot, but we want 14th slot and 15th slot, so 13th + bonusCount (which is 2) would be 15th slot.
 
-				--put everything together
-				result = table.concat(linkSplit, ":")
+					--Remove  (enchantID : gemID1 : gemID2 : gemID3 : gemID4: suffixID : uniqueID : linkLevel : specializationID : modifiersMask : itemContext)
+					for i = 2, #linkSplit do
+						if i < 13 or i > (13 + bonusCount) then
+							linkSplit[i] = ""
+						end
+					end
+
+					--put everything together
+					result = table.concat(linkSplit, ":")
+				end
 			end
 		end
 
