@@ -713,7 +713,7 @@ function Scanner:ProcessCurrencyTransfer(doCurrentPlayer, sourceGUID, currencyID
 			Debug(BSYC_DL.INFO, "CurrencyTransferSourceUpt-1", name, tmpRealm, sourceGUID, currencyID, transferAmt)
 			--lets check to see that the source player even exists
 
-			local currencyObj = Data:GetPlayerCurrencyObj(name, tmpRealm)
+			local currencyObj = Data:GetPlayerCurrencyObj(name, tmpRealm, sourceGUID)
 			if currencyObj and currencyObj[currencyID] and currencyObj[currencyID].count then
 				currencyObj[currencyID].count = currencyObj[currencyID].count - transferAmt
 				Debug(BSYC_DL.FINE, "CurrencyTransferSourceUpt-2", name, tmpRealm, sourceGUID, currencyID, transferAmt, currencyObj[currencyID].count)
@@ -721,6 +721,7 @@ function Scanner:ProcessCurrencyTransfer(doCurrentPlayer, sourceGUID, currencyID
 				BSYC:Print(L.WarningCurrencyUpt.." "..name.." | "..tmpRealm)
 			end
 
+			self:ResetTooltips()
 			--do not process below as we wait for the CURRENCY_TRANSFER_LOG_UPDATE to process the player
 			return
 		end
@@ -728,17 +729,20 @@ function Scanner:ProcessCurrencyTransfer(doCurrentPlayer, sourceGUID, currencyID
 	elseif doCurrentPlayer and Scanner.lastCurrencyID > 0 and Scanner.currencyTransferInProgress then
 		--update the current player
 		local xGetCurrencyInfo = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo) or GetCurrencyInfo
-		local currencyData = xGetCurrencyInfo(Scanner.lastCurrencyID )
+		local currencyData = xGetCurrencyInfo(Scanner.lastCurrencyID)
+		local dofullScan = true
 
-		if currencyData then
+		if currencyData and currencyData.quantity then
 			Debug(BSYC_DL.INFO, "CurrencyTransferPlayerUpt", Scanner.lastCurrencyID, currencyData.quantity)
 			--lets try to individually update the currency
 			if BSYC.db.player.currency[Scanner.lastCurrencyID] then
 				BSYC.db.player.currency[Scanner.lastCurrencyID].count = currencyData.quantity
-			else
-				--something went wrong so lets just can the entire thing
-				Scanner:SaveCurrency(false)
+				dofullScan = false
 			end
+		end
+		if dofullScan then
+			--something went wrong so lets just scan the entire thing
+			Scanner:SaveCurrency(false)
 		end
 	end
 
