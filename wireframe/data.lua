@@ -687,14 +687,26 @@ function Data:GetPlayerGuildObj(player)
 	}
 end
 
-function Data:GetPlayerCurrencyObj(player, realm)
+function Data:GetPlayerCurrencyObj(player, realm, GUID)
 	if not player or not realm then return end
 	if not BSYC.tracking.currency then return end
 	Debug(BSYC_DL.TRACE, "GetPlayerCurrencyObj", player, realm)
 
-	if not BagSyncDB[realm] then return end
-	if not BagSyncDB[realm][player] then return end
-	return BagSyncDB[realm][player].currency
+	if BagSyncDB[realm] and BagSyncDB[realm][player] then
+		return BagSyncDB[realm][player].currency
+	end
+	if GUID then
+		--lets check for GUID
+		for unitObj in self:IterateUnits(true) do
+			--don't do guilds
+			if not unitObj.isGuild then
+				--check for GUID
+				if unitObj.data.currency and unitObj.data.guid and unitObj.data.guid == GUID then
+					return unitObj.data.currency
+				end
+			end
+		end
+	end
 end
 
 function Data:GetWarbandBankObj()
