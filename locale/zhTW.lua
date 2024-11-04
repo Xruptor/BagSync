@@ -2,7 +2,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhTW")
 if not L then return end
 
 --  zhTW client (三皈依-暗影之月@TW補齊)
---  Last update: 2023/03/21
+--  Last update: 2024/11/04
 
 L.Yes = "是"
 L.No = "否"
@@ -19,6 +19,7 @@ L.Tooltip_mailbox = "信箱"
 L.Tooltip_void = "虛空倉庫"
 L.Tooltip_reagents = "材料銀行"
 L.Tooltip_auction = "拍賣"
+L.Tooltip_warband = "戰隊"
 L.TooltipSmall_bag = "包"
 L.TooltipSmall_bank = "銀"
 L.TooltipSmall_reagents = "材"
@@ -27,8 +28,10 @@ L.TooltipSmall_guild = "公"
 L.TooltipSmall_mailbox = "郵"
 L.TooltipSmall_void = "虛"
 L.TooltipSmall_auction = "拍"
+L.TooltipSmall_warband = "戰"
 L.TooltipTotal = "總計:"
-L.TooltipGuildTabs = "T:"
+L.TooltipGuildTabs = "公:"
+L.TooltipBagSlot = "位:"
 L.TooltipItemID = "[物品ID]:"
 L.TooltipDebug = "[偵錯]:"
 L.TooltipCurrencyID = "[貨幣ID]:"
@@ -50,6 +53,7 @@ L.Debug_SL1 = "SL1" --sublevel 1
 L.Debug_SL2 = "SL2" --sublevel 2
 L.Debug_SL3 = "SL3" --sublevel 3
 L.DebugEnable = "啟用偵錯"
+L.DebugCache = "停用快取"
 L.DebugDumpOptions = "傾印選項 |cff3587ff[DEBUG]|r"
 L.DebugIterateUnits = "重複單位 |cff3587ff[DEBUG]|r"
 L.DebugDBTotals = "數據庫總計 |cff3587ff[DEBUG]|r"
@@ -68,7 +72,7 @@ L.AdvancedLocationInformation = "* 選擇所有因為無預設"
 L.Units = "名字:"
 L.Locations = "位置:"
 L.Profiles = "訊息"
-L.SortOrder = "自定義排序"
+L.SortOrder = "排序"
 L.Professions = "專業"
 L.Currency = "貨幣"
 L.Blacklist = "黑名單"
@@ -179,6 +183,7 @@ L.FocusSearchEditBox = "開啟搜尋視窗時聚焦到搜尋框架"
 L.AlwaysShowAdvSearch = "始終顯示BagSync進階搜尋視窗。"
 L.DisplayTotal = "顯示 [總計] 金額"
 L.DisplayGuildGoldInGoldTooltip = "顯示 [公會] 金幣總數"
+L.Display_GSC = "顯示[詳細]金額（|cFFFFD700金|r， |cFFC0C0C0銀|r 和 |cFFB87333銅|r）。"
 L.DisplayMailbox = "包括信箱內物品"
 L.DisplayAuctionHouse = "包括拍賣行物品"
 L.DisplayMinimap = "顯示小地圖按鈕"
@@ -186,7 +191,13 @@ L.DisplayFaction = "同時顯示聯盟和部落的物品 (|cff3587ffAlliance|r/|
 L.DisplayClassColor = "職業顏色"
 L.DisplayItemTotalsByClassColor = "顯示物品總計根據角色的職業顏色。"
 L.DisplayTooltipOnlySearch = "僅在BagSync搜索視窗內顯示修改過的提示資訊"
+L.DisplayTooltipCurrencyData = "在暴雪貨幣窗口中顯示BagSync數據。"
 L.DisplayLineSeparator = "顯示空行分割線"
+L.DisplayCurrentCharacter = "當前角色" 
+L.DisplayCurrentCharacterOnly = "|cFFFFD700僅限！|r鼠標提示上顯示\"當前\"角色的BagSync數據。|cFFDF2B2B（不推薦）|r"
+L.DisplayBlacklistCurrentCharOnly = "|cFFFFD700僅限！|r顯示\"當前\"角色的黑名單物品數量。|cFFDF2B2B（不推薦）|r"
+L.DisplayCurrentRealmName = "顯示玩家的\"當前\"|cFF4CBB17[伺服器]|r。"
+L.DisplayCurrentRealmShortName = "為\"當前\"|cFF4CBB17[伺服器]|r使用一個簡短的名稱。"
 L.DisplayCR = "顯示 |cffff7d0a[連結伺服器]|r 角色。 |cffff7d0a[CR]|r"																			  
 L.DisplayBNET = "顯示戰網賬號訊息 |cff3587ff[BNet]|r |cFFDF2B2B(不推薦)|r"
 L.DisplayItemID = "顯示 [物品ID] "
@@ -202,6 +213,7 @@ L.DisplaySortOrderStatus = "排序目前為: [%s]"
 L.DisplayWhitelistHelp = "白名單幫助"
 L.DisplayWhitelistStatus = "白名單目前為: [%s]"
 L.DisplayWhitelistHelpInfo = "您只能在白名單數據庫中輸入物品ID編號。 \n\n要輸入戰鬥寵物，請使用FakeID而不是物品ID，您可以通過在bagsync 設置中啟用物品ID工具提示功能來獲取FakeID。\n\n|cFFDF2B2B這不適用於兌換通貨視窗。|r"
+L.DisplayWhitelistHelpInfo2 = "\n\n\n\n|cFFFF7D0A警告：此白名單功能將阻止|cFFFFFFFF--所有--|r 物品被BagSync統計，但在此列表中找到的物品除外。|r\n|cFF09DBE0這是一個反向黑名單！|r"
 L.DisplayTooltipAccountWide = "帳號訊息"
 L.DisplayAccountWideTagOpts = "|cFF99CC33標籤選項 ( |cffff7d0a[CR]|r & |cff3587ff[BNet]|r )|r"
 L.DisplayGreenCheck = "顯示 %s 在當前角色名字旁邊"
@@ -211,6 +223,8 @@ L.DisplayRealmAstrick = "顯示 [*] 而不是顯示 |cffff7d0a[CR]|r 和 |cff358
 L.DisplayShortRealmName = "顯示短位名字 |cffff7d0a[CR]|r 和 |cff3587ff[BNet]|r"
 L.DisplayFactionIcons = "顯示陣營圖案"
 L.DisplayGuildBankTabs = "在工具提示中顯示公會銀行標籤 [1,2,3, 等等...]。"
+L.DisplayWarbandBankTabs = "在鼠標提示中顯示[戰團銀行]標簽[1,2,3, 等...]。"
+L.DisplayEquipBagSlots = "在鼠標提示中顯示[裝備]背包欄位<1,2,3, 等...>。"
 L.DisplayRaceIcons = "在工具提示中顯示角色種族圖示。"
 L.DisplaySingleCharLocs = "在儲存位置顯示一個單獨角色。"
 L.DisplayIconLocs = "在儲存位置顯示一個圖示。"
@@ -218,6 +232,7 @@ L.DisplayGuildSeparately = "從角色總計中分離顯示[公會]名稱與物�
 L.DisplayGuildCurrentCharacter = "僅顯示當前游戲角色的 [公會] 物品"
 L.DisplayGuildBankScanAlert = "顯示公會銀行掃描視窗。"
 L.DisplayAccurateBattlePets = "在公會銀行和郵箱中啟用準確的戰鬥寵物。 |cFFDF2B2B(可能導致延遲)|r |cff3587ff[請參閱BagSync的常見問題]|r"
+L.DisplaySortCurrencyByExpansionFirst = "BagSync 的貨幣窗口是依據游戲資料片順序而不是字母順序來進行排序。"
 L.DisplaySorting = "工具提示排序"
 L.DisplaySortInfo = "預設：工具提示先根據伺服器的字母先後排序，然後才是角色名稱。"
 L.SortTooltipByTotals = "排序根據總數而非字母順序。"
@@ -227,6 +242,7 @@ L.CustomSortInfoWarn = "|cFF99CC33注意：只能使用數字！ (-1,0,3,4)|r"
 L.DisplayShowUniqueItemsTotals = "啟用該選項將允許物品總數量增加獨特的物品,無論物品的統計訊息。|cFF99CC33（推薦）|r"
 L.DisplayShowUniqueItemsTotals_2 = [[
 某些物品例如 |cffff7d0a[Legendaries]|r 可以共享相同的名字但具有不同的統計數據。由於這些物品是彼此獨立處理,因此有時不計入總物品數。啟用此選項將完全忽略獨特的物品統計數據並一視同仁,,只要它們共享相同的物品名稱。
+
 禁用此選項將獨立顯示物品計數,因此將考慮物品統計訊息。物品總數將只顯示每個游戲角色共享相同的唯一物品和完全相同的統計數據|cFFDF2B2B(不推薦)|r
 ]]
 L.DisplayShowUniqueItemsTotalsTitle = "在鼠標提示上顯示唯一物品的總數"
@@ -235,12 +251,16 @@ L.ColorPrimary = "主要BagSync提示顏色"
 L.ColorSecondary = "輔助BagSync提示顏色"
 L.ColorTotal = "BagSync [總計]提示顏色"
 L.ColorGuild = "BagSync [公會]提示顏色"
-L.ColorCR = "BagSync [連結伺服器] 工具提示顏色。"
+L.ColorWarband = "BagSync [戰隊] 提示顏色"
+L.ColorCurrentRealm = "BagSync \"當前\"[伺服器] 提示顏色。"
+L.ColorCR = "BagSync \"合並\"[伺服器] 提示顏色。"
 L.ColorBNET = "BagSync [戰網]提示顏色"
 L.ColorItemID = "BagSync [物品ID]提示顏色"
 L.ColorExpansion = "BagSync [資料片] 提示顏色"
 L.ColorItemTypes = "BagSync [物品類型] 提示顏色"
 L.ColorGuildTabs = "公會標籤 [1,2,3, etc...] 提示顏色"
+L.ColorWarbandTabs = "戰隊標簽 [1,2,3, 等...] 提示顏色。"
+L.ColorBagSlots = "背包位 <1,2,3, 等...> 提示顏色。"
 L.ConfigHeader = "各種BagSync功能的設置"
 L.ConfigDisplay = "顯示"
 L.ConfigTooltipHeader = "顯示BagSync提示訊息的設置"
@@ -277,6 +297,7 @@ L.TrackingModule_Mailbox = "郵箱"
 L.TrackingModule_Void = "虛空倉庫"
 L.TrackingModule_Auction = "拍賣場"
 L.TrackingModule_Guild = "公會銀行"
+L.TrackingModule_WarbandBank = "戰隊銀行（戰隊）"
 L.TrackingModule_Professions = "專業 / 交易技能"
 L.TrackingModule_Currency = "兌換通貨"
 L.WarningItemSearch = "警告：共有 [|cFFFFFFFF%s|r] 個物品未被搜索！\n\nBagSync 仍在等待伺服器/數據庫響應\n\n按“搜尋”或“更新”按鈕"
@@ -295,38 +316,39 @@ L.SearchHelp = [[
 |cFFDF2B2B(注意: 所有指令只限英文！)|r
 
 |cFF99CC33角色物品的位置|r:
-@bag
-@bank
-@reagents
-@equip
-@mailbox
-@void
-@auction
-@guild
+@bag <背包>
+@bank <銀行>
+@reagents <材料銀行>
+@equip <已裝備>
+@mailbox <信箱>
+@void <虛空倉庫>
+@auction <拍賣行>
+@guild <公會>
+@warband <戰隊>
 
 |cffff7d0a進階搜尋|r (|cFF99CC33指令|r | |cFFFFD580範例|r):
 
-|cff00ffff<item name>|r = |cFF99CC33n|r ; |cFF99CC33name|r | |cFFFFD580n:<text>|r ; |cFFFFD580name:<text>|r (n:ore ; name:ore)
+|cff00ffff<物品名稱>|r = |cFF99CC33n|r ; |cFF99CC33name|r | 示例：|cFFFFD580[輸入簡稱]:礦石|r ;  |cFFFFD580[輸入全稱]:寧鐵礦石|r 
 
-|cff00ffff<item bind>|r = |cFF99CC33bind|r | |cFFFFD580bind:<type>|r ; types (boe, bop, bou, boq) i.e boe = bind on equip
+|cff00ffff<綁定類型>|r = |cFF99CC33bind|r | 示例|cFFFFD580bind:boe|r ; types（boe, bop, bou, boq）i.e   boe = 裝備綁定
 
-|cff00ffff<quality>|r = |cFF99CC33q|r ; |cFF99CC33quality|r | |cFFFFD580q<op><text>|r ; |cFFFFD580q<op><digit>|r (q:rare ; q:>2 ; q:>=3)
+|cff00ffff<品質>|r = |cFF99CC33q|r ; |cFF99CC33quality|r | 示例：|cFFFFD580q:史詩|r 
 
-|cff00ffff<ilvl>|r = |cFF99CC33l|r ; |cFF99CC33level|r ; |cFF99CC33lvl|r ; |cFF99CC33ilvl|r | |cFFFFD580ilvl<op><number>|r ; |cFFFFD580lvl<op><number>|r (lvl:>5 ; lvl:>=20)
+|cff00ffff<物品等級>|r = |cFF99CC33l|r ; |cFF99CC33level|r ; |cFF99CC33lvl|r ; |cFF99CC33ilvl|r |示例： |cFFFFD580ilvl:382|r  ;  |cFFFFD580lvl:>=370|r 
 
-|cff00ffff<required ilvl>|r = |cFF99CC33r|r ; |cFF99CC33req|r ; |cFF99CC33rl|r ; |cFF99CC33reql|r ; |cFF99CC33reqlvl|r | |cFFFFD580req<op><number>|r ; |cFFFFD580req<op><number>|r (req:>5 ; req:>=20)
+|cff00ffff<需要的等級>|r = |cFF99CC33r|r ; |cFF99CC33req|r ; |cFF99CC33rl|r ; |cFF99CC33reql|r ; |cFF99CC33reqlvl|r | 示例：|cFFFFD580r:>5|r  ;  |cFFFFD580req:>=20|r 
 
-|cff00ffff<type / slot>|r = |cFF99CC33t|r ; |cFF99CC33type|r ; |cFF99CC33slot|r | |cFFFFD580t:<text>|r (slot:head)
+|cff00ffff<種類/部位>|r = |cFF99CC33t|r ; |cFF99CC33type|r ; 示例：|cFF99CC33飾品|r  ;  |cFFFFD580t:腳|r 
 
-|cff00ffff<tooltip>|r = |cFF99CC33tt|r ; |cFF99CC33tip|r ; |cFF99CC33tooltip|r | |cFFFFD580tt:<text>|r (tt:summon)
+|cff00ffff<提示>|r = |cFF99CC33tt|r ; |cFF99CC33tip|r ; |cFF99CC33tooltip|r | |cFFFFD580tt:<text>|r（tt:summon）
 
-|cff00ffff<item set>|r = |cFF99CC33s|r ; |cFF99CC33set|r | |cFFFFD580s:<setname>|r (setname can be * for all sets)
+|cff00ffff<item set>|r = |cFF99CC33s|r ; |cFF99CC33set|r | |cFFFFD580s:<setname>|r（setname can be * for all sets）
 
-|cff00ffff<expansion>|r = |cFF99CC33x|r ; |cFF99CC33xpac|r ; |cFF99CC33expansion|r | |cFFFFD580x:<expacID>|r ; |cFFFFD580x:<expansion name>|r ; |cFFFFD580xpac:<expansion name>|r (xpac:shadow)
+|cff00ffff<版本>|r = |cFF99CC33x|r ; |cFF99CC33xpac|r ; |cFF99CC33expansion|r | 示例： |cFFFFD580x:巨龍時代|r  ;   |cFFFFD580xpac:暗影國度|r 
 
-|cff00ffff<keyword>|r = |cFF99CC33k|r ; |cFF99CC33key|r ; |cFF99CC33keyword|r | |cFFFFD580k:<keyword>|r (key:quest) (keywords: soulbound, bound, boe, bop, bou, boa, quest, unique, toy, reagent, crafting, naval, follower, follow, power, apperance)
+|cff00ffff<關鍵字>|r = |cFF99CC33k|r ; |cFF99CC33key|r ; |cFF99CC33keyword|r | 示例：|cFFFFD580k:任務|r（關鍵字: soulbound, bound, boe, bop, bou, boa, quest, unique, toy, reagent, crafting, naval, follower, follow, power, apperance）
 
-|cff00ffff<class>|r = |cFF99CC33c|r ; |cFF99CC33class|r | |cFFFFD580c:<classname>|r ; |cFFFFD580class:<classname>|r (class:shaman)
+|cff00ffff<職業>|r = |cFF99CC33c|r ; |cFF99CC33class|r | 示例：|cFFFFD580class:戰士|r  ;  |cFFFFD580c:惡魔獵手|r
 
 |cffff7d0a運算符號 <op>|r:
 |cFF99CC33:|r | |cFF99CC33=|r | |cFF99CC33==|r | |cFF99CC33!=|r | |cFF99CC33~=|r | |cFF99CC33<|r | |cFF99CC33>|r | |cFF99CC33<=|r | |cFF99CC33>=|r
@@ -377,4 +399,20 @@ L.FAQ_Question_6_p1 = [[
 L.FAQ_Question_7 = "公會銀行和郵箱中準確的戰鬥寵物掃描是什麼？"
 L.FAQ_Question_7_p1 = [[
 暴雪不會將戰鬥寵物存儲在公會銀行或郵箱中，並帶有適當的物品ID或種類ID。事實上，戰鬥寵物以|cFF99CC33[寵物籠]|r的形式存儲在公會銀行和郵箱中，物品ID為|cFF99CC3382800|r。這使得有關插件作者難以進行特定戰鬥寵物的抓取任何數據。您可以在公會銀行交易日誌中看到，您會注意到戰鬥寵物被存儲為|cFF99CC33[寵物籠]|r。如果您從公會銀行鏈接一個，它也將顯示為|cFF99CC33[寵物籠]|r。為了解決這個問題，可以使用兩種方法。第一種方法是將戰鬥寵物分配給工具提示，然後從那裡找到。這要求伺服器響應WOW客戶端，並可能導致大量延遲，尤其是在公會銀行中有很多戰鬥寵物的情況下。第二種方法使用戰鬥寵物的圖示試圖找到。有時由於某些戰鬥寵物共享相同的圖示，這有時是不準確的。示例：毒毒與翡翠軟泥怪具有相同的圖示。啟用此選項將迫使工具提示掃描方法盡可能準確，但可能會導致延遲。|cFF99CC33直暴雪為我們提供更多數據來使用。|r
+]]
+L.BagSyncInfoWindow = [[
+在預設情況下，BagSync 只顯示來自合並伺服器角色的數據。( |cffff7d0a[CR]|r )
+
+合併伺服器( |cffff7d0a[CR]|r )是指數據互通伺服器的角色
+
+如需詳細的合並伺服器列表訊息，請訪問：
+(|cFF99CC33 https://tinyurl.com/msncc7j6 |r)
+
+
+|cFFfd5c63預設情況下，BagSync 不會顯示您戰網( |cff3587ff[BNet]|r )所有帳號的數據。您需要啟用此功能！|r
+( |cff3587ff[BNet]|r )
+
+|cFF52D386如果您想查看整個戰網內所有的角色( |cff3587ff[BNet]|r )，則需要在BagSync的“顯示”選項裡面啟用[所有戰網]選項。|r
+
+該選項標記為：
 ]]
