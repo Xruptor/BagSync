@@ -33,11 +33,17 @@ RACE_ICON_TCOORDS = {
 	["TROLL_FEMALE"]	= {0.5, 0.75, 0.75, 1.0},
 	["ORC_FEMALE"]		= {0.75, 1.0, 0.75, 1.0},
 }
+
+--https://warcraft.wiki.gg/wiki/AtlasID
+--raceicon-highmountain-male
+--https://wago.tools/db2/UiTextureAtlasMember
+--https://warcraft.wiki.gg/wiki/API_UnitRace
 local FIXED_RACE_ATLAS = {
 	["highmountaintauren"] = "highmountain",
 	["lightforgeddraenei"] = "lightforged",
 	["scourge"] = "undead",
 	["zandalaritroll"] = "zandalari",
+	["earthendwarf"] = "earthen",
 }
 
 local function Debug(level, ...)
@@ -129,6 +135,9 @@ end
 
 function Tooltip:GetRaceIcon(race, gender, size, xOffset, yOffset, useHiRez)
 	local raceString = ""
+	local origRace = race
+	local formatingString = useHiRez and "raceicon128-%s-%s" or "raceicon-%s-%s"
+
 	if not race or not gender then return raceString end
 
 	if BSYC.IsClassic then
@@ -142,11 +151,12 @@ function Tooltip:GetRaceIcon(race, gender, size, xOffset, yOffset, useHiRez)
 		race = race:lower()
 		race = FIXED_RACE_ATLAS[race] or race
 
-		local formatingString = useHiRez and "raceicon128-%s-%s" or "raceicon-%s-%s"
 		formatingString = formatingString:format(race, gender == 3 and "female" or "male")
 
 		raceString =  CreateAtlasMarkup(formatingString, size, size, xOffset, yOffset)
 	end
+
+	Debug(BSYC_DL.SL3, "GetRaceIcon", origRace, race, gender, size, xOffset, yOffset, useHiRez, raceString, formatingString)
 
 	return raceString
 end
