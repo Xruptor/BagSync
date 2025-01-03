@@ -134,11 +134,17 @@ local function set(info, arg1, arg2, arg3, arg4)
 			BSYC.options.enableRealmNames = false
 			BSYC.options.enableRealmAstrickName = false
 
-		elseif c == "sortByCustomOrder" and arg1 then
+		elseif c == "sortShowCurrentPlayerOnTop" and arg1 then
 			BSYC.options.sortTooltipByTotals = false
+			BSYC.options.sortByCustomOrder = false
 
 		elseif c == "sortTooltipByTotals" and arg1 then
 			BSYC.options.sortByCustomOrder = false
+			BSYC.options.sortShowCurrentPlayerOnTop = false
+
+		elseif c == "sortByCustomOrder" and arg1 then
+			BSYC.options.sortTooltipByTotals = false
+			BSYC.options.sortShowCurrentPlayerOnTop = false
 		end
 
 	end
@@ -782,8 +788,19 @@ options.args.display = {
 					name = "|cFFFFD700"..L.DisplaySortInfo.."|r",
 					width = "full",
 				},
-				sorttooltipbytotals = {
+				sortcurrentplayerontop = {
 					order = 1,
+					type = "toggle",
+					name = L.SortCurrentPlayerOnTop,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.sortShowCurrentPlayerOnTop",
+					disabled = function() return BSYC.options.sortTooltipByTotals or BSYC.options.sortByCustomOrder end,
+				},				
+				sorttooltipbytotals = {
+					order = 2,
 					type = "toggle",
 					name = L.SortTooltipByTotals,
 					width = "full",
@@ -791,10 +808,10 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.sortTooltipByTotals",
-					disabled = function() return BSYC.options.sortByCustomOrder end,
+					disabled = function() return BSYC.options.sortShowCurrentPlayerOnTop or BSYC.options.sortByCustomOrder end,
 				},
 				sortbycustomsortorder = {
-					order = 2,
+					order = 3,
 					type = "toggle",
 					name = L.SortByCustomSortOrder,
 					width = "full",
@@ -802,16 +819,16 @@ options.args.display = {
 					get = get,
 					set = set,
 					arg = "display.sortByCustomOrder",
-					disabled = function() return BSYC.options.sortTooltipByTotals end,
+					disabled = function() return BSYC.options.sortTooltipByTotals or BSYC.options.sortShowCurrentPlayerOnTop end,
 				},
 				customsortbutton = {
-					order = 3,
+					order = 4,
 					type = "execute",
 					name = L.SortOrder,
 					func = function()
 						BSYC:GetModule("SortOrder").frame:Show()
 					end,
-					disabled = function() return BSYC.options.sortTooltipByTotals or not BSYC.options.sortByCustomOrder end,
+					disabled = function() return BSYC.options.sortTooltipByTotals or BSYC.options.sortShowCurrentPlayerOnTop or not BSYC.options.sortByCustomOrder end,
 				},
 			}
 		},

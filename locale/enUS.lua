@@ -243,6 +243,7 @@ L.DisplayAccurateBattlePets = "Enable accurate Battle Pets in Guild Bank & Mailb
 L.DisplaySortCurrencyByExpansionFirst = "Sort the BagSync Currency window by expansion first rather than alphabetically."
 L.DisplaySorting = "Tooltip Sorting"
 L.DisplaySortInfo = "Default: Tooltips are sorted alphabetically by Realm then Character name."
+L.SortCurrentPlayerOnTop = "Sort by default and always display current character on top."
 L.SortTooltipByTotals = "Sort by totals and not alphabetically."
 L.SortByCustomSortOrder = "Sort by custom sort order."
 L.CustomSortInfo = "List uses an ascending order (1,2,3)"

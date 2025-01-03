@@ -78,6 +78,7 @@ local optionsDefaults = {
 	showBLCurrentCharacterOnly = false,
 	sortCurrencyByExpansion = true,
 	showBNETCRInfoWindow = true,
+	sortShowCurrentPlayerOnTop = false,
 }
 
 local colorsDefaults = {

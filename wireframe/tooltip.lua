@@ -114,23 +114,25 @@ end
 
 function Tooltip:GetSortIndex(unitObj)
 	if unitObj then
-		if not unitObj.isGuild and unitObj.realm == _G.GetRealmName() then
+		if BSYC.options.sortShowCurrentPlayerOnTop and unitObj.data == BSYC.db.player then
 			return 1
-		elseif unitObj.isGuild and unitObj.realm == _G.GetRealmName() then
+		elseif not unitObj.isGuild and unitObj.realm == _G.GetRealmName() then
 			return 2
-		elseif not unitObj.isGuild and unitObj.isConnectedRealm then
+		elseif unitObj.isGuild and unitObj.realm == _G.GetRealmName() then
 			return 3
-		elseif unitObj.isGuild and unitObj.isConnectedRealm then
+		elseif not unitObj.isGuild and unitObj.isConnectedRealm then
 			return 4
-		elseif not unitObj.isGuild then
+		elseif unitObj.isGuild and unitObj.isConnectedRealm then
 			return 5
+		elseif not unitObj.isGuild then
+			return 6
 		elseif unitObj.isWarbandBank then
 			--sort warband banks just above other server guilds
-			return 6
+			return 7
 		end
 	end
 	--other server guilds should be sorted last
-	return 7
+	return 8
 end
 
 function Tooltip:GetRaceIcon(race, gender, size, xOffset, yOffset, useHiRez)
@@ -547,16 +549,17 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 
 	--add to list
 	local doAdv = (advUnitList and true) or false
+	local sortIndex = self:GetSortIndex(unitObj)
 	local unitData = {
 		unitObj=unitObj,
 		colorized=self:ColorizeUnit(unitObj, false, false, doAdv),
 		tallyString=tallyString,
-		sortIndex=self:GetSortIndex(unitObj),
+		sortIndex=sortIndex,
 		count=total
 	}
 	table.insert(unitList, unitData)
 
-	Debug(BSYC_DL.SL2, "UnitTotals", unitObj.name, unitObj.realm, unitData.colorized, unitData.tallyString, total)
+	Debug(BSYC_DL.SL2, "UnitTotals", unitObj.name, unitObj.realm, unitData.colorized, unitData.tallyString, total, sortIndex)
 	return unitData
 end
 
