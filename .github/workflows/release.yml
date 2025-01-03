@@ -38,17 +38,7 @@ jobs:
         uses: actions/checkout@v1
 
       # Package and release the retail version
+      # It should create Retail, Classic and Progression server Packages so long as the (## Interface) has multiple client versions
+      # Example: ## Interface: 110005, 110007, 11504, 40401
       - name: Create Retail Package
         uses: BigWigsMods/packager@master
-
-      # Package and release the Classic version
-      - name: Create Classic Package
-        uses: BigWigsMods/packager@master
-        with:
-          args: -g classic
-
-       # Package and release the Cata version
-      - name: Create Cata Package
-        uses: BigWigsMods/packager@master
-        with:
-          args: -g Cata		  
