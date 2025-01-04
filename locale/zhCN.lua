@@ -233,6 +233,7 @@ L.DisplayAccurateBattlePets = "启用精准扫描公会银行和邮箱中的战�
 L.DisplaySortCurrencyByExpansionFirst = "BagSync 的货币窗口是依据游戏资料片顺序而不是字母顺序来进行排序。"
 L.DisplaySorting = "鼠标提示排序"
 L.DisplaySortInfo = "默认: 鼠标提示排序是根据服务器名的字母顺序，然后是角色名称来排序。"
+L.SortCurrentPlayerOnTop = "默认排序，始终将当前角色显示在首列。"
 L.SortTooltipByTotals = "按照总数进行排序，而不是字母顺序排列。"
 L.SortByCustomSortOrder = "按照自定义顺序排序。"
 L.CustomSortInfo = "列表使用升序排列 (1,2,3)"
