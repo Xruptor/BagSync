@@ -3,7 +3,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhCN")
 if not L then return end
 
 --  zhCN client (NGA-[男爵凯恩])
---  Last update: 2024/8/15
+--  Last update: 2025/01/04
 
 L.Yes = "Yes"
 L.No = "No"
@@ -203,7 +203,7 @@ L.DisplaySourceDebugInfo = "在鼠标提示中显示有用的[Debug]信息。"
 L.DisplayWhiteListOnly = "在鼠标提示中仅显示[白名单]的物品。"
 L.DisplaySourceExpansion = "在鼠标提示中显示[游戏版本]。 |cFF99CC33[仅正式服]|r"
 L.DisplayItemTypes = "在鼠标提示中显示[物品类型|子类型]。"
-L.DisplayTooltipTags = "各标识符号"
+L.DisplayTooltipTags = "标识符"
 L.DisplayTooltipStorage = "仓库"
 L.DisplayTooltipExtra = "其他统计"
 L.DisplaySortOrderHelp = "排序帮助"
@@ -233,6 +233,7 @@ L.DisplayAccurateBattlePets = "启用精准扫描公会银行和邮箱中的战�
 L.DisplaySortCurrencyByExpansionFirst = "BagSync 的货币窗口是依据游戏资料片顺序而不是字母顺序来进行排序。"
 L.DisplaySorting = "鼠标提示排序"
 L.DisplaySortInfo = "默认: 鼠标提示排序是根据服务器名的字母顺序，然后是角色名称来排序。"
+L.SortCurrentPlayerOnTop = "启用默认排序，始终将当前角色显示在首列。"
 L.SortTooltipByTotals = "按照总数进行排序，而不是字母顺序排列。"
 L.SortByCustomSortOrder = "按照自定义顺序排序。"
 L.CustomSortInfo = "列表使用升序排列 (1,2,3)"
@@ -378,7 +379,7 @@ L.FAQ_Question_1_p1 = [[
 为了解决这个问题,您可以尝试重置数据库。通常可以解决问题。使用以下命令： |cFF99CC33/bgs 重置|r
 如果这不能解决您的问题,请在 GitHub 上的 BagSync 提交问题报告。
 ]]
-L.FAQ_Question_2 = " 在|cFFDF2B2B单独|r |cff3587ff战网|r 帐号中。找不到我的其他魔兽世界帐号的物品数据。"
+L.FAQ_Question_2 = " 在|cFFDF2B2B单独|r |cff3587ff战网|r 账号中。找不到我的其他魔兽世界账号的物品数据。"
 L.FAQ_Question_2_p1 = [[
 插件无法从其他魔兽世界帐户读取数据。这是因为它们不共享相同的 SavedVariable 文件夹。这是暴雪魔兽世界客户端的内置限制。因此,您将无法在 |cFFDF2B2B单个e|r |cff3587ffBattle.net|r 下看到多个魔兽世界帐户的物品数据。 BagSync 将只能读取同一魔兽世界帐户内同服务器内多个的角色数据,而不是整个战网帐户。|cFF99CC33https://www.wowhead.com/guide=934|r
 
@@ -386,7 +387,7 @@ L.FAQ_Question_2_p1 = [[
 ]]
 L.FAQ_Question_3 = "可以查看来自 |cFFDF2B2B多个|r |cff3587ff战网|r 账号内的物品数据吗?"
 L.FAQ_Question_3_p1 = "不,这不可能。我不会在这方面提供帮助。所以不要问!"
-L.FAQ_Question_4 = "我可以在|cFFDF2B2B当前登录|r的帐号查看多个魔兽世界账户的物品数据吗?"
+L.FAQ_Question_4 = "我可以在|cFFDF2B2B当前登录|r的账号查看多个魔兽世界账户的物品数据吗?"
 L.FAQ_Question_4_p1 = "目前 BagSync 不支持在多个登录的魔兽世界帐户之间传输数据。这在未来可能会改变。"
 L.FAQ_Question_5 = "为什么会提示公会银行扫描未完成?"
 L.FAQ_Question_5_p1 = [[
@@ -409,7 +410,7 @@ L.BagSyncInfoWindow = [[
 (|cFF99CC33 https://tinyurl.com/msncc7j6 |r)
 
 
-|cFFfd5c63默认情况下，BagSync 不会显示您战网( |cff3587ff[BNet]|r )所有帐号的数据。您需要启用此功能！
+|cFFfd5c63默认情况下，BagSync 不会显示您战网( |cff3587ff[BNet]|r )所有账号的数据。您需要启用此功能！
 |r( |cff3587ff[BNet]|r )
 
 |cFF52D386如果您想查看整个战网内所有的角色( |cff3587ff[BNet]|r )，则需要在BagSync的“显示”选项里面启用[所有战网]选项。|r

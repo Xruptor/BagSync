@@ -235,6 +235,7 @@ L.DisplayAccurateBattlePets = "在公會銀行和郵箱中啟用準確的戰鬥�
 L.DisplaySortCurrencyByExpansionFirst = "BagSync 的貨幣窗口是依據游戲資料片順序而不是字母順序來進行排序。"
 L.DisplaySorting = "工具提示排序"
 L.DisplaySortInfo = "預設：工具提示先根據伺服器的字母先後排序，然後才是角色名稱。"
+L.SortCurrentPlayerOnTop = "默認排序，始終將當前角色顯示在首位。"
 L.SortTooltipByTotals = "排序根據總數而非字母順序。"
 L.SortByCustomSortOrder = "排序依據自定義順序。"
 L.CustomSortInfo = "列表上使用升序排序 (1,2,3)"
