@@ -2,7 +2,7 @@
 	gold.lua
 		A frame displaying all database character gold totals for BagSync
 
-		BagSync - All Rights Reserved - (c) 2024
+		BagSync - All Rights Reserved - (c) 2025
 		License included with addon.
 --]]
 

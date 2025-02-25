@@ -3,7 +3,7 @@
 		Unit module for BagSync
 		Special Thanks:  This module was inspired by LibItemCache-2.0.lua credit to jaliborc
 
-		BagSync - All Rights Reserved - (c) 2024
+		BagSync - All Rights Reserved - (c) 2025
 		License included with addon.
 --]]
 

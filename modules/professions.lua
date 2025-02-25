@@ -2,7 +2,7 @@
 	professions.lua
 		A professions frame for BagSync
 
-		BagSync - All Rights Reserved - (c) 2024
+		BagSync - All Rights Reserved - (c) 2025
 		License included with addon.
 --]]
 
