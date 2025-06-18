@@ -143,7 +143,7 @@ L.SlashMoney = "钱"
 L.SlashConfig = "配置"
 L.SlashCurrency = "货币"
 L.SlashFixDB = "优化数据库"
-L.SlashProfiles = "角色文档"
+L.SlashProfiles = "角色"
 L.SlashProfessions = "专业"
 L.SlashBlacklist = "黑名单"
 L.SlashWhitelist = "白名单"
@@ -349,12 +349,12 @@ L.SearchHelp = [[
 |cff00ffff<职业>|r = |cFF99CC33c|r ; |cFF99CC33class|r | 示例：|cFFFFD580class:战士|r  ;  |cFFFFD580c:恶魔猎手|r
 
 |cffff7d0a函数 <op>|r:
-|cFF99CC33:|r | |cFF99CC33=|r | |cFF99CC33==|r | |cFF99CC33！=|r | |cFF99CC33~=|r | |cFF99CC33<|r | |cFF99CC33>|r | |cFF99CC33<=|r | |cFF99CC33>=|r
+|cFF99CC33:|r | |cFF99CC33=|r | |cFF99CC33==|r | |cFF99CC33!=|r | |cFF99CC33~=|r | |cFF99CC33<|r | |cFF99CC33>|r | |cFF99CC33<=|r | |cFF99CC33>=|r
 
 
 |cffff7d0a否定命令|r:
-示例: |cFF99CC33！|r|cFFFFD580bind:boe|r（不是已绑定装备）
-示例: |cFF99CC33！|r|cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r（不是已绑定装备且物品等级大于20）
+示例: |cFF99CC33!|r|cFFFFD580bind:boe|r（不是已绑定装备）
+示例: |cFF99CC33!|r|cFFFFD580bind:boe|r |cFF99CC33&&|r |cFFFFD580lvl:>20|r（不是已绑定装备且物品等级大于20）
 
 |cffff7d0a联合搜索（和搜索）：|r
 （使用 |cFF99CC33&&|r 符号）
