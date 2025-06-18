@@ -1,5 +1,4 @@
 
-
 local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhCN")
 if not L then return end
 
