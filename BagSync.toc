@@ -1,4 +1,4 @@
-## Interface: 110105, 11507, 40402, 30404
+## Interface: 110107, 11507, 40402, 30404
 ## Title: BagSync
 ## Notes: BagSync tracks your characters items and displays it within tooltips.
 ## Notes-zhCN: BagSync 是统计您角色内的物品数量并将其显示在鼠标提示中.
@@ -12,7 +12,7 @@
 ## X-Wago-ID: xZKxjQNk
 ## OptionalDeps: tekDebug
 ## SavedVariables: BagSyncDB
-## Category-enUS: Inventory
+## Category: Inventory
 ## Category-deDE: Inventar
 ## Category-esES: Inventario
 ## Category-esMX: Inventario
