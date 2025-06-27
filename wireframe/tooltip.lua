@@ -1286,6 +1286,7 @@ end
 function Tooltip:HookTooltip(objTooltip)
 	--if the tooltip doesn't exist, chances are it's the BattlePetTooltip and they are on Classic or WOTLK
 	if not objTooltip then return end
+	local arkAlreadyHooked = false
 
 	Debug(BSYC_DL.INFO, "HookTooltip", objTooltip)
 
@@ -1310,6 +1311,45 @@ function Tooltip:HookTooltip(objTooltip)
 		objTooltip:HookScript("OnShow", function(self)
 			if self.__tooltipUpdated then return end
 		end)
+
+		--add support for ArkInventory (Fixes #231)
+		if ArkInventory and ArkInventory.API and ArkInventory.API.CustomBattlePetTooltipReady then
+			if not arkAlreadyHooked then
+				hooksecurefunc(ArkInventory.API, "CustomBattlePetTooltipReady", function(tooltip, link)
+					if tooltip.__tooltipUpdated then return end
+					if link then
+						Tooltip:TallyUnits(tooltip, link, "ArkInventory", true)
+					end
+				end)
+				arkAlreadyHooked = true
+			end
+		else
+			--BattlePetToolTip_Show
+			if BattlePetTooltip and objTooltip == BattlePetTooltip then
+				hooksecurefunc("BattlePetToolTip_Show", function(speciesID, level, breedQuality, maxHealth, power, speed, name)
+					if objTooltip.__tooltipUpdated then return end
+					if speciesID then
+						local fakeID = BSYC:CreateFakeID(nil, nil, speciesID, level, breedQuality, maxHealth, power, speed, name)
+						if fakeID then
+							Tooltip:TallyUnits(objTooltip, fakeID, "BattlePetToolTip_Show", true)
+						end
+					end
+				end)
+			end
+			--FloatingBattlePet_Show
+			if FloatingBattlePetTooltip and objTooltip == FloatingBattlePetTooltip then
+				hooksecurefunc("FloatingBattlePet_Show", function(speciesID, level, breedQuality, maxHealth, power, speed, name)
+					if objTooltip.__tooltipUpdated then return end
+					if speciesID then
+						local fakeID = BSYC:CreateFakeID(nil, nil, speciesID, level, breedQuality, maxHealth, power, speed, name)
+						if fakeID then
+							Tooltip:TallyUnits(objTooltip, fakeID, "FloatingBattlePet_Show", true)
+						end
+					end
+				end)
+			end
+		end
+
 	end
 
 	if C_TooltipInfo then
@@ -1368,81 +1408,85 @@ function Tooltip:HookTooltip(objTooltip)
 		end
 		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Currency, OnTooltipSetCurrency)
 
-		--add support for ArkInventory (Fixes #231)
-		if ArkInventory and ArkInventory.API and ArkInventory.API.CustomBattlePetTooltipReady then
-			hooksecurefunc(ArkInventory.API, "CustomBattlePetTooltipReady", function(tooltip, link)
-				if tooltip.__tooltipUpdated then return end
-				if link then
-					Tooltip:TallyUnits(tooltip, link, "ArkInventory", true)
-				end
-			end)
-		else
-			--BattlePetToolTip_Show
-			if objTooltip == BattlePetTooltip then
-				hooksecurefunc("BattlePetToolTip_Show", function(speciesID, level, breedQuality, maxHealth, power, speed, name)
-					if objTooltip.__tooltipUpdated then return end
-					if speciesID then
-						local fakeID = BSYC:CreateFakeID(nil, nil, speciesID, level, breedQuality, maxHealth, power, speed, name)
-						if fakeID then
-							Tooltip:TallyUnits(objTooltip, fakeID, "BattlePetToolTip_Show", true)
-						end
-					end
-				end)
-			end
-			--FloatingBattlePet_Show
-			if objTooltip == FloatingBattlePetTooltip then
-				hooksecurefunc("FloatingBattlePet_Show", function(speciesID, level, breedQuality, maxHealth, power, speed, name)
-					if objTooltip.__tooltipUpdated then return end
-					if speciesID then
-						local fakeID = BSYC:CreateFakeID(nil, nil, speciesID, level, breedQuality, maxHealth, power, speed, name)
-						if fakeID then
-							Tooltip:TallyUnits(objTooltip, fakeID, "FloatingBattlePet_Show", true)
-						end
-					end
-				end)
-			end
-		end
-
 	else
 
-		objTooltip:HookScript("OnTooltipSetItem", function(self)
-			if self.__tooltipUpdated then return end
-			local name, link = self:GetItem()
-			if link then
-				--sometimes the link is an empty link with the name being |h[]|h, its a bug with GetItem()
-				--so lets check for that
-				local linkName = string.match(link, "|h%[(.-)%]|h")
-				if not linkName or string.len(linkName) < 1 then return nil end  -- we don't want to store or process it
+		if objTooltip ~= BattlePetTooltip and objTooltip ~= FloatingBattlePetTooltip then
+			objTooltip:HookScript("OnTooltipSetItem", function(self)
+				if self.__tooltipUpdated then return end
+				local name, link = self:GetItem()
+				if link then
+					--sometimes the link is an empty link with the name being |h[]|h, its a bug with GetItem()
+					--so lets check for that
+					local linkName = string.match(link, "|h%[(.-)%]|h")
+					if not linkName or string.len(linkName) < 1 then return nil end  -- we don't want to store or process it
 
-				Tooltip:TallyUnits(self, link, "OnTooltipSetItem")
-			end
-		end)
+					Tooltip:TallyUnits(self, link, "OnTooltipSetItem")
+				end
+			end)
+		end
 
-		hooksecurefunc(objTooltip, "SetQuestLogItem", function(self, itemType, index)
-			if self.__tooltipUpdated then return end
-			local link = GetQuestLogItemLink(itemType, index)
-			if link then
-				Tooltip:TallyUnits(self, link, "SetQuestLogItem")
-			end
-		end)
-		hooksecurefunc(objTooltip, "SetQuestItem", function(self, itemType, index)
-			if self.__tooltipUpdated then return end
-			local link = GetQuestItemLink(itemType, index)
-			if link then
-				Tooltip:TallyUnits(self, link, "SetQuestItem")
-			end
-		end)
+		if objTooltip.SetQuestLogItem then
+			hooksecurefunc(objTooltip, "SetQuestLogItem", function(self, itemType, index)
+				if self.__tooltipUpdated then return end
+				local link = GetQuestLogItemLink(itemType, index)
+				if link then
+					Tooltip:TallyUnits(self, link, "SetQuestLogItem")
+				end
+			end)
+		end
+		if objTooltip.SetQuestItem then
+			hooksecurefunc(objTooltip, "SetQuestItem", function(self, itemType, index)
+				if self.__tooltipUpdated then return end
+				local link = GetQuestItemLink(itemType, index)
+				if link then
+					Tooltip:TallyUnits(self, link, "SetQuestItem")
+				end
+			end)
+		end
+
+		--C_CurrencyInfo.GetCurrencyListInfo
+		--https://www.townlong-yak.com/framexml/live/Blizzard_TokenUI/Blizzard_TokenUI.lua#383
+		if objTooltip.SetCurrencyToken then
+			hooksecurefunc(objTooltip, "SetCurrencyToken", function(self, currencyIndex)
+				local link = C_CurrencyInfo.GetCurrencyListLink(currencyIndex)
+				local xGetCurrencyInfo = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo) or GetCurrencyInfo
+				if link then
+					--local id = tonumber(string.match(link,"currency:(%d+)"))
+					--local name = C_CurrencyInfo.GetCurrencyInfo(id).name
+
+
+					--https://www.townlong-yak.com/framexml/55818/Blizzard_TokenUI/Blizzard_TokenUI.lua#307
+					-- local currencyData = C_CurrencyInfo.GetCurrencyListInfo(currencyIndex);
+					-- if currencyData then
+					-- 	currencyData.currencyIndex = currencyIndex;
+					-- 	tinsert(currencyList, currencyData);
+					-- end
+
+					local currencyID = BSYC:GetShortCurrencyID(link)
+
+					if currencyID then
+						--WOTLK still uses the old API functions, check for it
+						local currencyData = xGetCurrencyInfo(currencyID)
+						if currencyData and currencyData.name and currencyData.iconFileID then
+							Tooltip:CurrencyTooltip(objTooltip, currencyData.name, currencyData.iconFileID, currencyID, "SetCurrencyToken")
+						end
+					end
+				end
+			end)
+		end
 
 		--only parse CraftFrame when it's not the RETAIL but Classic and TBC, because this was changed to TradeSkillUI on retail
-		hooksecurefunc(objTooltip, "SetCraftItem", function(self, index, reagent)
-			if self.__tooltipUpdated then return end
-			local _, _, count = GetCraftReagentInfo(index, reagent)
-			--YOU NEED to do the above or it will return an empty link!
-			local link = GetCraftReagentItemLink(index, reagent)
-			if link then
-				Tooltip:TallyUnits(self, link, "SetCraftItem")
-			end
-		end)
+		if objTooltip.SetCraftItem then
+			hooksecurefunc(objTooltip, "SetCraftItem", function(self, index, reagent)
+				if self.__tooltipUpdated then return end
+				local _, _, count = GetCraftReagentInfo(index, reagent)
+				--YOU NEED to do the above or it will return an empty link!
+				local link = GetCraftReagentItemLink(index, reagent)
+				if link then
+					Tooltip:TallyUnits(self, link, "SetCraftItem")
+				end
+			end)
+		end
 
 	end
 

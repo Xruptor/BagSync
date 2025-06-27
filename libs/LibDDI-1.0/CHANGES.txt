@@ -1,12 +1,8 @@
 ------------------------------------------------------------------------
-r85 | funkehdude | 2024-07-09 18:34:35 +0000 (Tue, 09 Jul 2024) | 1 line
+r93 | funkehdude | 2025-05-21 15:04:24 +0000 (Wed, 21 May 2025) | 1 line
 Changed paths:
    M /trunk/LibDDI-1.0.toc
-   D /trunk/LibDDI-1.0_Cata.toc
-   D /trunk/LibDDI-1.0_TBC.toc
-   D /trunk/LibDDI-1.0_Vanilla.toc
-   D /trunk/LibDDI-1.0_Wrath.toc
 
-Merge toc files
+Bump toc
 ------------------------------------------------------------------------
 

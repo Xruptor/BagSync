@@ -5,7 +5,7 @@
 ## Notes-frFR: BagSync fait l'inventaire des objets de vos personnages et l'affiche dans des infobulles.
 ## Notes-deDE: BagSync verfolgt die Gegenstände Deiner Charaktere und zeigt sie in Tooltips an.
 ## Author: Xruptor
-## Version: 19.66
+## Version: 19.67
 ## IconTexture: Interface\AddOns\BagSync\media\icon
 ## X-Curse-Project-ID: 22067
 ## X-WoWI-ID: 15351
