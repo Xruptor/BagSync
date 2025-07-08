@@ -1283,11 +1283,12 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	end
 end
 
+local arkAlreadyHooked = false
+
 function Tooltip:HookTooltip(objTooltip)
 	--if the tooltip doesn't exist, chances are it's the BattlePetTooltip and they are on Classic or WOTLK
 	if not objTooltip then return end
-	local arkAlreadyHooked = false
-
+	
 	Debug(BSYC_DL.INFO, "HookTooltip", objTooltip)
 
 	--MORE INFO (https://wowpedia.fandom.com/wiki/Category:API_namespaces/C_TooltipInfo)
