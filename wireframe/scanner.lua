@@ -33,6 +33,9 @@ local MAX_GUILDBANK_SLOTS_PER_TAB = 98
 local FirstEquipped = INVSLOT_FIRST_EQUIPPED
 local LastEquipped = INVSLOT_LAST_EQUIPPED
 
+--backup scanner in case C_TooltipInfo doesn't exist
+local scannerTooltip = CreateFrame("GameTooltip", "BagSyncScannerTooltip", UIParent, "GameTooltipTemplate")
+
 Scanner.currencyTransferInProgress = false
 Scanner.lastCurrencyID = 0
 Scanner.pendingdMail = {items={}}
@@ -299,16 +302,49 @@ function Scanner:SaveVoidBank()
 end
 
 local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
-	Debug(BSYC_DL.INFO, "findBattlePet", iconTexture, petName, typeSlot, arg1, arg2)
+	Debug(BSYC_DL.INFO, "findBattlePet", iconTexture, petName, typeSlot, arg1, arg2, C_TooltipInfo and 'C_TooltipInfo', C_PetJournal and 'C_PetJournal')
 
 	if BSYC.options.enableAccurateBattlePets and arg1 then
-		local data
+		local data = {}
 
 		--https://github.com/tomrus88/BlizzardInterfaceCode/blob/4e7b4f5df63d240038912624218ebb9c0c8a3edf/Interface/SharedXML/Tooltip/TooltipDataRules.lua
+		--it may be possible to use C_PetJournal.GetPetStats(petID) in the future if the guildbank and mailbox return the GUID of the pet
 		if typeSlot == "guild" then
-			data = C_TooltipInfo.GetGuildBankItem(arg1, arg2)
+			--MOP Classic and a few other classic servers don't have C_TooltipInfo implemented for some stupid reason. So check for that.  *facepalm*
+			if C_TooltipInfo then
+				data = C_TooltipInfo.GetGuildBankItem(arg1, arg2)
+			else
+				--local speciesID, level, breedQuality, maxHealth, power, speed, name = GameTooltip:SetGuildBankItem(arg1, arg2)
+				local speciesID, level, breedQuality, maxHealth, power, speed, name = scannerTooltip:SetGuildBankItem(arg1, arg2)
+				if speciesID and speciesID > 0 then
+					data.battlePetSpeciesID = speciesID
+					data.battlePetLevel = level
+					data.battlePetBreedQuality = breedQuality
+					data.battlePetMaxHealth = maxHealth
+					data.battlePetPower = power
+					data.battlePetSpeed = speed
+					data.battlePetName = name
+				end
+				scannerTooltip:Hide()
+			end
 		else
-			data = C_TooltipInfo.GetInboxItem(arg1, arg2)
+			--MOP Classic and a few other classic servers don't have C_TooltipInfo implemented for some stupid reason. So check for that.  *facepalm*
+			if C_TooltipInfo then
+				data = C_TooltipInfo.GetInboxItem(arg1, arg2)
+			else
+				--local hasCooldown, speciesID, level, breedQuality, maxHealth, power, speed, name = scannerTooltip:SetInboxItem(mailIndex)
+				local hasCooldown, speciesID, level, breedQuality, maxHealth, power, speed, name = scannerTooltip:SetInboxItem(arg1)
+				if speciesID and speciesID > 0 then
+					data.battlePetSpeciesID = speciesID
+					data.battlePetLevel = level
+					data.battlePetBreedQuality = breedQuality
+					data.battlePetMaxHealth = maxHealth
+					data.battlePetPower = power
+					data.battlePetSpeed = speed
+					data.battlePetName = name
+				end
+				scannerTooltip:Hide()
+			end
 		end
 
 		--fixes a slight issue where occasionally due to server delay, the BattlePet tooltips are still shown on the screen and overlaps the GameTooltip
