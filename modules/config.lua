@@ -485,7 +485,7 @@ options.args.tracking = {
 					get = get,
 					set = set,
 					arg = "tracking.reagents",
-					hidden = function() return not IsReagentBankUnlocked end,
+					hidden = function() return not IsReagentBankUnlocked or not BSYC.IsBankTabsActive end,
 				},
 				module_equip = {
 					order = 4,
@@ -516,7 +516,7 @@ options.args.tracking = {
 					get = get,
 					set = set,
 					arg = "tracking.void",
-					hidden = function() return not CanUseVoidStorage end,
+					hidden = function() return not CanUseVoidStorage or not BSYC.IsBankTabsActive end,
 				},
 				module_auction = {
 					order = 7,

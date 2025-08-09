@@ -45,27 +45,24 @@ function Scanner:ResetTooltips()
 	if BSYC:GetModule("Tooltip", true) then BSYC:GetModule("Tooltip"):ResetLastLink() end
 end
 
---https://wowpedia.fandom.com/wiki/BagID
+--https://warcraft.wiki.gg/wiki/BagID
+--https://warcraft.wiki.gg/wiki/Enum.BagIndex
 function Scanner:GetBagSlots(bagType)
 	if bagType == "bag" then
-		if BSYC.IsRetail then
-			return BACKPACK_CONTAINER, NUM_TOTAL_EQUIPPED_BAG_SLOTS
-		else
-			return BACKPACK_CONTAINER, BACKPACK_CONTAINER + NUM_BAG_SLOTS
-		end
+		return Enum.BagIndex.Backpack, Enum.BagIndex.Bag_4
 
 	elseif bagType == "bank" then
-		if BSYC.IsRetail then
-			return NUM_TOTAL_EQUIPPED_BAG_SLOTS + 1, NUM_TOTAL_EQUIPPED_BAG_SLOTS + NUM_BANKBAGSLOTS
+		if BSYC.IsBankTabsActive then
+			return Enum.BagIndex.CharacterBankTab_1, Enum.BagIndex.CharacterBankTab_6
 		else
-			return NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS
+			return Enum.BagIndex.BankBag_1, Enum.BagIndex.BankBag_7
 		end
 	end
 end
 
 function Scanner:IsBackpack(bagid)
 	if not bagid then return false end
-	return bagid == BACKPACK_CONTAINER
+	return bagid == Enum.BagIndex.Backpack
 end
 
 function Scanner:IsBackpackBag(bagid)
@@ -76,15 +73,15 @@ end
 
 function Scanner:IsKeyring(bagid)
 	if not bagid then return false end
-	if bagid == KEYRING_CONTAINER and (not HasKey or not HasKey()) then
+	if bagid == Enum.BagIndex.Keyring and (not HasKey or not HasKey()) then
 		return false
 	end
-	return bagid == KEYRING_CONTAINER
+	return bagid == Enum.BagIndex.Keyring
 end
 
 function Scanner:IsBank(bagid)
 	if not bagid then return false end
-	return bagid == BANK_CONTAINER
+	return bagid == Enum.BagIndex.Bank
 end
 
 function Scanner:IsBankBag(bagid)
@@ -95,7 +92,7 @@ end
 
 function Scanner:IsReagentBag(bagid)
 	if not bagid then return false end
-	return bagid == REAGENTBANK_CONTAINER
+	return bagid == Enum.BagIndex.ReagentBag
 end
 
 function Scanner:IsWarbandBank(bagid)
@@ -115,14 +112,14 @@ function Scanner:StartupScans()
 		self:SaveBag("bag", i)
 	end
 
-	--check keyring, KEYRING_CONTAINER is nil on servers that have it disabled
-	if KEYRING_CONTAINER and HasKey and HasKey() then
-		self:SaveBag("bag", KEYRING_CONTAINER)
+	--check keyring, Enum.BagIndex.Keyring is nil on servers that have it disabled
+	if Enum.BagIndex.Keyring and HasKey and HasKey() then
+		self:SaveBag("bag", Enum.BagIndex.Keyring)
 	else
 		--cleanup old keyring stuff if it's disabled
-		local xKeyRing = KEYRING_CONTAINER or Enum.BagIndex.Keyring
-		if xKeyRing and BSYC.db.player["bag"] and BSYC.db.player["bag"][xKeyRing] then
-			BSYC.db.player["bag"][xKeyRing] = nil
+		local xKeyRing = Enum.BagIndex.Keyring
+		if xKeyRing and BSYC.db.player.bag and BSYC.db.player.bag[xKeyRing] then
+			BSYC.db.player.bag[xKeyRing] = nil
 		end
 	end
 
@@ -177,8 +174,15 @@ function Scanner:SaveBag(bagtype, bagid)
 end
 
 function Scanner:SaveEquippedBags(bagtype)
-	Debug(BSYC_DL.INFO, "SaveEquippedBags", bagtype, BSYC.options.showEquipBagSlots)
+	Debug(BSYC_DL.INFO, "SaveEquippedBags", bagtype, BSYC.options.showEquipBagSlots, BSYC.IsBankTabsActive)
 	if not bagtype then return end
+
+	--don't save bank bags if tabs is enabled, because they are using bank tabs instead
+	if bagtype == "bank" and BSYC.IsBankTabsActive then
+		if BSYC.db.player.equipbags and BSYC.db.player.equipbags.bank then BSYC.db.player.equipbags.bank = {} end
+		return
+	end
+
 	if not BSYC.db.player.equipbags then BSYC.db.player.equipbags = {} end
 	if not BSYC.db.player.equipbags.bag then BSYC.db.player.equipbags.bag = {} end
 	if not BSYC.db.player.equipbags.bank then BSYC.db.player.equipbags.bank = {} end
@@ -251,15 +255,21 @@ function Scanner:SaveEquipment()
 end
 
 function Scanner:SaveBank(rootOnly)
-	Debug(BSYC_DL.INFO, "SaveBank", rootOnly, Unit.atBank, BSYC.tracking.bank)
+	Debug(BSYC_DL.INFO, "SaveBank", rootOnly, Unit.atBank, BSYC.tracking.bank, BSYC.IsBankTabsActive)
 	if not Unit.atBank or not BSYC.tracking.bank then return end
 
-	--force scan of bank bag -1, since blizzard never sends updates for it
-	self:SaveBag("bank", BANK_CONTAINER)
 	--save bank bags
 	self:SaveEquippedBags("bank")
 
 	if not rootOnly then
+		--lets refresh the bank database, especially if the bagids got changed or we are using bank tabs now
+		if BSYC.db.player.bank then BSYC.db.player.bank = {} end
+
+		--force scan of bank bag -1, since blizzard never sends updates for it
+		if Enum.BagIndex.Bank then
+			self:SaveBag("bank", Enum.BagIndex.Bank)
+		end
+
 		local minCnt, maxCnt = self:GetBagSlots("bank")
 
 		for i = minCnt, maxCnt do
@@ -267,7 +277,13 @@ function Scanner:SaveBank(rootOnly)
 		end
 		--scan the reagents as part of the bank scan, but make sure it's even enabled on server
 		if IsReagentBankUnlocked then self:SaveReagents() end
+	else
+		--force scan of bank bag -1, since blizzard never sends updates for it
+		if Enum.BagIndex.Bank then
+			self:SaveBag("bank", Enum.BagIndex.Bank)
+		end
 	end
+
 	self:ResetTooltips()
 end
 
@@ -276,7 +292,7 @@ function Scanner:SaveReagents()
 	if not Unit.atBank or not BSYC.tracking.reagents then return end
 
 	if IsReagentBankUnlocked() then
-		self:SaveBag("reagents", REAGENTBANK_CONTAINER)
+		self:SaveBag("reagents", Enum.BagIndex.Reagentbank)
 	end
 	self:ResetTooltips()
 end

@@ -58,6 +58,8 @@ function Events:OnEnable()
 		self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:SaveReagents() end)
 	else
 		BSYC.tracking.reagents = false
+		--delete the reagents db if we have anything stored in the database, that way we don't have weird numbers
+		if BSYC.db.player.reagents then BSYC.db.player.reagents = nil end
 		Debug(BSYC_DL.WARN, "Module-Inactive", "reagents")
 	end
 
@@ -67,6 +69,8 @@ function Events:OnEnable()
 		self:RegisterEvent("VOID_TRANSFER_DONE", function() Scanner:SaveVoidBank() end)
 	else
 		BSYC.tracking.void = false
+		--delete the void db if we have anything stored in the database, that way we don't have weird numbers
+		if BSYC.db.player.void then BSYC.db.player.void = nil end
 		Debug(BSYC_DL.WARN, "Module-Inactive", "void")
 	end
 
@@ -211,7 +215,7 @@ function Events:BAG_UPDATE_DELAYED(event)
 		local bagname
 
 		Debug(BSYC_DL.SL1, "SpamBagCheck", bagid)
-		if Scanner:IsBackpack(bagid) or Scanner:IsBackpackBag(bagid) or Scanner:IsKeyring(bagid) then
+		if Scanner:IsBackpack(bagid) or Scanner:IsBackpackBag(bagid) or Scanner:IsKeyring(bagid) or Scanner:IsReagentBag(bagid) then
 			bagname = "bag"
 		elseif Scanner:IsBank(bagid) or Scanner:IsBankBag(bagid) then
 			--only do this while we are at a bank
