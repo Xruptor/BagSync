@@ -179,13 +179,12 @@ function Scanner:SaveEquippedBags(bagtype)
 
 	--don't save bank bags if tabs is enabled, because they are using bank tabs instead
 	if bagtype == "bank" and BSYC.IsBankTabsActive then
-		if BSYC.db.player.equipbags and BSYC.db.player.equipbags.bank then BSYC.db.player.equipbags.bank = {} end
+		if BSYC.db.player.equipbags and BSYC.db.player.equipbags.bank then BSYC.db.player.equipbags.bank = nil end
 		return
 	end
-
 	if not BSYC.db.player.equipbags then BSYC.db.player.equipbags = {} end
 	if not BSYC.db.player.equipbags.bag then BSYC.db.player.equipbags.bag = {} end
-	if not BSYC.db.player.equipbags.bank then BSYC.db.player.equipbags.bank = {} end
+	if not BSYC.IsBankTabsActive and not BSYC.db.player.equipbags.bank then BSYC.db.player.equipbags.bank = {} end
 
 	local slotItems = {}
 

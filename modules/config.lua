@@ -485,7 +485,7 @@ options.args.tracking = {
 					get = get,
 					set = set,
 					arg = "tracking.reagents",
-					hidden = function() return not IsReagentBankUnlocked or not BSYC.IsBankTabsActive end,
+					hidden = function() return not IsReagentBankUnlocked or BSYC.IsBankTabsActive end,
 				},
 				module_equip = {
 					order = 4,
@@ -516,7 +516,7 @@ options.args.tracking = {
 					get = get,
 					set = set,
 					arg = "tracking.void",
-					hidden = function() return not CanUseVoidStorage or not BSYC.IsBankTabsActive end,
+					hidden = function() return not CanUseVoidStorage or BSYC.IsBankTabsActive end,
 				},
 				module_auction = {
 					order = 7,
@@ -745,8 +745,20 @@ options.args.display = {
 					disabled = function() return not BSYC.tracking.warband end,
 					hidden = function() return not BSYC.isWarbandActive end,
 				},
-				equipbagslots = {
+				charbanktabs = {
 					order = 13,
+					type = "toggle",
+					name = L.DisplayBankTabs,
+					width = "full",
+					descStyle = "hide",
+					get = get,
+					set = set,
+					arg = "display.showBankTabs",
+					disabled = function() return not BSYC.tracking.bank end,
+					hidden = function() return not BSYC.IsBankTabsActive end,
+				},
+				equipbagslots = {
+					order = 14,
 					type = "toggle",
 					name = L.DisplayEquipBagSlots,
 					width = "full",
@@ -798,7 +810,7 @@ options.args.display = {
 					set = set,
 					arg = "display.sortShowCurrentPlayerOnTop",
 					disabled = function() return BSYC.options.sortTooltipByTotals or BSYC.options.sortByCustomOrder end,
-				},				
+				},
 				sorttooltipbytotals = {
 					order = 2,
 					type = "toggle",
@@ -1233,8 +1245,19 @@ options.args.color = {
 			set = set,
 			arg = "color.warbandtabs",
 		},
-		bagslots = {
+		banktabs = {
 			order = 14,
+			type = "color",
+			name = L.ColorBankTabs,
+			width = "full",
+			hasAlpha = false,
+			descStyle = "hide",
+			get = get,
+			set = set,
+			arg = "color.banktabs",
+		},
+		bagslots = {
+			order = 15,
 			type = "color",
 			name = L.ColorBagSlots,
 			width = "full",
@@ -1245,7 +1268,7 @@ options.args.color = {
 			arg = "color.bagslots",
 		},
 		resetcolors = {
-			order = 15,
+			order = 16,
 			type = "execute",
 			name = L.DefaultColors,
 			func = function()

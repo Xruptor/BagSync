@@ -351,7 +351,9 @@ function Tooltip:DoSort(tblData)
 end
 
 function Tooltip:GetEquipBags(target, unitObj, itemID, countList)
+	if not target or not unitObj or not itemID then return 0 end
 	if not unitObj.data.equipbags or not unitObj.data.equipbags[target] then return 0 end
+	if target == "bank" and BSYC.IsBankTabsActive then return 0 end
 
 	local iCount = 0
 	local tmpSlots = ""
@@ -400,9 +402,17 @@ function Tooltip:AddItems(unitObj, itemID, target, countList, isCurrentPlayer)
 
 	if unitObj.data[target] and BSYC.tracking[target] then
 		if target == "bag" or target == "bank" or target == "reagents" then
+			countList.btab = {}
 			for bagID, bagData in pairs(unitObj.data[target] or {}) do
-				total = total + getTotal(bagData, target)
+
+				local bTotal = getTotal(bagData, target)
+				total = total + bTotal
+
+				if target == "bank" and BSYC.IsBankTabsActive and bTotal > 0 then
+					table.insert(countList.btab, bagID - 5) --subtract 5 to get it to start from 1 since bank tabs start at 6
+				end
 			end
+
 			if target == "bag" or target == "bank" then
 				total = total + self:GetEquipBags(target, unitObj, itemID, countList)
 			end
@@ -418,7 +428,7 @@ function Tooltip:AddItems(unitObj, itemID, target, countList, isCurrentPlayer)
 		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
 			local tabCount = getTotal(tabData, target)
 			if tabCount > 0 then
-				countList.gtab[tabID] = tabCount
+				table.insert(countList.gtab, tabID)
 			end
 			total = total + tabCount
 		end
@@ -429,7 +439,7 @@ function Tooltip:AddItems(unitObj, itemID, target, countList, isCurrentPlayer)
 		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
 			local tabCount = getTotal(tabData, target)
 			if tabCount > 0 then
-				countList.wtab[tabID] = tabCount
+				table.insert(countList.wtab, tabID)
 			end
 			total = total + tabCount
 		end
@@ -467,7 +477,27 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 	end
 	if ((countList["bank"] or 0) > 0) then
 		total = total + countList["bank"]
-		table.insert(tallyCount, self:GetCountString(colorType, dispType, "bank", countList["bank"], BSYC.options.showEquipBagSlots and countList["bankslots"]))
+
+		local bTabStr = ""
+
+		--check for warband tabs first
+		if BSYC.IsBankTabsActive and BSYC.options.showBankTabs and countList["btab"] and #countList["btab"] > 0 then
+			table.sort(countList["btab"], function(a, b) return a < b end)
+
+			for i=1, #countList["btab"] do
+				bTabStr = bTabStr..","..countList["btab"][i]
+			end
+			bTabStr = string.sub(bTabStr, 2)  -- remove comma
+
+			--check for bank tab
+			if string.len(bTabStr) > 0 then
+				bTabStr = self:HexColor(BSYC.colors.banktabs, " ["..L.TooltipTabs.." "..bTabStr.."]")
+			end
+		else
+			bTabStr = (BSYC.options.showEquipBagSlots and countList["bankslots"]) or nil
+		end
+
+		table.insert(tallyCount, self:GetCountString(colorType, dispType, "bank", countList["bank"], bTabStr))
 	end
 	if ((countList["reagents"] or 0) > 0) then
 		total = total + countList["reagents"]
@@ -494,17 +524,17 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 		local gTabStr = ""
 
 		--check for guild tabs first
-		if BSYC.options.showGuildTabs then
+		if BSYC.options.showGuildTabs and countList["gtab"] and #countList["gtab"] > 0 then
 			table.sort(countList["gtab"], function(a, b) return a < b end)
 
-			for k, v in pairs(countList["gtab"]) do
-				gTabStr = gTabStr..","..tostring(k)
+			for i=1, #countList["gtab"] do
+				gTabStr = gTabStr..","..countList["gtab"][i]
 			end
 			gTabStr = string.sub(gTabStr, 2)  -- remove comma
 
 			--check for guild tab
 			if string.len(gTabStr) > 0 then
-				gTabStr = self:HexColor(BSYC.colors.guildtabs, " ["..L.TooltipGuildTabs.." "..gTabStr.."]")
+				gTabStr = self:HexColor(BSYC.colors.guildtabs, " ["..L.TooltipTabs.." "..gTabStr.."]")
 			end
 		end
 
@@ -516,17 +546,17 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 		local wTabStr = ""
 
 		--check for warband tabs first
-		if BSYC.options.showWarbandTabs and countList["wtab"] then
+		if BSYC.options.showWarbandTabs and countList["wtab"] and #countList["wtab"] > 0 then
 			table.sort(countList["wtab"], function(a, b) return a < b end)
 
-			for k, v in pairs(countList["wtab"]) do
-				wTabStr = wTabStr..","..tostring(k)
+			for i=1, #countList["wtab"] do
+				wTabStr = wTabStr..","..countList["wtab"][i]
 			end
 			wTabStr = string.sub(wTabStr, 2)  -- remove comma
 
 			--check for warband tab
 			if string.len(wTabStr) > 0 then
-				wTabStr = self:HexColor(BSYC.colors.warbandtabs, " ["..L.TooltipGuildTabs.." "..wTabStr.."]")
+				wTabStr = self:HexColor(BSYC.colors.warbandtabs, " ["..L.TooltipTabs.." "..wTabStr.."]")
 			end
 		end
 
@@ -969,6 +999,11 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 					self:GetEquipBags("bank", playerObj, link, countList)
 				end
 
+				if BSYC.IsBankTabsActive and BSYC.options.showBankTabs then
+					--we do this so we can grab the btabs, even if we use a real time count from GetItemCount.
+					self:AddItems(playerObj, link, "bank", countList)
+				end
+
 				countList.bag = bagCount
 				countList.bank = bankCount
 				countList.reagents = regCount
@@ -1288,7 +1323,7 @@ local arkAlreadyHooked = false
 function Tooltip:HookTooltip(objTooltip)
 	--if the tooltip doesn't exist, chances are it's the BattlePetTooltip and they are on Classic or WOTLK
 	if not objTooltip then return end
-	
+
 	Debug(BSYC_DL.INFO, "HookTooltip", objTooltip)
 
 	--MORE INFO (https://wowpedia.fandom.com/wiki/Category:API_namespaces/C_TooltipInfo)

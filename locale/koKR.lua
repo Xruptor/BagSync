@@ -31,7 +31,7 @@ L.TooltipSmall_void = "V"
 L.TooltipSmall_auction = "A"
 --do not touch these unless requiring a new image for a specific localization
 L.TooltipTotal = "합계:"
-L.TooltipGuildTabs = "T:"
+L.TooltipTabs = "T:"
 L.TooltipItemID = "[아이템ID]:"
 L.TooltipDebug = "[디버그]:"
 L.TooltipCurrencyID = "[화폐ID]:"
