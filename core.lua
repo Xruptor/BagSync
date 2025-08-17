@@ -206,7 +206,6 @@ function BSYC:EncodeOpts(tbl, link, removeOpts)
 		return tmpStr
 	end
 
-	return
 end
 
 function BSYC:Split(dataStr, skipOpts, mergeOpts)

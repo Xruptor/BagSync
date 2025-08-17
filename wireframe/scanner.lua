@@ -186,6 +186,8 @@ function Scanner:SaveEquippedBags(bagtype)
 	if not BSYC.db.player.equipbags.bag then BSYC.db.player.equipbags.bag = {} end
 	if not BSYC.IsBankTabsActive and not BSYC.db.player.equipbags.bank then BSYC.db.player.equipbags.bank = {} end
 
+	if not C_Container or not C_Container.ContainerIDToInventoryID then return end
+
 	local slotItems = {}
 
 	--add the bag slots

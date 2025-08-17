@@ -117,7 +117,8 @@ function Whitelist:OnEnable()
 		exclusive = 1,
 		hideOnEscape = 1,
 		OnShow = function (self)
-			self.text:SetText(L.WhiteListRemove:format(self.data.value));
+			local tObj = self.text or self.Text
+			tObj:SetText(L.WhiteListRemove:format(self.data.value));
 		end,
 		OnAccept = function (self)
 			Whitelist:RemoveData(self.data)

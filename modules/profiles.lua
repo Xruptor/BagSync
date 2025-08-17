@@ -75,7 +75,8 @@ function Profiles:OnEnable()
 		hideOnEscape = 1,
 		OnShow = function (self)
 			--entry.unitObj.realm
-			self.text:SetText(L.ProfilesRemove:format(self.data.colorized, self.data.realm));
+			local tObj = self.text or self.Text
+			tObj:SetText(L.ProfilesRemove:format(self.data.colorized, self.data.realm));
 		end,
 		OnAccept = function (self)
 			Profiles:DeleteUnit(self.data)

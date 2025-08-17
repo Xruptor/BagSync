@@ -104,7 +104,8 @@ function Blacklist:OnEnable()
 		exclusive = 1,
 		hideOnEscape = 1,
 		OnShow = function (self)
-			self.text:SetText(L.BlackListRemove:format(self.data.value));
+			local tObj = self.text or self.Text
+			tObj:SetText(L.BlackListRemove:format(self.data.value));
 		end,
 		OnAccept = function (self)
 			Blacklist:RemoveData(self.data)
