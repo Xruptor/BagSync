@@ -201,7 +201,7 @@ L.DisplayBNET = "显示所有[战网账号]信息 。|cff3587ff[BNet]|r |cFFDF2B
 L.DisplayItemID = "显示[物品ID]。"
 L.DisplaySourceDebugInfo = "在鼠标提示中显示有用的[Debug]信息。"
 L.DisplayWhiteListOnly = "在鼠标提示中仅显示[白名单]的物品。"
-L.DisplaySourceExpansion = "在鼠标提示中显示[游戏版本]。 |cFF99CC33[仅正式服]|r"
+L.DisplaySourceExpansion = "在鼠标提示中显示[游戏内容]。 |cFF99CC33[仅正式服]|r"
 L.DisplayItemTypes = "在鼠标提示中显示[物品类型|子类型]。"
 L.DisplayTooltipTags = "标识符"
 L.DisplayTooltipStorage = "仓库"
@@ -256,7 +256,7 @@ L.ColorCurrentRealm = "BagSync \"当前\"[服务器] 提示颜色。"
 L.ColorCR = "BagSync \"合并\"[服务器] 提示颜色。"
 L.ColorBNET = "BagSync [战网] 提示颜色。"
 L.ColorItemID = "BagSync [物品ID] 提示颜色。"
-L.ColorExpansion = "BagSync [游戏版本] 提示颜色。"
+L.ColorExpansion = "BagSync [游戏内容] 提示颜色。"
 L.ColorItemTypes = "BagSync [物品类型] 提示颜色。"
 L.ColorGuildTabs = "公会标签 [1,2,3, 等...] 提示颜色。"
 L.ColorWarbandTabs = "战团标签 [1,2,3, 等...] 提示颜色。"
@@ -344,7 +344,7 @@ L.SearchHelp = [[
 
 |cff00ffff<item set>|r = |cFF99CC33s|r ; |cFF99CC33set|r | |cFFFFD580s:<setname>|r（setname can be * for all sets）
 
-|cff00ffff<版本>|r = |cFF99CC33x|r ; |cFF99CC33xpac|r ; |cFF99CC33expansion|r | 示例： |cFFFFD580x:巨龙时代|r  ;   |cFFFFD580xpac:暗影国度|r 
+|cff00ffff<游戏内容>|r = |cFF99CC33x|r ; |cFF99CC33xpac|r ; |cFF99CC33expansion|r | 示例： |cFFFFD580x:巨龙时代|r  ;   |cFFFFD580xpac:暗影国度|r 
 
 |cff00ffff<关键字>|r = |cFF99CC33k|r ; |cFF99CC33key|r ; |cFF99CC33keyword|r | 示例：|cFFFFD580k:任务|r（关键字: soulbound, bound, boe, bop, bou, boa, quest, unique, toy, reagent, crafting, naval, follower, follow, power, apperance）
 
