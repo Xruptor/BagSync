@@ -55,7 +55,10 @@ function Scanner:GetBagSlots(bagType)
 		if BSYC.IsBankTabsActive then
 			return Enum.BagIndex.CharacterBankTab_1, Enum.BagIndex.CharacterBankTab_6
 		else
-			return Enum.BagIndex.BankBag_1, Enum.BagIndex.BankBag_7
+			--classic server bank bags start at 5 so these are off by one, the actual bank slot 5 is the reagentbank variable, so we have to use that
+			--https://us.forums.blizzard.com/en/wow/t/bug-enumbagslotflags-keys-different-to-retail/1912948
+			--Special thanks to Schlapstick on anniversary server for helping me out with this. :)
+			return Enum.BagIndex.ReagentBag, Enum.BagIndex.BankBag_7
 		end
 	end
 end
