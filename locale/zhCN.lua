@@ -383,9 +383,9 @@ L.FAQ_Question_1_p1 = [[
 ]]
 L.FAQ_Question_2 = " 在|cFFDF2B2B单独|r |cff3587ff战网|r 账号中。找不到我的其他魔兽世界账号的物品数据。"
 L.FAQ_Question_2_p1 = [[
-插件无法从其他魔兽世界帐户读取数据。这是因为它们不共享相同的 SavedVariable 文件夹。这是暴雪魔兽世界客户端的内置限制。因此,您将无法在 |cFFDF2B2B单个e|r |cff3587ffBattle.net|r 下看到多个魔兽世界帐户的物品数据。 BagSync 将只能读取同一魔兽世界帐户内同服务器内多个的角色数据,而不是整个战网帐户。|cFF99CC33https://www.wowhead.com/guide=934|r
+插件无法从其他魔兽世界帐户读取数据。这是因为它们不共享相同的 SavedVariable 文件夹。这是暴雪魔兽世界客户端的内置限制。因此,您将无法在 |cFFDF2B2B单独|r |cff3587ffBattle.net|r 下看到多个魔兽世界帐户的物品数据。 BagSync 将只能读取同一魔兽世界帐户内同服务器内多个的角色数据,而不是整个战网帐户。|cFF99CC33https://www.wowhead.com/guide=934|r
 
-有一种方法可以在 |cFFDF2B2Bsingle|r |cff3587ffBattle.net|r 帐户内连接多个魔兽世界帐户,以便它们共享相同的 SavedVariables 文件夹。这涉及创建服务器链接文件夹。我不会在这方面提供帮助。所以别问了！请访问以下指南了解更多详情。 
+有一种方法可以在 |cFFDF2B2B单独|r |cff3587ffBattle.net|r 帐户内连接多个魔兽世界帐户,以便它们共享相同的 SavedVariables 文件夹。这涉及创建服务器链接文件夹。我不会在这方面提供帮助。所以别问了！请访问以下指南了解更多详情。 
 ]]
 L.FAQ_Question_3 = "可以查看来自 |cFFDF2B2B多个|r |cff3587ff战网|r 账号内的物品数据吗 ？"
 L.FAQ_Question_3_p1 = "不,这不可能。我不会在这方面提供帮助。所以不要问！"
