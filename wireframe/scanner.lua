@@ -119,12 +119,17 @@ function Scanner:StartupScans()
 		self:SaveBag("bag", i)
 	end
 
+	--save reagent bag if active
+	if BSYC.IsReagentBagActive then
+		self:SaveBag("bag", Enum.BagIndex.ReagentBag)
+	end
+
 	--check keyring, Enum.BagIndex.Keyring is nil on servers that have it disabled
 	if Enum.BagIndex.Keyring and HasKey and HasKey() then
 		self:SaveBag("bag", Enum.BagIndex.Keyring)
 	else
 		--cleanup old keyring stuff if it's disabled
-		local xKeyRing = Enum.BagIndex.Keyring
+		local xKeyRing = Enum.BagIndex.Keyring or -1
 		if xKeyRing and BSYC.db.player.bag and BSYC.db.player.bag[xKeyRing] then
 			BSYC.db.player.bag[xKeyRing] = nil
 		end
