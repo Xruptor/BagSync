@@ -193,8 +193,11 @@ end
 function Events:BAG_UPDATE(event, bagid)
 	Debug(BSYC_DL.SL3, "BAG_UPDATE", bagid)
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
+	local wasQueued = self.SpamBagQueue[bagid]
 	self.SpamBagQueue[bagid] = true
-	self.SpamBagTotal = (self.SpamBagTotal or 0) + 1
+	if not wasQueued then
+		self.SpamBagTotal = (self.SpamBagTotal or 0) + 1
+	end
 	--this will act as a failsafe in case BAG_UPDATE_DELAYED doesn't get fired for some weird reason on a faulty server
 	BSYC:StartTimer("BagUpdateFailsafe", 3, Events, "BAG_UPDATE_DELAYED")
 end

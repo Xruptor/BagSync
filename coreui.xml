@@ -397,9 +397,9 @@
 					<AbsInset left="24" right="19" top="1" bottom="-1"/> <!-- Move the Input cursor to the right beyond Search Icon -->
 				</TextInsets>
 				<Anchors>
-					<!-- This is important as it sets the size of the SearchBox to dimentions it can fit on the frame-->
-					<Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="TOPRIGHT" x="-135" y="-30"/>
-					<Anchor point="RIGHT" relativeKey="$parent" relativePoint="LEFT" x="20" y="0"/>
+					<!-- Size the SearchBox within the frame, leaving space on the right for + and Refresh -->
+					<Anchor point="TOPLEFT"  relativeKey="$parent" relativePoint="TOPLEFT"  x="20"   y="-30"/>
+					<Anchor point="TOPRIGHT" relativeKey="$parent" relativePoint="TOPRIGHT" x="-135" y="-30"/>
 				</Anchors>
 				<Layers>
 					<Layer level="ARTWORK">

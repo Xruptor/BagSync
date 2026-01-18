@@ -33,6 +33,30 @@ BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 --BSYC.IsTBC_C = WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC
 BSYC.IsWLK_C = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
 
+-- literal marker helper (no Lua patterns)
+local function hasMark(s, mark)
+    return type(s) == "string" and s:find(mark, 1, true) ~= nil
+end
+BSYC.hasMark = hasMark
+
+-- centralized API compatibility table (preserves fallbacks)
+BSYC.API = BSYC.API or {}
+BSYC.API.GetContainerNumSlots = (C_Container and C_Container.GetContainerNumSlots) or GetContainerNumSlots
+BSYC.API.GetContainerItemInfo = (C_Container and C_Container.GetContainerItemInfo) or GetContainerItemInfo
+BSYC.API.TimerAfter = (C_Timer and C_Timer.After) or function(t, fn)
+    if BSYC and BSYC.CreateTimer then
+        BSYC:CreateTimer(fn, t)
+    else
+        -- last-resort fallback: run on next frame if no timer system exists
+        local f = CreateFrame("Frame")
+        f:SetScript("OnUpdate", function(self)
+            self:SetScript("OnUpdate", nil)
+            fn()
+        end)
+    end
+end
+
+
 BSYC.IsBankTabsActive = Enum.BagIndex.CharacterBankTab_1 ~= nil
 BSYC.IsReagentBagActive = (Constants.InventoryConstants.NumReagentBagSlots or 0) > 0
 
@@ -238,94 +262,104 @@ end
 
 --This function will always return the base short itemID if no count is provided or if the count is less than 1.
 --Note: In addition to above, the base itemID is returned as an integer unless the item has bonusID, in which case the itemID with bonusID string is returned.
+BSYC.__parseCache = BSYC.__parseCache or {}
+BSYC.__parseCacheSize = BSYC.__parseCacheSize or 0
+
+local MAX_PARSE_CACHE = 5000
+
 function BSYC:ParseItemLink(link, count)
-	if link then
-		if not count then count = 1 end
+	if not link then return end
+	if not count then count = 1 end
 
-		--there are times link comes in as a number and breaks string matching, convert to string to fix
-		if type(link) == "number" then link = tostring(link) end
+	if type(link) == "number" then
+		link = tostring(link)
+	end
 
-		--if we are parsing a database entry just return it, chances are it's a battlepet anyways
-		local qLink, qCount = BSYC:Split(link, true)
-		if qLink and qCount then
-			return link
-		end
+	-- hard cap protection (defensive)
+	if next(self.__parseCache) and self.__parseCacheSize > MAX_PARSE_CACHE then
+		wipe(self.__parseCache)
+		self.__parseCacheSize = 0
+	end
 
-		--local linkType, linkOptions, name = LinkUtil.ExtractLink(battlePetLink);
-		--if linkType ~= "battlepet" then
-		--	return false;
-		--end
-		local isBattlepet = string.match(link, ".*(battlepet):.*") == "battlepet"
-		if isBattlepet then
-			return BSYC:CreateFakeID(link, count)
-		end
+	local cacheKey = link .. ";" .. tostring(count)
 
-		local result = link:match("item:([%d:]+)")
-		local shortID = self:GetShortItemID(link)
+	-- fast path
+	local cached = self.__parseCache[cacheKey]
+	if cached then
+		return cached
+	end
 
-		--sometimes the profession window has a bug for the items it parses, so lets fix it
-		-----------------------------
-		if shortID and tonumber(shortID) == 0 and TradeSkillFrame then
-			local focus = BSYC.GMF():GetName()
-
-			if focus == 'TradeSkillSkillIcon' then
-				link = C_TradeSkillUI.GetRecipeItemLink(TradeSkillFrame.selectedSkill)
-			else
-				local i = focus:match('TradeSkillReagent(%d+)')
-				if i then
-					link = C_TradeSkillUI.GetRecipeReagentItemLink(TradeSkillFrame.selectedSkill, tonumber(i))
-				end
-			end
-			if link then
-				result = link:match("item:([%d:]+)")
-				shortID = self:GetShortItemID(link)
-			end
-		end
-		-----------------------------
-
-		if result then
-			--https://wowpedia.fandom.com/wiki/ItemLink
-
-			local linkSplit = {strsplit(":", result)}
-			result = shortID --set this to default shortID, if we have something in the bonusID we will replace it below
-
-			if linkSplit and #linkSplit > 13 then
-
-				--check for bonusID, we do this by checking 13th marker value
-				local bonusCount = linkSplit[13] or 0 -- do we have a bonusID number count?
-				bonusCount = bonusCount == "" and 0 or bonusCount --make sure we have a count if not default to zero
-				bonusCount = tonumber(bonusCount)
-
-				--if we don't have a bonusCount than just stick to use the shortID from the result above
-				if bonusCount and bonusCount > 0 then
-					--empty out everything after the bonusIDs, so starting at 13 + the bonusCount
-					--example 138823::::::::::::1:664::::::::, 664 is 14th slot, but we want to start emptying after that so it would be > 13th slot + bonusCount, so > 14 or 15
-					--example 36374::::::::::::2:6654:1708:::::::::: 6654 is 14th slot, but we want 14th slot and 15th slot, so 13th + bonusCount (which is 2) would be 15th slot.
-
-					--Remove  (enchantID : gemID1 : gemID2 : gemID3 : gemID4: suffixID : uniqueID : linkLevel : specializationID : modifiersMask : itemContext)
-					for i = 2, #linkSplit do
-						if i < 13 or i > (13 + bonusCount) then
-							linkSplit[i] = ""
-						end
-					end
-
-					--put everything together
-					result = table.concat(linkSplit, ":")
-				end
-			end
-		end
-
-		--grab the link results if we have it, otherwise use the shortID
-		link = result or shortID
-
-		--if we have a count, then add it to the parse string
-		if count and count > 1 then
-			link = link .. ';' .. count
-		end
-
+	-- database entry short-circuit
+	local qLink, qCount = self:Split(link, true)
+	if qLink and qCount then
 		return link
 	end
+
+	-- battle pet handling
+	if link:find("battlepet:", 1, true) then
+		local parsed = self:CreateFakeID(link, count)
+		if parsed then
+			self.__parseCache[cacheKey] = parsed
+			self.__parseCacheSize = self.__parseCacheSize + 1
+		end
+		return parsed
+	end
+
+	local result = link:match("item:([%d:]+)")
+	local shortID = self:GetShortItemID(link)
+
+	-- profession frame bug workaround
+	if shortID and tonumber(shortID) == 0 and TradeSkillFrame then
+		local focus = self.GMF():GetName()
+
+		if focus == "TradeSkillSkillIcon" then
+			link = C_TradeSkillUI.GetRecipeItemLink(TradeSkillFrame.selectedSkill)
+		else
+			local i = focus:match("TradeSkillReagent(%d+)")
+			if i then
+				link = C_TradeSkillUI.GetRecipeReagentItemLink(
+					TradeSkillFrame.selectedSkill,
+					tonumber(i)
+				)
+			end
+		end
+
+		if link then
+			result = link:match("item:([%d:]+)")
+			shortID = self:GetShortItemID(link)
+		end
+	end
+
+	if result then
+		local linkSplit = { strsplit(":", result) }
+		result = shortID
+
+		if #linkSplit > 13 then
+			local bonusCount = tonumber(linkSplit[13]) or 0
+
+			if bonusCount > 0 then
+				for i = 2, #linkSplit do
+					if i < 13 or i > (13 + bonusCount) then
+						linkSplit[i] = ""
+					end
+				end
+				result = table.concat(linkSplit, ":")
+			end
+		end
+	end
+
+	link = result or shortID
+
+	if count > 1 then
+		link = link .. ";" .. count
+	end
+
+	self.__parseCache[cacheKey] = link
+	self.__parseCacheSize = self.__parseCacheSize + 1
+
+	return link
 end
+
 
 function BSYC:CreateFakeID(link, count, speciesID, level, breedQuality, maxHealth, power, speed, name)
 	if not BattlePetTooltip then return end
@@ -385,30 +419,28 @@ function BSYC:FakeIDToSpeciesID(fakeID)
 end
 
 function BSYC:GetShortItemID(link)
-	if link then
-		if type(link) == "number" then link = tostring(link) end
+  if not link then return end
+  if type(link) == "number" then link = tostring(link) end
 
-		--first check if we are being sent a battlepet link
-		local isBattlepet = string.match(link, ".*(battlepet):.*") == "battlepet"
-		if isBattlepet then
-			--create a FakeID
-			link = BSYC:CreateFakeID(link)
-		end
-		if not link then return end
+  if link:find("battlepet:", 1, true) then
+    link = BSYC:CreateFakeID(link) -- may return nil if BattlePetTooltip missing
+    if not link then return end
+  end
 
-		return link:match("item:(%d+):") or link:match("^(%d+):") or strsplit(";", link) or link
-	end
+  return link:match("item:(%d+):")
+      or link:match("^(%d+):")
+      or (select(1, strsplit(";", link)))
+      or link
 end
 
 function BSYC:GetShortCurrencyID(link)
-	--https://wowpedia.fandom.com/wiki/Hyperlinks#currency
-    if link then
-        if type(link) == "number" then link = tostring(link) end
-        link = link:match("currency:([%d:]+)[:]?") or link
-        local link = link:match("currency:([%d:]+):") or link:match("currency:(%d+):") or link:match("^(%d+):") or link
-        return tonumber(link)
-    end
+  if not link then return end
+  if type(link) == "number" then link = tostring(link) end
+
+  local id = link:match("currency:(%d+):") or link:match("currency:(%d+)$") or link:match("^(%d+):") or link
+  return tonumber(id)
 end
+
 
 function BSYC:SetDefaults(category, defaults)
 	local dbObj = BagSyncDB["options§"]

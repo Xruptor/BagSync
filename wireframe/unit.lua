@@ -9,6 +9,7 @@
 
 local BSYC = select(2, ...) --grab the addon namespace
 local Unit = BSYC:NewModule("Unit", 'AceEvent-3.0')
+local hasMark = BSYC.hasMark
 
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Unit", ...) end
@@ -234,7 +235,16 @@ function Unit:GetUnitAddress(unit)
 	end
 
 	local name, realm = strmatch(unit, '^(.-) *%- *(.+)$')
-	local guildName = strmatch(name or unit, '(.+)©')
+	local guildName
+	local n = name or unit
+	if n and hasMark(n, "©") then
+		local pos = n:find("©", 1, true)
+		if pos and pos > 1 then
+			guildName = n:sub(1, pos - 1)
+		end
+	end
+
+
 	return realm or REALM, guildName or unit, guildName and true
 end
 
@@ -272,9 +282,9 @@ function Unit:GetPlayerInfo(bypassDebug)
 	return unit
 end
 
-function Unit:isConnectedRealm(realm)
+function Unit:CheckConnectedRealm(realm)
 	if not realm then return false end
-	if not Unit.realmKey then Unit:DoRealmCollection("isConnectedRealm") end
+	if not Unit.realmKey then Unit:DoRealmCollection("CheckConnectedRealm") end
 
 	realm = BROKEN_REALMS[realm] or realm
 	realm = realm:gsub('(%l)(%u)', '%1 %2') -- names like Blade'sEdge to Blade's Edge

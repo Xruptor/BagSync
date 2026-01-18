@@ -8,6 +8,7 @@
 
 local BSYC = select(2, ...) --grab the addon namespace
 local Data = BSYC:NewModule("Data")
+local hasMark = BSYC.hasMark
 local Unit = BSYC:GetModule("Unit")
 local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 
@@ -200,7 +201,7 @@ function Data:OnEnable()
 	end
 	if BSYC.options.debug.enable then
 		BSYC:Print(L.DebugWarning)
-		C_Timer.After(6, function() BSYC:Print(L.DebugWarning) end)
+		BSYC.API.TimerAfter(6, function() BSYC:Print(L.DebugWarning) end)
 	end
 end
 
@@ -280,7 +281,7 @@ function Data:FixDB()
 	local removeList = {}
 	for k, v in pairs(BagSyncDB) do
 		--only do checks for realms not on options
-		if not string.match(k, '§*') then
+		if not hasMark(k, "§") then
 			if BSYC:GetHashTableLen(v) == 0 then
 				--don't remove tables while iterating, that causes complications, do it afterwards
 				table.insert(removeList, k)
@@ -435,49 +436,75 @@ function Data:CacheLink(parseLink)
 			itemObj.speciesID = speciesID
 			itemObj.parseLink = origLink
 
-			--https://wowpedia.fandom.com/wiki/API_C_PetJournal.GetPetInfoBySpeciesID
+			--https://wowpedia.fandom.com/wiki/API_(C_PetJournal and C_PetJournal.GetPetInfoBySpeciesID)
 			itemObj.speciesName,
 			itemObj.speciesIcon,
 			itemObj.petType,
 			itemObj.companionID,
 			itemObj.tooltipSource,
-			itemObj.tooltipDescription,
-			itemObj.isWild,
-			itemObj.canBattle,
-			itemObj.isTradeable,
+			itemObj.isNotTradable,
 			itemObj.isUnique,
-			itemObj.obtainable,
-			itemObj.creatureDisplayID = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
-		else
-			if C_Item.IsItemDataCachedByID(shortID) then
-				itemObj.parseLink = origLink
+			itemObj.ownedByBattleNet,
+			itemObj.sourceText,
+			itemObj.description,
+			itemObj.isWildPet,
+			itemObj.canBattle,
+			itemObj.tradeSkill
+			= (C_PetJournal and C_PetJournal.GetPetInfoBySpeciesID)(speciesID)
 
-				--https://wowpedia.fandom.com/wiki/API_C_Item.GetItemInfo
-				itemObj.itemName,
-				itemObj.itemLink,
-				itemObj.itemQuality,
-				itemObj.itemLevel,
-				itemObj.itemMinLevel,
-				itemObj.itemType,
-				itemObj.itemSubType,
-				itemObj.itemStackCount,
-				itemObj.itemEquipLoc,
-				itemObj.itemTexture,
-				itemObj.sellPrice,
-				itemObj.classID,
-				itemObj.subclassID,
-				itemObj.bindType,
-				itemObj.expacID,
-				itemObj.setID,
-				itemObj.isCraftingReagent = C_Item.GetItemInfo(shortID)
-			else
-				C_Item.RequestLoadItemDataByID(shortID)
+			--grab some additional information from the species
+			if C_PetJournal and C_PetJournal.GetPetAbilityList then
+				itemObj.ability1, itemObj.ability2, itemObj.ability3, itemObj.ability4, itemObj.ability5, itemObj.ability6 = C_PetJournal.GetPetAbilityList(speciesID)
 			end
-		end
-		--add to Cache if we have something to work with
-		if itemObj.speciesName or (itemObj.itemName and itemObj.itemLink) then
+
+			-- battle pets bypass itemID logic entirely
+			itemObj.itemName = itemObj.speciesName
+			-- no itemID for pets
+
+			--lets store our fakeID
 			Data.__cache.items[shortID] = itemObj
 			return itemObj
+		else
+
+			--https://wowpedia.fandom.com/wiki/API_C_Item.GetItemInfo
+			--NOTE: C_Item.GetItemInfo doesn't exist on classic, so fallback
+			local itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent
+			if C_Item and C_Item.GetItemInfo then
+				itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent = C_Item.GetItemInfo(shortID)
+			else
+				itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID = GetItemInfo(shortID)
+			end
+
+			--if we are missing itemName and itemLink then request it (retail async cache)
+			if not itemName or not itemLink then
+				if C_Item and C_Item.RequestLoadItemDataByID then
+					C_Item.RequestLoadItemDataByID(shortID)
+				end
+			end
+
+			itemObj.itemName = itemName
+			itemObj.itemLink = itemLink
+			itemObj.itemQuality = itemQuality or 1
+			itemObj.itemLevel = itemLevel
+			itemObj.itemMinLevel = itemMinLevel
+			itemObj.itemType = itemType
+			itemObj.itemSubType = itemSubType
+			itemObj.itemStackCount = itemStackCount
+			itemObj.itemEquipLoc = itemEquipLoc
+			itemObj.itemTexture = itemTexture
+			itemObj.sellPrice = sellPrice
+			itemObj.classID = classID
+			itemObj.subclassID = subclassID
+			itemObj.bindType = bindType
+			itemObj.expacID = expacID
+			itemObj.setID = setID
+			itemObj.isCraftingReagent = isCraftingReagent
+
+			--add to Cache if we have something to work with
+			if itemObj.itemName and itemObj.itemLink then
+				Data.__cache.items[shortID] = itemObj
+				return itemObj
+			end
 		end
 	else
 		return Data.__cache.items[shortID]
@@ -652,7 +679,7 @@ end
 
 function Data:GetPlayerObj(player)
 	if not player then player = Unit:GetPlayerInfo(true) end
-	local isConnectedRealm = Unit:isConnectedRealm(player.realm)
+	local isConnectedRealm = Unit:CheckConnectedRealm(player.realm)
 	Debug(BSYC_DL.TRACE, "GetPlayerObj", player.name, player.realm, isConnectedRealm)
 	return {
 		realm = player.realm,
@@ -670,7 +697,7 @@ function Data:GetPlayerGuildObj(player)
 	if not BSYC.tracking.guild then return end
 	Debug(BSYC_DL.TRACE, "GetPlayerGuild", player.guild, BSYC.tracking.guild)
 
-	local isConnectedRealm = Unit:isConnectedRealm(player.guildrealm)
+	local isConnectedRealm = Unit:CheckConnectedRealm(player.guildrealm)
 	local isXRGuild = false
 	if not BSYC.options.enableCR and not BSYC.options.enableBNET then
 		isXRGuild = not Unit:CompareRealms(player.guildrealm, player.realm) or false
@@ -725,120 +752,154 @@ function Data:GetWarbandBankObj()
 	}
 end
 
-function Data:IterateUnits(dumpAll, filterList)
-	Debug(BSYC_DL.INFO, "IterateUnits", dumpAll, filterList)
+-- -------------------------------------------------------
+-- IterateUnits helpers
+-- -------------------------------------------------------
 
-	local player = Unit:GetPlayerInfo(true)
-	local argKey, argValue = next(BagSyncDB)
-	local k, v
+local function ShouldIncludeRealm(realmKey, meta, dumpAll, filterList)
+	if hasMark(realmKey, "§") then
+		return false
+	end
 
-	return function()
-		while argKey do
+	if dumpAll then return true end
+	if filterList and filterList[realmKey] then return true end
 
-			if argKey and string.match(argKey, '§*') then
-				argKey, argValue = next(BagSyncDB, argKey)
+	if meta.isCurrent then return true end
+	if BSYC.options.enableBNET then
+		-- allow all realms, but preserve legacy equivalence safety
+		if meta.isConnected then
+			return true
+		end
 
-			elseif argKey then
-				local isConnectedRealm = Unit:isConnectedRealm(argKey)
+		-- legacy fallback: string-equivalent realms
+		if Unit:CompareRealms(realmKey, BSYC.realm) then
+			return true
+		end
 
-				--check to see if a user joined a guild on a connected realm and doesn't have the CR or BNET options on
-				--if they have guilds enabled, then we should show it anyways, regardless of the CR and BNET options
-				--NOTE: This should ONLY be done if the guild realm is NOT the player realm.  If it's the same realms for both then it would be processed anyways.
-				local isXRGuild = false
-				if BSYC.tracking.guild and player.guild and not BSYC.options.enableCR and not BSYC.options.enableBNET then
-					if player.guildrealm and Unit:CompareRealms(argKey, player.guildrealm) then
-						isXRGuild = not Unit:CompareRealms(argKey, player.realm) or false
-					end
-				end
+		return true -- still allow, but flags below will differ
+	end
+	if BSYC.options.enableCR and meta.isConnected then return true end
 
-				local passChk = false
-				if dumpAll or filterList then
-					if dumpAll or (filterList and filterList[argKey]) then passChk = true end
-				else
-					if argKey == player.realm or isXRGuild then passChk = true end
-					if isConnectedRealm and BSYC.options.enableCR then passChk = true end
-					if BSYC.options.enableBNET then passChk = true end
-				end
+	-- XR-guild passthrough
+	if not BSYC.options.enableCR and meta.isConnected then
+		return true
+	end
 
-				if passChk then
+	return false
+end
 
-					--pull entries from characters until k is empty, then pull next realm entry
-					k, v = next(argValue, k)
+local function ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, filterList)
+	local isGuild = hasMark(unitKey, "©")
+	local hasAnyMark = hasMark(unitKey, "©") or hasMark(unitKey, "§")
 
-					if k then
+	if dumpAll or filterList then
+		local realmFilter = filterList and filterList[realmKey]
+		if realmFilter and type(realmFilter) == "table" and not realmFilter[unitKey] then
+			return false
+		end
+		return true
+	end
 
-						local skipReturn = false
-						local isGuild = (k:find('©*') and true) or false
+	-- XR realm suppression
+	if not BSYC.options.enableCR and meta.isConnected then
+		return isGuild
+	end
 
-						--return everything regardless of user settings
-						if dumpAll or filterList then
-
-							if filterList and not filterList[argKey][k] then
-								skipReturn = true
-							end
-
-							if not skipReturn then
-								return {
-									realm = argKey,
-									name = k,
-									data = v,
-									isGuild = isGuild,
-									isConnectedRealm = isConnectedRealm,
-									isXRGuild = isXRGuild
-								}
-							end
-
-						elseif v.faction and (v.faction == BSYC.db.player.faction or BSYC.options.enableFaction) then
-
-							--check for guilds and if we have them merged or not
-							if BSYC.tracking.guild and isGuild then
-
-								--check for guilds only on current character if enabled and on their current realm
-								if (isXRGuild or BSYC.options.showGuildCurrentCharacter) and player.guild and player.guildrealm then
-									--if we have the same guild realm and same guild name, then let it pass, otherwise skip it
-									if Unit:CompareRealms(argKey, player.guildrealm) and k == player.guild then
-										skipReturn = false
-									else
-										skipReturn = true
-									end
-								end
-
-								--check for the guild blacklist
-								if BSYC.db.blacklist[k..argKey] then skipReturn = true end
-
-							elseif not BSYC.tracking.guild and isGuild then
-								skipReturn = true
-
-							elseif isXRGuild then
-								--if this is enabled, then we only want guilds, skip all users
-								skipReturn = true
-							end
-
-							if not skipReturn then
-								return {
-									realm = argKey,
-									name = k,
-									data = v,
-									isGuild = isGuild,
-									isConnectedRealm = isConnectedRealm,
-									isXRGuild = isXRGuild
-								}
-							end
-
-						end
-
-					else
-						--we have looped through all the characters and next k entry is empty, pull next entry from realms
-						argKey, argValue = next(BagSyncDB, argKey)
-					end
-
-				else
-					--realm doesn't match our criteria, pull next entry from realms
-					argKey, argValue = next(BagSyncDB, argKey)
-				end
-
-			end
+	-- faction filtering (characters only)
+	if not isGuild and not hasAnyMark and not BSYC.options.enableFaction then
+		if unitData.faction ~= BSYC.player.faction then
+			return false
 		end
 	end
 
+	-- guild toggle
+	if isGuild and not BSYC.options.enableGuild then
+		return false
+	end
+
+	-- blacklist (characters only)
+	if not isGuild and BSYC.db.blacklist and BSYC.db.blacklist[unitKey] then
+		return false
+	end
+
+
+	return true
+end
+
+function Data:IterateUnits(dumpAll, filterList)
+	-- snapshot realm keys (FixDB-safe)
+	local realmKeys = {}
+	for realmKey in pairs(BagSyncDB) do
+		realmKeys[#realmKeys + 1] = realmKey
+	end
+
+	-- precompute realm metadata once
+	local realmMeta = {}
+	for _, realmKey in ipairs(realmKeys) do
+		if not hasMark(realmKey, "§") then
+			realmMeta[realmKey] = {
+				isConnected = Unit:CheckConnectedRealm(realmKey),
+				isCurrent   = (realmKey == BSYC.realm),
+			}
+		end
+	end
+
+	local realmIndex = 0
+	local unitKeys
+	local unitIndex
+	local realmKey
+	local currentRealmData
+
+	return function()
+		while true do
+			-- advance realm
+			if not unitKeys then
+				realmIndex = realmIndex + 1
+				realmKey = realmKeys[realmIndex]
+				if not realmKey then
+					return
+				end
+
+				currentRealmData = BagSyncDB[realmKey]
+				local meta = realmMeta[realmKey]
+
+				if currentRealmData and meta and ShouldIncludeRealm(realmKey, meta, dumpAll, filterList) then
+					-- snapshot unit keys for this realm
+					unitKeys = {}
+					for unitKey in pairs(currentRealmData) do
+						unitKeys[#unitKeys + 1] = unitKey
+					end
+					unitIndex = 0
+				else
+					unitKeys = nil
+				end
+			end
+
+			-- advance unit
+			if unitKeys then
+				unitIndex = unitIndex + 1
+				local unitKey = unitKeys[unitIndex]
+				if unitKey then
+					local unitData = currentRealmData[unitKey]
+					local meta = realmMeta[realmKey]
+
+					if unitData and ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, filterList) then
+						local isGuild = hasMark(unitKey, "©")
+						local isXRGuild = (not BSYC.options.enableCR and meta.isConnected and isGuild)
+
+						return {
+							realm = realmKey,
+							name = unitKey,
+							data = unitData,
+							isGuild = isGuild,
+							isConnectedRealm = meta.isConnected,
+							isXRGuild = isXRGuild,
+						}
+					end
+				else
+					unitKeys = nil
+				end
+			end
+		end
+	end
 end
