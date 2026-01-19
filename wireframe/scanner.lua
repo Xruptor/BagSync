@@ -155,6 +155,9 @@ function Scanner:SaveBag(bagtype, bagid)
 	if not BSYC.tracking[bagtype] then return end
 	if not BSYC.db.player[bagtype] then BSYC.db.player[bagtype] = {} end
 
+	-- CLEAR FIRST (important!)
+	BSYC.db.player[bagtype][bagid] = nil
+
 	local xGetNumSlots = BSYC.API.GetContainerNumSlots
 	local xGetContainerInfo = BSYC.API.GetContainerItemInfo
 
@@ -202,16 +205,42 @@ function Scanner:SaveEquippedBags(bagtype)
 
 	local slotItems = {}
 
-	--add the bag slots
-	local minCnt, maxCnt = self:GetBagSlots(bagtype)
+	-- add the bag slots (EQUIPPED bags only; do NOT include Backpack/container 0)
+	local minCnt, maxCnt
+
+	if bagtype == "bag" then
+		-- equipped bag containers are 1..4; backpack (0) is NOT an equipped bag slot
+		minCnt, maxCnt = Enum.BagIndex.Bag_1, Enum.BagIndex.Bag_4
+	else
+		-- bank equip bags stay based on GetBagSlots()
+		minCnt, maxCnt = self:GetBagSlots(bagtype)
+	end
+
+	-- sanity range for equipped bag inventory slots (Bag0Slot..Bag3Slot)
+	local bagInvMin, bagInvMax
+	if bagtype == "bag" then
+		bagInvMin = GetInventorySlotInfo("Bag0Slot")
+		bagInvMax = GetInventorySlotInfo("Bag3Slot")
+	end
+
 	for i = minCnt, maxCnt do
 		local invID = C_Container.ContainerIDToInventoryID(i)
-		local bagLink = GetInventoryItemLink("player",invID)
-		if bagLink then
-			local parseLink =  BSYC:ParseItemLink(bagLink)
-			if parseLink then
-				local encodeStr = BSYC:EncodeOpts({bagslot=i}, parseLink)
-				table.insert(slotItems,  encodeStr)
+
+		-- OPTIONAL HARDENING: ensure this invID is actually a bag slot
+		if bagtype == "bag" then
+			if not (invID and bagInvMin and bagInvMax and invID >= bagInvMin and invID <= bagInvMax) then
+				invID = nil
+			end
+		end
+
+		if invID then
+			local bagLink = GetInventoryItemLink("player", invID)
+			if bagLink then
+				local parseLink = BSYC:ParseItemLink(bagLink)
+				if parseLink then
+					local encodeStr = BSYC:EncodeOpts({bagslot=i}, parseLink)
+					table.insert(slotItems, encodeStr)
+				end
 			end
 		end
 	end
