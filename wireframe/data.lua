@@ -756,6 +756,13 @@ end
 -- IterateUnits helpers
 -- -------------------------------------------------------
 
+local function GetOption(key, defaultValue)
+	if not BSYC.options then return defaultValue end
+	local value = BSYC.options[key]
+	if value == nil then return defaultValue end
+	return value
+end
+
 local function ShouldIncludeRealm(realmKey, meta, dumpAll, filterList)
 	if hasMark(realmKey, "§") then
 		return false
@@ -765,7 +772,11 @@ local function ShouldIncludeRealm(realmKey, meta, dumpAll, filterList)
 	if filterList and filterList[realmKey] then return true end
 
 	if meta.isCurrent then return true end
-	if BSYC.options.enableBNET then
+
+	local enableBNET = GetOption("enableBNET", optionsDefaults.enableBNET)
+	local enableCR = GetOption("enableCR", optionsDefaults.enableCR)
+
+	if enableBNET then
 		-- allow all realms, but preserve legacy equivalence safety
 		if meta.isConnected then
 			return true
@@ -778,17 +789,17 @@ local function ShouldIncludeRealm(realmKey, meta, dumpAll, filterList)
 
 		return true -- still allow, but flags below will differ
 	end
-	if BSYC.options.enableCR and meta.isConnected then return true end
+	if enableCR and meta.isConnected then return true end
 
 	-- XR-guild passthrough
-	if not BSYC.options.enableCR and meta.isConnected then
+	if not enableCR and meta.isConnected then
 		return true
 	end
 
 	return false
 end
 
-local function ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, filterList)
+local function ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, filterList, currentFaction)
 	local isGuild = hasMark(unitKey, "©")
 	local hasAnyMark = hasMark(unitKey, "©") or hasMark(unitKey, "§")
 
@@ -800,25 +811,28 @@ local function ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, fil
 		return true
 	end
 
+	local enableCR = GetOption("enableCR", true)
+
 	-- XR realm suppression
-	if not BSYC.options.enableCR and meta.isConnected then
+	if not enableCR and meta.isConnected then
 		return isGuild
 	end
 
 	-- faction filtering (characters only)
-	if not isGuild and not hasAnyMark and not BSYC.options.enableFaction then
-		if unitData.faction ~= BSYC.player.faction then
+	local enableFaction = GetOption("enableFaction", true)
+	if not isGuild and not hasAnyMark and not enableFaction then
+		if currentFaction and unitData.faction and unitData.faction ~= currentFaction then
 			return false
 		end
 	end
 
 	-- guild toggle
-	if isGuild and not BSYC.options.enableGuild then
+	if isGuild and BSYC.tracking and BSYC.tracking.guild == false then
 		return false
 	end
 
 	-- blacklist (characters only)
-	if not isGuild and BSYC.db.blacklist and BSYC.db.blacklist[unitKey] then
+	if not isGuild and BSYC.db and BSYC.db.blacklist and BSYC.db.blacklist[unitKey] then
 		return false
 	end
 
@@ -827,6 +841,8 @@ local function ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, fil
 end
 
 function Data:IterateUnits(dumpAll, filterList)
+	local currentFaction = (BSYC.db and BSYC.db.player and BSYC.db.player.faction) or _G.UnitFactionGroup("player")
+
 	-- snapshot realm keys (FixDB-safe)
 	local realmKeys = {}
 	for realmKey in pairs(BagSyncDB) do
@@ -883,9 +899,10 @@ function Data:IterateUnits(dumpAll, filterList)
 					local unitData = currentRealmData[unitKey]
 					local meta = realmMeta[realmKey]
 
-					if unitData and ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, filterList) then
+					if unitData and ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, filterList, currentFaction) then
 						local isGuild = hasMark(unitKey, "©")
-						local isXRGuild = (not BSYC.options.enableCR and meta.isConnected and isGuild)
+						local enableCR = GetOption("enableCR", true)
+						local isXRGuild = (not enableCR and meta.isConnected and isGuild)
 
 						return {
 							realm = realmKey,
