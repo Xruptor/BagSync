@@ -699,7 +699,14 @@ function Data:GetPlayerGuildObj(player)
 
 	local isConnectedRealm = Unit:CheckConnectedRealm(player.guildrealm)
 	local isXRGuild = false
-	if not BSYC.options.enableCR and not BSYC.options.enableBNET then
+
+	local enableCR = BSYC.options and BSYC.options.enableCR
+	if enableCR == nil then enableCR = optionsDefaults.enableCR end
+
+	local enableBNET = BSYC.options and BSYC.options.enableBNET
+	if enableBNET == nil then enableBNET = optionsDefaults.enableBNET end
+
+	if not enableCR and not enableBNET then
 		isXRGuild = not Unit:CompareRealms(player.guildrealm, player.realm) or false
 	end
 
@@ -811,7 +818,7 @@ local function ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, fil
 		return true
 	end
 
-	local enableCR = GetOption("enableCR", true)
+	local enableCR = GetOption("enableCR", optionsDefaults.enableCR)
 
 	-- XR realm suppression
 	if not enableCR and meta.isConnected then
@@ -819,7 +826,7 @@ local function ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, fil
 	end
 
 	-- faction filtering (characters only)
-	local enableFaction = GetOption("enableFaction", true)
+	local enableFaction = GetOption("enableFaction", optionsDefaults.enableFaction)
 	if not isGuild and not hasAnyMark and not enableFaction then
 		if currentFaction and unitData.faction and unitData.faction ~= currentFaction then
 			return false
@@ -901,7 +908,7 @@ function Data:IterateUnits(dumpAll, filterList)
 
 					if unitData and ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, filterList, currentFaction) then
 						local isGuild = hasMark(unitKey, "©")
-						local enableCR = GetOption("enableCR", true)
+						local enableCR = GetOption("enableCR", optionsDefaults.enableCR)
 						local isXRGuild = (not enableCR and meta.isConnected and isGuild)
 
 						return {
