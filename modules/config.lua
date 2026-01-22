@@ -295,7 +295,7 @@ options.args.main = {
 					get = get,
 					set = set,
 					arg = "main.enableExtTooltip",
-					disabled = function() return not BSYC.options.enableTooltips end,
+					disabled = function() return BSYC.options.enableTooltips == false end,
 				},
 				font = {
 					type = "select",
@@ -1009,7 +1009,11 @@ options.args.display = {
 							get = get,
 							set = set,
 							arg = "display.enableRealmIDTags",
-							disabled = function() return not BSYC.options.enableCR and not BSYC.options.enableBNET end,
+							disabled = function()
+								local enableCR = BSYC.options.enableCR ~= false
+								local enableBNET = BSYC.options.enableBNET == true
+								return not enableCR and not enableBNET
+							end,
 						},
 						realmnames = {
 							order = 1,
@@ -1021,7 +1025,10 @@ options.args.display = {
 							set = set,
 							arg = "display.enableRealmNames",
 							disabled = function()
-								if not BSYC.options.enableCR and not BSYC.options.enableBNET then
+								local enableCR = BSYC.options.enableCR ~= false
+								local enableBNET = BSYC.options.enableBNET == true
+
+								if not enableCR and not enableBNET then
 									return true
 								end
 								return BSYC.options.enableRealmAstrickName or BSYC.options.enableRealmShortName
@@ -1037,7 +1044,10 @@ options.args.display = {
 							set = set,
 							arg = "display.enableRealmAstrickName",
 							disabled = function()
-								if not BSYC.options.enableCR and not BSYC.options.enableBNET then
+								local enableCR = BSYC.options.enableCR ~= false
+								local enableBNET = BSYC.options.enableBNET == true
+
+								if not enableCR and not enableBNET then
 									return true
 								end
 								return BSYC.options.enableRealmNames or BSYC.options.enableRealmShortName
@@ -1053,7 +1063,10 @@ options.args.display = {
 							set = set,
 							arg = "display.enableRealmShortName",
 							disabled = function()
-								if not BSYC.options.enableCR and not BSYC.options.enableBNET then
+								local enableCR = BSYC.options.enableCR ~= false
+								local enableBNET = BSYC.options.enableBNET == true
+
+								if not enableCR and not enableBNET then
 									return true
 								end
 								return BSYC.options.enableRealmNames or BSYC.options.enableRealmAstrickName

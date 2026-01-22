@@ -206,7 +206,7 @@ function Data:OnEnable()
 end
 
 function Data:ShowInfoWindow()
-	if not BSYC.options.showBNETCRInfoWindow then return end
+	if BSYC.options.showBNETCRInfoWindow == false then return end
 
 	local bgsInfoWindow = _G.CreateFrame("Frame", nil, UIParent, "BagSyncInfoFrameTemplate")
 	bgsInfoWindow:SetHeight(500)

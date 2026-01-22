@@ -136,12 +136,12 @@ function DataBroker:OnEnable()
 	if BSYC.options.minimap == nil then BSYC.options.minimap = {} end
 	MinimapIcon:Register("BagSync", DataBroker.BrokerPlugin, BSYC.options.minimap)
 
-	local iconSwitch = not BSYC.options.enableMinimap --the opposite of what the value is
+	local iconSwitch = (BSYC.options.enableMinimap == false) --the opposite of what the value is
 
-	if BSYC.options.enableMinimap then
+	if BSYC.options.enableMinimap ~= false then
 		BSYC.options.minimap.hide = iconSwitch
 		MinimapIcon:Show("BagSync")
-	elseif not BSYC.options.enableMinimap then
+	elseif BSYC.options.enableMinimap == false then
 		BSYC.options.minimap.hide = iconSwitch
 		MinimapIcon:Hide("BagSync")
 	end

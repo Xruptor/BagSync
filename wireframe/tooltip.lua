@@ -761,7 +761,7 @@ function Tooltip:CheckModifier()
 end
 
 function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
-	if not BSYC.options.enableTooltips then return end
+	if BSYC.options.enableTooltips == false then return end
 	if not CanAccessObject(objTooltip) then return end
 	if Scanner.isScanningGuild then return end --don't tally while we are scanning the Guildbank
 
@@ -1181,7 +1181,7 @@ end
 
 function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currencyID, source)
 	if not BSYC.tracking.currency then return end
-	if not BSYC.options.enableCurrencyWindowTooltipData and source ~= "bagsync_currency" then return end
+	if BSYC.options.enableCurrencyWindowTooltipData == false and source ~= "bagsync_currency" then return end
 
 	--check for modifier option
 	if not self:CheckModifier() and source ~= "bagsync_currency" then return end
