@@ -15,7 +15,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
 local LibQTip = LibStub("LibQTip-1.0")
 
 --https://github.com/tomrus88/BlizzardInterfaceCode/blob/classic/Interface/GlueXML/CharacterCreate.lua
-RACE_ICON_TCOORDS = {
+local RACE_ICON_TCOORDS = _G.RACE_ICON_TCOORDS or {
 	["HUMAN_MALE"]		= {0, 0.25, 0, 0.25},
 	["DWARF_MALE"]		= {0.25, 0.5, 0, 0.25},
 	["GNOME_MALE"]		= {0.5, 0.75, 0, 0.25},
@@ -32,6 +32,25 @@ RACE_ICON_TCOORDS = {
 	["SCOURGE_FEMALE"]	= {0.25, 0.5, 0.75, 1.0},
 	["TROLL_FEMALE"]	= {0.5, 0.75, 0.75, 1.0},
 	["ORC_FEMALE"]		= {0.75, 1.0, 0.75, 1.0},
+}
+
+local PERM_IGNORE = {
+	[6948] = "Hearthstone",
+	[110560] = "Garrison Hearthstone",
+	[140192] = "Dalaran Hearthstone",
+	[128353] = "Admiral's Compass",
+	[141605] = "Flight Master's Whistle",
+}
+
+local DEFAULT_ALLOW_LIST = {
+	bag = true,
+	bank = true,
+	reagents = true,
+	equip = true,
+	mailbox = true,
+	void = true,
+	auction = true,
+	warband = true,
 }
 
 --https://warcraft.wiki.gg/wiki/AtlasID
@@ -65,6 +84,24 @@ local function RGBPercToHex(r, g, b)
 	g = g <= 1 and g >= 0 and g or 0
 	b = b <= 1 and b >= 0 and b or 0
 	return string.format("%02x%02x%02x", r*255, g*255, b*255)
+end
+
+local function GetTotalForItem(data, itemID, useUniqueTotals)
+	local total = 0
+
+	for i = 1, #data do
+		local entry = data[i]
+		if entry then
+			local link, count = BSYC:Split(entry, true)
+			if useUniqueTotals then link = BSYC:GetShortItemID(link) end
+
+			if link and link == itemID then
+				total = total + (count or 1)
+			end
+		end
+	end
+
+	return total
 end
 
 function Tooltip:HexColor(color, str)
@@ -355,12 +392,14 @@ function Tooltip:GetEquipBags(target, unitObj, itemID, countList)
 	if not unitObj.data.equipbags or not unitObj.data.equipbags[target] then return 0 end
 	if target == "bank" and BSYC.IsBankTabsActive then return 0 end
 
+	local useUniqueTotals = BSYC.options.enableShowUniqueItemsTotals
+
 	local iCount = 0
 	local tmpSlots = ""
 
 	for i=1, #unitObj.data.equipbags[target] do
 		local link, count, qOpts = BSYC:Split(unitObj.data.equipbags[target][i], false)
-		if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
+		if useUniqueTotals then link = BSYC:GetShortItemID(link) end
 		if link then
 			if link == itemID and qOpts and qOpts.bagslot then
 				tmpSlots = tmpSlots..","..qOpts.bagslot
@@ -384,31 +423,17 @@ function Tooltip:AddItems(unitObj, itemID, target, countList, isCurrentPlayer)
 	if not unitObj or not itemID or not target or not countList then return total end
 	if not unitObj.data then return total end
 
-	local function getTotal(data, target)
-		local iCount = 0
-		for i=1, #data do
-			if data[i] then
-				local link, count = BSYC:Split(data[i], true)
-				if BSYC.options.enableShowUniqueItemsTotals then link = BSYC:GetShortItemID(link) end
-				if link then
-					if link == itemID then
-						iCount = iCount + (count or 1)
-					end
-				end
-			end
-		end
-		return iCount
-	end
+	local useUniqueTotals = BSYC.options.enableShowUniqueItemsTotals
 
 	if unitObj.data[target] and BSYC.tracking[target] then
 		if target == "bag" or target == "bank" or target == "reagents" then
-			countList.btab = {}
 			for bagID, bagData in pairs(unitObj.data[target] or {}) do
 
-				local bTotal = getTotal(bagData, target)
+				local bTotal = GetTotalForItem(bagData, itemID, useUniqueTotals)
 				total = total + bTotal
 
-				if target == "bank" and BSYC.IsBankTabsActive and bTotal > 0 then
+				if target == "bank" and BSYC.IsBankTabsActive and BSYC.options.showBankTabs and bTotal > 0 then
+					if not countList.btab then countList.btab = {} end
 					table.insert(countList.btab, bagID - 5) --subtract 5 to get it to start from 1 since bank tabs start at 6
 				end
 			end
@@ -417,17 +442,17 @@ function Tooltip:AddItems(unitObj, itemID, target, countList, isCurrentPlayer)
 				total = total + self:GetEquipBags(target, unitObj, itemID, countList)
 			end
 		elseif target == "auction" then
-			total = getTotal(unitObj.data[target].bag or {}, target)
+			total = GetTotalForItem(unitObj.data[target].bag or {}, itemID, useUniqueTotals)
 
 		elseif target == "equip" or target == "void" or target == "mailbox" then
-			total = getTotal(unitObj.data[target] or {}, target)
+			total = GetTotalForItem(unitObj.data[target] or {}, itemID, useUniqueTotals)
 		end
 	end
 	if target == "guild" and BSYC.tracking.guild then
-		countList.gtab = {}
 		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
-			local tabCount = getTotal(tabData, target)
-			if tabCount > 0 then
+			local tabCount = GetTotalForItem(tabData, itemID, useUniqueTotals)
+			if tabCount > 0 and BSYC.options.showGuildTabs then
+				if not countList.gtab then countList.gtab = {} end
 				table.insert(countList.gtab, tabID)
 			end
 			total = total + tabCount
@@ -435,10 +460,10 @@ function Tooltip:AddItems(unitObj, itemID, target, countList, isCurrentPlayer)
 	end
 
 	if target == "warband" and BSYC.tracking.warband then
-		countList.wtab = {}
 		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
-			local tabCount = getTotal(tabData, target)
-			if tabCount > 0 then
+			local tabCount = GetTotalForItem(tabData, itemID, useUniqueTotals)
+			if tabCount > 0 and BSYC.options.showWarbandTabs then
+				if not countList.wtab then countList.wtab = {} end
 				table.insert(countList.wtab, tabID)
 			end
 			total = total + tabCount
@@ -816,19 +841,12 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		return
 	end
 
-	local permIgnore ={
-		[6948] = "Hearthstone",
-		[110560] = "Garrison Hearthstone",
-		[140192] = "Dalaran Hearthstone",
-		[128353] = "Admiral's Compass",
-		[141605] = "Flight Master's Whistle",
-	}
-
 	--check blacklist
 	local personalBlacklist = false
+	local shortNum = tonumber(shortID)
 
-	if shortID and (permIgnore[tonumber(shortID)] or BSYC.db.blacklist[tonumber(shortID)]) then
-		if BSYC.db.blacklist[tonumber(shortID)] then
+	if shortNum and (PERM_IGNORE[shortNum] or BSYC.db.blacklist[shortNum]) then
+		if BSYC.db.blacklist[shortNum] then
 			--don't use this on perm ignores only personal blacklist
 			skipTally = not BSYC.options.showBLCurrentCharacterOnly
 			personalBlacklist = true
@@ -839,14 +857,16 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	end
 	--check whitelist (blocks all items except those found in whitelist)
 	if BSYC.options.enableWhitelist then
-		if not BSYC.db.whitelist[tonumber(shortID)] then
+		if not shortNum or not BSYC.db.whitelist[shortNum] then
 			skipTally = true
 			Debug(BSYC_DL.SL3, "TallyUnits", "|cFFe454fd[Whitelist]|r", link, shortID)
 		end
 	end
 
+	local useUniqueTotals = BSYC.options.enableShowUniqueItemsTotals
+
 	--short the shortID and ignore all BonusID's and stats
-	if BSYC.options.enableShowUniqueItemsTotals then link = shortID end
+	if useUniqueTotals then link = shortID end
 
 	--store these in the addon itself not in the tooltip
 	self.__lastTally = {}
@@ -859,16 +879,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local guildObj = Data:GetPlayerGuildObj(player)
 	local warbandObj = Data:GetWarbandBankObj()
 
-	local allowList = {
-		bag = true,
-		bank = true,
-		reagents = true,
-		equip = true,
-		mailbox = true,
-		void = true,
-		auction = true,
-		warband = true,
-	}
+	local allowList = DEFAULT_ALLOW_LIST
 
 	--the true option for GetModule is to set it to silent and not return an error if not found
 	--only display advanced search results in the BagSync search window, but make sure to show tooltips regularly outside of that by checking isBSYCSearch
@@ -904,7 +915,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 					--This is why we check for player name and realm below, we don't want to do anything in regards to the current player when the Database.
 					if unitObj.data ~= BSYC.db.player then
 						Debug(BSYC_DL.SL2, "TallyUnits", "[Unit]", unitObj.name, unitObj.realm)
-						for k, v in pairs(allowList) do
+						for k in pairs(allowList) do
 							grandTotal = grandTotal + self:AddItems(unitObj, link, k, countList)
 						end
 					elseif advUnitList then
@@ -948,6 +959,11 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 		--CURRENT PLAYER
 		-----------------
+		local carriedCount
+		local bankTotalCount
+		local reagentTotalCount
+		local warbandTotalCount
+
 		if not advUnitList or advPlayerChk then
 			countList = {}
 			local playerObj = Data:GetPlayerObj(player)
@@ -966,24 +982,30 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				grandTotal = grandTotal + self:AddItems(playerObj, link, "bank", countList)
 				grandTotal = grandTotal + self:AddItems(playerObj, link, "reagents", countList)
 
-			elseif not isBattlePet then
+			else
 				local equipCount = countList["equip"] or 0
 				local carryCount, bagCount, bankCount, regCount = 0, 0, 0, 0
 
-				carryCount = C_Item.GetItemCount(origLink) or 0 --get the total amount the player is currently carrying (bags + equip)
+				carriedCount = carriedCount or (C_Item.GetItemCount(origLink) or 0) --get the total amount the player is currently carrying (bags + equip)
+
+				carryCount = carriedCount
 				bagCount = carryCount - equipCount -- subtract the equipment count from the carry amount to get bag count
 
 				if bagCount < 0 then bagCount = 0 end
 
 				if IsReagentBankUnlocked and IsReagentBankUnlocked() then
 					--C_Item.GetItemCount returns the bag count + reagent regardless of parameters.  So we have to subtract bag and reagents.  This does not include bank totals
-					regCount = C_Item.GetItemCount(origLink, false, false, true, false) or 0
+					reagentTotalCount = reagentTotalCount or (C_Item.GetItemCount(origLink, false, false, true, false) or 0)
+
+					regCount = reagentTotalCount
 					regCount = regCount - carryCount
 					if regCount < 0 then regCount = 0 end
 				end
 
 				--bankCount = C_Item.GetItemCount returns the bag + bank count regardless of parameters.  So we have to subtract the carry totals
-				bankCount = C_Item.GetItemCount(origLink, true, false, false, false) or 0
+				bankTotalCount = bankTotalCount or (C_Item.GetItemCount(origLink, true, false, false, false) or 0)
+
+				bankCount = bankTotalCount
 				bankCount = (bankCount - carryCount)
 				if bankCount < 0 then bankCount = 0 end
 
@@ -1038,13 +1060,17 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			if isBattlePet then
 				grandTotal = grandTotal + self:AddItems(warbandObj, link, "warband", countList)
 
-			elseif not isBattlePet then
+			else
 				if BSYC.options.showWarbandTabs then
 					--we do this so we can grab the wtabs, even if we use a real time count from GetItemCount.
 					self:AddItems(warbandObj, link, "warband", countList)
 				end
-				local carryCount = C_Item.GetItemCount(origLink) or 0 --get the total amount the player is currently carrying (bags + equip)
-				local warbandCount = C_Item.GetItemCount(origLink, false, false, false, true) or 0
+
+				carriedCount = carriedCount or (C_Item.GetItemCount(origLink) or 0) --get the total amount the player is currently carrying (bags + equip)
+				warbandTotalCount = warbandTotalCount or (C_Item.GetItemCount(origLink, false, false, false, true) or 0)
+
+				local carryCount = carriedCount
+				local warbandCount = warbandTotalCount
 				warbandCount = warbandCount - carryCount
 
 				if not BSYC.tracking.warband then warbandCount = 0 end
@@ -1196,7 +1222,7 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 		if self.__lastCurrencyTally and #self.__lastCurrencyTally > 0 then
 			for i=1, #self.__lastCurrencyTally do
 				if showQTip then
-					local lineNum = Tooltip.qTip:AddLine(self.__lastCurrencyTally[i][1], string.rep(" ", 4), self.__lastCurrencyTally[i][2])
+					Tooltip.qTip:AddLine(self.__lastCurrencyTally[i][1], string.rep(" ", 4), self.__lastCurrencyTally[i][2])
 				else
 					objTooltip:AddDoubleLine(self.__lastCurrencyTally[i][1], self.__lastCurrencyTally[i][2], 1, 1, 1, 1, 1, 1)
 				end
@@ -1263,7 +1289,6 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	usrData = self:DoSort(usrData)
 
 	local displayList = {}
-	local showQTip = Tooltip:QTipCheck()
 
 	-- if currencyName then
 	-- 	table.insert(displayList, {string.format("|cff%s%s|r", RGBPercToHex(64/255, 224/255, 208/255), tostring(currencyName)), " "})

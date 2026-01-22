@@ -123,6 +123,17 @@ Data.__cache.ignore = {}
 
 local ignoreChk, ignoreTotal = 0, 0
 
+local ITEMCACHE_ALLOW_LIST = {
+	bag = true,
+	bank = true,
+	reagents = true,
+	equip = true,
+	mailbox = true,
+	void = true,
+	auction = true,
+	equipbags = true,
+}
+
 ----------------------
 --   DB Functions   --
 ----------------------
@@ -516,16 +527,6 @@ function Data:PopulateItemCache(errorList, errorCount)
 	if errorList and errorCount then
 		Debug(BSYC_DL.INFO, "PopulateItemCache", #errorList, errorCount)
 	end
-	local allowList = {
-		bag = true,
-		bank = true,
-		reagents = true,
-		equip = true,
-		mailbox = true,
-		void = true,
-		auction = true,
-		equipbags = true,
-	}
 	local tmpList = {}
 	local tmpError = {}
 
@@ -576,7 +577,7 @@ function Data:PopulateItemCache(errorList, errorCount)
 
 		for unitObj in Data:IterateUnits(true) do
 			if not unitObj.isGuild then
-				for k, v in pairs(allowList) do
+				for k in pairs(ITEMCACHE_ALLOW_LIST) do
 					CacheCheck(unitObj, k)
 				end
 			else

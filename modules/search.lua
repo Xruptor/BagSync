@@ -11,6 +11,17 @@ local Search = BSYC:NewModule("Search")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
 
+local DEFAULT_ALLOW_LIST = {
+	bag = true,
+	bank = true,
+	reagents = true,
+	equip = true,
+	mailbox = true,
+	void = true,
+	auction = true,
+	warband = true,
+}
+
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Search", ...) end
 end
@@ -363,16 +374,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch,
 	BSYC.advUnitList = advUnitList
 
 	--items aren't counted into this array, it's just for allowing the search to pass through
-	local allowList = {
-		bag = true,
-		bank = true,
-		reagents = true,
-		equip = true,
-		mailbox = true,
-		void = true,
-		auction = true,
-		warband = true,
-	}
+	local allowList = DEFAULT_ALLOW_LIST
 
 	--This is used when a player is requesting to view a custom list, such as @bank, @auction, @bag etc...
 	if not isAdvancedSearch and string.len(searchStr) > 1 then
@@ -390,7 +392,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch,
 	if not atUserLoc then
 		for unitObj in Data:IterateUnits(false, advUnitList) do
 			if not unitObj.isGuild then
-				for k, v in pairs(allowList) do
+				for k in pairs(allowList) do
 					warnTotal = warnTotal + Search:CheckItems(searchStr, unitObj, k, checkList)
 				end
 			else

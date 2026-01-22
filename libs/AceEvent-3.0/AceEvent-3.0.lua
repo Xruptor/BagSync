@@ -18,10 +18,20 @@ local AceEvent = LibStub:NewLibrary(MAJOR, MINOR)
 if not AceEvent then return end
 
 -- Lua APIs
-local pairs = pairs
+local next, pairs, pcall = next, pairs, pcall
+local InCombatLockdown = InCombatLockdown
 
 AceEvent.frame = AceEvent.frame or CreateFrame("Frame", "AceEvent30Frame") -- our event frame
 AceEvent.embeds = AceEvent.embeds or {} -- what objects embed this lib
+AceEvent._pendingEventRegistrations = AceEvent._pendingEventRegistrations or {}
+local pendingEventRegistrations = AceEvent._pendingEventRegistrations
+
+local function tryRegisterEvent(eventname)
+	if AceEvent.frame:IsEventRegistered(eventname) then
+		return true
+	end
+	return pcall(AceEvent.frame.RegisterEvent, AceEvent.frame, eventname)
+end
 
 -- APIs and registry for blizzard events, using CallbackHandler lib
 if not AceEvent.events then
@@ -30,11 +40,23 @@ if not AceEvent.events then
 end
 
 function AceEvent.events:OnUsed(target, eventname)
-	AceEvent.frame:RegisterEvent(eventname)
+	if tryRegisterEvent(eventname) then
+		return
+	end
+
+	-- On some client versions, Frame:RegisterEvent can become protected (e.g. in combat).
+	-- Avoid throwing and retry once the player leaves combat.
+	if eventname ~= "PLAYER_REGEN_ENABLED"
+		and type(InCombatLockdown) == "function"
+		and InCombatLockdown()
+	then
+		pendingEventRegistrations[eventname] = true
+		tryRegisterEvent("PLAYER_REGEN_ENABLED")
+	end
 end
 
 function AceEvent.events:OnUnused(target, eventname)
-	AceEvent.frame:UnregisterEvent(eventname)
+	pcall(AceEvent.frame.UnregisterEvent, AceEvent.frame, eventname)
 end
 
 
@@ -117,6 +139,13 @@ end
 -- Script to fire blizzard events into the event listeners
 local events = AceEvent.events
 AceEvent.frame:SetScript("OnEvent", function(this, event, ...)
+	if event == "PLAYER_REGEN_ENABLED" and next(pendingEventRegistrations) then
+		for pendingEventName in pairs(pendingEventRegistrations) do
+			if tryRegisterEvent(pendingEventName) then
+				pendingEventRegistrations[pendingEventName] = nil
+			end
+		end
+	end
 	events:Fire(event, ...)
 end)
 
