@@ -353,13 +353,54 @@ end
 
 function Tooltip:DoSort(tblData)
 
-	--sort the list by our sortIndex then by realm and finally by name
-	if BSYC.options.sortTooltipByTotals then
+	local mode = BSYC.options.tooltipSortMode
+	if not mode or mode == "" then
+		if BSYC.options.sortTooltipByTotals then
+			mode = "totals"
+		elseif BSYC.options.sortByCustomOrder then
+			mode = "custom"
+		else
+			mode = "realm_character"
+		end
+	end
+
+	local function pinKey(entry)
+		if BSYC.options.sortShowCurrentPlayerOnTop
+			and entry
+			and entry.unitObj
+			and BSYC.db
+			and entry.unitObj.data == BSYC.db.player
+		then
+			return 0
+		end
+		return 1
+	end
+
+	local function strKey(s)
+		return tostring(s or ""):lower()
+	end
+
+	local function isCharacter(unitObj)
+		return unitObj and not unitObj.isGuild and not unitObj.isWarbandBank
+	end
+
+	local function classKey(unitObj)
+		if not unitObj or not unitObj.data or not unitObj.data.class then return "" end
+		local token = unitObj.data.class
+		local localized = _G.LOCALIZED_CLASS_NAMES_MALE and _G.LOCALIZED_CLASS_NAMES_MALE[token]
+		return strKey(localized or token)
+	end
+
+	--sort the list by our chosen mode
+	if mode == "totals" then
 		table.sort(tblData, function(a, b)
 			return a.count > b.count;
 		end)
-	elseif BSYC.options.sortByCustomOrder then
+	elseif mode == "custom" then
 		table.sort(tblData, function(a, b)
+			local ap, bp = pinKey(a), pinKey(b)
+			if ap ~= bp then return ap < bp end
+
 			if a.unitObj.data.SortIndex and b.unitObj.data.SortIndex  then
 				return  a.unitObj.data.SortIndex < b.unitObj.data.SortIndex;
 			else
@@ -371,6 +412,46 @@ function Tooltip:DoSort(tblData)
 				end
 				return a.sortIndex < b.sortIndex;
 			end
+		end)
+	elseif mode == "character" then
+		table.sort(tblData, function(a, b)
+			local ap, bp = pinKey(a), pinKey(b)
+			if ap ~= bp then return ap < bp end
+
+			local an, bn = strKey(a.unitObj and a.unitObj.name), strKey(b.unitObj and b.unitObj.name)
+			if an == bn then
+				return strKey(a.unitObj and a.unitObj.realm) < strKey(b.unitObj and b.unitObj.realm)
+			end
+			return an < bn
+		end)
+	elseif mode == "class_character" then
+		table.sort(tblData, function(a, b)
+			local ap, bp = pinKey(a), pinKey(b)
+			if ap ~= bp then return ap < bp end
+
+			local aChar, bChar = isCharacter(a.unitObj), isCharacter(b.unitObj)
+			if aChar ~= bChar then return aChar end -- characters first
+
+			if aChar and bChar then
+				local ac, bc = classKey(a.unitObj), classKey(b.unitObj)
+				if ac == bc then
+					local an, bn = strKey(a.unitObj.name), strKey(b.unitObj.name)
+					if an == bn then
+						return strKey(a.unitObj.realm) < strKey(b.unitObj.realm)
+					end
+					return an < bn
+				end
+				return ac < bc
+			end
+
+			-- non-characters: keep prior stable ordering
+			if a.sortIndex == b.sortIndex then
+				if a.unitObj.realm == b.unitObj.realm then
+					return a.unitObj.name < b.unitObj.name;
+				end
+				return a.unitObj.realm < b.unitObj.realm;
+			end
+			return a.sortIndex < b.sortIndex;
 		end)
 	else
 		table.sort(tblData, function(a, b)

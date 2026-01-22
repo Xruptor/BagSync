@@ -56,6 +56,7 @@ local optionsDefaults = {
 	alwaysShowAdvSearch = false,
 	sortTooltipByTotals = false,
 	sortByCustomOrder = false,
+	tooltipSortMode = "realm_character",
 	tooltipModifer = "NONE",
 	singleCharLocations = false,
 	useIconLocations = true,
@@ -165,6 +166,17 @@ function Data:OnEnable()
 	--options DB
 	BSYC:SetDefaults(nil, optionsDefaults)
 
+	-- migrate legacy sort toggles into the new sort mode option
+	if not BSYC.options.tooltipSortMode or BSYC.options.tooltipSortMode == "realm_character" then
+		if BSYC.options.sortTooltipByTotals then
+			BSYC.options.tooltipSortMode = "totals"
+		elseif BSYC.options.sortByCustomOrder then
+			BSYC.options.tooltipSortMode = "custom"
+		else
+			BSYC.options.tooltipSortMode = "realm_character"
+		end
+	end
+
 	--set tracking defaults
 	BSYC:SetDefaults("tracking", trackingDefaults)
 	BSYC.tracking = BSYC.options.tracking
@@ -212,7 +224,9 @@ function Data:OnEnable()
 	end
 	if BSYC.options.debug.enable then
 		BSYC:Print(L.DebugWarning)
-		BSYC.API.TimerAfter(6, function() BSYC:Print(L.DebugWarning) end)
+		if C_Timer and C_Timer.After then
+			C_Timer.After(6, function() BSYC:Print(L.DebugWarning) end)
+		end
 	end
 end
 

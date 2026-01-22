@@ -43,18 +43,6 @@ BSYC.hasMark = hasMark
 BSYC.API = BSYC.API or {}
 BSYC.API.GetContainerNumSlots = (C_Container and C_Container.GetContainerNumSlots) or GetContainerNumSlots
 BSYC.API.GetContainerItemInfo = (C_Container and C_Container.GetContainerItemInfo) or GetContainerItemInfo
-BSYC.API.TimerAfter = (C_Timer and C_Timer.After) or function(t, fn)
-    if BSYC and BSYC.CreateTimer then
-        BSYC:CreateTimer(fn, t)
-    else
-        -- last-resort fallback: run on next frame if no timer system exists
-        local f = CreateFrame("Frame")
-        f:SetScript("OnUpdate", function(self)
-            self:SetScript("OnUpdate", nil)
-            fn()
-        end)
-    end
-end
 
 
 BSYC.IsBankTabsActive = Enum.BagIndex.CharacterBankTab_1 ~= nil

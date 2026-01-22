@@ -91,7 +91,8 @@ end
 function SortOrder:OnShow()
 	BSYC:SetBSYC_FrameLevel(SortOrder)
 
-	local getStatus = (BSYC.options.sortByCustomOrder and ("|cFF99CC33"..L.ON.."|r")) or ( "|cFFDF2B2B"..L.OFF.."|r")
+	local isCustom = (BSYC.options.tooltipSortMode == "custom") or BSYC.options.sortByCustomOrder
+	local getStatus = (isCustom and ("|cFF99CC33"..L.ON.."|r")) or ( "|cFFDF2B2B"..L.OFF.."|r")
 	SortOrder.warningFrame.infoText1:SetText(L.DisplaySortOrderStatus:format(getStatus))
 	SortOrder.warningFrame:Show()
 	SortOrder:UpdateList()
