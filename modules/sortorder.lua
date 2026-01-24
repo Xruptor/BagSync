@@ -15,7 +15,7 @@ local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "SortOrder", ...) end
 end
 
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
+local L = BSYC.L
 
 function SortOrder:OnEnable()
 	local sortorderFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")

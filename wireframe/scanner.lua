@@ -10,7 +10,7 @@ local BSYC = select(2, ...) --grab the addon namespace
 local Scanner = BSYC:NewModule("Scanner")
 local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
+local L = BSYC.L
 
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Scanner", ...) end

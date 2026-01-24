@@ -11,7 +11,7 @@ local Tooltip = BSYC:NewModule("Tooltip")
 local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
 local Scanner = BSYC:GetModule("Scanner")
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
+local L = BSYC.L
 local LibQTip = LibStub("LibQTip-1.0")
 
 --https://github.com/tomrus88/BlizzardInterfaceCode/blob/classic/Interface/GlueXML/CharacterCreate.lua

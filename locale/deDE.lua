@@ -1,5 +1,5 @@
-
-local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "deDE")
+local _, BSYC = ...
+local L = BSYC:NewLocale("deDE")
 if not L then return end
 
 --special thanks to Dlarge, GrimPala from wowinterface.com

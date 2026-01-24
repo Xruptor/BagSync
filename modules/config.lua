@@ -7,9 +7,9 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
-local config = LibStub("AceConfig-3.0")
-local configDialog = LibStub("AceConfigDialog-3.0")
+local L = BSYC.L
+local config = BSYC.Config
+local configDialog = BSYC.ConfigDialog
 local MinimapIcon = LibStub("LibDBIcon-1.0")
 local SML = LibStub("LibSharedMedia-3.0")
 local SML_FONT = SML.MediaType and SML.MediaType.FONT or "font"
@@ -1485,7 +1485,7 @@ local function LoadAboutFrame()
 	else
 		local category, layout = _G.Settings.RegisterCanvasLayoutCategory(about, about.name);
 		_G.Settings.RegisterAddOnCategory(category);
-		addon.settingsCategory = category
+		BSYC.settingsCategory = category
 	end
 
 	return about

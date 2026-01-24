@@ -7,7 +7,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
+local L = BSYC.L
 local Debug = BSYC:NewModule("Debug")
 
 local xListLen = 500

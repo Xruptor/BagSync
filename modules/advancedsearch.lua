@@ -16,7 +16,7 @@ local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "AdvancedSearch", ...) end
 end
 
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
+local L = BSYC.L
 
 function AdvancedSearch:OnEnable()
     local advFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncSearchFrameTemplate")

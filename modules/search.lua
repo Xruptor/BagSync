@@ -26,7 +26,7 @@ local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Search", ...) end
 end
 
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
+local L = BSYC.L
 local ItemScout = LibStub("LibItemScout-1.0")
 
 Search.cacheItems = {}

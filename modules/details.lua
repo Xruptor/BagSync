@@ -15,7 +15,7 @@ local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Details", ...) end
 end
 
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
+local L = BSYC.L
 
 local function comma_value(n)
 	if not n or not tonumber(n) then return "?" end

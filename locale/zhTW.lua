@@ -1,4 +1,5 @@
-local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhTW")
+local _, BSYC = ...
+local L = BSYC:NewLocale("zhTW")
 if not L then return end
 
 --  zhTW client (三皈依-暗影之月@TW補齊)

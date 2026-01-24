@@ -7,9 +7,8 @@
 --]]
 
 local BAGSYNC, BSYC = ... --grab the addon namespace
-LibStub("AceAddon-3.0"):NewAddon(BSYC, "BagSync", "AceEvent-3.0", "AceConsole-3.0")
 _G[BAGSYNC] = BSYC --add it to the global frame space, otherwise you won't be able to call it
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
+local L = BSYC.L
 local SML = LibStub("LibSharedMedia-3.0")
 local SML_FONT = SML.MediaType and SML.MediaType.FONT or "font"
 
@@ -54,6 +53,55 @@ BSYC.isWarbandActive = (C_Container and C_Container.SortAccountBankBags) and (En
 
 --increment forceDBReset to reset the ENTIRE db forcefully
 local forceDBReset = 3
+
+function BSYC:OpenConfig()
+	if InCombatLockdown and InCombatLockdown() then return false end
+
+	local addonCategoryName = "BagSync"
+
+	if _G.Settings and type(_G.Settings.OpenToCategory) == "function" then
+		local category = self.settingsCategory
+		if not category and self.ConfigDialog and type(self.ConfigDialog._settingsCategories) == "table" then
+			category = self.ConfigDialog._settingsCategories[addonCategoryName]
+		end
+
+		local categoryID
+		if type(category) == "number" then
+			categoryID = category
+		elseif type(category) == "table" then
+			if type(category.GetID) == "function" then
+				categoryID = category:GetID()
+			elseif type(category.GetCategoryID) == "function" then
+				categoryID = category:GetCategoryID()
+			elseif type(category.ID) == "number" then
+				categoryID = category.ID
+			elseif type(category.id) == "number" then
+				categoryID = category.id
+			end
+		end
+
+		if categoryID ~= nil then
+			if pcall(_G.Settings.OpenToCategory, categoryID) then return true end
+		end
+
+		-- Some older clients accepted an addon name string here; keep as a last resort.
+		if pcall(_G.Settings.OpenToCategory, addonCategoryName) then return true end
+	end
+
+	if _G.InterfaceOptionsFrame_OpenToCategory then
+		if not self.IsRetail and _G.InterfaceOptionsFrame then
+			-- required on some clients to ensure panels are created before opening
+			_G.InterfaceOptionsFrame:Show()
+		end
+
+		local panel = self.blizzPanel or self.aboutPanel
+		if panel then
+			return pcall(_G.InterfaceOptionsFrame_OpenToCategory, panel)
+		end
+	end
+
+	return false
+end
 
 BSYC.FakePetCode = 10000000000
 BSYC_DL = {

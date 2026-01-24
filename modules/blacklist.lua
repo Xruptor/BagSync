@@ -16,7 +16,7 @@ local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Blacklist", ...) end
 end
 
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
+local L = BSYC.L
 
 function Blacklist:OnEnable()
 	local blacklistFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")

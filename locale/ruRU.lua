@@ -1,5 +1,6 @@
 
-local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "ruRU")
+local _, BSYC = ...
+local L = BSYC:NewLocale("ruRU")
 if not L then return end
 -- Translator ZamestoTV
 L.Yes = "Да"

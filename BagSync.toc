@@ -26,19 +26,13 @@
 
 libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
-libs\TaintLess\TaintLess.xml
-libs\AceAddon-3.0\AceAddon-3.0.xml
-libs\AceGUI-3.0\AceGUI-3.0.xml
-libs\AceConfig-3.0\AceConfig-3.0.xml
-libs\AceLocale-3.0\AceLocale-3.0.xml
-libs\AceConsole-3.0\AceConsole-3.0.xml
-libs\AceEvent-3.0\AceEvent-3.0.xml
 libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 libs\LibItemScout-1.0\LibItemScout-1.0.lua
 libs\LibQTip-1.0\LibQTip-1.0.lua
 libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
-libs\LibDDI-1.0\lib.xml
+
+wireframe\wrapper.lua
 
 locale\enUS.lua
 locale\deDE.lua

@@ -10,7 +10,7 @@ local BSYC = select(2, ...) --grab the addon namespace
 local Data = BSYC:NewModule("Data")
 local hasMark = BSYC.hasMark
 local Unit = BSYC:GetModule("Unit")
-local L = LibStub("AceLocale-3.0"):GetLocale("BagSync")
+local L = BSYC.L
 
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Data", ...) end
@@ -381,21 +381,7 @@ function Data:LoadSlashCommand()
 				StaticPopup_Show("BAGSYNC_RESETDATABASE")
 				return true
 			elseif cmd == L.SlashConfig then
-				if Settings then
-					Settings.OpenToCategory("BagSync")
-				elseif InterfaceOptionsFrame_OpenToCategory then
-
-					if not BSYC.IsRetail then
-						--only do this for Expansions less than Retail
-						InterfaceOptionsFrame:Show() --has to be here to load the about frame onLoad
-					else
-						if InCombatLockdown() or GameMenuFrame:IsShown() or InterfaceOptionsFrame then
-							return false
-						end
-					end
-
-					InterfaceOptionsFrame_OpenToCategory(BSYC.aboutPanel)
-				end
+				BSYC:OpenConfig()
 				return true
 			elseif cmd == L.SlashDebug then
 				BSYC:GetModule("Debug").frame:Show()

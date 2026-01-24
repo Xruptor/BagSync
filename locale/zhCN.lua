@@ -1,5 +1,5 @@
-
-local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "zhCN")
+local _, BSYC = ...
+local L = BSYC:NewLocale("zhCN")
 if not L then return end
 
 --  zhCN client (NGA-[男爵凯恩])

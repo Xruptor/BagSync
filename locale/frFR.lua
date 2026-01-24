@@ -1,4 +1,5 @@
-local L = LibStub("AceLocale-3.0"):NewLocale("BagSync", "frFR")
+local _, BSYC = ...
+local L = BSYC:NewLocale("frFR")
 if not L then return end
 
 --PLEASE LOOK AT enUS.lua for a complete localization list
