@@ -30,6 +30,16 @@ L.TooltipSmall_mailbox = "邮"
 L.TooltipSmall_void = "虚"
 L.TooltipSmall_auction = "拍"
 L.TooltipSmall_warband = "战"
+--do not touch these unless requiring a new image for a specific localization
+L.TooltipIcon_bag = [[|TInterface\AddOns\BagSync\media\bag:13:13|t]]
+L.TooltipIcon_bank = [[|TInterface\AddOns\BagSync\media\bank:13:13|t]]
+L.TooltipIcon_reagents = [[|TInterface\AddOns\BagSync\media\reagents:13:13|t]]
+L.TooltipIcon_equip = [[|TInterface\AddOns\BagSync\media\equip:13:13|t]]
+L.TooltipIcon_guild = [[|TInterface\AddOns\BagSync\media\guild:13:13|t]]
+L.TooltipIcon_mailbox = [[|TInterface\AddOns\BagSync\media\mailbox:13:13|t]]
+L.TooltipIcon_void = [[|TInterface\AddOns\BagSync\media\void:13:13|t]]
+L.TooltipIcon_auction = [[|TInterface\AddOns\BagSync\media\auction:13:13|t]]
+L.TooltipIcon_warband = [[|TInterface\AddOns\BagSync\media\warband:13:13|t]]
 L.TooltipTotal = "总计:"
 L.TooltipTabs = "标签:"
 L.TooltipBagSlot = "位:"
@@ -50,6 +60,9 @@ L.Debug_INFO = "信息"
 L.Debug_TRACE = "追踪"
 L.Debug_WARN = "警告"
 L.Debug_FINE = "详情"
+L.Debug_SL1 = "SL1" --sublevel 1
+L.Debug_SL2 = "SL2" --sublevel 2
+L.Debug_SL3 = "SL3" --sublevel 3
 L.DebugEnable = "启用 Debug"
 L.DebugCache = "禁用缓存"
 L.DebugDumpOptions = "存储选项 |cff3587ff[Debug]|r"
@@ -234,6 +247,10 @@ L.DisplayAccurateBattlePets = "启用精准扫描公会银行和邮箱中的战�
 L.DisplaySortCurrencyByExpansionFirst = "BagSync 的货币窗口是依据游戏资料片顺序而不是字母顺序来进行排序。"
 L.DisplaySorting = "鼠标提示排序"
 L.DisplaySortInfo = "默认: 鼠标提示排序是根据服务器名的字母顺序，然后是角色名称来排序。"
+L.SortMode = "排序模式"
+L.SortMode_RealmCharacter = "服务器然后角色（默认）"
+L.SortMode_Character = "角色"
+L.SortMode_ClassCharacter = "职业然后角色"
 L.SortCurrentPlayerOnTop = "启用默认排序，始终将当前角色显示在首列。"
 L.SortTooltipByTotals = "按照总数进行排序，而不是字母顺序排列。"
 L.SortByCustomSortOrder = "按照自定义顺序排序。"
@@ -307,6 +324,19 @@ L.WarningHeader = "警告！"
 L.SavedSearch = "保存的搜索"
 L.SavedSearch_Add = "添加搜索"
 L.SavedSearch_Warn = "您必须在搜索框中输入一些信息。"
+---------------------------------------
+--Blizzard doesn't return the same header title in the Currency/Token window that is used in their expansion globals.
+--Meaning that, "The Burning Crusade" is listed as "Burning Crusade" in the Currency/Token window.  The same for "The War Within" being shown as "War Within"
+--In order to do a proper sorting of the Currency/Token Window for BagSync.  I've done the following steps
+--1) Removed all spaces and special characters from the expansion name
+--2) forced all characters to be lower case
+--3) Use the filter below to remove any other additional words in the name to match it to the currency/token window.
+--
+--Example: "The War Within" and "War Within" gets matched as "warwithin".  "Battle for Azeroth" gets matched as "battleforazeroth"
+--You can add as many words as you want below, just make sure it's lowercase, no spaces or symbols and to follow each entry with a comma
+---------------------------------------
+L.CurrencySortFilters = {
+}
 ---------------------------------------
 --Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  Example: class:<name of class in your locale>
 --This includes name searches like name:<name in your locale>

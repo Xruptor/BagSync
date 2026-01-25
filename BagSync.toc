@@ -26,8 +26,6 @@
 
 libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
-libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
-libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 libs\LibItemScout-1.0\LibItemScout-1.0.lua
 libs\LibQTip-1.0\LibQTip-1.0.lua
 libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
@@ -35,14 +33,17 @@ libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
 wireframe\wrapper.lua
 
 locale\enUS.lua
+locale\enGB.lua
 locale\deDE.lua
 locale\frFR.lua
+locale\itIT.lua
 locale\koKR.lua
 locale\ruRU.lua
 locale\zhCN.lua
 locale\zhTW.lua
 locale\ptBR.lua
 locale\esES.lua
+locale\esMX.lua
 
 core.lua
 coreui.xml
@@ -66,4 +67,5 @@ modules\whitelist.lua
 modules\gold.lua
 modules\profiles.lua
 modules\sortorder.lua
+modules\minimap.lua
 modules\config.lua

@@ -22,6 +22,7 @@ L.Tooltip_mailbox = "우편함"
 L.Tooltip_void = "공허보관사"
 L.Tooltip_reagents = "재료 은행"
 L.Tooltip_auction = "경매장"
+L.Tooltip_warband = "전투부대"
 L.TooltipSmall_bag = "P"
 L.TooltipSmall_bank = "B"
 L.TooltipSmall_reagents = "R"
@@ -30,9 +31,20 @@ L.TooltipSmall_guild = "G"
 L.TooltipSmall_mailbox = "M"
 L.TooltipSmall_void = "V"
 L.TooltipSmall_auction = "A"
+L.TooltipSmall_warband = "W"
 --do not touch these unless requiring a new image for a specific localization
+L.TooltipIcon_bag = [[|TInterface\AddOns\BagSync\media\bag:13:13|t]]
+L.TooltipIcon_bank = [[|TInterface\AddOns\BagSync\media\bank:13:13|t]]
+L.TooltipIcon_reagents = [[|TInterface\AddOns\BagSync\media\reagents:13:13|t]]
+L.TooltipIcon_equip = [[|TInterface\AddOns\BagSync\media\equip:13:13|t]]
+L.TooltipIcon_guild = [[|TInterface\AddOns\BagSync\media\guild:13:13|t]]
+L.TooltipIcon_mailbox = [[|TInterface\AddOns\BagSync\media\mailbox:13:13|t]]
+L.TooltipIcon_void = [[|TInterface\AddOns\BagSync\media\void:13:13|t]]
+L.TooltipIcon_auction = [[|TInterface\AddOns\BagSync\media\auction:13:13|t]]
+L.TooltipIcon_warband = [[|TInterface\AddOns\BagSync\media\warband:13:13|t]]
 L.TooltipTotal = "합계:"
 L.TooltipTabs = "T:"
+L.TooltipBagSlot = "칸:"
 L.TooltipItemID = "[아이템ID]:"
 L.TooltipDebug = "[디버그]:"
 L.TooltipCurrencyID = "[화폐ID]:"
@@ -56,6 +68,7 @@ L.Debug_SL2 = "하위레벨2" --sublevel 2
 L.Debug_SL3 = "하위레벨3" --sublevel 3
 --[[Translation missing --]]
 L.DebugEnable = "Enable Debug"
+L.DebugCache = "캐시 비활성화"
 L.DebugDumpOptions = "덤프 설정 |cff3587ff[디버그]|r"
 L.DebugIterateUnits = "반복 단위 |cff3587ff[디버그]|r"
 L.DebugDBTotals = "DB 합계 |cff3587ff[디버그]|r"
@@ -81,6 +94,7 @@ L.Currency = "화폐"
 L.Blacklist = "차단목록"
 L.Whitelist = "허가목록"
 L.Recipes = "제조법"
+L.Details = "세부 정보"
 L.Gold = "소지금"
 L.Close = "닫기"
 L.FixDB = "데이터 갱신"
@@ -104,6 +118,7 @@ L.AddGuild = "길드 추가"
 L.AddItemID = "아이템ID 추가"
 L.RemoveItemID = "아이템ID 제거"
 L.PleaseRescan = "|cFF778899[다시 갱신하세요.]|r"
+L.UseFakeID = "전투 애완동물은 [ItemID] 대신 [FakeID]를 사용합니다."
 L.ItemIDNotFound = "[%s] 아이템ID를 찾을 수 없습니다. 다시 시도하세요!"
 L.ItemIDNotValid = "[%s] 아이템ID가 올바르지 않거나 서버가 응답하지 않습니다. 다시 시도하세요!"
 L.ItemIDRemoved = "[%s] 아이템ID 제거됨"
@@ -185,6 +200,7 @@ L.FocusSearchEditBox = "검색 창을 열면 검색 입력창에 위치합니다
 L.AlwaysShowAdvSearch = "아이템 검색시 항상 심화 검색창을 같이 표시합니다."
 L.DisplayTotal = "[총] 수량을 표시합니다."
 L.DisplayGuildGoldInGoldWindow = "소지금 툴팁에 [길드]의 총 골드를 표시합니다."
+L.Display_GSC = "소지금 창에 |cFFFFD700골드|r, |cFFC0C0C0실버|r 및 |cFFB87333코퍼|r를 표시합니다."
 L.DisplayMailbox = "우편함의 아이템을 표시합니다."
 L.DisplayAuctionHouse = "경매장 아이템을 표시합니다."
 L.DisplayMinimap = "BagSync 미니맵 버튼을 표시합니다."
@@ -204,18 +220,30 @@ L.DisplayItemTypes = "툴팁에 아이템 유형을 [아이템 유형 | 속성] 
 L.DisplayTooltipTags = "태그"
 L.DisplayTooltipStorage = "아이템 위치"
 L.DisplayTooltipExtra = "추가기능"
+L.DisplayTooltipCurrencyData = "블리자드 화폐 창에 BagSync 툴팁 데이터를 표시합니다."
+L.DisplaySortOrderHelp = "정렬 순서 도움말"
+L.DisplaySortOrderStatus = "현재 정렬 순서: [%s]"
 L.DisplayWhitelistHelp = "허가목록 도움말"
 L.DisplayWhitelistStatus = "현재 허가목록: [%s]"
 L.DisplayWhitelistHelpInfo = "허가목록에 아이템ID를 입력할 수 있습니다. \n\n애완동물을 입력하려면 아이템ID가 아니라 FakeID를 사용해야 합니다. 설정에서 아이템ID 툴팁을 사용하여 FakeID를 가져올 수 있습니다.\n\n|cFFDF2B2B화폐 창에서는 동작하지 않습니다.|r"
+L.DisplayWhitelistHelpInfo2 = "\n\n\n\n|cFFFF7D0A경고: 이 허가목록 기능은 이 목록에 있는 아이템을 제외한 |cFFFFFFFF--모든--|r 아이템의 BagSync 카운트를 차단합니다.|r\n|cFF09DBE0블랙리스트의 반대입니다!|r"
 L.DisplayTooltipAccountWide = "교차 서버"
 L.DisplayAccountWideTagOpts = "|cFF99CC33태그 설정 ( |cffff7d0a[CR]|r & |cff3587ff[BNet]|r )|r"
 L.DisplayGreenCheck = "현재 캐릭터 이름 옆에 %s를 표시합니다."
+L.DisplayCurrentCharacter = "현재 캐릭터"
+L.DisplayCurrentCharacterOnly = "현재 캐릭터 |cFFFFD700전용!|r BagSync 툴팁 데이터를 표시합니다. |cFFDF2B2B(추천하지 않음)|r"
+L.DisplayBlacklistCurrentCharOnly = "현재 캐릭터 |cFFFFD700전용!|r 차단목록 아이템 수량을 표시합니다. |cFFDF2B2B(추천하지 않음)|r"
+L.DisplayCurrentRealmName = "플레이어의 |cFF4CBB17[현재 서버]|r를 표시합니다."
+L.DisplayCurrentRealmShortName = "|cFF4CBB17[현재 서버]|r의 짧은 이름을 사용합니다."
 L.DisplayRealmIDTags = "캐릭터에 서버식별자 |cffff7d0a[CR]|r과 |cff3587ff[BNet]|r을 표시합니다."
 L.DisplayRealmNames = "서버 이름을 표시합니다."
 L.DisplayRealmAstrick = "|cffff7d0a[CR]|r과 |cff3587ff[BNet]|r 서버 이름 대신 [*]을 표시합니다."
 L.DisplayShortRealmName = "|cffff7d0a[CR]|r과 |cff3587ff[BNet]|r 서버 이름을 축약해서 표시합니다."
 L.DisplayFactionIcons = "툴팁에 진영 아이콘을 표시합니다."
 L.DisplayGuildBankTabs = "툴팁에 길드은행 탭 [1,2,3, 등]을 사용합니다."
+L.DisplayWarbandBankTabs = "툴팁에 전투부대 은행 탭 [1,2,3, 등]을 표시합니다."
+L.DisplayBankTabs = "툴팁에 은행 탭 [1,2,3, 등]을 표시합니다."
+L.DisplayEquipBagSlots = "툴팁에 장착한 가방 슬롯 <1,2,3, 등>을 표시합니다."
 L.DisplayRaceIcons = "툴팁에 캐릭터 종족 아이콘을 표시합니다."
 L.DisplaySingleCharLocs = "아이템의 위치를 단축문자를 사용하여 표시합니다."
 L.DisplayIconLocs = "아이템의 위치를 아이콘을 사용하여 표시합니다."
@@ -223,8 +251,14 @@ L.DisplayGuildSeparately = "캐릭터의 합계와 분리하여 [길드] 이름 
 L.DisplayGuildCurrentCharacter = "현재 접속한 캐릭터의 [길드] 아이템만 표시합니다."
 L.DisplayGuildBankScanAlert = "길드 은행 스캔시 경고 창을 표시합니다."
 L.DisplayAccurateBattlePets = "길드 은행 및 우편함에 정확한 전투 애완 동물 사용. |cFFDF2B2B(랙을 발생시킴)|r |cff3587ff[BagSync의 FAQ를 참고하세요.]|r"
+L.DisplaySortCurrencyByExpansionFirst = "BagSync 화폐 창을 알파벳 순이 아니라 확장팩 기준으로 먼저 정렬합니다."
 L.DisplaySorting = "툴팁 정렬"
 L.DisplaySortInfo = "기본: 서버의 캐릭터 이름으로 툴팁은 알파벳 순으로 정렬되어 있습니다."
+L.SortMode = "정렬 모드"
+L.SortMode_RealmCharacter = "서버 후 캐릭터 (기본)"
+L.SortMode_Character = "캐릭터"
+L.SortMode_ClassCharacter = "직업 후 캐릭터"
+L.SortCurrentPlayerOnTop = "기본 정렬을 사용하고 현재 캐릭터를 항상 맨 위에 표시합니다."
 L.SortTooltipByTotals = "BagSync의 툴팁에 알파벳 순이 아닌 총 갯수로 정렬합니다."
 L.SortByCustomSortOrder = "사용자 정렬 순서로 정렬합니다."
 L.CustomSortInfo = "오름차순으로 정렬합니다. (1,2,3)"
@@ -240,6 +274,8 @@ L.ColorPrimary = "주 BagSync 툴팁 색상"
 L.ColorSecondary = "보조 BagSync 툴팁 색상"
 L.ColorTotal = "BagSync [총] 툴팁 색상"
 L.ColorGuild = "BagSync [길드] 툴팁 색상"
+L.ColorWarband = "BagSync [전투부대] 툴팁 색상"
+L.ColorCurrentRealm = "BagSync [현재 서버] 툴팁 색상"
 --[[Translation missing --]]
 L.ColorCR = "BagSync [Connected Realm] tooltip color."
 L.ColorBNET = "BagSync [Battle.Net] 툴팁 색상"
@@ -247,6 +283,9 @@ L.ColorItemID = "BagSync [아이템ID] 툴팁 색상"
 L.ColorExpansion = "[확장팩] 툴팁 색상"
 L.ColorItemTypes = "[아이템유형] 툴팁 색상"
 L.ColorGuildTabs = "길드 은행 탭 [1,2,3, 등] 툴팁 색상"
+L.ColorWarbandTabs = "전투부대 은행 탭 [1,2,3, 등] 툴팁 색상"
+L.ColorBankTabs = "은행 탭 [1,2,3, 등] 툴팁 색상"
+L.ColorBagSlots = "가방 슬롯 <1,2,3, 등> 툴팁 색상"
 L.ConfigHeader = "여러 BagSync 기능을 설정합니다."
 L.ConfigDisplay = "표시"
 L.ConfigTooltipHeader = "표시할 BagSync 툴팁 정보를 설정합니다."
@@ -286,13 +325,28 @@ L.TrackingModule_Auction = "Auction House"
 L.TrackingModule_Guild = "Guild Bank"
 L.TrackingModule_Professions = "Professions / Tradeskills"
 L.TrackingModule_Currency = "Curency Tokens"
+L.TrackingModule_WarbandBank = "Warband Bank"
 L.WarningItemSearch = "경고: 총 [|cFFFFFFFF%s|r]개의 아이템이 검색되지 않았습니다!\n\nBagSync는 계속해서 서버/캐시의 응답을 기다립니다.\n\n새로고침 버튼을 누르세요."
 L.WarningUpdatedDB = "최신 데이터베이스 버전으로 갱신했습니다! 당신의 모든 캐릭터를 다시 재탐색해야 합니다!|r"
+L.WarningCurrencyUpt = "화폐 업데이트에 실패했습니다. 다음 캐릭터로 로그인하세요: "
 L.WarningHeader = "경고!"
 --[[Translation missing --]]
 L.SavedSearch = "Saved Search"
 L.SavedSearch_Add = "Add Search"
 L.SavedSearch_Warn = "You must type something in the search box."
+---------------------------------------
+--Blizzard doesn't return the same header title in the Currency/Token window that is used in their expansion globals.
+--Meaning that, "The Burning Crusade" is listed as "Burning Crusade" in the Currency/Token window.  The same for "The War Within" being shown as "War Within"
+--In order to do a proper sorting of the Currency/Token Window for BagSync.  I've done the following steps
+--1) Removed all spaces and special characters from the expansion name
+--2) forced all characters to be lower case
+--3) Use the filter below to remove any other additional words in the name to match it to the currency/token window.
+--
+--Example: "The War Within" and "War Within" gets matched as "warwithin".  "Battle for Azeroth" gets matched as "battleforazeroth"
+--You can add as many words as you want below, just make sure it's lowercase, no spaces or symbols and to follow each entry with a comma
+---------------------------------------
+L.CurrencySortFilters = {
+}
 ---------------------------------------
 --Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  Example: class:<name of class in your locale>
 --This includes name searches like name:<name in your locale>
@@ -381,4 +435,20 @@ L.FAQ_Question_7 = "What is accurate Battle Pet scanning in Guild Bank & Mailbox
 --[[Translation missing --]]
 L.FAQ_Question_7_p1 = [[
 Blizzard does not store Battle Pets in the Guild Bank or Mailbox with a proper ItemID or SpeciesID.  In fact Battle Pets are stored in the Guild Bank and Mailbox as |cFF99CC33[Pet Cage]|r with an ItemID of |cFF99CC3382800|r.  This makes grabbing any data in regards to specific Battle Pets difficult for addon authors.  You can see for yourself in the Guild Bank transaction logs, you'll notice Battle Pets are stored as |cFF99CC33[Pet Cage]|r.  If you link one from a Guild Bank it will also be displayed as |cFF99CC33[Pet Cage]|r.  In order to get by this problem, there are two methods that can be used.  The first method is assigning the Battle Pet to a tooltip and then grabbing the SpeciesID from there.  This requires the server to respond to the WOW client and can potentially lead to massive lag, especially if there is a lot of Battle Pets in the Guild Bank.  The second method uses the iconTexture of the Battle Pet to try to find the SpeciesID.  This is sometimes inaccurate as certain Battle Pets share the same iconTexture.  Example:  Toxic Wasteling shares the same iconTexture as Jade Oozeling.  Enabling this option will force the tooltip scanning method to be as accurate as possible, but it can potentially cause lag.  |cFFDF2B2BThere is no way around this until Blizzard gives us more data to work with.|r
+]]
+L.BagSyncInfoWindow = [[
+BagSync는 기본적으로 연결된 서버의 캐릭터에 대한 툴팁 데이터만 표시합니다. ( |cffff7d0a[CR]|r )
+
+연결된 서버 ( |cffff7d0a[CR]|r )는 서로 연결된 서버들입니다.
+
+전체 목록은 다음을 참고하세요:
+(|cFF99CC33 https://tinyurl.com/msncc7j6 |r)
+
+
+|cFFfd5c63BagSync는 기본적으로 전체 Battle.Net 계정의 데이터를 표시하지 않습니다. 이 기능을 활성화해야 합니다!|r
+( |cff3587ff[BNet]|r )
+
+|cFF52D386전체 Battle.net 계정 ( |cff3587ff[BNet]|r )의 모든 캐릭터를 보고 싶다면, BagSync 설정 창의 [Account Wide]에서 옵션을 활성화하세요.|r
+
+옵션 이름:
 ]]

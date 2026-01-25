@@ -234,6 +234,7 @@ L.DisplayShortRealmName = "Kurze Realmnamen für |cffff7d0a[CR]|r und |cff3587ff
 L.DisplayFactionIcons = "Fraktionssymbole im Tooltip anzeigen"
 L.DisplayGuildBankTabs = "Gildenbank-Reiter [1,2,3, etc...] im Tooltip anzeigen."
 L.DisplayWarbandBankTabs = "Zeigt die Tabs [1, 2, 3 usw.] der Kriegermeuten Bank im Tooltip an."
+L.DisplayBankTabs = "Bank-Reiter [1,2,3, etc...] im Tooltip anzeigen."
 L.DisplayEquipBagSlots = "Zeigt die ausgerüsteten Taschenplätze <1,2,3, etc.> im Tooltip an."
 L.DisplayRaceIcons = "Symbole der Charakterrasse im Tooltip anzeigen."
 L.DisplaySingleCharLocs = "Zeige ein einzelnes Zeichen für Speicherorte an."
@@ -242,8 +243,14 @@ L.DisplayGuildSeparately = "Zeige [Gilden-]Namen und Gegenstandssummen getrennt 
 L.DisplayGuildCurrentCharacter = "Zeige [Gilden] Gegenstände nur für den aktuell eingeloggten Charakter"
 L.DisplayGuildBankScanAlert = "Zeigt das Scan Warnfenster der Gildenbank an"
 L.DisplayAccurateBattlePets = "Genaue Kampfhaustiere in der Gildenbank und Mailbox aktivieren. |cFFDF2B2B(Kann zu Verzögerungen führen)|r |cff3587ff[Siehe BagSync FAQ]|r"
+L.DisplaySortCurrencyByExpansionFirst = "Sortiere das BagSync-Währungsfenster zuerst nach Erweiterung statt alphabetisch."
 L.DisplaySorting = "Tooltip Sortierung"
 L.DisplaySortInfo = "Standard: Tooltips werden alphabetisch nach Realm und dann nach Charakternamen sortiert."
+L.SortMode = "Sortiermodus"
+L.SortMode_RealmCharacter = "Realm dann Charakter (Standard)"
+L.SortMode_Character = "Charakter"
+L.SortMode_ClassCharacter = "Klasse dann Charakter"
+L.SortCurrentPlayerOnTop = "Standardmäßig sortieren und aktuellen Charakter immer oben anzeigen."
 L.SortTooltipByTotals = "Sortiere die BagSync Tooltips nach Summen und nicht alphabetisch."
 L.SortByCustomSortOrder = "Sortieren nach benutzerdefinierter Sortierreihenfolge."
 L.CustomSortInfo = "Liste verwendet eine aufsteigende Reihenfolge (1,2,3)"
@@ -269,6 +276,7 @@ L.ColorExpansion = "BagSync [Erweiterungen] Tooltipfarbe."
 L.ColorItemTypes = "BagSync [Gegenstandstyp] Tooltipfarbe."
 L.ColorGuildTabs = "Gilden Tabs [1,2,3, etc...] Tooltipfarbe."
 L.ColorWarbandTabs = "Kriegsmeuten Tabs [1,2,3, etc...] Tooltipfarbe."
+L.ColorBankTabs = "Bank Tabs [1,2,3, etc...] Tooltipfarbe."
 L.ColorBagSlots = "Taschen Slots <1,2,3, etc...> Tooltipfarbe."
 L.ConfigHeader = "Einstellungen für verschiedene BagSync Funktionen."
 L.ConfigDisplay = "Anzeige"
@@ -316,6 +324,23 @@ L.WarningHeader = "Warnung!"
 L.SavedSearch = "Gespeicherte Suche"
 L.SavedSearch_Add = "Suche hinzufügen"
 L.SavedSearch_Warn = "Du mußt etwas in das Suchfeld eingeben."
+---------------------------------------
+--Blizzard doesn't return the same header title in the Currency/Token window that is used in their expansion globals.
+--Meaning that, "The Burning Crusade" is listed as "Burning Crusade" in the Currency/Token window.  The same for "The War Within" being shown as "War Within"
+--In order to do a proper sorting of the Currency/Token Window for BagSync.  I've done the following steps
+--1) Removed all spaces and special characters from the expansion name
+--2) forced all characters to be lower case
+--3) Use the filter below to remove any other additional words in the name to match it to the currency/token window.
+--
+--Example: "The War Within" and "War Within" gets matched as "warwithin".  "Battle for Azeroth" gets matched as "battleforazeroth"
+--You can add as many words as you want below, just make sure it's lowercase, no spaces or symbols and to follow each entry with a comma
+---------------------------------------
+L.CurrencySortFilters = {
+	"der",
+	"die",
+	"das",
+	"the",
+}
 ---------------------------------------
 --Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  Example: class:<name of class in your locale>
 --This includes name searches like name:<name in your locale>
@@ -411,6 +436,23 @@ Blizzard weist Kampfhaustieren keine ItemIDs für WOW zu. Stattdessen wird Battl
 L.FAQ_Question_7 = "Was ist ein genaues Scannen von Kampfhaustieren in Gildenbank und Postfach?"
 L.FAQ_Question_7_p1 = [[
 Blizzard speichert Kampfhaustiere nicht mit einer korrekten ItemID oder SpeciesID in der Gildenbank oder Mailbox. Tatsächlich werden Kampfhaustiere in der Gildenbank und im Postfach als |cFF99CC33[Haustierkäfig]|r mit der ItemID |cFF99CC3382800|r gespeichert. Dies macht es für Addon-Entwickler schwierig, Daten zu bestimmten Kampfhaustieren zu erhalten. Dies zeigt sich auch im Log der Gildenbank, dort werden Kaupfhaustiere als |cFF99CC33[Haustierkäfig]|r angezeigt. Auch beim Verlinken aus der Gildenbank werden sie als |cFF99CC33[Haustierkäfig]|r angezeigt. Um dieses Problem zu umgehen, gibt es zwei Methoden. Die erste Methode besteht darin, das Kampfhaustier einem Tooltip zuzuweisen und dann die SpeciesID von dort zu holen. Dafür muss der Server auf den WoW-Client antworten. Das kann zu massiven Lags führen, insbesondere wenn sich viele Kampfhaustiere in der Gildenbank befinden. Die zweite Methode verwendet die Symboltextur des Kampfhaustiers, um die SpeciesID herauszufinden. Dies ist manchmal ungenau, da manche Kampfhaustiere die gleiche Symboltextur haben. Beispiel: Giftmüllschleimling verwendet die gleiche Symboltextur wie Jadeschlammling. Aktivieren dieser Option erzwingt die Tooltip-Scanmethode für möglichst genaue Ergebnisse, kann aber Lags verursachen. |cFFDF2B2BDaran führt kein Weg vorbei, bis Blizzard uns mehr Daten zum Arbeiten gibt.|r
+]]
+
+L.BagSyncInfoWindow = [[
+BagSync zeigt standardmäßig nur Tooltip-Daten von Charakteren auf verbundenen Realms an. ( |cffff7d0a[CR]|r )
+
+Verbundene Realms ( |cffff7d0a[CR]|r ) sind Server, die miteinander verbunden wurden.
+
+Für eine vollständige Liste besuche bitte:
+(|cFF99CC33 https://tinyurl.com/msncc7j6 |r)
+
+
+|cFFfd5c63BagSync zeigt standardmäßig NICHT die Daten deines gesamten Battle.Net-Kontos. Du musst dies aktivieren!|r
+( |cff3587ff[BNet]|r )
+
+|cFF52D386Wenn du alle deine Charaktere über dein gesamtes Battle.net-Konto ( |cff3587ff[BNet]|r ) hinweg sehen möchtest, musst du die Option im BagSync-Konfigurationsfenster unter [Account Wide] aktivieren.|r
+
+Die Option heißt:
 ]]
 
 

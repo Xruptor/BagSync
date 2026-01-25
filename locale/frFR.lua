@@ -236,6 +236,7 @@ L.DisplayShortRealmName = "Afficher les noms de royaumes courts pour |cffff7d0a[
 L.DisplayFactionIcons = "Afficher les icônes de faction dans l'infobulle."
 L.DisplayGuildBankTabs = "Afficher [1,2,3, etc...] des onglets de la banque de guilde dans l'infobulle."
 L.DisplayWarbandBankTabs = "Afficher [1,2,3, etc...] des onglets de la banque du bataillon dans l'infobulle."
+L.DisplayBankTabs = "Afficher les onglets de banque [1,2,3, etc...] dans l'infobulle."
 L.DisplayEquipBagSlots = "Display equipped bag slots <1,2,3, etc...> in tooltip."
 L.DisplayRaceIcons = "Affichage des icônes de race des personnages dans l'infobulle."
 L.DisplaySingleCharLocs = "Afficher un seul caractère pour les emplacements de stockage."
@@ -244,8 +245,14 @@ L.DisplayGuildSeparately = "Afficher les noms de [Guilde] et les totaux d'élém
 L.DisplayGuildCurrentCharacter = "Afficher les objets de [Guilde] uniquement pour le personnage actuellement connecté."
 L.DisplayGuildBankScanAlert = "Afficher la fenêtre d'alerte d'analyse de la banque de guilde."
 L.DisplayAccurateBattlePets = "Enable accurate Battle Pets in Guild Bank & Mailbox. |cFFDF2B2B(May cause lag)|r |cff3587ff[See BagSync FAQ]|r"
+L.DisplaySortCurrencyByExpansionFirst = "Trier la fenêtre des monnaies BagSync par extension d'abord plutôt qu'alphabétiquement."
 L.DisplaySorting = "Tri des infobulles"
 L.DisplaySortInfo = "Défaut : les infobulles sont classées par ordre alphabétique, par royaume puis par nom de personnage."
+L.SortMode = "Mode de tri"
+L.SortMode_RealmCharacter = "Royaume puis personnage (par défaut)"
+L.SortMode_Character = "Personnage"
+L.SortMode_ClassCharacter = "Classe puis personnage"
+L.SortCurrentPlayerOnTop = "Trier par défaut et toujours afficher le personnage actuel en haut."
 L.SortTooltipByTotals = "Trier par total et non par ordre alphabétique."
 L.SortByCustomSortOrder = "Trier par ordre personnalisé."
 L.CustomSortInfo = "La liste utilise un ordre croissant (1,2,3)"
@@ -271,6 +278,7 @@ L.ColorExpansion = "Couleur de l'infobulle de [Extension] de BagSync."
 L.ColorItemTypes = "Couleur de l'infobulle de [ItemType] de BagSync."
 L.ColorGuildTabs = "Couleur de l'infobulle des onglets de guilde [1,2,3, etc...] de BagSync."
 L.ColorWarbandTabs = "Couleur de l'infobulle des onglets du bataillon [1,2,3, etc...] de BagSync."
+L.ColorBankTabs = "Couleur de l'infobulle des onglets de banque [1,2,3, etc...] de BagSync."
 L.ColorBagSlots = "Bag Slots <1,2,3, etc...> tooltip color."
 L.ConfigHeader = "Paramètres des différentes fonctions de BagSync."
 L.ConfigDisplay = "Affichage"
@@ -318,6 +326,26 @@ L.WarningHeader = "Attention !"
 L.SavedSearch = "Recherche sauvegardée !"
 L.SavedSearch_Add = "Ajouter une recherche"
 L.SavedSearch_Warn = "Vous devez saisir quelque chose dans le champ de recherche."
+---------------------------------------
+--Blizzard doesn't return the same header title in the Currency/Token window that is used in their expansion globals.
+--Meaning that, "The Burning Crusade" is listed as "Burning Crusade" in the Currency/Token window.  The same for "The War Within" being shown as "War Within"
+--In order to do a proper sorting of the Currency/Token Window for BagSync.  I've done the following steps
+--1) Removed all spaces and special characters from the expansion name
+--2) forced all characters to be lower case
+--3) Use the filter below to remove any other additional words in the name to match it to the currency/token window.
+--
+--Example: "The War Within" and "War Within" gets matched as "warwithin".  "Battle for Azeroth" gets matched as "battleforazeroth"
+--You can add as many words as you want below, just make sure it's lowercase, no spaces or symbols and to follow each entry with a comma
+---------------------------------------
+L.CurrencySortFilters = {
+	"le",
+	"la",
+	"les",
+	"de",
+	"des",
+	"du",
+	"the",
+}
 ---------------------------------------
 --Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  Example: class:<name of class in your locale>
 --This includes name searches like name:<name in your locale>
@@ -413,4 +441,21 @@ Blizzard does not assign ItemID's to Battle Pets for WOW.  Instead, Battle Pets 
 L.FAQ_Question_7 = "What is accurate Battle Pet scanning in Guild Bank & Mailbox?"
 L.FAQ_Question_7_p1 = [[
 Blizzard does not store Battle Pets in the Guild Bank or Mailbox with a proper ItemID or SpeciesID.  In fact Battle Pets are stored in the Guild Bank and Mailbox as |cFF99CC33[Pet Cage]|r with an ItemID of |cFF99CC3382800|r.  This makes grabbing any data in regards to specific Battle Pets difficult for addon authors.  You can see for yourself in the Guild Bank transaction logs, you'll notice Battle Pets are stored as |cFF99CC33[Pet Cage]|r.  If you link one from a Guild Bank it will also be displayed as |cFF99CC33[Pet Cage]|r.  In order to get by this problem, there are two methods that can be used.  The first method is assigning the Battle Pet to a tooltip and then grabbing the SpeciesID from there.  This requires the server to respond to the WOW client and can potentially lead to massive lag, especially if there is a lot of Battle Pets in the Guild Bank.  The second method uses the iconTexture of the Battle Pet to try to find the SpeciesID.  This is sometimes inaccurate as certain Battle Pets share the same iconTexture.  Example:  Toxic Wasteling shares the same iconTexture as Jade Oozeling.  Enabling this option will force the tooltip scanning method to be as accurate as possible, but it can potentially cause lag.  |cFFDF2B2BThere is no way around this until Blizzard gives us more data to work with.|r
+]]
+
+L.BagSyncInfoWindow = [[
+BagSync, par défaut, n'affiche dans les infobulles que les données des personnages sur les royaumes connectés. ( |cffff7d0a[CR]|r )
+
+Les royaumes connectés ( |cffff7d0a[CR]|r ) sont des serveurs qui ont été liés entre eux.
+
+Pour une liste complète, veuillez consulter :
+(|cFF99CC33 https://tinyurl.com/msncc7j6 |r)
+
+
+|cFFfd5c63BagSync n'affichera PAS, par défaut, les données de l'ensemble de votre compte Battle.Net. Vous devez l'activer !|r
+( |cff3587ff[BNet]|r )
+
+|cFF52D386Si vous souhaitez voir tous vos personnages sur l'ensemble de votre compte Battle.net ( |cff3587ff[BNet]|r ), vous devez activer l'option dans la fenêtre de configuration BagSync, sous [Account Wide].|r
+
+L'option s'appelle :
 ]]

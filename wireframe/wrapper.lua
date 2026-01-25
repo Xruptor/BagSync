@@ -341,7 +341,7 @@ local function createTitle(parent, text, y)
 end
 
 local function createDescription(parent, text, y)
-	local fs = parent:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+	local fs = parent:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 	fs:SetPoint("TOPLEFT", parent, "TOPLEFT", 16, y)
 	fs:SetPoint("RIGHT", parent, "RIGHT", -16, 0)
 	fs:SetJustifyH("LEFT")
@@ -697,12 +697,27 @@ function BSYC.ConfigDialog:AddToBlizOptions(appName, name, parentName)
 	local content = CreateFrame("Frame", nil, scroll)
 	content:SetPoint("TOPLEFT", 0, 0)
 	content:SetPoint("RIGHT", 0, 0)
-	content:SetWidth(1)
 	scroll:SetScrollChild(content)
 
 	panel._widgets = {}
 	panel._built = false
+
+	local function syncContentWidth()
+		local w = scroll.GetWidth and scroll:GetWidth() or 0
+		if not w or w <= 1 then
+			w = panel.GetWidth and (panel:GetWidth() - 32) or 0
+		end
+		if w and w > 1 then
+			content:SetWidth(w)
+		end
+	end
+
+	scroll:HookScript("OnSizeChanged", function()
+		syncContentWidth()
+	end)
+
 	panel:SetScript("OnShow", function()
+		syncContentWidth()
 		if panel._built then
 			for _, w in ipairs(panel._widgets) do w.refresh() end
 			return

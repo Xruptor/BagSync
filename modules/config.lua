@@ -10,9 +10,10 @@ local BSYC = select(2, ...) --grab the addon namespace
 local L = BSYC.L
 local config = BSYC.Config
 local configDialog = BSYC.ConfigDialog
-local MinimapIcon = LibStub("LibDBIcon-1.0")
 local SML = LibStub("LibSharedMedia-3.0")
 local SML_FONT = SML.MediaType and SML.MediaType.FONT or "font"
+
+local Minimap = BSYC:GetModule("Minimap")
 
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Config", ...) end
@@ -98,10 +99,10 @@ local function set(info, arg1, arg2, arg3, arg4)
 		BSYC.colors[c].b = arg3
 	elseif p == "tracking" then
 		BSYC.tracking[c] = arg1
-		--rebuild the minimap if any options have changed
-		if BSYC:GetModule("DataBroker", true) then
-			BSYC:GetModule("DataBroker"):BuildMinimapDropdown()
-		end
+		-- --rebuild the minimap if any options have changed
+		-- if BSYC:GetModule("DataBroker", true) then
+		-- 	BSYC:GetModule("DataBroker"):BuildMinimapDropdown()
+		-- end
 	elseif p == "keybind" then
 	   local b1, b2 = GetBindingKey(c)
 	   if b1 then SetBinding(b1) end
@@ -115,13 +116,13 @@ local function set(info, arg1, arg2, arg3, arg4)
 		BSYC.options[c] = arg1
 
 		if p == "minimap" then
+			BSYC.options.minimap = BSYC.options.minimap or {}
 			if arg1 then
-				MinimapIcon:Show("BagSync")
 				BSYC.options.minimap.hide = false
 			else
-				MinimapIcon:Hide("BagSync")
 				BSYC.options.minimap.hide = true
 			end
+			Minimap:UpdateVisibility()
 		elseif c == "enableRealmNames" and arg1 then
 			BSYC.options.enableRealmAstrickName = false
 			BSYC.options.enableRealmShortName = false
@@ -1318,104 +1319,32 @@ options.args.faq = {
 	name = L.ConfigFAQ,
 	desc = L.ConfigFAQHeader,
 	args = {
-		question_1 = {
-			order = 1,
-			name = L.FAQ_Question_1,
-			type = "group",
-			guiInline = true,
-			args = {
-				title = {
-				  order = 0,
-				  fontSize = "medium",
-				  type = "description",
-				  name = L.FAQ_Question_1_p1,
-				},
-			}
-		},
-		question_2 = {
-			order = 2,
-			name = L.FAQ_Question_2,
-			type = "group",
-			guiInline = true,
-			args = {
-				title = {
-				  order = 0,
-				  fontSize = "medium",
-				  type = "description",
-				  name = L.FAQ_Question_2_p1,
-				},
-			}
-		},
-		question_3 = {
-			order = 3,
-			name = L.FAQ_Question_3,
-			type = "group",
-			guiInline = true,
-			args = {
-				title = {
-				  order = 0,
-				  fontSize = "medium",
-				  type = "description",
-				  name = L.FAQ_Question_3_p1,
-				},
-			}
-		},
-		question_4 = {
-			order = 4,
-			name = L.FAQ_Question_4,
-			type = "group",
-			guiInline = true,
-			args = {
-				title = {
-				  order = 0,
-				  fontSize = "medium",
-				  type = "description",
-				  name = L.FAQ_Question_4_p1,
-				},
-			}
-		},
-		question_5 = {
-			order = 5,
-			name = L.FAQ_Question_5,
-			type = "group",
-			guiInline = true,
-			args = {
-				title = {
-				  order = 0,
-				  fontSize = "medium",
-				  type = "description",
-				  name = L.FAQ_Question_5_p1,
-				},
-			}
-		},
-		question_6 = {
-			order = 6,
-			name = L.FAQ_Question_6,
-			type = "group",
-			guiInline = true,
-			args = {
-				title = {
-				  order = 0,
-				  fontSize = "medium",
-				  type = "description",
-				  name = L.FAQ_Question_6_p1,
-				},
-			}
-		},
-		question_7 = {
-			order = 7,
-			name = L.FAQ_Question_7,
-			type = "group",
-			guiInline = true,
-			args = {
-				title = {
-				  order = 0,
-				  fontSize = "medium",
-				  type = "description",
-				  name = L.FAQ_Question_7_p1,
-				},
-			}
-		},
+		question_1 = { order = 1, type = "description", fontSize = "large", name = function() return "|cffffd200"..(L.FAQ_Question_1 or "").."|r" end, width = "full" },
+		answer_1 = { order = 2, type = "description", fontSize = "medium", name = function() return L.FAQ_Question_1_p1 or "" end, width = "full" },
+		sep_1 = { order = 3, type = "description", name = "|cff5c5c5c--------------------------------------------------|r", width = "full" },
+
+		question_2 = { order = 4, type = "description", fontSize = "large", name = function() return "|cffffd200"..(L.FAQ_Question_2 or "").."|r" end, width = "full" },
+		answer_2 = { order = 5, type = "description", fontSize = "medium", name = function() return L.FAQ_Question_2_p1 or "" end, width = "full" },
+		sep_2 = { order = 6, type = "description", name = "|cff5c5c5c--------------------------------------------------|r", width = "full" },
+
+		question_3 = { order = 7, type = "description", fontSize = "large", name = function() return "|cffffd200"..(L.FAQ_Question_3 or "").."|r" end, width = "full" },
+		answer_3 = { order = 8, type = "description", fontSize = "medium", name = function() return L.FAQ_Question_3_p1 or "" end, width = "full" },
+		sep_3 = { order = 9, type = "description", name = "|cff5c5c5c--------------------------------------------------|r", width = "full" },
+
+		question_4 = { order = 10, type = "description", fontSize = "large", name = function() return "|cffffd200"..(L.FAQ_Question_4 or "").."|r" end, width = "full" },
+		answer_4 = { order = 11, type = "description", fontSize = "medium", name = function() return L.FAQ_Question_4_p1 or "" end, width = "full" },
+		sep_4 = { order = 12, type = "description", name = "|cff5c5c5c--------------------------------------------------|r", width = "full" },
+
+		question_5 = { order = 13, type = "description", fontSize = "large", name = function() return "|cffffd200"..(L.FAQ_Question_5 or "").."|r" end, width = "full" },
+		answer_5 = { order = 14, type = "description", fontSize = "medium", name = function() return L.FAQ_Question_5_p1 or "" end, width = "full" },
+		sep_5 = { order = 15, type = "description", name = "|cff5c5c5c--------------------------------------------------|r", width = "full" },
+
+		question_6 = { order = 16, type = "description", fontSize = "large", name = function() return "|cffffd200"..(L.FAQ_Question_6 or "").."|r" end, width = "full" },
+		answer_6 = { order = 17, type = "description", fontSize = "medium", name = function() return L.FAQ_Question_6_p1 or "" end, width = "full" },
+		sep_6 = { order = 18, type = "description", name = "|cff5c5c5c--------------------------------------------------|r", width = "full" },
+
+		question_7 = { order = 19, type = "description", fontSize = "large", name = function() return "|cffffd200"..(L.FAQ_Question_7 or "").."|r" end, width = "full" },
+		answer_7 = { order = 20, type = "description", fontSize = "medium", name = function() return L.FAQ_Question_7_p1 or "" end, width = "full" },
 	},
 }
 

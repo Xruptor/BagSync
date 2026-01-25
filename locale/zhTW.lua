@@ -30,6 +30,16 @@ L.TooltipSmall_mailbox = "郵"
 L.TooltipSmall_void = "虛"
 L.TooltipSmall_auction = "拍"
 L.TooltipSmall_warband = "戰"
+--do not touch these unless requiring a new image for a specific localization
+L.TooltipIcon_bag = [[|TInterface\AddOns\BagSync\media\bag:13:13|t]]
+L.TooltipIcon_bank = [[|TInterface\AddOns\BagSync\media\bank:13:13|t]]
+L.TooltipIcon_reagents = [[|TInterface\AddOns\BagSync\media\reagents:13:13|t]]
+L.TooltipIcon_equip = [[|TInterface\AddOns\BagSync\media\equip:13:13|t]]
+L.TooltipIcon_guild = [[|TInterface\AddOns\BagSync\media\guild:13:13|t]]
+L.TooltipIcon_mailbox = [[|TInterface\AddOns\BagSync\media\mailbox:13:13|t]]
+L.TooltipIcon_void = [[|TInterface\AddOns\BagSync\media\void:13:13|t]]
+L.TooltipIcon_auction = [[|TInterface\AddOns\BagSync\media\auction:13:13|t]]
+L.TooltipIcon_warband = [[|TInterface\AddOns\BagSync\media\warband:13:13|t]]
 L.TooltipTotal = "總計:"
 L.TooltipTabs = "公:"
 L.TooltipBagSlot = "位:"
@@ -184,6 +194,7 @@ L.FocusSearchEditBox = "開啟搜尋視窗時聚焦到搜尋框架"
 L.AlwaysShowAdvSearch = "始終顯示BagSync進階搜尋視窗。"
 L.DisplayTotal = "顯示 [總計] 金額"
 L.DisplayGuildGoldInGoldTooltip = "顯示 [公會] 金幣總數"
+L.DisplayGuildGoldInGoldWindow = "在金幣視窗顯示 [公會] 金幣總數。"
 L.Display_GSC = "顯示[詳細]金額（|cFFFFD700金|r， |cFFC0C0C0銀|r 和 |cFFB87333銅|r）。"
 L.DisplayMailbox = "包括信箱內物品"
 L.DisplayAuctionHouse = "包括拍賣行物品"
@@ -225,6 +236,7 @@ L.DisplayShortRealmName = "顯示短位名字 |cffff7d0a[CR]|r 和 |cff3587ff[BN
 L.DisplayFactionIcons = "顯示陣營圖案"
 L.DisplayGuildBankTabs = "在工具提示中顯示公會銀行標籤 [1,2,3, 等等...]。"
 L.DisplayWarbandBankTabs = "在鼠標提示中顯示[戰團銀行]標簽[1,2,3, 等...]。"
+L.DisplayBankTabs = "在工具提示中顯示銀行標籤 [1,2,3, 等...]。"
 L.DisplayEquipBagSlots = "在鼠標提示中顯示[裝備]背包欄位<1,2,3, 等...>。"
 L.DisplayRaceIcons = "在工具提示中顯示角色種族圖示。"
 L.DisplaySingleCharLocs = "在儲存位置顯示一個單獨角色。"
@@ -236,6 +248,10 @@ L.DisplayAccurateBattlePets = "在公會銀行和郵箱中啟用準確的戰鬥�
 L.DisplaySortCurrencyByExpansionFirst = "BagSync 的貨幣窗口是依據游戲資料片順序而不是字母順序來進行排序。"
 L.DisplaySorting = "工具提示排序"
 L.DisplaySortInfo = "預設：工具提示先根據伺服器的字母先後排序，然後才是角色名稱。"
+L.SortMode = "排序模式"
+L.SortMode_RealmCharacter = "伺服器然後角色（預設）"
+L.SortMode_Character = "角色"
+L.SortMode_ClassCharacter = "職業然後角色"
 L.SortCurrentPlayerOnTop = "默認排序，始終將當前角色顯示在首位。"
 L.SortTooltipByTotals = "排序根據總數而非字母順序。"
 L.SortByCustomSortOrder = "排序依據自定義順序。"
@@ -262,6 +278,7 @@ L.ColorExpansion = "BagSync [資料片] 提示顏色"
 L.ColorItemTypes = "BagSync [物品類型] 提示顏色"
 L.ColorGuildTabs = "公會標籤 [1,2,3, etc...] 提示顏色"
 L.ColorWarbandTabs = "戰隊標簽 [1,2,3, 等...] 提示顏色。"
+L.ColorBankTabs = "銀行標籤 [1,2,3, 等...] 提示顏色。"
 L.ColorBagSlots = "背包位 <1,2,3, 等...> 提示顏色。"
 L.ConfigHeader = "各種BagSync功能的設置"
 L.ConfigDisplay = "顯示"
@@ -304,10 +321,24 @@ L.TrackingModule_Professions = "專業 / 交易技能"
 L.TrackingModule_Currency = "兌換通貨"
 L.WarningItemSearch = "警告：共有 [|cFFFFFFFF%s|r] 個物品未被搜索！\n\nBagSync 仍在等待伺服器/數據庫響應\n\n按“搜尋”或“更新”按鈕"
 L.WarningUpdatedDB = "您已更新到最新的版本!您將需要再次重新掃描所有角色!|r "
+L.WarningCurrencyUpt = "貨幣更新失敗。請登入角色："
 L.WarningHeader = "警告!"
 L.SavedSearch = "搜尋已儲存"
 L.SavedSearch_Add = "加入搜尋"
 L.SavedSearch_Warn = "你必須在搜尋框中輸入某些東西。"
+---------------------------------------
+--Blizzard doesn't return the same header title in the Currency/Token window that is used in their expansion globals.
+--Meaning that, "The Burning Crusade" is listed as "Burning Crusade" in the Currency/Token window.  The same for "The War Within" being shown as "War Within"
+--In order to do a proper sorting of the Currency/Token Window for BagSync.  I've done the following steps
+--1) Removed all spaces and special characters from the expansion name
+--2) forced all characters to be lower case
+--3) Use the filter below to remove any other additional words in the name to match it to the currency/token window.
+--
+--Example: "The War Within" and "War Within" gets matched as "warwithin".  "Battle for Azeroth" gets matched as "battleforazeroth"
+--You can add as many words as you want below, just make sure it's lowercase, no spaces or symbols and to follow each entry with a comma
+---------------------------------------
+L.CurrencySortFilters = {
+}
 ---------------------------------------
 --Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  範例: class:<name of class in your locale>
 --This includes name searches like name:<name in your locale>
