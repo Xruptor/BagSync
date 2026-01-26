@@ -524,12 +524,11 @@ local function renderOptions(parent, group, widgets, y)
 						UIDropDownMenu_EnableDropDown(dd)
 					end
 
-					-- LibDDI-like behavior for the font dropdown: show the selected font.
-					if opt.itemControl == "DDI-Font" and type(_G.LibStub) == "table" then
-						local SML = _G.LibStub("LibSharedMedia-3.0", true)
-						if SML and type(SML.Fetch) == "function" and label then
-							applyFontPreview(dd, SML:Fetch(SML.MediaType.FONT, label))
-						end
+					if (opt.itemControl == "FONT-DDL" or opt.itemControl == "DDI-Font")
+						and label
+						and type(BSYC.GetFontPath) == "function"
+					then
+						applyFontPreview(dd, BSYC:GetFontPath(label))
 					end
 				end
 			})

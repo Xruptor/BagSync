@@ -10,8 +10,6 @@ local BSYC = select(2, ...) --grab the addon namespace
 local L = BSYC.L
 local config = BSYC.Config
 local configDialog = BSYC.ConfigDialog
-local SML = LibStub("LibSharedMedia-3.0")
-local SML_FONT = SML.MediaType and SML.MediaType.FONT or "font"
 
 local Minimap = BSYC:GetModule("Minimap")
 
@@ -77,9 +75,18 @@ local function get(info)
 	elseif c == "extTT_FontSize" then
 		return BSYC.options[c] or 12
 	elseif c == "extTT_Font" then
-		for i, v in next, SML:List(SML_FONT) do
-			if v == (BSYC.options.extTT_Font or "Friz Quadrata TT") then return i end
+		local list = BSYC:GetAvailableFontNames()
+		local current = BSYC.options.extTT_Font or BSYC.DEFAULT_FONT_NAME
+		local defaultIndex = 1
+		for i, v in next, list do
+			if v == BSYC.DEFAULT_FONT_NAME then
+				defaultIndex = i
+			end
+			if v == current then
+				return i
+			end
 		end
+		return defaultIndex
 	else
 		if BSYC.options[c] then --if this is nil then it will default to false
 			return BSYC.options[c]
@@ -110,8 +117,8 @@ local function set(info, arg1, arg2, arg3, arg4)
 	   SetBinding(arg1, c)
 	   SaveBindings(GetCurrentBindingSet())
 	elseif c == "extTT_Font" then
-		local list = SML:List(SML_FONT)
-		BSYC.options[c] = list[arg1]
+		local list = BSYC:GetAvailableFontNames()
+		BSYC.options[c] = list[arg1] or BSYC.DEFAULT_FONT_NAME
 	else
 		BSYC.options[c] = arg1
 
@@ -294,8 +301,8 @@ options.args.main = {
 					type = "select",
 					name = L.ConfigFont,
 					order = 2,
-					values = SML:List(SML_FONT),
-					itemControl = "DDI-Font",
+					values = function() return BSYC:GetAvailableFontNames() end,
+					itemControl = "FONT-DDL",
 					get = get,
 					set = set,
 					arg = "font.extTT_Font",

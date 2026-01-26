@@ -9,8 +9,6 @@
 local BAGSYNC, BSYC = ... --grab the addon namespace
 _G[BAGSYNC] = BSYC --add it to the global frame space, otherwise you won't be able to call it
 local L = BSYC.L
-local SML = LibStub("LibSharedMedia-3.0")
-local SML_FONT = SML.MediaType and SML.MediaType.FONT or "font"
 
 local WOW_PROJECT_ID = _G.WOW_PROJECT_ID
 local WOW_PROJECT_MAINLINE = _G.WOW_PROJECT_MAINLINE
@@ -32,17 +30,12 @@ BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 --BSYC.IsTBC_C = WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC
 BSYC.IsWLK_C = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
 
--- literal marker helper (no Lua patterns)
-local function hasMark(s, mark)
-    return type(s) == "string" and s:find(mark, 1, true) ~= nil
-end
-BSYC.hasMark = hasMark
+BSYC.DEFAULT_FONT_NAME = BSYC.DEFAULT_FONT_NAME or "Friz Quadrata TT"
 
 -- centralized API compatibility table (preserves fallbacks)
 BSYC.API = BSYC.API or {}
 BSYC.API.GetContainerNumSlots = (C_Container and C_Container.GetContainerNumSlots) or GetContainerNumSlots
 BSYC.API.GetContainerItemInfo = (C_Container and C_Container.GetContainerItemInfo) or GetContainerItemInfo
-
 
 BSYC.IsBankTabsActive = Enum.BagIndex.CharacterBankTab_1 ~= nil
 BSYC.IsReagentBagActive = (Constants.InventoryConstants.NumReagentBagSlots or 0) > 0
@@ -53,55 +46,6 @@ BSYC.isWarbandActive = (C_Container and C_Container.SortAccountBankBags) and (En
 
 --increment forceDBReset to reset the ENTIRE db forcefully
 local forceDBReset = 3
-
-function BSYC:OpenConfig()
-	if InCombatLockdown and InCombatLockdown() then return false end
-
-	local addonCategoryName = "BagSync"
-
-	if _G.Settings and type(_G.Settings.OpenToCategory) == "function" then
-		local category = self.settingsCategory
-		if not category and self.ConfigDialog and type(self.ConfigDialog._settingsCategories) == "table" then
-			category = self.ConfigDialog._settingsCategories[addonCategoryName]
-		end
-
-		local categoryID
-		if type(category) == "number" then
-			categoryID = category
-		elseif type(category) == "table" then
-			if type(category.GetID) == "function" then
-				categoryID = category:GetID()
-			elseif type(category.GetCategoryID) == "function" then
-				categoryID = category:GetCategoryID()
-			elseif type(category.ID) == "number" then
-				categoryID = category.ID
-			elseif type(category.id) == "number" then
-				categoryID = category.id
-			end
-		end
-
-		if categoryID ~= nil then
-			if pcall(_G.Settings.OpenToCategory, categoryID) then return true end
-		end
-
-		-- Some older clients accepted an addon name string here; keep as a last resort.
-		if pcall(_G.Settings.OpenToCategory, addonCategoryName) then return true end
-	end
-
-	if _G.InterfaceOptionsFrame_OpenToCategory then
-		if not self.IsRetail and _G.InterfaceOptionsFrame then
-			-- required on some clients to ensure panels are created before opening
-			_G.InterfaceOptionsFrame:Show()
-		end
-
-		local panel = self.blizzPanel or self.aboutPanel
-		if panel then
-			return pcall(_G.InterfaceOptionsFrame_OpenToCategory, panel)
-		end
-	end
-
-	return false
-end
 
 BSYC.FakePetCode = 10000000000
 BSYC_DL = {
@@ -182,21 +126,15 @@ function BSYC.DEBUG(level, sName, ...)
 	Debug:AddMessage(level, sName, ...)
 end
 
-local debugf = tekDebug and tekDebug:GetFrame("BagSync")
-function BSYC.T_DEBUG(...)
-
-	--old tekDebug code just in case I want to track old debugging method
-    if debugf then
-		local debugStr = string.join(", ", tostringall(...))
-		local moduleName = string.format("|cFFffff00[%s]|r: ", "BagSync")
-		debugStr = moduleName..debugStr
-		debugf:AddMessage(debugStr)
-	end
-end
-
 local function Debug(level, ...)
 	BSYC.DEBUG(level, "CORE", ...)
 end
+
+-- literal marker helper (no Lua patterns)
+local function hasMark(s, mark)
+    return type(s) == "string" and s:find(mark, 1, true) ~= nil
+end
+BSYC.hasMark = hasMark
 
 --use /framestack to debug windows and show tooltip information
 --if you press SHIFT while doing the above command it gives you a bit more information
@@ -209,6 +147,64 @@ function BSYC:GetHashTableLen(tbl)
 		count = count + 1
 	end
 	return count
+end
+
+function BSYC:CopyArray(src)
+	if type(src) ~= "table" then return {} end
+	local out = {}
+	for i = 1, #src do
+		out[i] = src[i]
+	end
+	return out
+end
+
+function BSYC:OpenConfig()
+	if InCombatLockdown and InCombatLockdown() then return false end
+
+	local addonCategoryName = "BagSync"
+
+	if _G.Settings and type(_G.Settings.OpenToCategory) == "function" then
+		local category = self.settingsCategory
+		if not category and self.ConfigDialog and type(self.ConfigDialog._settingsCategories) == "table" then
+			category = self.ConfigDialog._settingsCategories[addonCategoryName]
+		end
+
+		local categoryID
+		if type(category) == "number" then
+			categoryID = category
+		elseif type(category) == "table" then
+			if type(category.GetID) == "function" then
+				categoryID = category:GetID()
+			elseif type(category.GetCategoryID) == "function" then
+				categoryID = category:GetCategoryID()
+			elseif type(category.ID) == "number" then
+				categoryID = category.ID
+			elseif type(category.id) == "number" then
+				categoryID = category.id
+			end
+		end
+
+		if categoryID ~= nil then
+			if pcall(_G.Settings.OpenToCategory, categoryID) then return true end
+		end
+
+		-- Some older clients accepted an addon name string here; keep as a last resort.
+		if pcall(_G.Settings.OpenToCategory, addonCategoryName) then return true end
+	end
+
+	if _G.InterfaceOptionsFrame_OpenToCategory then
+		if not self.IsRetail and _G.InterfaceOptionsFrame then
+			-- required on some clients to ensure panels are created before opening
+			_G.InterfaceOptionsFrame:Show()
+		end
+
+		local panel = self.blizzPanel or self.aboutPanel
+		if panel then
+			return pcall(_G.InterfaceOptionsFrame_OpenToCategory, panel)
+		end
+	end
+
+	return false
 end
 
 function BSYC:DecodeOpts(tblString, mergeOpts)
@@ -491,6 +487,92 @@ function BSYC:SetDefaults(category, defaults)
 	end
 end
 
+--- -------------------
+--- FONT stuff
+--- -------------------
+
+function BSYC:GetLibSharedMedia()
+	local libStub = _G.LibStub
+	if type(libStub) ~= "table" and type(libStub) ~= "function" then return nil end
+
+	local ok, sml = pcall(libStub, "LibSharedMedia-3.0", true)
+	if not ok or not sml then return nil end
+	if type(sml.List) ~= "function" or type(sml.Fetch) ~= "function" then return nil end
+
+	local mtFont = (sml.MediaType and sml.MediaType.FONT) or "font"
+	return sml, mtFont
+end
+
+function BSYC:GetBlizzardFontMap()
+	local map = {}
+
+	local function add(name, path)
+		if type(name) ~= "string" or name == "" then return end
+		if type(path) ~= "string" or path == "" then return end
+		map[name] = path
+	end
+
+	add("Friz Quadrata TT", _G.STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF")
+	add("Arial Narrow", "Fonts\\ARIALN.TTF")
+	add("Skurri", "Fonts\\SKURRI.TTF")
+	add("Morpheus", "Fonts\\MORPHEUS.TTF")
+
+	return map
+end
+
+function BSYC:GetBlizzardFontList()
+	return { "Friz Quadrata TT", "Arial Narrow", "Skurri", "Morpheus" }
+end
+
+function BSYC:GetFontPathOrNil(fontName)
+	if type(fontName) ~= "string" or fontName == "" then return nil end
+
+	local sml, mtFont = self:GetLibSharedMedia()
+	if sml then
+		local path = sml:Fetch(mtFont, fontName, true)
+		if type(path) == "string" and path ~= "" then return path end
+		return nil
+	end
+
+	return self:GetBlizzardFontMap()[fontName]
+end
+
+function BSYC:GetFontPath(fontName)
+	return self:GetFontPathOrNil(fontName)
+		or self:GetFontPathOrNil(self.DEFAULT_FONT_NAME)
+		or _G.STANDARD_TEXT_FONT
+		or "Fonts\\FRIZQT__.TTF"
+end
+
+function BSYC:GetAvailableFontNames()
+	local list
+
+	local sml, mtFont = self:GetLibSharedMedia()
+	if sml then
+		local ok, res = pcall(sml.List, sml, mtFont)
+		if ok and type(res) == "table" and #res > 0 then
+			list = self:CopyArray(res)
+		end
+	end
+
+	if not list then
+		list = self:GetBlizzardFontList()
+	end
+
+	local hasDefault = false
+	for _, name in ipairs(list) do
+		if name == self.DEFAULT_FONT_NAME then
+			hasDefault = true
+			break
+		end
+	end
+	if not hasDefault then
+		table.insert(list, 1, self.DEFAULT_FONT_NAME)
+	end
+
+	return list
+end
+
 function BSYC:CreateFonts()
 	if not BSYC.options then return end
 
@@ -505,9 +587,17 @@ function BSYC:CreateFonts()
 	BSYC.__fontFlags = flags
 
 	local fontObject = CreateFont("BagSyncExtTT_Font")
-	fontObject:SetFont(SML:Fetch(SML_FONT, BSYC.options.extTT_Font), BSYC.options.extTT_FontSize, flags)
+
+	local fontName = BSYC.options.extTT_Font or BSYC.DEFAULT_FONT_NAME
+	if not BSYC:GetFontPathOrNil(fontName) then
+		fontName = BSYC.DEFAULT_FONT_NAME
+		BSYC.options.extTT_Font = fontName
+	end
+	fontObject:SetFont(BSYC:GetFontPath(fontName), BSYC.options.extTT_FontSize, flags)
 	BSYC.__font = fontObject
 end
+
+--------------------
 
 function BSYC:CanDoCurrency()
 	--Classic servers do have some implementations of these features installed, so we have to do checks
