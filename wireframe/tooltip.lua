@@ -717,9 +717,6 @@ function Tooltip:EnsureExtTip()
 	extTip:SetClampedToScreen(true)
 	extTip:SetFrameStrata("TOOLTIP")
 	extTip:SetToplevel(true)
-	extTip:SetScript("OnShow", function()
-		Tooltip:UpdateExtTipAnchor()
-	end)
 	Tooltip.extTip = extTip
 end
 
@@ -753,52 +750,71 @@ local function FrameAnchoredTo(frame, rel)
 	return false
 end
 
-function Tooltip:CollectRelatedTooltips(owner, out)
-	out = WipeTable(out or {})
-	out[1] = owner
-	local related = WipeTable(self.__scratchRelatedTooltipSet or {})
-	self.__scratchRelatedTooltipSet = related
-	related[owner] = true
+local function IsRelatedTooltipFrame(frame, owner)
+	if not frame or not owner or frame == Tooltip.extTip then return false end
+	if not CanAccessObject(frame) then return false end
+	if not frame.IsVisible or not frame:IsVisible() then return false end
 
-	local changed = true
-	for _ = 1, 3 do
-		if not changed then break end
-		changed = false
+	if frame == owner then return true end
+	if frame.GetOwner and frame:GetOwner() == owner then return true end
+	if FrameAnchoredTo(frame, owner) then return true end
 
-		local f = EnumerateFrames()
-		while f do
-			if f ~= Tooltip.extTip and CanAccessObject(f) and f.IsVisible and f:IsVisible() and f.GetBottom then
-				local isRelated = false
-				if f.GetOwner and related[f:GetOwner()] then
-					isRelated = true
-				elseif FrameAnchoredTo(f, owner) then
-					isRelated = true
-				else
-					for relFrame in pairs(related) do
-						if relFrame ~= owner and FrameAnchoredTo(f, relFrame) then
-							isRelated = true
-							break
-						end
-					end
-				end
+	return false
+end
 
-				if isRelated and not related[f] then
-					related[f] = true
-					tinsert(out, f)
-					changed = true
-				end
-			end
-			f = EnumerateFrames(f)
+local function QuantizeCoord(v)
+	if not v then return 0 end
+	return math.floor(v * 10 + 0.5) -- tenth-pixel-ish granularity, avoids jitter
+end
+
+function Tooltip:GetBottomTooltipAnchor(owner)
+	if not owner then return nil end
+
+	local bestFrame = owner
+	local bestPos = owner:GetBottom()
+
+	local candidates = WipeTable(self.__scratchAnchorCandidates or {})
+	self.__scratchAnchorCandidates = candidates
+
+	local function consider(frame)
+		if not frame or not frame.GetBottom then return end
+		if not IsRelatedTooltipFrame(frame, owner) then return end
+		local bottom = frame:GetBottom()
+		if bottom and (not bestPos or bottom < bestPos) then
+			bestPos = bottom
+			bestFrame = frame
 		end
 	end
 
-	--Explicit known cases (some addons don't set owners consistently)
+	-- Owner itself
+	consider(owner)
+
+	-- Blizzard comparison tooltips (common sources of "behind" issues)
+	consider(_G.ShoppingTooltip1)
+	consider(_G.ShoppingTooltip2)
+	consider(_G.ShoppingTooltip3)
+	consider(_G.ItemRefShoppingTooltip1)
+	consider(_G.ItemRefShoppingTooltip2)
+	consider(_G.ItemRefShoppingTooltip3)
+
+	-- Retail: some tooltips keep a list of comparison tooltips
+	if owner.shoppingTooltips then
+		for _, tip in pairs(owner.shoppingTooltips) do
+			consider(tip)
+		end
+	end
+	if owner.comparisonTooltips then
+		for _, tip in pairs(owner.comparisonTooltips) do
+			consider(tip)
+		end
+	end
+
+	-- Explicit known addon cases (cheap and predictable)
 	if C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
 		for i = 1, 20 do
 			local t = _G["TSMExtraTip" .. i]
-			if t and t:IsVisible() and not related[t] then
-				related[t] = true
-				tinsert(out, t)
+			if t and t.IsVisible and t:IsVisible() then
+				consider(t)
 			elseif not t then
 				break
 			end
@@ -807,43 +823,176 @@ function Tooltip:CollectRelatedTooltips(owner, out)
 
 	if LibStub and LibStub.libs and LibStub.libs["LibExtraTip-1"] then
 		local t = LibStub("LibExtraTip-1"):GetExtraTip(owner)
-		if t and t:IsVisible() and not related[t] then
-			related[t] = true
-			tinsert(out, t)
+		if t and t.IsVisible and t:IsVisible() then
+			consider(t)
 		end
 	end
 
 	if BPBID_BreedTooltip or BPBID_BreedTooltip2 then
 		local t = BPBID_BreedTooltip or BPBID_BreedTooltip2
-		if t and t:IsVisible() and not related[t] then
-			related[t] = true
-			tinsert(out, t)
-		end
-	end
-
-	return out
-end
-
-function Tooltip:GetBottomTooltipAnchor(owner)
-	if not owner then return nil end
-	local bestFrame = owner
-	local bestPos = owner:GetBottom()
-
-	local cache = self:CollectRelatedTooltips(owner, self.__scratchRelatedTooltips)
-	self.__scratchRelatedTooltips = cache
-
-	for i = 1, #cache do
-		local f = cache[i]
-		if f and f.GetBottom then
-			local bottom = f:GetBottom()
-			if bottom and (not bestPos or bottom < bestPos) then
-				bestPos = bottom
-				bestFrame = f
-			end
+		if t and t.IsVisible and t:IsVisible() then
+			consider(t)
 		end
 	end
 
 	return bestFrame, bestPos
+end
+
+function Tooltip:GetBottomTooltipAnchorCached(owner)
+	if not owner then return nil end
+
+	-- Single-cache is enough: ExtTip shows for only one owner at a time.
+	local cachedOwner = self.__extTipAnchorOwner
+	local cachedSig = self.__extTipAnchorSig
+	local cachedAnchor = self.__extTipAnchorFrame
+
+	local sig = 5381
+
+	local function sigAdd(n)
+		sig = (sig * 33 + (n or 0)) % 2147483647
+	end
+
+	local function consider(frame, weight)
+		if not frame or not frame.GetBottom then
+			sigAdd(7 + (weight or 0))
+			return nil
+		end
+
+		-- Visibility/relationship gates both anchoring and signature.
+		if not IsRelatedTooltipFrame(frame, owner) then
+			sigAdd(13 + (weight or 0))
+			return nil
+		end
+
+		local bottom = frame:GetBottom()
+		local q = QuantizeCoord(bottom)
+		sigAdd((q * 31) + (weight or 0))
+
+		return frame, bottom
+	end
+
+	-- Owner position affects where we anchor (TOP/BOTTOM and LEFT/RIGHT logic).
+	local cx, cy = owner:GetCenter()
+	sigAdd(QuantizeCoord(cx))
+	sigAdd(QuantizeCoord(cy))
+
+	-- Compute signature across the same candidate set used for anchoring.
+	consider(owner, 1)
+	consider(_G.ShoppingTooltip1, 2)
+	consider(_G.ShoppingTooltip2, 3)
+	consider(_G.ShoppingTooltip3, 4)
+	consider(_G.ItemRefShoppingTooltip1, 5)
+	consider(_G.ItemRefShoppingTooltip2, 6)
+	consider(_G.ItemRefShoppingTooltip3, 7)
+
+	if owner.shoppingTooltips then
+		local w = 10
+		for _, tip in pairs(owner.shoppingTooltips) do
+			consider(tip, w)
+			w = w + 1
+		end
+	end
+	if owner.comparisonTooltips then
+		local w = 40
+		for _, tip in pairs(owner.comparisonTooltips) do
+			consider(tip, w)
+			w = w + 1
+		end
+	end
+
+	if C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
+		for i = 1, 20 do
+			local t = _G["TSMExtraTip" .. i]
+			if t and t.IsVisible and t:IsVisible() then
+				consider(t, 100 + i)
+			elseif not t then
+				break
+			end
+		end
+	end
+
+	if LibStub and LibStub.libs and LibStub.libs["LibExtraTip-1"] then
+		local t = LibStub("LibExtraTip-1"):GetExtraTip(owner)
+		if t and t.IsVisible and t:IsVisible() then
+			consider(t, 200)
+		end
+	end
+
+	if BPBID_BreedTooltip or BPBID_BreedTooltip2 then
+		local t = BPBID_BreedTooltip or BPBID_BreedTooltip2
+		if t and t.IsVisible and t:IsVisible() then
+			consider(t, 300)
+		end
+	end
+
+	-- Cache hit: ensure the cached anchor still qualifies.
+	if cachedOwner == owner and cachedSig == sig and cachedAnchor and IsRelatedTooltipFrame(cachedAnchor, owner) then
+		return cachedAnchor
+	end
+
+	-- Cache miss: compute best anchor and store signature.
+	local bestFrame = owner
+	local bestPos = owner:GetBottom()
+
+	local function pick(frame)
+		if not frame or not frame.GetBottom then return end
+		if not IsRelatedTooltipFrame(frame, owner) then return end
+		local bottom = frame:GetBottom()
+		if bottom and (not bestPos or bottom < bestPos) then
+			bestPos = bottom
+			bestFrame = frame
+		end
+	end
+
+	pick(owner)
+	pick(_G.ShoppingTooltip1)
+	pick(_G.ShoppingTooltip2)
+	pick(_G.ShoppingTooltip3)
+	pick(_G.ItemRefShoppingTooltip1)
+	pick(_G.ItemRefShoppingTooltip2)
+	pick(_G.ItemRefShoppingTooltip3)
+
+	if owner.shoppingTooltips then
+		for _, tip in pairs(owner.shoppingTooltips) do
+			pick(tip)
+		end
+	end
+	if owner.comparisonTooltips then
+		for _, tip in pairs(owner.comparisonTooltips) do
+			pick(tip)
+		end
+	end
+
+	if C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
+		for i = 1, 20 do
+			local t = _G["TSMExtraTip" .. i]
+			if t and t.IsVisible and t:IsVisible() then
+				pick(t)
+			elseif not t then
+				break
+			end
+		end
+	end
+
+	if LibStub and LibStub.libs and LibStub.libs["LibExtraTip-1"] then
+		local t = LibStub("LibExtraTip-1"):GetExtraTip(owner)
+		if t and t.IsVisible and t:IsVisible() then
+			pick(t)
+		end
+	end
+
+	if BPBID_BreedTooltip or BPBID_BreedTooltip2 then
+		local t = BPBID_BreedTooltip or BPBID_BreedTooltip2
+		if t and t.IsVisible and t:IsVisible() then
+			pick(t)
+		end
+	end
+
+	self.__extTipAnchorOwner = owner
+	self.__extTipAnchorSig = sig
+	self.__extTipAnchorFrame = bestFrame
+
+	return bestFrame
 end
 
 function Tooltip:SetExtTipAnchor(owner, anchor, extTip)
@@ -867,7 +1016,7 @@ function Tooltip:UpdateExtTipAnchor()
 	if not frame or not extTip or not extTip:IsShown() then return end
 
 	extTip:ClearAllPoints()
-	local anchor = self:GetBottomTooltipAnchor(frame) or frame
+	local anchor = self:GetBottomTooltipAnchorCached(frame) or frame
 	if anchor == extTip then anchor = frame end
 	self:SetExtTipAnchor(frame, anchor, extTip)
 end
@@ -1492,6 +1641,9 @@ function Tooltip:HookTooltip(objTooltip)
 	objTooltip:HookScript("OnHide", function(self)
 		self.__tooltipUpdated = false
 		if Tooltip.extTip then Tooltip.extTip:Hide() end
+		Tooltip.__extTipAnchorOwner = nil
+		Tooltip.__extTipAnchorSig = nil
+		Tooltip.__extTipAnchorFrame = nil
 	end)
 	--the battlepet tooltips don't use this, so check for it
 	if objTooltip ~= BattlePetTooltip and objTooltip ~= FloatingBattlePetTooltip then
