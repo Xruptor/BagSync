@@ -336,6 +336,7 @@ L.SavedSearch_Warn = "您必须在搜索框中输入一些信息。"
 --You can add as many words as you want below, just make sure it's lowercase, no spaces or symbols and to follow each entry with a comma
 ---------------------------------------
 L.CurrencySortFilters = {
+	"the",
 }
 ---------------------------------------
 --Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  Example: class:<name of class in your locale>

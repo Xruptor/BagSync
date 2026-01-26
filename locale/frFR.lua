@@ -210,7 +210,7 @@ L.DisplayCurrentCharacterOnly = "Display BagSync tooltip data for the current ch
 L.DisplayBlacklistCurrentCharOnly = "Display blacklisted item counts for the current chraracter |cFFFFD700ONLY!|r |cFFDF2B2B(Not Recommended)|r"
 L.DisplayCurrentRealmName = "Display the |cFF4CBB17[Current Realm]|r of the player."
 L.DisplayCurrentRealmShortName = "Use a short name for the |cFF4CBB17[Current Realm]|r."
-L.DisplayCR = "Afficher les personnages |cffff7d0a[Connected Realm]|r. |cffff7d0a[CR]|r"
+L.DisplayCR = "Afficher les personnages |cffff7d0a[Royaume connecté]|r. |cffff7d0a[CR]|r"
 L.DisplayBNET = "Afficher les personnages du compte Battle.Net. |cff3587ff[BNet]|r |cFFDF2B2B(Non recommandé)|r."
 L.DisplayItemID = "Afficher l'ItemID de l'objet dans l'infobulle."
 L.DisplaySourceDebugInfo = "Afficher les informations de [Debug] dans l'infobulle."
@@ -271,7 +271,7 @@ L.ColorTotal = "Couleur de l'infobulle de [Total] de BagSync."
 L.ColorGuild = "Couleur de l'infobulle de [Guild] de BagSync."
 L.ColorWarband = "Couleur de l'infobulle de [Warband] de BagSync."
 L.ColorCurrentRealm = "BagSync [Current Realm] tooltip color."
-L.ColorCR = "Couleur de l'infobulle de [Connected Realm] de BagSync."
+L.ColorCR = "Couleur de l'infobulle de [Royaume connecté] de BagSync."
 L.ColorBNET = "Couleur de l'infobulle de [Battle.Net] de BagSync."
 L.ColorItemID = "Couleur de l'infobulle de [ItemID] de BagSync."
 L.ColorExpansion = "Couleur de l'infobulle de [Extension] de BagSync."
@@ -301,7 +301,7 @@ L.ConfigFontOutline_THICKOUTLINE = "ThickOutline"
 L.ConfigFontMonochrome = "Monochrome"
 L.ConfigTracking = "Tracking"
 L.ConfigTrackingHeader = "Tracking settings for all stored BagSync database locations."
-L.ConfigTrackingCaution = "Caution"
+L.ConfigTrackingCaution = "Attention"
 L.ConfigTrackingModules = "Modules"
 L.ConfigTrackingInfo = [[
 |cFFDF2B2BNOTE|r: La désactivation d'un module entraîne l'arrêt du suivi et du stockage du module dans la base de données par BagSync.
@@ -314,14 +314,14 @@ L.TrackingModule_Reagents = "Banque de composants"
 L.TrackingModule_Equip = "Objets équipés"
 L.TrackingModule_Mailbox = "Boite aux lettres"
 L.TrackingModule_Void = "Banque du vide"
-L.TrackingModule_Auction = "Hôtel des vendes"
+L.TrackingModule_Auction = "Hôtel des ventes"
 L.TrackingModule_Guild = "Banque de guilde"
 L.TrackingModule_WarbandBank = "Banque du Bataillon (WarBank)"
 L.TrackingModule_Professions = "Métiers"
-L.TrackingModule_Currency = "Curency Tokens"
+L.TrackingModule_Currency = "Monnaies / Jetons"
 L.WarningItemSearch = "ATTENTION : Un total de [|cFFFFFFFF%s|r] objets n'ont pas été recherchés !\n\nBagSync attend toujours la réponse du serveur/cache.\n\nAppuyez sur le bouton Rechercher ou Actualiser."
 L.WarningUpdatedDB = "La base de données a été mise à jour dans sa dernière version ! Vous devez analyser à nouveau tous vos personnages !|r"
-L.WarningCurrencyUpt = "Error updating currency.  Please login to character: "
+L.WarningCurrencyUpt = "Erreur lors de la mise à jour des monnaies. Veuillez vous connecter au personnage : "
 L.WarningHeader = "Attention !"
 L.SavedSearch = "Recherche sauvegardée !"
 L.SavedSearch_Add = "Ajouter une recherche"
@@ -413,34 +413,36 @@ Example: |cFFFFD580bind:boe|r |cFF99CC33|||||r |cFFFFD580lvl:>20|r
 ]]
 L.ConfigFAQ= "FAQ / Aide"
 L.ConfigFAQHeader = "Foire aux questions et section d'aide pour BagSync."
-L.FAQ_Question_1 = "I'm experiencing hitching/stuttering/lagging with tooltips."
+L.FAQ_Question_1 = "Je subis des saccades/micro-freezes/ralentissements avec les infobulles."
 L.FAQ_Question_1_p1 = [[
-This issue normally happens when there is old or corrupt data in the database, which BagSync cannot interpret.  The problem can also occur when there is overwhelming amount of data for BagSync to go through.  If you have thousands of items across multiple characters, that's a lot of data to go through within a second.  This can lead to your client stuttering for a brief moment.  Finally, another cause for this problem is having an extremely old computer.  Older computer's will experience hitching/stuttering as BagSync processes thousands of item and character data.  Newer computer's with faster CPU's and memory don't typically have this issue.
+Ce problème survient généralement lorsqu'il y a des données anciennes ou corrompues dans la base de données, que BagSync ne peut pas interpréter. Il peut aussi se produire lorsqu'il y a une quantité énorme de données à traiter. Si vous avez des milliers d'objets sur plusieurs personnages, cela représente beaucoup d'informations à parcourir en une seconde, ce qui peut provoquer un bref ralentissement du client. Enfin, un ordinateur très ancien peut aussi être à l'origine de ce comportement : les machines plus anciennes subissent des saccades lorsque BagSync traite des milliers d'objets et de données de personnages. Les ordinateurs plus récents, avec des CPU et de la mémoire plus rapides, n'ont généralement pas ce problème.
 
-In order to fix this problem, you can try resetting the database.  This usually resolves the problem.  Use the following slash command. |cFF99CC33/bgs resetdb|r
-If this does not resolve your issue, please file an issue ticket on GitHub for BagSync.
+Pour résoudre ce problème, vous pouvez essayer de réinitialiser la base de données. Cela corrige généralement le souci. Utilisez la commande suivante : |cFF99CC33/bgs resetdb|r
+Si cela ne résout pas votre problème, veuillez ouvrir un ticket sur GitHub pour BagSync.
 ]]
-L.FAQ_Question_2 = "No item data for my other WOW accounts found in a |cFFDF2B2Bsingle|r |cff3587ffBattle.net|r account."
+L.FAQ_Question_2 = "Aucune donnée d'objet pour mes autres comptes WoW dans un |cFFDF2B2Bseul|r compte |cff3587ffBattle.net|r."
 L.FAQ_Question_2_p1 = [[
-Addon's do not have the ability to read data from other WOW accounts.  This is because they don't share the same SavedVariable folder.  This is a built in limitation within Blizzard's WOW Client.  Therefore, you will not be able to see item data for multiple WOW accounts under a |cFFDF2B2Bsingle|r |cff3587ffBattle.net|r.  BagSync will only be able to read character data across multiple realms within the same WOW Account, not the entire Battle.net account.
+Les addons ne peuvent pas lire les données d'autres comptes WoW, car ils ne partagent pas le même dossier SavedVariables. C'est une limitation intégrée au client WoW de Blizzard. Par conséquent, vous ne pourrez pas voir les données d'objets de plusieurs comptes WoW au sein d'un |cFFDF2B2Bseul|r compte |cff3587ffBattle.net|r. BagSync ne peut lire que les données de personnages sur plusieurs royaumes au sein d'un même compte WoW, pas l'ensemble du compte Battle.net.
 
-There is a way to connect multiple WOW Accounts, within a |cFFDF2B2Bsingle|r |cff3587ffBattle.net|r account, so that they share the same SavedVariables folder.  This involves creating Symlink folders.  I will not provide assistance on this.  So don't ask!  Please visit the following guide for more details.  |cFF99CC33https://www.wowhead.com/guide=934|r
+Il existe un moyen de faire en sorte que plusieurs comptes WoW, au sein d'un |cFFDF2B2Bseul|r compte |cff3587ffBattle.net|r, partagent le même dossier SavedVariables : cela implique de créer des dossiers de type symlink. Je ne fournirai pas d'assistance pour cela, donc ne demandez pas ! Pour plus de détails, consultez le guide suivant : |cFF99CC33https://www.wowhead.com/guide=934|r
 ]]
-L.FAQ_Question_3 = "Can you view item data from |cFFDF2B2Bmultiple|r |cff3587ffBattle.net|r Accounts?"
-L.FAQ_Question_3_p1 = "No, it's not possible.  I will not provide assistance in this.  So don't ask!"
-L.FAQ_Question_4 = "Can I view item data from multiple WOW accounts |cFFDF2B2Bcurrently logged in|r?"
-L.FAQ_Question_4_p1 = "Currently BagSync does not support transmitting data between multiple logged in WOW accounts.  This may change in the future."
-L.FAQ_Question_5 = "Why do I get a message that guild bank scanning is incomplete?"
+L.FAQ_Question_3 = "Peut-on voir les données d'objets de |cFFDF2B2Bplusieurs|r comptes |cff3587ffBattle.net|r ?"
+L.FAQ_Question_3_p1 = "Non, ce n'est pas possible. Je ne fournirai pas d'assistance à ce sujet, donc ne demandez pas !"
+L.FAQ_Question_4 = "Puis-je voir les données d'objets de plusieurs comptes WoW |cFFDF2B2Bactuellement connectés|r ?"
+L.FAQ_Question_4_p1 = "Actuellement, BagSync ne prend pas en charge la transmission de données entre plusieurs comptes WoW connectés simultanément. Cela pourrait changer à l'avenir."
+L.FAQ_Question_5 = "Pourquoi ai-je un message indiquant que l'analyse de la banque de guilde est incomplète ?"
 L.FAQ_Question_5_p1 = [[
-BagSync has to query the server for |cFF99CC33ALL|r your guild bank information.  It takes time for the server to transmit all the data.  In order for BagSync to properly store all your items, you must wait until the server query is complete.  When the scanning process is complete, BagSync will notify you in chat.  Leaving the Guild Bank window before the scanning process is done, will result in incorrect data being stored for your Guild Bank.
+BagSync doit interroger le serveur pour récupérer |cFF99CC33TOUTES|r les informations de votre banque de guilde. Le serveur met du temps à transmettre l'ensemble des données. Pour que BagSync stocke correctement tous vos objets, vous devez attendre la fin de cette requête. Lorsque le scan est terminé, BagSync vous en informera dans le chat. Si vous quittez la fenêtre de banque de guilde avant la fin du scan, des données incorrectes seront enregistrées pour votre banque de guilde.
 ]]
-L.FAQ_Question_6 = "Why do I see [FakeID] instead of [ItemID] for Battle Pets?"
+L.FAQ_Question_6 = "Pourquoi vois-je [FakeID] au lieu de [ItemID] pour les mascottes de combat ?"
 L.FAQ_Question_6_p1 = [[
-Blizzard does not assign ItemID's to Battle Pets for WOW.  Instead, Battle Pets in WOW are assigned a temporary PetID from the server.  This PetID is not unique and will be changed when the server resets.  In order to keep track of Battle Pets, BagSync generates a FakeID.  A FakeID is generated from static numbers associated with the Battle Pet.  Using a FakeID allows BagSync to track Battle Pets even across server resets.
+Blizzard n'assigne pas d'ItemID aux mascottes de combat dans WoW. À la place, les mascottes de combat reçoivent un PetID temporaire fourni par le serveur. Ce PetID n'est pas unique et change lors des redémarrages du serveur. Pour pouvoir suivre les mascottes de combat, BagSync génère un FakeID. Un FakeID est construit à partir de nombres statiques associés à la mascotte. L'utilisation d'un FakeID permet à BagSync de suivre les mascottes de combat même après des redémarrages du serveur.
 ]]
-L.FAQ_Question_7 = "What is accurate Battle Pet scanning in Guild Bank & Mailbox?"
+L.FAQ_Question_7 = "Qu'est-ce que l'analyse précise des mascottes de combat dans la banque de guilde et la boîte aux lettres ?"
 L.FAQ_Question_7_p1 = [[
-Blizzard does not store Battle Pets in the Guild Bank or Mailbox with a proper ItemID or SpeciesID.  In fact Battle Pets are stored in the Guild Bank and Mailbox as |cFF99CC33[Pet Cage]|r with an ItemID of |cFF99CC3382800|r.  This makes grabbing any data in regards to specific Battle Pets difficult for addon authors.  You can see for yourself in the Guild Bank transaction logs, you'll notice Battle Pets are stored as |cFF99CC33[Pet Cage]|r.  If you link one from a Guild Bank it will also be displayed as |cFF99CC33[Pet Cage]|r.  In order to get by this problem, there are two methods that can be used.  The first method is assigning the Battle Pet to a tooltip and then grabbing the SpeciesID from there.  This requires the server to respond to the WOW client and can potentially lead to massive lag, especially if there is a lot of Battle Pets in the Guild Bank.  The second method uses the iconTexture of the Battle Pet to try to find the SpeciesID.  This is sometimes inaccurate as certain Battle Pets share the same iconTexture.  Example:  Toxic Wasteling shares the same iconTexture as Jade Oozeling.  Enabling this option will force the tooltip scanning method to be as accurate as possible, but it can potentially cause lag.  |cFFDF2B2BThere is no way around this until Blizzard gives us more data to work with.|r
+Blizzard ne stocke pas les mascottes de combat dans la banque de guilde ou la boîte aux lettres avec un ItemID ou un SpeciesID correct. En réalité, elles sont enregistrées dans la banque de guilde et la boîte aux lettres comme |cFF99CC33[Pet Cage]|r avec un ItemID de |cFF99CC3382800|r. Cela rend la récupération de données sur des mascottes spécifiques difficile pour les auteurs d'addons. Vous pouvez le constater dans les journaux de transactions de la banque de guilde : les mascottes y apparaissent comme |cFF99CC33[Pet Cage]|r. Si vous en liez une depuis la banque de guilde, elle s'affichera également comme |cFF99CC33[Pet Cage]|r.
+
+Pour contourner ce problème, deux méthodes peuvent être utilisées. La première consiste à attribuer la mascotte de combat à une infobulle puis à récupérer le SpeciesID depuis celle-ci. Cela nécessite que le serveur réponde au client WoW et peut entraîner d'importants ralentissements, surtout s'il y a beaucoup de mascottes dans la banque de guilde. La seconde méthode utilise l'iconTexture de la mascotte pour tenter de trouver le SpeciesID. Cela peut parfois être imprécis, car certaines mascottes partagent la même iconTexture. Exemple : Toxic Wasteling partage la même iconTexture que Jade Oozeling. Activer cette option forcera la méthode de scan des infobulles à être aussi précise que possible, mais peut provoquer du lag. |cFFDF2B2BIl n'y a pas de solution parfaite tant que Blizzard ne nous donne pas plus de données à exploiter.|r
 ]]
 
 L.BagSyncInfoWindow = [[
