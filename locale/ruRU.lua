@@ -383,6 +383,7 @@ L.SearchHelp = [[
 
 |cffff7d0aОператоры <op>|r:
 |cFF99CC33:|r | |cFF99CC33=|r | |cFF99CC33==|r | |cFF99CC33!=|r | |cFF99CC33~=|r | |cFF99CC33<|r | |cFF99CC33>|r | |cFF99CC33<=|r | |cFF99CC33>=|r
+|cFFDF2B2BNote:|r |cFF99CC33!=|r and |cFF99CC33~=|r are supported (not equal).
 
 
 |cffff7d0aОтрицательные команды|r:

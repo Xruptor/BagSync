@@ -379,12 +379,13 @@ L.SearchHelp = [[
 
 |cff00ffff<版本>|r = |cFF99CC33x|r ; |cFF99CC33xpac|r ; |cFF99CC33expansion|r | 示例： |cFFFFD580x:巨龍時代|r  ;   |cFFFFD580xpac:暗影國度|r 
 
-|cff00ffff<關鍵字>|r = |cFF99CC33k|r ; |cFF99CC33key|r ; |cFF99CC33keyword|r | 示例：|cFFFFD580k:任務|r（關鍵字: soulbound, bound, boe, bop, bou, boa, quest, unique, toy, reagent, crafting, naval, follower, follow, power, apperance）
+|cff00ffff<關鍵字>|r = |cFF99CC33k|r ; |cFF99CC33key|r ; |cFF99CC33keyword|r | 示例：|cFFFFD580k:任務|r（關鍵字: soulbound, bound, boe, bop, bou, boa, quest, unique, toy, reagent, crafting, naval, follower, follow, power, appearance, apperance）
 
 |cff00ffff<職業>|r = |cFF99CC33c|r ; |cFF99CC33class|r | 示例：|cFFFFD580class:戰士|r  ;  |cFFFFD580c:惡魔獵手|r
 
 |cffff7d0a運算符號 <op>|r:
 |cFF99CC33:|r | |cFF99CC33=|r | |cFF99CC33==|r | |cFF99CC33!=|r | |cFF99CC33~=|r | |cFF99CC33<|r | |cFF99CC33>|r | |cFF99CC33<=|r | |cFF99CC33>=|r
+|cFFDF2B2BNote:|r |cFF99CC33!=|r and |cFF99CC33~=|r are supported (not equal).
 
 
 |cffff7d0a反向指令|r:

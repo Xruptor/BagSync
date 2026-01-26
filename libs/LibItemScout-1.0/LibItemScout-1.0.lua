@@ -18,6 +18,52 @@
 	Tuller had given me permission to use this Library to incorporate into BagSync back in 2011-2012.  Original credit goes to Tuller for the original code.
 	https://github.com/Tuller/LibItemSearch-1.0
 
+	------------------------------
+
+	Public API (optional, for better performance):
+
+	Compiling a search once and reusing it avoids repeated parsing per item.
+
+		local ItemScout = LibStub("LibItemScout-1.0")
+		local compiled = ItemScout:CompileSearch("bind:boe && lvl:>=20 && name:robe")
+
+		-- later, per-item:
+		local matches = ItemScout:Find(itemLinkOrName, compiled, cacheObj)
+
+	Notes:
+	- `cacheObj` is optional but recommended for speed; it is required for some filters (ex: battle pet metadata).
+	- `cacheObj` should be a plain Lua table with Blizzard API-like field names (so this library can avoid extra API calls).
+	  Use the same naming used by the return values from `C_Item.GetItemInfo` and related APIs.
+
+	  Common fields this library will use when present:
+	    itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemEquipLoc,
+	    classID, subclassID, bindType, expacID
+
+	  Battle pet extras (BagSync-style FakeID support):
+	    speciesID, speciesName, speciesIcon
+
+	  Example:
+	    local cacheObj = {
+	      itemName = itemName,
+	      itemLink = itemLink,
+	      itemQuality = itemQuality,
+	      itemLevel = itemLevel,
+	      itemMinLevel = itemMinLevel,
+	      itemType = itemType,
+	      itemSubType = itemSubType,
+	      itemEquipLoc = itemEquipLoc,
+	      classID = classID,
+	      subclassID = subclassID,
+	      bindType = bindType,
+	      expacID = expacID,
+	    }
+
+	  References (field naming / return ordering):
+	    https://warcraft.wiki.gg/wiki/API_C_Item.GetItemInfo
+	    https://warcraft.wiki.gg/wiki/World_of_Warcraft_API
+	- If you dynamically register typed searches at runtime and want to force recompilation of existing search strings,
+	  call `ItemScout:ClearSearchCache()`.
+
 	ItemSearch
 	An item text search engine of some sort
 
@@ -41,7 +87,7 @@
 	<op>					:=  : | = | == | != | ~= | < | > | <= | >=
 --]]
 
-local Lib = LibStub:NewLibrary('LibItemScout-1.0', 1)
+local Lib = LibStub:NewLibrary('LibItemScout-1.0', 2)
 if not Lib then
 	return
 else
@@ -51,7 +97,17 @@ end
 --[[ Locals ]]--
 
 local tonumber, select, split, trim = tonumber, select, strsplit, strtrim
+local strfind, strlower, strsub, strlen = string.find, string.lower, string.sub, string.len
+local tinsert = table.insert
 local cache = {}
+local EMPTY_CACHE = {}
+
+Lib._compiledCache = Lib._compiledCache or setmetatable({}, { __mode = "kv" })
+Lib._tagPrefixCache = Lib._tagPrefixCache or setmetatable({}, { __mode = "kv" })
+Lib._indexDirty = true
+Lib._freeSearchTypes = Lib._freeSearchTypes or {}
+Lib._tagAliases = Lib._tagAliases or {}
+
 local function useful(a) -- check if the search has a decent size
 	return a and #a >= 1
 end
@@ -62,22 +118,12 @@ local function dotrim(a)
 end
 
 local function compare(op, a, b)
-	if op == '<=' then
-		return a <= b
-	end
-
-	if op == '<' then
-		return a < b
-	end
-
-	if op == '>' then
-		return a > b
-	end
-
-	if op == '>=' then
-		return a >= b
-	end
-
+	if op == '<=' then return a <= b end
+	if op == '<' then return a < b end
+	if op == '>' then return a > b end
+	if op == '>=' then return a >= b end
+	if op == '!=' or op == '~=' then return a ~= b end
+	-- : = == (and nil) are treated as equality
 	return a == b
 end
 
@@ -108,11 +154,44 @@ function Lib:Find(itemLink, search, cacheObj)
 		return false
 	end
 
-	if cacheObj then
-		cache = cacheObj
+	cache = cacheObj or EMPTY_CACHE
+
+	-- allow callers to pass a precompiled search object
+	if type(search) == "table" and search.__libItemScoutCompiled then
+		return self:_EvalCompiledSearch(itemLink, search)
 	end
-	--\124 ascii code for |
-	return self:FindUnionSearch(itemLink, split('\124\124', search:lower()))
+
+	if type(search) ~= "string" then
+		return true
+	end
+
+	local normalized = trim(strlower(search))
+	if not useful(normalized) then
+		return true
+	end
+
+	local compiled = self._compiledCache[normalized]
+	if not compiled then
+		compiled = self:Compile(normalized)
+		self._compiledCache[normalized] = compiled
+	end
+
+	return self:_EvalCompiledSearch(itemLink, compiled)
+end
+
+-- Optional: compile a search string once and reuse it across many items for better performance.
+function Lib:CompileSearch(search)
+	return self:Compile(search)
+end
+
+function Lib:IsCompiledSearch(obj)
+	return type(obj) == "table" and obj.__libItemScoutCompiled == true
+end
+
+-- Clears the internal compiled-search caches (does not affect tooltip caching).
+function Lib:ClearSearchCache()
+	self._compiledCache = setmetatable({}, { __mode = "kv" })
+	self._tagPrefixCache = setmetatable({}, { __mode = "kv" })
 end
 
 
@@ -174,6 +253,10 @@ A typed search object should look like the following:
 
 function Lib:RegisterTypedSearch(object)
 	self.searchTypes[object.id] = object
+	self._indexDirty = true
+	-- a new search type changes parsing/evaluation; drop caches to avoid stale compiled queries
+	self._compiledCache = setmetatable({}, { __mode = "kv" })
+	self._tagPrefixCache = setmetatable({}, { __mode = "kv" })
 end
 
 function Lib:GetTypedSearches()
@@ -182,6 +265,29 @@ end
 
 function Lib:GetTypedSearch(id)
 	return self.searchTypes[id]
+end
+
+local function parseOperator(text)
+	if not useful(text) then
+		return nil, text
+	end
+
+	text = dotrim(text)
+	if not useful(text) then
+		return nil, text
+	end
+
+	local op2 = strsub(text, 1, 2)
+	if op2 == "<=" or op2 == ">=" or op2 == "==" or op2 == "~=" or op2 == "!=" then
+		return op2, dotrim(strsub(text, 3))
+	end
+
+	local op1 = strsub(text, 1, 1)
+	if op1 == "<" or op1 == ">" or op1 == "=" or op1 == ":" then
+		return op1, dotrim(strsub(text, 2))
+	end
+
+	return nil, text
 end
 
 function Lib:FindTypedSearch(item, search, default)
@@ -198,16 +304,15 @@ function Lib:FindTypedSearch(item, search, default)
 		end
 	end
 
-	local operator, search = search:match('^[%s]*([%>%<%=]*)[%s]*(.*)$')
-	if useful(search) then
-		operator = useful(operator) and operator
-	else
+	local operator
+	operator, search = parseOperator(search)
+	if not useful(search) then
 		return default
 	end
 
 	if tag then
 		tag = '^' .. tag
-		for id, searchType in self:GetTypedSearches() do
+		for _, searchType in pairs(self.searchTypes) do
 			if searchType.tags then
 				for _, value in pairs(searchType.tags) do
 					if value:find(tag) then
@@ -219,7 +324,7 @@ function Lib:FindTypedSearch(item, search, default)
 	else
 		--onlyTag forces general searches to require the tags instead of doing a free for all search through all the filters
 		--so long as onlyTags is true, then the tag MUST exist in the search string
-		for id, searchType in self:GetTypedSearches() do
+		for _, searchType in pairs(self.searchTypes) do
 			if not searchType.onlyTags and self:UseTypedSearch(searchType, item, operator, search) then
 				return true
 			end
@@ -237,6 +342,209 @@ function Lib:UseTypedSearch(searchType, item, operator, search)
 			return true
 		end
 	end
+end
+
+function Lib:_RebuildIndex()
+	if not self._indexDirty then
+		return
+	end
+
+	local free = {}
+	local aliases = {}
+
+	for _, searchType in pairs(self.searchTypes) do
+		if not searchType.onlyTags then
+			free[#free + 1] = searchType
+		end
+		if searchType.tags then
+			for _, tag in pairs(searchType.tags) do
+				aliases[#aliases + 1] = { tag = strlower(tag), searchType = searchType }
+			end
+		end
+	end
+
+	self._freeSearchTypes = free
+	self._tagAliases = aliases
+	self._tagPrefixCache = setmetatable({}, { __mode = "kv" })
+	self._indexDirty = false
+end
+
+function Lib:_GetSearchTypesForTagPrefix(prefix)
+	self:_RebuildIndex()
+
+	prefix = strlower(prefix or "")
+	if not useful(prefix) then
+		return nil
+	end
+
+	local cached = self._tagPrefixCache[prefix]
+	if cached then
+		return cached
+	end
+
+	local out, seen = {}, {}
+	local prefixLen = strlen(prefix)
+
+	for _, entry in ipairs(self._tagAliases) do
+		if strsub(entry.tag, 1, prefixLen) == prefix then
+			local st = entry.searchType
+			if not seen[st] then
+				seen[st] = true
+				out[#out + 1] = st
+			end
+		end
+	end
+
+	self._tagPrefixCache[prefix] = out
+	return out
+end
+
+local function splitPlain(delim, text)
+	local out = {}
+	local start = 1
+	while true do
+		local pos = strfind(text, delim, start, true)
+		if not pos then
+			out[#out + 1] = dotrim(strsub(text, start))
+			break
+		end
+		out[#out + 1] = dotrim(strsub(text, start, pos - 1))
+		start = pos + #delim
+	end
+	return out
+end
+
+local function evalTerm(itemLink, term)
+	local primitive = term.defaultPrimitive
+	for i = 1, #term.entries do
+		local e = term.entries[i]
+		if e.searchType:findItem(itemLink, e.operator, e.c1, e.c2, e.c3) then
+			primitive = true
+			break
+		end
+	end
+
+	if term.negated then
+		return not primitive
+	end
+	return primitive
+end
+
+function Lib:_CompileTerm(text)
+	text = dotrim(text)
+	if not useful(text) then
+		return nil
+	end
+
+	local negated, raw = false, text
+	local negatedSearch = raw:match('^[!~][%s]*(.+)$')
+	if negatedSearch then
+		negated = true
+		raw = dotrim(negatedSearch)
+	end
+
+	local tag, rest = raw:match('^[%s]*(%w+):(.*)$')
+	if tag then
+		if useful(rest) then
+			raw = rest
+		else
+			-- preserve legacy behavior: invalid tagged search is ignored (true), unless negated (!tag:) which becomes false
+			return {
+				negated = negated,
+				defaultPrimitive = (not negated),
+				entries = {},
+			}
+		end
+	end
+
+	local operator
+	operator, raw = parseOperator(raw)
+	if not useful(raw) then
+		return {
+			negated = negated,
+			defaultPrimitive = (tag and not negated) and true or false,
+			entries = {},
+		}
+	end
+
+	local candidates
+	if tag then
+		candidates = self:_GetSearchTypesForTagPrefix(tag) or {}
+	else
+		self:_RebuildIndex()
+		candidates = self._freeSearchTypes
+	end
+
+	local entries = {}
+	for i = 1, #candidates do
+		local st = candidates[i]
+		local c1, c2, c3 = st:canSearch(operator, raw)
+		if c1 ~= nil then
+			entries[#entries + 1] = { searchType = st, operator = operator, c1 = c1, c2 = c2, c3 = c3 }
+		end
+	end
+
+	return {
+		negated = negated,
+		-- legacy: tagged terms default to true unless negated
+		defaultPrimitive = (tag and not negated) and true or false,
+		entries = entries,
+	}
+end
+
+function Lib:Compile(search)
+	self:_RebuildIndex()
+
+	local normalized = dotrim(strlower(search or ""))
+	if not useful(normalized) then
+		return { __libItemScoutCompiled = true, groups = {} }
+	end
+
+	local groups = {}
+	local orParts = splitPlain("||", normalized)
+	for _, orPart in ipairs(orParts) do
+		orPart = dotrim(orPart)
+		if useful(orPart) then
+			local terms = {}
+			local andParts = splitPlain("&&", orPart)
+			for _, andPart in ipairs(andParts) do
+				andPart = dotrim(andPart)
+				if useful(andPart) then
+					local term = self:_CompileTerm(andPart)
+					if term then
+						terms[#terms + 1] = term
+					end
+				end
+			end
+			if #terms > 0 then
+				groups[#groups + 1] = terms
+			end
+		end
+	end
+
+	return { __libItemScoutCompiled = true, groups = groups }
+end
+
+function Lib:_EvalCompiledSearch(itemLink, compiled)
+	if not compiled or not compiled.groups or #compiled.groups == 0 then
+		return true
+	end
+
+	for _, andTerms in ipairs(compiled.groups) do
+		local ok = true
+		for i = 1, #andTerms do
+			if not evalTerm(itemLink, andTerms[i]) then
+				ok = false
+				break
+			end
+		end
+		if ok then
+			return true
+		end
+	end
+
+	-- preserve legacy behavior: a non-match returns nil (which is falsy)
+	return nil
 end
 
 --[[ Item name ]]--
@@ -331,8 +639,12 @@ Lib:RegisterTypedSearch{
 --[[ Item quality ]]--
 
 local qualities = {}
-for i = 0, #ITEM_QUALITY_COLORS do
-	qualities[i] = _G['ITEM_QUALITY' .. i .. '_DESC']:lower()
+local qualityCount = (Enum and Enum.ItemQualityMeta and Enum.ItemQualityMeta.NumValues) or (ITEM_QUALITY_COLORS and #ITEM_QUALITY_COLORS) or 0
+for i = 0, qualityCount - 1 do
+	local desc = _G['ITEM_QUALITY' .. i .. '_DESC']
+	if desc then
+		qualities[i] = strlower(desc)
+	end
 end
 
 Lib:RegisterTypedSearch{
@@ -416,13 +728,8 @@ end
 
 local function stripColor(text)
 	if not text or type(text) ~= "string" then return nil end
-
-	local cleanText = text:match("|c[ %x]%x[ %x]%x[ %x]%x[ %x]%x(.+)|r")
-	if cleanText then
-		return cleanText
-	end
-
-	return text
+	-- remove color codes; keep other formatting intact
+	return (text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
 end
 
 local function link_FindSearchInTooltip(itemLink, search)
@@ -487,6 +794,8 @@ Lib:RegisterTypedSearch{
 		[MINIMAP_TRACKING_VENDOR_REAGENT:lower()] = PROFESSIONS_USED_IN_COOKING,
 		[PROFESSIONS_USED_IN_COOKING:lower()] = PROFESSIONS_USED_IN_COOKING,
 		[APPEARANCE_LABEL:lower()] = TRANSMOGRIFY_TOOLTIP_APPEARANCE_UNKNOWN,
+		['appearance'] = TRANSMOGRIFY_TOOLTIP_APPEARANCE_UNKNOWN,
+		['apperance'] = TRANSMOGRIFY_TOOLTIP_APPEARANCE_UNKNOWN, -- legacy typo kept for backwards compatibility
 		['reagent'] = PROFESSIONS_USED_IN_COOKING,
 		['crafting'] = PROFESSIONS_USED_IN_COOKING,
 		['naval'] = 'naval equipment',
@@ -510,8 +819,11 @@ Lib:RegisterTypedSearch{
         if data then
             for i, line in ipairs(data.lines) do
 				local text = line.args[2].stringVal
-				if text and text:lower():find(search) then
+				if text then
+					text = stripColor(text)
+					if text and strlower(text):find(search, 1, true) then
 					return true
+					end
 				end
             end
         end
