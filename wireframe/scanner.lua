@@ -362,8 +362,9 @@ end
 local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 	Debug(BSYC_DL.INFO, "findBattlePet", iconTexture, petName, typeSlot, arg1, arg2, C_TooltipInfo and 'C_TooltipInfo', C_PetJournal and 'C_PetJournal')
 
+	local data = {}
+
 	if BSYC.options.enableAccurateBattlePets and arg1 then
-		local data = {}
 
 		--https://github.com/tomrus88/BlizzardInterfaceCode/blob/4e7b4f5df63d240038912624218ebb9c0c8a3edf/Interface/SharedXML/Tooltip/TooltipDataRules.lua
 		--it may be possible to use C_PetJournal.GetPetStats(petID) in the future if the guildbank and mailbox return the GUID of the pet
@@ -374,6 +375,7 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 			else
 				--local speciesID, level, breedQuality, maxHealth, power, speed, name = GameTooltip:SetGuildBankItem(arg1, arg2)
 				local speciesID, level, breedQuality, maxHealth, power, speed, name = scannerTooltip:SetGuildBankItem(arg1, arg2)
+
 				if speciesID and speciesID > 0 then
 					data.battlePetSpeciesID = speciesID
 					data.battlePetLevel = level
@@ -423,7 +425,7 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 
 	--this can be totally inaccurate, but until Blizzard allows us to get more info from the GuildBank in regards to Battle Pets.  This is the fastest way without scanning in tooltips.
 	--Example:  Toxic Wasteling shares the same icon as Jade Oozeling
-	if iconTexture and C_PetJournal then
+	if iconTexture and C_PetJournal and (not data or (data and data.id ~= 82800)) then
 		for index = 1, C_PetJournal.GetNumPets() do
 			local _, speciesID, _, _, _, _, _, _, icon = C_PetJournal.GetPetInfoByIndex(index)
 			if icon == iconTexture then

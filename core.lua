@@ -210,18 +210,12 @@ end
 function BSYC:DecodeOpts(tblString, mergeOpts)
 	--Example = "petdata=245:12:4:5:3|auction=124567|foo=bar|tickle=elmo|test=12:3:4|forthe=horde"
 	local t = mergeOpts or {}
+	if type(tblString) ~= "string" or tblString == "" then return t end
 
-	--([^=]+) everything except '='
-	-- followed by '='
-	-- ([^|]+) = then everything except '|'
-	-- followed by an optional '|'
-
-	if tblString and string.len(tblString) > 0 then
-		for k, v in string.gmatch(tblString, "([^=]+)=([^|]+)|*") do
-			--only overwrite if we don't have an existing value, the reason for this is because we don't want to overwrite any mergeOpts values that are newer
-			if not t[k] then
-				t[k] = v
-			end
+	for k, v in tblString:gmatch("([^=|]+)=([^|]*)") do
+		-- Only overwrite if we don't have an existing value; we don't want to overwrite any mergeOpts values that are newer.
+		if t[k] == nil then
+			t[k] = v
 		end
 	end
 
@@ -230,55 +224,67 @@ end
 
 function BSYC:EncodeOpts(tbl, link, removeOpts)
 	if not tbl then return end
-	local tmpStr = ""
 	--To Remove Opts: (example) BSYC:EncodeOpts(qOpts, link, {gtab=true})
+	if removeOpts ~= nil and type(removeOpts) ~= "table" then
+		removeOpts = nil
+	end
 
 	if link then
 		--when doing the split, make sure to merge our table
 		local xLink, xCount, xOpts = self:Split(link, nil, tbl)
 
 		if xLink then
-			if not xCount then xCount = 1 end
+			xCount = tonumber(xCount) or 1
 
+			local parts = {}
 			for k, v in pairs(xOpts) do
-				if not removeOpts or (type(removeOpts) == "table" and not removeOpts[k]) then
-					tmpStr = tmpStr.."|"..k.."="..v
+				if not removeOpts or not removeOpts[k] then
+					parts[#parts + 1] = k .. "=" .. tostring(v)
 				end
 			end
-			tmpStr = string.sub(tmpStr, 2)  -- remove first pipe
 
-			return xLink..";"..xCount..( (string.len(tmpStr) > 0 and ";"..tmpStr) or "")
+			if #parts > 0 then
+				return xLink .. ";" .. xCount .. ";" .. table.concat(parts, "|")
+			end
+			return xLink .. ";" .. xCount
 		end
 
 		--this is an invalid ParseItemLink, return empty string
 		return
 	end
 
+	local parts = {}
 	for k, v in pairs(tbl) do
-		tmpStr = tmpStr.."|"..k.."="..v
+		parts[#parts + 1] = k .. "=" .. tostring(v)
 	end
 
-	tmpStr = string.sub(tmpStr, 2)  -- remove first pipe
-	if tmpStr ~= "" then
-		return tmpStr
+	if #parts > 0 then
+		return table.concat(parts, "|")
 	end
 
 end
 
 function BSYC:Split(dataStr, skipOpts, mergeOpts)
-	if not dataStr then return nil, nil, {} end
+	if not dataStr then return nil, nil, nil end
 
-	local qLink, qCount, qOpts = strsplit(";", dataStr)
-	if not qLink or string.len(qLink) < 1 then
-		return nil, nil, {}
+	if type(dataStr) == "number" then
+		dataStr = tostring(dataStr)
+	end
+	if type(dataStr) ~= "string" or dataStr == "" then
+		return nil, nil, nil
+	end
+
+	local qLink, qCount, qOpts = strsplit(";", dataStr, 3)
+	if not qLink or qLink == "" then
+		return nil, nil, nil
 	end
 
 	--only do Opts functions if we need too, otherwise just return the link and count
 	if not skipOpts or mergeOpts then
-		return qLink, qCount, self:DecodeOpts(qOpts, mergeOpts) or {}
+		return qLink, tonumber(qCount) or qCount, self:DecodeOpts(qOpts, mergeOpts) or {}
 	end
 
-	return qLink, qCount, {}
+	return qLink, tonumber(qCount) or qCount, nil
 end
 
 function BagSync_ShowWindow(windowName)
@@ -504,11 +510,15 @@ function BSYC:GetLibSharedMedia()
 end
 
 function BSYC:GetBlizzardFontMap()
+	if self.__blizzFontMap then return self.__blizzFontMap end
+
 	local map = {}
 
 	local function add(name, path)
 		if type(name) ~= "string" or name == "" then return end
 		if type(path) ~= "string" or path == "" then return end
+		local p = path:lower()
+		if not (p:find("%.ttf$") or p:find("%.otf$")) then return end
 		map[name] = path
 	end
 
@@ -517,11 +527,70 @@ function BSYC:GetBlizzardFontMap()
 	add("Skurri", "Fonts\\SKURRI.TTF")
 	add("Morpheus", "Fonts\\MORPHEUS.TTF")
 
+	-- Add known Blizzard font globals (locale-dependent).
+	local knownGlobals = {
+		"STANDARD_TEXT_FONT",
+		"UNIT_NAME_FONT",
+		"DAMAGE_TEXT_FONT",
+		"NAMEPLATE_FONT",
+		"CHAT_FONT",
+		"RAID_WARNING_FONT",
+		"SYSTEM_FONT_NAME",
+	}
+	for i = 1, #knownGlobals do
+		local varName = knownGlobals[i]
+		add("Blizzard: " .. varName, _G[varName])
+	end
+
+	-- Best-effort scan for additional *_FONT globals.
+	for k, v in pairs(_G) do
+		if type(k) == "string" and k:find("_FONT$") and type(v) == "string" then
+			add("Blizzard: " .. k, v)
+		end
+	end
+
+	self.__blizzFontMap = map
+	self.__blizzFontList = nil
 	return map
 end
 
 function BSYC:GetBlizzardFontList()
-	return { "Friz Quadrata TT", "Arial Narrow", "Skurri", "Morpheus" }
+	if self.__blizzFontList then return self.__blizzFontList end
+
+	local map = self:GetBlizzardFontMap()
+	local list = {}
+	local seen = {}
+
+	local function push(name)
+		if name and map[name] and not seen[name] then
+			seen[name] = true
+			list[#list + 1] = name
+		end
+	end
+
+	-- Keep the traditional list first.
+	push("Friz Quadrata TT")
+	push("Arial Narrow")
+	push("Skurri")
+	push("Morpheus")
+
+	local rest = {}
+	for name in pairs(map) do
+		if not seen[name] then
+			rest[#rest + 1] = name
+		end
+	end
+
+	table.sort(rest, function(a, b)
+		return a:lower() < b:lower()
+	end)
+
+	for i = 1, #rest do
+		push(rest[i])
+	end
+
+	self.__blizzFontList = list
+	return list
 end
 
 function BSYC:GetFontPathOrNil(fontName)
@@ -683,44 +752,90 @@ end
 
 BSYC.timerFrame = CreateFrame("Frame")
 BSYC.timerFrame:Hide()
-BSYC.timers = {}
+BSYC.timers = BSYC.timers or {}
+BSYC.timersByName = BSYC.timersByName or {}
+
+local HAS_C_TIMER = (C_Timer and type(C_Timer.NewTimer) == "function")
+
+local function FireTimer(tmr)
+	Debug(BSYC_DL.SL3, "DoTimer", tmr.name, tmr.origDelay, tmr.object, tmr.func)
+
+	if type(tmr.func) == "string" then
+		local obj = tmr.object
+		local method = obj and obj[tmr.func]
+		if type(method) == "function" then
+			method(obj, unpack(tmr.argsList or {}, 1, tmr.argsCount))
+		end
+	elseif type(tmr.func) == "function" then
+		tmr.func(unpack(tmr.argsList or {}, 1, tmr.argsCount))
+	end
+end
 
 function BSYC:StartTimer(name, delay, selfObj, func, ...)
-	local found = false
-	for i=#BSYC.timers, 1, -1 do
-		local tmr = BSYC.timers[i]
-		if tmr.name == name then
-			BSYC.timers[i].func = func
-			BSYC.timers[i].object = selfObj
-			BSYC.timers[i].delay = delay
-			BSYC.timers[i].origDelay = delay
-			BSYC.timers[i].argsCount = select("#", ...)
-			BSYC.timers[i].argsList = {...}
-			found = true
-			break
-		end
-	end
-	if not found then
-		-- args (...) are passed a variable length arguments in an index table (https://www.lua.org/pil/5.2.html)
-		table.insert(BSYC.timers, {
+	if not name then return end
+
+	delay = tonumber(delay) or 0
+	local argsCount = select("#", ...)
+	local argsList = { ... }
+
+	-- Enforce uniqueness by name; StartTimer is used as a debounce in many places.
+	self:StopTimer(name)
+
+	-- Prefer C_Timer when available (no OnUpdate scanning).
+	if HAS_C_TIMER then
+		local tmr = {
 			func = func,
 			object = selfObj,
-			delay = delay,
 			origDelay = delay,
 			name = name,
-			argsCount = select("#", ...),
-			argsList = {...}
-		})
+			argsCount = argsCount,
+			argsList = argsList,
+		}
+
+		self.timersByName[name] = tmr
+		tmr.handle = C_Timer.NewTimer(delay, function()
+			if self.timersByName[name] ~= tmr then return end -- replaced/cancelled
+			self.timersByName[name] = nil
+			FireTimer(tmr)
+		end)
+
+		return
 	end
-	BSYC.timerFrame:Show() --show frame to start the OnUpdate
+
+	-- Fallback: manual OnUpdate timers for older clients.
+	table.insert(self.timers, {
+		func = func,
+		object = selfObj,
+		delay = delay,
+		origDelay = delay,
+		name = name,
+		argsCount = argsCount,
+		argsList = argsList,
+	})
+	self.timerFrame:Show() --show frame to start the OnUpdate
 end
 
 function BSYC:StopTimer(name)
-	--iterate backwards since we are using table.remove
-	for i=#BSYC.timers, 1, -1 do
-		if BSYC.timers[i] and BSYC.timers[i].name == name then
-			table.remove(BSYC.timers, i)
+	if not name then return end
+
+	-- C_Timer path
+	local tmr = self.timersByName and self.timersByName[name]
+	if tmr then
+		self.timersByName[name] = nil
+		if tmr.handle and type(tmr.handle.Cancel) == "function" then
+			tmr.handle:Cancel()
 		end
+	end
+
+	-- Fallback list removal (iterate backwards since we are using table.remove)
+	for i = #self.timers, 1, -1 do
+		if self.timers[i] and self.timers[i].name == name then
+			table.remove(self.timers, i)
+		end
+	end
+
+	if self.timerFrame and (not self.timers or #self.timers < 1) then
+		self.timerFrame:Hide()
 	end
 end
 
@@ -733,12 +848,7 @@ BSYC.timerFrame:SetScript("OnUpdate", function(self, elapsed)
 			tmr.delay = tmr.delay - elapsed
 
 			if tmr.delay < 0 then
-				Debug(BSYC_DL.SL3, "DoTimer", tmr.name, tmr.origDelay, tmr.object, tmr.func)
-				if type(tmr.func) == "string" and tmr.object then
-					tmr.object[tmr.func](tmr.object, unpack(tmr.argsList or {}, 1, tmr.argsCount))
-				else
-					tmr.func(unpack(tmr.argsList or {}, 1, tmr.argsCount))
-				end
+				FireTimer(tmr)
 				table.remove(BSYC.timers, i)
 			end
 			chk = true
@@ -748,19 +858,6 @@ BSYC.timerFrame:SetScript("OnUpdate", function(self, elapsed)
         BSYC.timerFrame:Hide()
     end
 end)
-
--- function BSYC:CheckDB_Reset()
--- 	Debug(BSYC_DL.INFO, "CheckDB_Reset")
--- 	if not BagSyncDB["forceDBReset§"] or BagSyncDB["forceDBReset§"] < forceDBReset then
--- 		BagSyncDB = { ["forceDBReset§"] = forceDBReset }
--- 		BSYC:Print("|cFFFF9900"..L.DatabaseReset.."|r")
--- 		C_Timer.After(6, function()
--- 			StaticPopup_Show("BAGSYNC_RESETDB_INFO")
---			ReloadUI()
--- 		end)
--- 		return
--- 	end
--- end
 
 --create base DB entries before we load any modules
 function BSYC:OnEnable()
