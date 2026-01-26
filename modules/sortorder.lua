@@ -18,43 +18,27 @@ end
 local L = BSYC.L
 
 function SortOrder:OnEnable()
-	local sortorderFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")
-	Mixin(sortorderFrame, SortOrder) --implement new frame to our parent module Mixin, to have access to parent methods
-	_G["BagSyncSortOrderFrame"] = sortorderFrame
-    --Add to special frames so window can be closed when the escape key is pressed.
-    tinsert(UISpecialFrames, "BagSyncSortOrderFrame")
-    sortorderFrame.TitleText:SetText("BagSync - "..L.SortOrder)
-    sortorderFrame:SetHeight(523)
-	sortorderFrame:SetWidth(440)
-    sortorderFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-    sortorderFrame:EnableMouse(true) --don't allow clickthrough
-    sortorderFrame:SetMovable(true)
-    sortorderFrame:SetResizable(false)
-    sortorderFrame:SetFrameStrata("FULLSCREEN_DIALOG")
-	sortorderFrame:RegisterForDrag("LeftButton")
-	sortorderFrame:SetClampedToScreen(true)
-	sortorderFrame:SetScript("OnDragStart", sortorderFrame.StartMoving)
-	sortorderFrame:SetScript("OnDragStop", sortorderFrame.StopMovingOrSizing)
-	sortorderFrame:SetScript("OnShow", function() SortOrder:OnShow() end)
-	local closeBtn = CreateFrame("Button", nil, sortorderFrame, "UIPanelCloseButton")
-	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode		
-    sortorderFrame.closeBtn = closeBtn
-    SortOrder.frame = sortorderFrame
+	local sortorderFrame = BSYC:UI_CreateModuleFrame(SortOrder, {
+		template = "BagSyncFrameTemplate",
+		globalName = "BagSyncSortOrderFrame",
+		title = "BagSync - "..L.SortOrder,
+		height = 523,
+		width = 440,
+		point = { "CENTER", UIParent, "CENTER", 0, 0 },
+		onShow = function() SortOrder:OnShow() end,
+	})
+	SortOrder.frame = sortorderFrame
 
-    SortOrder.scrollFrame = _G.CreateFrame("ScrollFrame", nil, sortorderFrame, "HybridScrollFrameTemplate")
-    SortOrder.scrollFrame:SetWidth(397)
-    SortOrder.scrollFrame:SetPoint("TOPLEFT", sortorderFrame, "TOPLEFT", 13, -29)
-    --set ScrollFrame height by altering the distance from the bottom of the frame
-    SortOrder.scrollFrame:SetPoint("BOTTOMLEFT", sortorderFrame, "BOTTOMLEFT", -25, 15)
-    SortOrder.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", SortOrder.scrollFrame, "HybridScrollBarTemplate")
-    SortOrder.scrollFrame.scrollBar:SetPoint("TOPLEFT", SortOrder.scrollFrame, "TOPRIGHT", 1, -16)
-    SortOrder.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", SortOrder.scrollFrame, "BOTTOMRIGHT", 1, 12)
-	--initiate the scrollFrame
-    --the items we will work with
-    SortOrder.sortorderList = {}
-	SortOrder.scrollFrame.update = function() SortOrder:RefreshList(); end
-    HybridScrollFrame_SetDoNotHideScrollBar(SortOrder.scrollFrame, true)
-	HybridScrollFrame_CreateButtons(SortOrder.scrollFrame, "BagSyncListSortItemTemplate")
+	SortOrder.scrollFrame = BSYC:UI_CreateHybridScrollFrame(sortorderFrame, {
+		width = 397,
+		pointTopLeft = { "TOPLEFT", sortorderFrame, "TOPLEFT", 13, -29 },
+		-- set ScrollFrame height by altering the distance from the bottom of the frame
+		pointBottomLeft = { "BOTTOMLEFT", sortorderFrame, "BOTTOMLEFT", -25, 15 },
+		buttonTemplate = "BagSyncListSortItemTemplate",
+		update = function() SortOrder:RefreshList(); end,
+	})
+	--the items we will work with
+	SortOrder.sortorderList = {}
 
 	--Warning Frame
 	local warningFrame = _G.CreateFrame("Frame", nil, sortorderFrame, "BagSyncInfoFrameTemplate")

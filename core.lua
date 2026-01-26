@@ -750,6 +750,86 @@ function BSYC:SetBSYC_FrameLevel(module)
 	end
 end
 
+-- ------------------------------------------------------------
+-- UI helpers (backbone only; preserves existing layout/behavior)
+-- ------------------------------------------------------------
+
+function BSYC:UI_CreateModuleFrame(module, opts)
+	opts = opts or {}
+
+	local parent = opts.parent or UIParent
+	local template = opts.template or "BagSyncFrameTemplate"
+
+	local frame = _G.CreateFrame("Frame", nil, parent, template)
+	if module then
+		Mixin(frame, module)
+	end
+
+	if opts.globalName then
+		_G[opts.globalName] = frame
+		-- Add to special frames so window can be closed when the escape key is pressed.
+		tinsert(UISpecialFrames, opts.globalName)
+	end
+
+	if frame.TitleText and opts.title then
+		frame.TitleText:SetText(opts.title)
+	end
+
+	if opts.width then frame:SetWidth(opts.width) end
+	if opts.height then frame:SetHeight(opts.height) end
+	if opts.point then frame:SetPoint(unpack(opts.point)) end
+
+	frame:EnableMouse(opts.enableMouse ~= false)
+	frame:SetMovable(opts.movable ~= false)
+	frame:SetResizable(false)
+	frame:SetFrameStrata(opts.frameStrata or "FULLSCREEN_DIALOG")
+	frame:RegisterForDrag(opts.dragButton or "LeftButton")
+	frame:SetClampedToScreen(true)
+	frame:SetScript("OnDragStart", frame.StartMoving)
+	frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+
+	if opts.onShow then frame:SetScript("OnShow", opts.onShow) end
+	if opts.onHide then frame:SetScript("OnHide", opts.onHide) end
+
+	if opts.createCloseButton ~= false then
+		local closeBtn = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
+		closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1)
+		frame.closeBtn = closeBtn
+	end
+
+	return frame
+end
+
+function BSYC:UI_CreateHybridScrollFrame(parent, opts)
+	opts = opts or {}
+	local scroll = _G.CreateFrame("ScrollFrame", nil, parent, "HybridScrollFrameTemplate")
+
+	if opts.width then
+		scroll:SetWidth(opts.width)
+	end
+	if opts.pointTopLeft then
+		scroll:SetPoint(unpack(opts.pointTopLeft))
+	end
+	if opts.pointBottomLeft then
+		scroll:SetPoint(unpack(opts.pointBottomLeft))
+	end
+
+	scroll.scrollBar = CreateFrame("Slider", "$parentscrollBar", scroll, "HybridScrollBarTemplate")
+	scroll.scrollBar:SetPoint("TOPLEFT", scroll, "TOPRIGHT", 1, -16)
+	scroll.scrollBar:SetPoint("BOTTOMLEFT", scroll, "BOTTOMRIGHT", 1, 12)
+
+	if opts.update then
+		scroll.update = opts.update
+	end
+
+	HybridScrollFrame_SetDoNotHideScrollBar(scroll, opts.doNotHideScrollBar ~= false)
+	if opts.buttonTemplate then
+		HybridScrollFrame_CreateButtons(scroll, opts.buttonTemplate)
+	end
+
+	return scroll
+end
+
 BSYC.timerFrame = CreateFrame("Frame")
 BSYC.timerFrame:Hide()
 BSYC.timers = BSYC.timers or {}

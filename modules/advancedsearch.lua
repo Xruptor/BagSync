@@ -19,26 +19,16 @@ end
 local L = BSYC.L
 
 function AdvancedSearch:OnEnable()
-    local advFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncSearchFrameTemplate")
-	Mixin(advFrame, AdvancedSearch) --implement new frame to our parent module Mixin, to have access to parent methods
-    advFrame.TitleText:SetText(L.AdvancedSearch)
-	advFrame:SetWidth(400)
-    advFrame:SetHeight(570)
-    advFrame:SetPoint("TOPRIGHT", Search.frame, "TOPLEFT", -10, 0)
-    advFrame:EnableMouse(true) --don't allow clickthrough
-    advFrame:SetMovable(true)
-    advFrame:SetResizable(false)
-    advFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+	local advFrame = BSYC:UI_CreateModuleFrame(AdvancedSearch, {
+		template = "BagSyncSearchFrameTemplate",
+		title = L.AdvancedSearch,
+		width = 400,
+		height = 570,
+		point = { "TOPRIGHT", Search.frame, "TOPLEFT", -10, 0 },
+		onShow = function() AdvancedSearch:OnShow() end,
+		onHide = function() AdvancedSearch:OnHide() end,
+	})
 	advFrame.HelpButton:Hide()
-	advFrame:RegisterForDrag("LeftButton")
-	advFrame:SetClampedToScreen(true)
-	advFrame:SetScript("OnDragStart", advFrame.StartMoving)
-	advFrame:SetScript("OnDragStop", advFrame.StopMovingOrSizing)
-	local closeBtn = CreateFrame("Button", nil, advFrame, "UIPanelCloseButton")
-	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode
-	advFrame.closeBtn = closeBtn
-    advFrame:SetScript("OnShow", function() AdvancedSearch:OnShow() end)
-	advFrame:SetScript("OnHide", function() AdvancedSearch:OnHide() end)
 	AdvancedSearch.frame = advFrame
 
 	--Advanced Search Information
@@ -58,20 +48,16 @@ function AdvancedSearch:OnEnable()
 	advFrame.unitTitle:SetJustifyH("LEFT")
 	advFrame.unitTitle:SetWidth(advFrame:GetWidth() - 15)
 
-    AdvancedSearch.playerScroll = _G.CreateFrame("ScrollFrame", nil, advFrame, "HybridScrollFrameTemplate")
-    AdvancedSearch.playerScroll:SetWidth(357)
-    AdvancedSearch.playerScroll:SetPoint("TOPLEFT", advFrame, "TOPLEFT", 13, -90)
-    --set ScrollFrame height by altering the distance from the bottom of the frame
-    AdvancedSearch.playerScroll:SetPoint("BOTTOMLEFT", advFrame, "BOTTOMLEFT", -25, 240)
-    AdvancedSearch.playerScroll.scrollBar = CreateFrame("Slider", "$parentscrollBar", AdvancedSearch.playerScroll, "HybridScrollBarTemplate")
-    AdvancedSearch.playerScroll.scrollBar:SetPoint("TOPLEFT", AdvancedSearch.playerScroll, "TOPRIGHT", 1, -16)
-    AdvancedSearch.playerScroll.scrollBar:SetPoint("BOTTOMLEFT", AdvancedSearch.playerScroll, "BOTTOMRIGHT", 1, 12)
-	--initiate the playerScroll
-    --the items we will work with
+	AdvancedSearch.playerScroll = BSYC:UI_CreateHybridScrollFrame(advFrame, {
+		width = 357,
+		pointTopLeft = { "TOPLEFT", advFrame, "TOPLEFT", 13, -90 },
+		-- set ScrollFrame height by altering the distance from the bottom of the frame
+		pointBottomLeft = { "BOTTOMLEFT", advFrame, "BOTTOMLEFT", -25, 240 },
+		buttonTemplate = "BagSyncListItemTemplate",
+		update = function() AdvancedSearch:RefreshPlayerList(); end,
+	})
+	--the items we will work with
 	AdvancedSearch.playerList = {}
-	AdvancedSearch.playerScroll.update = function() AdvancedSearch:RefreshPlayerList(); end
-    HybridScrollFrame_SetDoNotHideScrollBar(AdvancedSearch.playerScroll, true)
-	HybridScrollFrame_CreateButtons(AdvancedSearch.playerScroll, "BagSyncListItemTemplate")
 
 	advFrame.locationTitle = advFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
 	advFrame.locationTitle:SetText(L.Locations)
@@ -89,20 +75,16 @@ function AdvancedSearch:OnEnable()
 	advFrame.locationInfo:SetJustifyH("LEFT")
 	advFrame.locationInfo:SetWidth(advFrame:GetWidth() - 15)
 
-    AdvancedSearch.locationScroll = _G.CreateFrame("ScrollFrame", nil, advFrame, "HybridScrollFrameTemplate")
-    AdvancedSearch.locationScroll:SetWidth(357)
-    AdvancedSearch.locationScroll:SetPoint("TOPLEFT", advFrame, "TOPLEFT", 13, -345)
-    --set ScrollFrame height by altering the distance from the bottom of the frame
-    AdvancedSearch.locationScroll:SetPoint("BOTTOMLEFT", advFrame, "BOTTOMLEFT", -25, 45)
-    AdvancedSearch.locationScroll.scrollBar = CreateFrame("Slider", "$parentscrollBar", AdvancedSearch.locationScroll, "HybridScrollBarTemplate")
-    AdvancedSearch.locationScroll.scrollBar:SetPoint("TOPLEFT", AdvancedSearch.locationScroll, "TOPRIGHT", 1, -16)
-    AdvancedSearch.locationScroll.scrollBar:SetPoint("BOTTOMLEFT", AdvancedSearch.locationScroll, "BOTTOMRIGHT", 1, 12)
-	--initiate the locationScroll
-    --the items we will work with
-    AdvancedSearch.locationList = {}
-	AdvancedSearch.locationScroll.update = function() AdvancedSearch:RefreshLocationList(); end
-    HybridScrollFrame_SetDoNotHideScrollBar(AdvancedSearch.locationScroll, true)
-	HybridScrollFrame_CreateButtons(AdvancedSearch.locationScroll, "BagSyncListItemTemplate")
+	AdvancedSearch.locationScroll = BSYC:UI_CreateHybridScrollFrame(advFrame, {
+		width = 357,
+		pointTopLeft = { "TOPLEFT", advFrame, "TOPLEFT", 13, -345 },
+		-- set ScrollFrame height by altering the distance from the bottom of the frame
+		pointBottomLeft = { "BOTTOMLEFT", advFrame, "BOTTOMLEFT", -25, 45 },
+		buttonTemplate = "BagSyncListItemTemplate",
+		update = function() AdvancedSearch:RefreshLocationList(); end,
+	})
+	--the items we will work with
+	AdvancedSearch.locationList = {}
 
 	--Reset button
 	advFrame.resetButton = _G.CreateFrame("Button", nil, advFrame, "UIPanelButtonTemplate")

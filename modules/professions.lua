@@ -18,28 +18,16 @@ end
 local L = BSYC.L
 
 function Professions:OnEnable()
-	local professionsFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")
-	Mixin(professionsFrame, Professions) --implement new frame to our parent module Mixin, to have access to parent methods
-	_G["BagSyncProfessionsFrame"] = professionsFrame
-    --Add to special frames so window can be closed when the escape key is pressed.
-    tinsert(UISpecialFrames, "BagSyncProfessionsFrame")
-    professionsFrame.TitleText:SetText("BagSync - "..L.Professions)
-    professionsFrame:SetHeight(506) --irregular height to allow the scroll frame to fit the bottom most button
-	professionsFrame:SetWidth(380)
-    professionsFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-    professionsFrame:EnableMouse(true) --don't allow clickthrough
-    professionsFrame:SetMovable(true)
-    professionsFrame:SetResizable(false)
-    professionsFrame:SetFrameStrata("FULLSCREEN_DIALOG")
-	professionsFrame:RegisterForDrag("LeftButton")
-	professionsFrame:SetClampedToScreen(true)
-	professionsFrame:SetScript("OnDragStart", professionsFrame.StartMoving)
-	professionsFrame:SetScript("OnDragStop", professionsFrame.StopMovingOrSizing)
-	professionsFrame:SetScript("OnShow", function() Professions:OnShow() end)
-	local closeBtn = CreateFrame("Button", nil, professionsFrame, "UIPanelCloseButton")
-	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode		
-    professionsFrame.closeBtn = closeBtn
-    Professions.frame = professionsFrame
+	local professionsFrame = BSYC:UI_CreateModuleFrame(Professions, {
+		template = "BagSyncFrameTemplate",
+		globalName = "BagSyncProfessionsFrame",
+		title = "BagSync - "..L.Professions,
+		height = 506, --irregular height to allow the scroll frame to fit the bottom most button
+		width = 380,
+		point = { "CENTER", UIParent, "CENTER", 0, 0 },
+		onShow = function() Professions:OnShow() end,
+	})
+	Professions.frame = professionsFrame
 
 	professionsFrame.infoText = professionsFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
 	professionsFrame.infoText:SetText(L.ProfessionInformation)
@@ -49,20 +37,16 @@ function Professions:OnEnable()
 	professionsFrame.infoText:SetJustifyH("LEFT")
 	professionsFrame.infoText:SetWidth(professionsFrame:GetWidth() - 15)
 
-    Professions.scrollFrame = _G.CreateFrame("ScrollFrame", nil, professionsFrame, "HybridScrollFrameTemplate")
-    Professions.scrollFrame:SetWidth(337)
-    Professions.scrollFrame:SetPoint("TOPLEFT", professionsFrame, "TOPLEFT", 13, -48)
-    --set ScrollFrame height by altering the distance from the bottom of the frame
-    Professions.scrollFrame:SetPoint("BOTTOMLEFT", professionsFrame, "BOTTOMLEFT", -25, 15)
-    Professions.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Professions.scrollFrame, "HybridScrollBarTemplate")
-    Professions.scrollFrame.scrollBar:SetPoint("TOPLEFT", Professions.scrollFrame, "TOPRIGHT", 1, -16)
-    Professions.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Professions.scrollFrame, "BOTTOMRIGHT", 1, 12)
-	--initiate the scrollFrame
-    --the items we will work with
-    Professions.professionList = {}
-	Professions.scrollFrame.update = function() Professions:RefreshList(); end
-    HybridScrollFrame_SetDoNotHideScrollBar(Professions.scrollFrame, true)
-	HybridScrollFrame_CreateButtons(Professions.scrollFrame, "BagSyncListSimpleItemTemplate")
+	Professions.scrollFrame = BSYC:UI_CreateHybridScrollFrame(professionsFrame, {
+		width = 337,
+		pointTopLeft = { "TOPLEFT", professionsFrame, "TOPLEFT", 13, -48 },
+		-- set ScrollFrame height by altering the distance from the bottom of the frame
+		pointBottomLeft = { "BOTTOMLEFT", professionsFrame, "BOTTOMLEFT", -25, 15 },
+		buttonTemplate = "BagSyncListSimpleItemTemplate",
+		update = function() Professions:RefreshList(); end,
+	})
+	--the items we will work with
+	Professions.professionList = {}
 
 	professionsFrame:Hide()
 end

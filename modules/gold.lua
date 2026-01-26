@@ -18,43 +18,27 @@ end
 local L = BSYC.L
 
 function Gold:OnEnable()
-	local goldFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")
-	Mixin(goldFrame, Gold) --implement new frame to our parent module Mixin, to have access to parent methods
-	_G["BagSyncGoldFrame"] = goldFrame
-    --Add to special frames so window can be closed when the escape key is pressed.
-    tinsert(UISpecialFrames, "BagSyncGoldFrame")
-    goldFrame.TitleText:SetText("BagSync - "..L.Gold)
-    goldFrame:SetHeight(506)
-	goldFrame:SetWidth(440)
-    goldFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-    goldFrame:EnableMouse(true) --don't allow clickthrough
-    goldFrame:SetMovable(true)
-    goldFrame:SetResizable(false)
-    goldFrame:SetFrameStrata("FULLSCREEN_DIALOG")
-	goldFrame:RegisterForDrag("LeftButton")
-	goldFrame:SetClampedToScreen(true)
-	goldFrame:SetScript("OnDragStart", goldFrame.StartMoving)
-	goldFrame:SetScript("OnDragStop", goldFrame.StopMovingOrSizing)
-	goldFrame:SetScript("OnShow", function() Gold:OnShow() end)
-	local closeBtn = CreateFrame("Button", nil, goldFrame, "UIPanelCloseButton")
-	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode		
-    goldFrame.closeBtn = closeBtn
-    Gold.frame = goldFrame
+	local goldFrame = BSYC:UI_CreateModuleFrame(Gold, {
+		template = "BagSyncFrameTemplate",
+		globalName = "BagSyncGoldFrame",
+		title = "BagSync - "..L.Gold,
+		height = 506,
+		width = 440,
+		point = { "CENTER", UIParent, "CENTER", 0, 0 },
+		onShow = function() Gold:OnShow() end,
+	})
+	Gold.frame = goldFrame
 
-    Gold.scrollFrame = _G.CreateFrame("ScrollFrame", nil, goldFrame, "HybridScrollFrameTemplate")
-    Gold.scrollFrame:SetWidth(397)
-    Gold.scrollFrame:SetPoint("TOPLEFT", goldFrame, "TOPLEFT", 13, -29)
-    --set ScrollFrame height by altering the distance from the bottom of the frame
-    Gold.scrollFrame:SetPoint("BOTTOMLEFT", goldFrame, "BOTTOMLEFT", -25, 37)
-    Gold.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Gold.scrollFrame, "HybridScrollBarTemplate")
-    Gold.scrollFrame.scrollBar:SetPoint("TOPLEFT", Gold.scrollFrame, "TOPRIGHT", 1, -16)
-    Gold.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Gold.scrollFrame, "BOTTOMRIGHT", 1, 12)
-	--initiate the scrollFrame
-    --the items we will work with
-    Gold.goldList = {}
-	Gold.scrollFrame.update = function() Gold:RefreshList(); end
-    HybridScrollFrame_SetDoNotHideScrollBar(Gold.scrollFrame, true)
-	HybridScrollFrame_CreateButtons(Gold.scrollFrame, "BagSyncListSimpleItemTemplate")
+	Gold.scrollFrame = BSYC:UI_CreateHybridScrollFrame(goldFrame, {
+		width = 397,
+		pointTopLeft = { "TOPLEFT", goldFrame, "TOPLEFT", 13, -29 },
+		-- set ScrollFrame height by altering the distance from the bottom of the frame
+		pointBottomLeft = { "BOTTOMLEFT", goldFrame, "BOTTOMLEFT", -25, 37 },
+		buttonTemplate = "BagSyncListSimpleItemTemplate",
+		update = function() Gold:RefreshList(); end,
+	})
+	--the items we will work with
+	Gold.goldList = {}
 
 	--total counter
 	goldFrame.totalText = goldFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")

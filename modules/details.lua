@@ -23,27 +23,15 @@ local function comma_value(n)
 end
 
 function Details:OnEnable()
-	local detailsFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")
-	Mixin(detailsFrame, Details) --implement new frame to our parent module Mixin, to have access to parent methods
-	_G["BagSyncDetailsFrame"] = detailsFrame
-    --Add to special frames so window can be closed when the escape key is pressed.
-    tinsert(UISpecialFrames, "BagSyncDetailsFrame")
-    detailsFrame.TitleText:SetText("BagSync - "..L.Details)
-    detailsFrame:SetHeight(606)
-	detailsFrame:SetWidth(600)
-    detailsFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-    detailsFrame:EnableMouse(true) --don't allow clickthrough
-    detailsFrame:SetMovable(true)
-    detailsFrame:SetResizable(false)
-    detailsFrame:SetFrameStrata("FULLSCREEN_DIALOG")
-	detailsFrame:RegisterForDrag("LeftButton")
-	detailsFrame:SetClampedToScreen(true)
-	detailsFrame:SetScript("OnDragStart", detailsFrame.StartMoving)
-	detailsFrame:SetScript("OnDragStop", detailsFrame.StopMovingOrSizing)
-	detailsFrame:SetScript("OnShow", function() Details:OnShow() end)
-	local closeBtn = CreateFrame("Button", nil, detailsFrame, "UIPanelCloseButton")
-	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode			
-    detailsFrame.closeBtn = closeBtn
+	local detailsFrame = BSYC:UI_CreateModuleFrame(Details, {
+		template = "BagSyncFrameTemplate",
+		globalName = "BagSyncDetailsFrame",
+		title = "BagSync - "..L.Details,
+		height = 606,
+		width = 600,
+		point = { "CENTER", UIParent, "CENTER", 0, 0 },
+		onShow = function() Details:OnShow() end,
+	})
 	Details.frame = detailsFrame
 
 	detailsFrame.infoText = detailsFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
@@ -54,20 +42,16 @@ function Details:OnEnable()
 	detailsFrame.infoText:SetJustifyH("LEFT")
 	detailsFrame.infoText:SetWidth(detailsFrame:GetWidth() - 15)
 
-    Details.scrollFrame = _G.CreateFrame("ScrollFrame", nil, detailsFrame, "HybridScrollFrameTemplate")
-    Details.scrollFrame:SetWidth(557)
-    Details.scrollFrame:SetPoint("TOPLEFT", detailsFrame, "TOPLEFT", 13, -45)
-    --set ScrollFrame height by altering the distance from the bottom of the frame
-    Details.scrollFrame:SetPoint("BOTTOMLEFT", detailsFrame, "BOTTOMLEFT", -25, 15)
-    Details.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Details.scrollFrame, "HybridScrollBarTemplate")
-    Details.scrollFrame.scrollBar:SetPoint("TOPLEFT", Details.scrollFrame, "TOPRIGHT", 1, -16)
-    Details.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Details.scrollFrame, "BOTTOMRIGHT", 1, 12)
-	--initiate the scrollFrame
-    --the items we will work with
-    Details.items = {}
-	Details.scrollFrame.update = function() Details:RefreshList(); end
-    HybridScrollFrame_SetDoNotHideScrollBar(Details.scrollFrame, true)
-	HybridScrollFrame_CreateButtons(Details.scrollFrame, "BagSyncListSimpleItemTemplate")
+	Details.scrollFrame = BSYC:UI_CreateHybridScrollFrame(detailsFrame, {
+		width = 557,
+		pointTopLeft = { "TOPLEFT", detailsFrame, "TOPLEFT", 13, -45 },
+		-- set ScrollFrame height by altering the distance from the bottom of the frame
+		pointBottomLeft = { "BOTTOMLEFT", detailsFrame, "BOTTOMLEFT", -25, 15 },
+		buttonTemplate = "BagSyncListSimpleItemTemplate",
+		update = function() Details:RefreshList(); end,
+	})
+	--the items we will work with
+	Details.items = {}
 
 	detailsFrame:Hide()
 end
@@ -93,7 +77,6 @@ function Details:CheckItems(usrData, unitObj, target, itemID, colorized)
 	if not unitObj or not target then return end
 
 	local function parseItems(data, tab, equipped)
-		local iCount = 0
 		for i=1, #data do
 			if data[i] then
 				local link, count, qOpts = BSYC:Split(data[i])
@@ -117,7 +100,6 @@ function Details:CheckItems(usrData, unitObj, target, itemID, colorized)
 				end
 			end
 		end
-		return iCount
 	end
 
 	if unitObj.data[target] and BSYC.tracking[target] then

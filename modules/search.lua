@@ -29,47 +29,29 @@ end
 local L = BSYC.L
 local ItemScout = LibStub("LibItemScout-1.0")
 
-Search.cacheItems = {}
-
 function Search:OnEnable()
-    local searchFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncSearchFrameTemplate")
-	Mixin(searchFrame, Search) --implement new frame to our parent module Mixin, to have access to parent methods
-	_G["BagSyncSearchFrame"] = searchFrame
-    --Add to special frames so window can be closed when the escape key is pressed.
-    tinsert(UISpecialFrames, "BagSyncSearchFrame")
-    searchFrame.TitleText:SetText("BagSync - "..L.Search)
-	searchFrame:SetWidth(400)
-    searchFrame:SetHeight(500)
-    searchFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-    searchFrame:EnableMouse(true) --don't allow clickthrough
-    searchFrame:SetMovable(true)
-    searchFrame:SetResizable(false)
-    searchFrame:SetFrameStrata("FULLSCREEN_DIALOG")
-	searchFrame:RegisterForDrag("LeftButton")
-	searchFrame:SetClampedToScreen(true)
-	searchFrame:SetScript("OnDragStart", searchFrame.StartMoving)
-	searchFrame:SetScript("OnDragStop", searchFrame.StopMovingOrSizing)
-	searchFrame:SetScript("OnShow", function() Search:OnShow() end)
-	searchFrame:SetScript("OnHide", function() Search:OnHide() end)
-	local closeBtn = CreateFrame("Button", nil, searchFrame, "UIPanelCloseButton")
-	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode
-    searchFrame.closeBtn = closeBtn
-    Search.frame = searchFrame
+	local searchFrame = BSYC:UI_CreateModuleFrame(Search, {
+		template = "BagSyncSearchFrameTemplate",
+		globalName = "BagSyncSearchFrame",
+		title = "BagSync - "..L.Search,
+		width = 400,
+		height = 500,
+		point = { "CENTER", UIParent, "CENTER", 0, 0 },
+		onShow = function() Search:OnShow() end,
+		onHide = function() Search:OnHide() end,
+	})
+	Search.frame = searchFrame
 
-    Search.scrollFrame = _G.CreateFrame("ScrollFrame", nil, searchFrame, "HybridScrollFrameTemplate")
-    Search.scrollFrame:SetWidth(357)
-    Search.scrollFrame:SetPoint("TOPLEFT", searchFrame, "TOPLEFT", 13, -60)
-    --set ScrollFrame height by altering the distance from the bottom of the frame
-    Search.scrollFrame:SetPoint("BOTTOMLEFT", searchFrame, "BOTTOMLEFT", -25, 42)
-    Search.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Search.scrollFrame, "HybridScrollBarTemplate")
-    Search.scrollFrame.scrollBar:SetPoint("TOPLEFT", Search.scrollFrame, "TOPRIGHT", 1, -16)
-    Search.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Search.scrollFrame, "BOTTOMRIGHT", 1, 12)
-	--initiate the scrollFrame
-    --the items we will work with
-    Search.items = {}
-	Search.scrollFrame.update = function() Search:RefreshList(); end
-    HybridScrollFrame_SetDoNotHideScrollBar(Search.scrollFrame, true)
-	HybridScrollFrame_CreateButtons(Search.scrollFrame, "BagSyncListItemTemplate")
+	Search.scrollFrame = BSYC:UI_CreateHybridScrollFrame(searchFrame, {
+		width = 357,
+		pointTopLeft = { "TOPLEFT", searchFrame, "TOPLEFT", 13, -60 },
+		-- set ScrollFrame height by altering the distance from the bottom of the frame
+		pointBottomLeft = { "BOTTOMLEFT", searchFrame, "BOTTOMLEFT", -25, 42 },
+		buttonTemplate = "BagSyncListItemTemplate",
+		update = function() Search:RefreshList(); end,
+	})
+	--the items we will work with
+	Search.items = {}
 
 	--total counter
 	searchFrame.totalText = searchFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
@@ -176,20 +158,16 @@ function Search:OnEnable()
 	savedSearch.TitleText:SetTextColor(1, 1, 1)
 	savedSearch:SetScript("OnShow", function() Search:SavedSearch_UpdateList() end)
 	Search.savedSearch = savedSearch
-    savedSearch.scrollFrame = _G.CreateFrame("ScrollFrame", nil, savedSearch, "HybridScrollFrameTemplate")
-    savedSearch.scrollFrame:SetWidth(357)
-    savedSearch.scrollFrame:SetPoint("TOPLEFT", savedSearch, "TOPLEFT", 13, -32)
-    --set ScrollFrame height by altering the distance from the bottom of the frame
-    savedSearch.scrollFrame:SetPoint("BOTTOMLEFT", savedSearch, "BOTTOMLEFT", -25, 36)
-    savedSearch.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", savedSearch.scrollFrame, "HybridScrollBarTemplate")
-    savedSearch.scrollFrame.scrollBar:SetPoint("TOPLEFT", savedSearch.scrollFrame, "TOPRIGHT", 1, -16)
-    savedSearch.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", savedSearch.scrollFrame, "BOTTOMRIGHT", 1, 12)
-	--initiate the scrollFrame
-    --the items we will work with
-    savedSearch.items = {}
-	savedSearch.scrollFrame.update = function() Search:SavedSearch_RefreshList(); end
-    HybridScrollFrame_SetDoNotHideScrollBar(savedSearch.scrollFrame, true)
-	HybridScrollFrame_CreateButtons(savedSearch.scrollFrame, "BagSyncSavedListTemplate")
+	savedSearch.scrollFrame = BSYC:UI_CreateHybridScrollFrame(savedSearch, {
+		width = 357,
+		pointTopLeft = { "TOPLEFT", savedSearch, "TOPLEFT", 13, -32 },
+		-- set ScrollFrame height by altering the distance from the bottom of the frame
+		pointBottomLeft = { "BOTTOMLEFT", savedSearch, "BOTTOMLEFT", -25, 36 },
+		buttonTemplate = "BagSyncSavedListTemplate",
+		update = function() Search:SavedSearch_RefreshList(); end,
+	})
+	--the items we will work with
+	savedSearch.items = {}
 	--Add Search Button
 	savedSearch.addSavedBtn = _G.CreateFrame("Button", nil, savedSearch, "UIPanelButtonTemplate")
 	savedSearch.addSavedBtn:SetText(L.SavedSearch_Add)

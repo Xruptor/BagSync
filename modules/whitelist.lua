@@ -17,28 +17,16 @@ end
 local L = BSYC.L
 
 function Whitelist:OnEnable()
-	local whitelistFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")
-	Mixin(whitelistFrame, Whitelist) --implement new frame to our parent module Mixin, to have access to parent methods
-	_G["BagSyncWhitelistFrame"] = whitelistFrame
-    --Add to special frames so window can be closed when the escape key is pressed.
-    tinsert(UISpecialFrames, "BagSyncWhitelistFrame")
-    whitelistFrame.TitleText:SetText("BagSync - "..L.Whitelist)
-    whitelistFrame:SetHeight(506) --irregular height to allow the scroll frame to fit the bottom most button
-	whitelistFrame:SetWidth(380)
-    whitelistFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-    whitelistFrame:EnableMouse(true) --don't allow clickthrough
-    whitelistFrame:SetMovable(true)
-    whitelistFrame:SetResizable(false)
-    whitelistFrame:SetFrameStrata("FULLSCREEN_DIALOG")
-	whitelistFrame:RegisterForDrag("LeftButton")
-	whitelistFrame:SetClampedToScreen(true)
-	whitelistFrame:SetScript("OnDragStart", whitelistFrame.StartMoving)
-	whitelistFrame:SetScript("OnDragStop", whitelistFrame.StopMovingOrSizing)
-	whitelistFrame:SetScript("OnShow", function() Whitelist:OnShow() end)
-	local closeBtn = CreateFrame("Button", nil, whitelistFrame, "UIPanelCloseButton")
-	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode			
-    whitelistFrame.closeBtn = closeBtn
-    Whitelist.frame = whitelistFrame
+	local whitelistFrame = BSYC:UI_CreateModuleFrame(Whitelist, {
+		template = "BagSyncFrameTemplate",
+		globalName = "BagSyncWhitelistFrame",
+		title = "BagSync - "..L.Whitelist,
+		height = 506, --irregular height to allow the scroll frame to fit the bottom most button
+		width = 380,
+		point = { "CENTER", UIParent, "CENTER", 0, 0 },
+		onShow = function() Whitelist:OnShow() end,
+	})
+	Whitelist.frame = whitelistFrame
 
 	local itemIDBox = CreateFrame("EditBox", nil, whitelistFrame, "InputBoxTemplate")
 	itemIDBox:SetSize(210, 20)
@@ -63,20 +51,16 @@ function Whitelist:OnEnable()
 	whitelistFrame.infoText:SetJustifyH("LEFT")
 	whitelistFrame.infoText:SetWidth(whitelistFrame:GetWidth() - 15)
 
-    Whitelist.scrollFrame = _G.CreateFrame("ScrollFrame", nil, whitelistFrame, "HybridScrollFrameTemplate")
-    Whitelist.scrollFrame:SetWidth(337)
-    Whitelist.scrollFrame:SetPoint("TOPLEFT", whitelistFrame, "TOPLEFT", 13, -70)
-    --set ScrollFrame height by altering the distance from the bottom of the frame
-    Whitelist.scrollFrame:SetPoint("BOTTOMLEFT", whitelistFrame, "BOTTOMLEFT", -25, 15)
-    Whitelist.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Whitelist.scrollFrame, "HybridScrollBarTemplate")
-    Whitelist.scrollFrame.scrollBar:SetPoint("TOPLEFT", Whitelist.scrollFrame, "TOPRIGHT", 1, -16)
-    Whitelist.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Whitelist.scrollFrame, "BOTTOMRIGHT", 1, 12)
-	--initiate the scrollFrame
-    --the items we will work with
-    Whitelist.listItems = {}
-	Whitelist.scrollFrame.update = function() Whitelist:RefreshList(); end
-    HybridScrollFrame_SetDoNotHideScrollBar(Whitelist.scrollFrame, true)
-	HybridScrollFrame_CreateButtons(Whitelist.scrollFrame, "BagSyncListSimpleItemTemplate")
+	Whitelist.scrollFrame = BSYC:UI_CreateHybridScrollFrame(whitelistFrame, {
+		width = 337,
+		pointTopLeft = { "TOPLEFT", whitelistFrame, "TOPLEFT", 13, -70 },
+		-- set ScrollFrame height by altering the distance from the bottom of the frame
+		pointBottomLeft = { "BOTTOMLEFT", whitelistFrame, "BOTTOMLEFT", -25, 15 },
+		buttonTemplate = "BagSyncListSimpleItemTemplate",
+		update = function() Whitelist:RefreshList(); end,
+	})
+	--the items we will work with
+	Whitelist.listItems = {}
 
 	--Warning Frame
 	local warningFrame = _G.CreateFrame("Frame", nil, whitelistFrame, "BagSyncInfoFrameTemplate")
@@ -261,20 +245,6 @@ function Whitelist:AddItemID()
 		BSYC:Print(L.ItemIDAdded:format(itemid), dItemLink)
 	end
 	editBox:SetText("")
-
-	Whitelist:UpdateList()
-end
-
-function Whitelist:AddGuild()
-	if not Whitelist.selectedGuild then return end
-
-	if BSYC.db.whitelist[Whitelist.selectedGuild.value] then
-		BSYC:Print(L.GuildExist:format(Whitelist.selectedGuild.arg1))
-		return
-	end
-
-	BSYC.db.whitelist[Whitelist.selectedGuild.value] = Whitelist.selectedGuild.arg1
-	BSYC:Print(L.GuildAdded:format(Whitelist.selectedGuild.arg1))
 
 	Whitelist:UpdateList()
 end

@@ -18,27 +18,15 @@ end
 local L = BSYC.L
 
 function Recipes:OnEnable()
-	local recipesFrame = _G.CreateFrame("Frame", nil, UIParent, "BagSyncFrameTemplate")
-	Mixin(recipesFrame, Recipes) --implement new frame to our parent module Mixin, to have access to parent methods
-	_G["BagSyncRecipesFrame"] = recipesFrame
-    --Add to special frames so window can be closed when the escape key is pressed.
-    tinsert(UISpecialFrames, "BagSyncRecipesFrame")
-    recipesFrame.TitleText:SetText("BagSync - "..L.Recipes)
-    recipesFrame:SetHeight(500)
-	recipesFrame:SetWidth(570)
-    recipesFrame:SetPoint("TOPLEFT", Professions.frame, "TOPRIGHT", 10, 0)
-    recipesFrame:EnableMouse(true) --don't allow clickthrough
-    recipesFrame:SetMovable(true)
-    recipesFrame:SetResizable(false)
-    recipesFrame:SetFrameStrata("FULLSCREEN_DIALOG")
-	recipesFrame:RegisterForDrag("LeftButton")
-	recipesFrame:SetClampedToScreen(true)
-	recipesFrame:SetScript("OnDragStart", recipesFrame.StartMoving)
-	recipesFrame:SetScript("OnDragStop", recipesFrame.StopMovingOrSizing)
-	recipesFrame:SetScript("OnShow", function() Recipes:OnShow() end)
-	local closeBtn = CreateFrame("Button", nil, recipesFrame, "UIPanelCloseButton")
-	closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1) --check for classic servers to adjust for positioning using a check for the new EditMode			
-    recipesFrame.closeBtn = closeBtn
+	local recipesFrame = BSYC:UI_CreateModuleFrame(Recipes, {
+		template = "BagSyncFrameTemplate",
+		globalName = "BagSyncRecipesFrame",
+		title = "BagSync - "..L.Recipes,
+		height = 500,
+		width = 570,
+		point = { "TOPLEFT", Professions.frame, "TOPRIGHT", 10, 0 },
+		onShow = function() Recipes:OnShow() end,
+	})
 	Recipes.frame = recipesFrame
 
 	recipesFrame.infoText = recipesFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
@@ -49,20 +37,16 @@ function Recipes:OnEnable()
 	recipesFrame.infoText:SetJustifyH("CENTER")
 	recipesFrame.infoText:SetWidth(recipesFrame:GetWidth() - 15)
 
-    Recipes.scrollFrame = _G.CreateFrame("ScrollFrame", nil, recipesFrame, "HybridScrollFrameTemplate")
-    Recipes.scrollFrame:SetWidth(527)
-    Recipes.scrollFrame:SetPoint("TOPLEFT", recipesFrame, "TOPLEFT", 13, -48)
-    --set ScrollFrame height by altering the distance from the bottom of the frame
-    Recipes.scrollFrame:SetPoint("BOTTOMLEFT", recipesFrame, "BOTTOMLEFT", -25, 15)
-    Recipes.scrollFrame.scrollBar = CreateFrame("Slider", "$parentscrollBar", Recipes.scrollFrame, "HybridScrollBarTemplate")
-    Recipes.scrollFrame.scrollBar:SetPoint("TOPLEFT", Recipes.scrollFrame, "TOPRIGHT", 1, -16)
-    Recipes.scrollFrame.scrollBar:SetPoint("BOTTOMLEFT", Recipes.scrollFrame, "BOTTOMRIGHT", 1, 12)
-	--initiate the scrollFrame
-    --the items we will work with
-    Recipes.recipesList = {}
-	Recipes.scrollFrame.update = function() Recipes:RefreshList(); end
-    HybridScrollFrame_SetDoNotHideScrollBar(Recipes.scrollFrame, true)
-	HybridScrollFrame_CreateButtons(Recipes.scrollFrame, "BagSyncListItemTemplate")
+	Recipes.scrollFrame = BSYC:UI_CreateHybridScrollFrame(recipesFrame, {
+		width = 527,
+		pointTopLeft = { "TOPLEFT", recipesFrame, "TOPLEFT", 13, -48 },
+		-- set ScrollFrame height by altering the distance from the bottom of the frame
+		pointBottomLeft = { "BOTTOMLEFT", recipesFrame, "BOTTOMLEFT", -25, 15 },
+		buttonTemplate = "BagSyncListItemTemplate",
+		update = function() Recipes:RefreshList(); end,
+	})
+	--the items we will work with
+	Recipes.recipesList = {}
 
 	recipesFrame:Hide()
 end
