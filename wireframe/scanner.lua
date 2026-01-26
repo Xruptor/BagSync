@@ -888,73 +888,109 @@ function Scanner:SaveCurrency(showDebug)
 	local lastHeader
 	local slotItems = {}
 
-	--first lets expand everything just in case
-	local whileChk = true
-	local exitCount = 0
-
 	--WOTLK still doesn't have all the correct C_CurrencyInfo functions
 	local xGetCurrencyListSize = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListSize) or GetCurrencyListSize
 	local xGetCurrencyListInfo = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListInfo) or GetCurrencyListInfo
 	local xGetCurrencyListLink = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListLink) or GetCurrencyListLink
 	local xExpandCurrencyList = (C_CurrencyInfo and C_CurrencyInfo.ExpandCurrencyList) or ExpandCurrencyList
+	local questionMarkIcon = 134400
+
+	local function pickIcon(icon1, icon2)
+		--icon1 is actually extraCurrencyType on older APIs, but sometimes they pass iconFileID here instead of icon2.
+		if icon1 and tonumber(icon1) and tonumber(icon1) > 5 then
+			return icon1
+		end
+		if icon2 and tonumber(icon2) and tonumber(icon2) > 5 then
+			return icon2
+		end
+		return questionMarkIcon
+	end
 
 	--only do this if we have the functions to work with
-	if xGetCurrencyListSize then
-		while whileChk do
-			whileChk = false -- turn the while loop off, it will only continue if we found an unexpanded header until all are expanded
-			exitCount = exitCount + 1 --catch all to prevent endless loop
+	if not (xGetCurrencyListSize and xGetCurrencyListInfo) then
+		BSYC.db.player.currency = slotItems
+		self:ResetTooltips()
+		return
+	end
 
-			for k=1, xGetCurrencyListSize() do
-				local headerCheck = xGetCurrencyListInfo(k)
-				if headerCheck.isHeader and not headerCheck.isHeaderExpanded then
-					xExpandCurrencyList(k, true)
-					whileChk = true
+	--first lets expand everything just in case (supports both retail-table and classic multi-return APIs)
+	if xExpandCurrencyList then
+		for _ = 1, 50 do
+			local expandedAny = false
+			local listSize = xGetCurrencyListSize()
+
+			for i = 1, listSize do
+				--Retail returns a table; Classic/WotLK can return multiple values.
+				local currencyInfoOrName, isHeaderFlag, isHeaderExpandedFlag = xGetCurrencyListInfo(i)
+				local isHeader, isExpanded
+
+				if type(currencyInfoOrName) == "table" then
+					isHeader = currencyInfoOrName.isHeader
+					isExpanded = currencyInfoOrName.isHeaderExpanded
+				else
+					isHeader = isHeaderFlag
+					isExpanded = isHeaderExpandedFlag
+				end
+
+				if isHeader and not isExpanded then
+					xExpandCurrencyList(i, true)
+					expandedAny = true
 				end
 			end
 
-			--this is a catch all in case something happens above and for some reason it's always true
-			if exitCount >= 50 then
-				whileChk = false --just in case
+			if not expandedAny then
 				break
 			end
 		end
+	end
 
-		for i=1, xGetCurrencyListSize() do
-			local xHeader, xCount, xUseIcon, xIcon1, xIcon2
+	local listSize = xGetCurrencyListSize()
+	for i = 1, listSize do
+		--Retail (C_CurrencyInfo.GetCurrencyListInfo) returns a table.
+		--Classic (GetCurrencyListInfo) returns multiple values:
+		--name, isHeader, isHeaderExpanded, isTypeUnused, isShowInBackpack, count, extraCurrencyType, iconFileID
+		local currencyInfoOrName,
+			isHeaderFlag,
+			isHeaderExpandedFlag,
+			isTypeUnused,
+			isShowInBackpack,
+			count,
+			extraCurrencyType,
+			iconFileID = xGetCurrencyListInfo(i)
 
-			local currencyinfo = xGetCurrencyListInfo(i)
-			local link = xGetCurrencyListLink(i)
-			local currencyID = BSYC:GetShortCurrencyID(link)
+		local currName, isHeader, currQuantity, currIcon
+		if type(currencyInfoOrName) == "table" then
+			currName = currencyInfoOrName.name
+			isHeader = currencyInfoOrName.isHeader
+			currQuantity = currencyInfoOrName.quantity or 0
+			currIcon = currencyInfoOrName.iconFileID or questionMarkIcon
+		else
+			currName = currencyInfoOrName
+			isHeader = isHeaderFlag
+			currQuantity = count or 0
+			currIcon = pickIcon(extraCurrencyType, iconFileID)
+		end
 
-			local currName = currencyinfo.name or currencyinfo --classic and wotlk servers don't return an array but a string name instead
-
-			--classic and wotlk do not use array returns for xGetCurrencyListInfo, so lets compensate for it
-			if not currencyinfo.name then
-				_, xHeader, _, _, _, xCount, xIcon1, xIcon2 = xGetCurrencyListInfo(i)
-				--xIcon1 is actually extraCurrencyType, but for SOME REASON they occasionally pass the iconFileID here rather then in xIcon2.  This is straight from the Wow API Wiki
-				if xIcon1 and tonumber(xIcon1) and tonumber(xIcon1) > 5 then
-					xUseIcon = xIcon1
-				elseif xIcon2 and tonumber(xIcon2) and tonumber(xIcon2) > 5 then
-					xUseIcon = xIcon2
-				else
-					xUseIcon = 134400 --question mark
+		if currName then
+			if isHeader then
+				lastHeader = currName
+			else
+				local currencyID
+				if xGetCurrencyListLink then
+					local link = xGetCurrencyListLink(i)
+					currencyID = BSYC:GetShortCurrencyID(link)
 				end
-			end
 
-			local isHeader = not currencyID or currencyinfo.isHeader or xHeader
-			local currQuantity = currencyinfo.quantity or xCount or 0
-			local currIcon = currencyinfo.iconFileID or xUseIcon or 134400 --question mark
-
-			if currName then
-				if isHeader then
+				--Some clients can return nil links sporadically; treat those as headers to preserve grouping behavior.
+				if not currencyID then
 					lastHeader = currName
 				elseif currencyID and not slotItems[currencyID] then --make sure we don't do the same currency twice
 					slotItems[currencyID] = slotItems[currencyID] or {}
-					slotItems[currencyID].name = currName
-					slotItems[currencyID].header = lastHeader
-					slotItems[currencyID].count = currQuantity
-					slotItems[currencyID].icon = currIcon
-
+					local currencySlot = slotItems[currencyID]
+					currencySlot.name = currName
+					currencySlot.header = lastHeader
+					currencySlot.count = currQuantity
+					currencySlot.icon = currIcon
 				end
 			end
 		end
