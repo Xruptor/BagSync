@@ -12,7 +12,6 @@ local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
 local Scanner = BSYC:GetModule("Scanner")
 local L = BSYC.L
-local LibQTip = LibStub("LibQTip-1.0")
 local tinsert, tconcat, tsort = table.insert, table.concat, table.sort
 local wipe = _G.wipe
 
@@ -711,146 +710,166 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 	return unitData
 end
 
-function Tooltip:QTipCheck(source, isBattlePet)
-	local showQTip = false
-
-	--create the extra tooltip (qTip) only if it doesn't already exist
-	if BSYC.options.enableExtTooltip or isBattlePet then
-		local doQTip = true
-		--only show the external tooltip if we have the option enabled, otherwise show it inside the tooltip if isBattlePet
-		if source == "ArkInventory" and not BSYC.options.enableExtTooltip then doQTip = false end
-		if doQTip then
-			if not Tooltip.qTip then
-				Tooltip.qTip = LibQTip:Acquire("BagSyncQTip", 3, "LEFT", "CENTER", "RIGHT")
-				Tooltip.qTip:SetClampedToScreen(true)
-
-				Tooltip.qTip:SetScript("OnShow", function()
-					Tooltip:GetBottomChild()
-				end)
-			end
-			if BSYC.__font and BSYC.__fontFlags then
-				Tooltip.qTip:SetFont(BSYC.__font)
-			end
-			Tooltip.qTip:Clear()
-			showQTip = true
-		end
-	end
-	--release it if we aren't using the qTip
-	if Tooltip.qTip and not showQTip then
-		LibQTip:Release(Tooltip.qTip)
-		Tooltip.qTip = nil
-	end
-
-	return showQTip
+function Tooltip:EnsureExtTip()
+	if Tooltip.extTip then return end
+	local extTip = CreateFrame("GameTooltip", "BagSyncExtTip", UIParent, "GameTooltipTemplate")
+	extTip:SetOwner(UIParent, "ANCHOR_NONE")
+	extTip:SetClampedToScreen(true)
+	extTip:SetFrameStrata("TOOLTIP")
+	extTip:SetToplevel(true)
+	extTip:SetScript("OnShow", function()
+		Tooltip:UpdateExtTipAnchor()
+	end)
+	Tooltip.extTip = extTip
 end
 
-function Tooltip:GetBottomChild()
-	Debug(BSYC_DL.TRACE, "GetBottomChild", Tooltip.objTooltip, Tooltip.qTip)
+function Tooltip:ExtTipCheck(source, isBattlePet)
+	local opts = BSYC.options
+	local shouldShow = (opts.enableExtTooltip or isBattlePet) and true or false
 
-	local frame, qTip = Tooltip.objTooltip, Tooltip.qTip
-	if not qTip then return end
+	self:EnsureExtTip()
 
-	local cache = {}
+	if not shouldShow then
+		Tooltip.extTip:Hide()
+		return false
+	end
 
-	qTip:ClearAllPoints()
+	Tooltip.extTip:ClearAllPoints()
+	Tooltip.extTip:ClearLines()
+	Tooltip.extTip:SetOwner(UIParent, "ANCHOR_NONE")
 
-	local function getMinLoc(top, bottom)
-		if top and bottom then
-			if top < bottom then
-				return "top", top
-			else
-				return "bottom", bottom
+	return true
+end
+
+local function FrameAnchoredTo(frame, rel)
+	if not frame or not rel then return false end
+	if not frame.GetNumPoints or not frame.GetPoint then return false end
+	for i = 1, frame:GetNumPoints() do
+		local _, relativeTo = frame:GetPoint(i)
+		if relativeTo == rel then
+			return true
+		end
+	end
+	return false
+end
+
+function Tooltip:CollectRelatedTooltips(owner, out)
+	out = WipeTable(out or {})
+	out[1] = owner
+	local related = WipeTable(self.__scratchRelatedTooltipSet or {})
+	self.__scratchRelatedTooltipSet = related
+	related[owner] = true
+
+	local changed = true
+	for _ = 1, 3 do
+		if not changed then break end
+		changed = false
+
+		local f = EnumerateFrames()
+		while f do
+			if f ~= Tooltip.extTip and CanAccessObject(f) and f.IsVisible and f:IsVisible() and f.GetBottom then
+				local isRelated = false
+				if f.GetOwner and related[f:GetOwner()] then
+					isRelated = true
+				elseif FrameAnchoredTo(f, owner) then
+					isRelated = true
+				else
+					for relFrame in pairs(related) do
+						if relFrame ~= owner and FrameAnchoredTo(f, relFrame) then
+							isRelated = true
+							break
+						end
+					end
+				end
+
+				if isRelated and not related[f] then
+					related[f] = true
+					tinsert(out, f)
+					changed = true
+				end
 			end
-		elseif top then
-			return "top", top
-		elseif bottom then
-			return "bottom", bottom
+			f = EnumerateFrames(f)
 		end
 	end
 
-	--first do TradeSkillMaster
-	if C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
-        for i=1, 20 do
-            local t = _G["TSMExtraTip" .. i]
-            if t and t:IsVisible() then
-				local loc, pos = getMinLoc(t:GetTop(), t:GetBottom())
-				table.insert(cache, {name="TradeSkillMaster", frame=t, loc=loc, pos=pos})
+	--Explicit known cases (some addons don't set owners consistently)
+	if C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
+		for i = 1, 20 do
+			local t = _G["TSMExtraTip" .. i]
+			if t and t:IsVisible() and not related[t] then
+				related[t] = true
+				tinsert(out, t)
 			elseif not t then
 				break
-            end
-        end
-    end
-
-	--check for LibExtraTip (Auctioneer, Oribos Exchange Addon, etc...)
-	if LibStub and LibStub.libs and LibStub.libs["LibExtraTip-1"] then
-		local t = LibStub("LibExtraTip-1"):GetExtraTip(frame)
-		if t and t:IsVisible() then
-			local loc, pos = getMinLoc(t:GetTop(), t:GetBottom())
-			table.insert(cache, {name="LibExtraTip-1", frame=t, loc=loc, pos=pos})
-		end
-	end
-
-	--check for BattlePetBreedID addon (Fixes #231)
-	if BPBID_BreedTooltip or BPBID_BreedTooltip2 then
-		local t = BPBID_BreedTooltip or BPBID_BreedTooltip2
-		if t and t:IsVisible() then
-			local loc, pos = getMinLoc(t:GetTop(), t:GetBottom())
-			table.insert(cache, {name="BattlePetBreedID", frame=t, loc=loc, pos=pos})
-		end
-	end
-
-	--find closest to edge (closer to 0)
-	local lastLoc
-	local lastPos
-	local lastAnchor
-	local lastName
-
-	for i=1, #cache do
-		local data = cache[i]
-		if data and data.frame and data.loc and data.pos then
-			if not lastPos then lastPos = data.pos end
-			if not lastLoc then lastLoc = data.loc end
-			if not lastAnchor then lastAnchor = data.frame end
-			if not lastName then lastName = data.name end
-
-			if data.pos <  lastPos then
-				lastPos = data.pos
-				lastLoc = data.loc
-				lastAnchor = data.frame
-				lastName = data.name
 			end
 		end
 	end
 
-	if lastAnchor and lastLoc and lastPos then
-		Debug(BSYC_DL.SL3, "GetBottomChild", lastAnchor, lastLoc, lastPos, lastName)
-		if lastLoc == "top" then
-			qTip:SetPoint("BOTTOM", lastAnchor, "TOP")
-		else
-			qTip:SetPoint("TOP", lastAnchor, "BOTTOM")
+	if LibStub and LibStub.libs and LibStub.libs["LibExtraTip-1"] then
+		local t = LibStub("LibExtraTip-1"):GetExtraTip(owner)
+		if t and t:IsVisible() and not related[t] then
+			related[t] = true
+			tinsert(out, t)
 		end
+	end
+
+	if BPBID_BreedTooltip or BPBID_BreedTooltip2 then
+		local t = BPBID_BreedTooltip or BPBID_BreedTooltip2
+		if t and t:IsVisible() and not related[t] then
+			related[t] = true
+			tinsert(out, t)
+		end
+	end
+
+	return out
+end
+
+function Tooltip:GetBottomTooltipAnchor(owner)
+	if not owner then return nil end
+	local bestFrame = owner
+	local bestPos = owner:GetBottom()
+
+	local cache = self:CollectRelatedTooltips(owner, self.__scratchRelatedTooltips)
+	self.__scratchRelatedTooltips = cache
+
+	for i = 1, #cache do
+		local f = cache[i]
+		if f and f.GetBottom then
+			local bottom = f:GetBottom()
+			if bottom and (not bestPos or bottom < bestPos) then
+				bestPos = bottom
+				bestFrame = f
+			end
+		end
+	end
+
+	return bestFrame, bestPos
+end
+
+function Tooltip:SetExtTipAnchor(owner, anchor, extTip)
+	Debug(BSYC_DL.SL2, "SetExtTipAnchor", owner, anchor, extTip)
+
+	anchor = anchor or owner
+	local x, y = owner:GetCenter()
+	if not x or not y then
+		extTip:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT")
 		return
 	end
 
-	--failsafe
-	self:SetQTipAnchor(frame, qTip)
+	local hhalf = (x > UIParent:GetWidth() * 2 / 3) and "LEFT" or (x < UIParent:GetWidth() / 3) and "RIGHT" or ""
+	local vhalf = (y > UIParent:GetHeight() / 4) and "TOP" or "BOTTOM"
+
+	extTip:SetPoint(vhalf .. hhalf, anchor, (vhalf == "TOP" and "BOTTOM" or "TOP") .. hhalf)
 end
 
-function Tooltip:SetQTipAnchor(frame, qTip)
-	Debug(BSYC_DL.SL2, "SetQTipAnchor", frame, qTip)
+function Tooltip:UpdateExtTipAnchor()
+	local frame, extTip = Tooltip.objTooltip, Tooltip.extTip
+	if not frame or not extTip or not extTip:IsShown() then return end
 
-    local x, y = frame:GetCenter()
-
-    if not x or not y then
-        qTip:SetPoint("TOPLEFT", frame, "BOTTOMLEFT")
-		return
-    end
-
-    local hhalf = (x > UIParent:GetWidth() * 2 / 3) and "LEFT" or (x < UIParent:GetWidth() / 3) and "RIGHT" or ""
-	--adjust the 4 to make it less sensitive on the top/bottom.  The higher the number the closer to the edges it's allowed.
-    local vhalf = (y > UIParent:GetHeight() / 4) and "TOP" or "BOTTOM"
-
-	qTip:SetPoint(vhalf .. hhalf, frame, (vhalf == "TOP" and "BOTTOM" or "TOP") .. hhalf)
+	extTip:ClearAllPoints()
+	local anchor = self:GetBottomTooltipAnchor(frame) or frame
+	if anchor == extTip then anchor = frame end
+	self:SetExtTipAnchor(frame, anchor, extTip)
 end
 
 function Tooltip:ResetCache()
@@ -885,19 +904,19 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	local opts = BSYC.options
 	local tracking = BSYC.tracking
-	local space4 = "    "
 	local GetItemCount = C_Item and C_Item.GetItemCount
 
 	--check for modifier option only in windows that isn't BagSync search
 	if not self:CheckModifier() and not objTooltip.isBSYCSearch then return end
 
-	local showQTip = Tooltip:QTipCheck(source, isBattlePet)
+	local showExtTip = Tooltip:ExtTipCheck(source, isBattlePet)
 	local skipTally = false
 
 	Tooltip.objTooltip = objTooltip
 
 	--only show tooltips in search frame if the option is enabled
 	if BSYC.options.tooltipOnlySearch and not objTooltip.isBSYCSearch then
+		if Tooltip.extTip then Tooltip.extTip:Hide() end
 		objTooltip:Show()
 		return
 	end
@@ -915,6 +934,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	--make sure we have something to work with
 	if not link or not shortID then
+		if Tooltip.extTip then Tooltip.extTip:Hide() end
 		objTooltip:Show()
 		Debug(BSYC_DL.WARN, "TallyUnits", "NoLink", origLink, source, isBattlePet)
 		return
@@ -925,15 +945,17 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		if self.__lastTally and #self.__lastTally > 0 then
 			for i=1, #self.__lastTally do
 				local color = self:GetClassColor(self.__lastTally[i].unitObj, 2, false, BSYC.colors.total)
-				if showQTip then
-					local lineNum = Tooltip.qTip:AddLine(self.__lastTally[i].colorized, string.rep(" ", 4), self.__lastTally[i].tallyString)
-					Tooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
+				if showExtTip then
+					Tooltip.extTip:AddDoubleLine(self.__lastTally[i].colorized, self.__lastTally[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
 				else
 					objTooltip:AddDoubleLine(self.__lastTally[i].colorized, self.__lastTally[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
 				end
 			end
 			objTooltip:Show()
-			if showQTip then Tooltip.qTip:Show() end
+			if showExtTip then
+				Tooltip.extTip:Show()
+				Tooltip:UpdateExtTipAnchor()
+			end
 		end
 		objTooltip.__tooltipUpdated = true
 		return
@@ -1277,17 +1299,15 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	end
 
 	--add separator if enabled and only if we have something to work with
-	if not showQTip and opts.enableTooltipSeparator and #unitList > 0 then
+	if not showExtTip and opts.enableTooltipSeparator and #unitList > 0 then
 		tinsert(unitList, 1, { colorized=" ", tallyString=" "} )
 	end
 
 	--finally display it
 	for i=1, #unitList do
 		local color = self:GetClassColor(unitList[i].unitObj, 2, false, BSYC.colors.total)
-		if showQTip then
-			-- Add an new line, using all columns
-			local lineNum = Tooltip.qTip:AddLine(unitList[i].colorized, space4, unitList[i].tallyString)
-			Tooltip.qTip:SetLineTextColor(lineNum, color.r, color.g, color.b, 1)
+		if showExtTip then
+			Tooltip.extTip:AddDoubleLine(unitList[i].colorized, unitList[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
 		else
 			objTooltip:AddDoubleLine(unitList[i].colorized, unitList[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
 		end
@@ -1299,11 +1319,12 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	objTooltip.__tooltipUpdated = true
 	objTooltip:Show()
 
-	if showQTip then
+	if showExtTip then
 		if #unitList > 0 then
-			Tooltip.qTip:Show()
+			Tooltip.extTip:Show()
+			Tooltip:UpdateExtTipAnchor()
 		else
-			Tooltip.qTip:Hide()
+			Tooltip.extTip:Hide()
 		end
 	end
 
@@ -1321,20 +1342,24 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	currencyID = tonumber(currencyID) --make sure it's a number we are working with and not a string
 	if not currencyID then return end
 
-	local showQTip = Tooltip:QTipCheck()
+	local showExtTip = Tooltip:ExtTipCheck(source, false)
 
 	--if we already did the currency, then display the previous information, use the unparsed link to verify
 	if self.__lastCurrencyID and self.__lastCurrencyID == currencyID then
 		if self.__lastCurrencyTally and #self.__lastCurrencyTally > 0 then
+			Tooltip.objTooltip = objTooltip
 			for i=1, #self.__lastCurrencyTally do
-				if showQTip then
-					Tooltip.qTip:AddLine(self.__lastCurrencyTally[i][1], string.rep(" ", 4), self.__lastCurrencyTally[i][2])
+				if showExtTip then
+					Tooltip.extTip:AddDoubleLine(self.__lastCurrencyTally[i][1], self.__lastCurrencyTally[i][2], 1, 1, 1, 1, 1, 1)
 				else
 					objTooltip:AddDoubleLine(self.__lastCurrencyTally[i][1], self.__lastCurrencyTally[i][2], 1, 1, 1, 1, 1, 1)
 				end
 			end
 			objTooltip:Show()
-			if showQTip then Tooltip.qTip:Show() end
+			if showExtTip then
+				Tooltip.extTip:Show()
+				Tooltip:UpdateExtTipAnchor()
+			end
 		end
 		objTooltip.__tooltipUpdated = true
 		return
@@ -1433,8 +1458,8 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 
 	--finally display it
 	for i=1, #displayList do
-		if showQTip then
-			Tooltip.qTip:AddLine(displayList[i][1], string.rep(" ", 4), displayList[i][2])
+		if showExtTip then
+			Tooltip.extTip:AddDoubleLine(displayList[i][1], displayList[i][2], 1, 1, 1, 1, 1, 1)
 		else
 			objTooltip:AddDoubleLine(displayList[i][1], displayList[i][2], 1, 1, 1, 1, 1, 1)
 		end
@@ -1444,8 +1469,10 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 
 	objTooltip.__tooltipUpdated = true
 	objTooltip:Show()
-	if showQTip then
-		Tooltip.qTip:Show()
+	if showExtTip then
+		Tooltip.extTip:Show()
+		Tooltip.objTooltip = objTooltip
+		Tooltip:UpdateExtTipAnchor()
 	end
 end
 
@@ -1464,8 +1491,7 @@ function Tooltip:HookTooltip(objTooltip)
 
 	objTooltip:HookScript("OnHide", function(self)
 		self.__tooltipUpdated = false
-		--we don't want to Release() the qTip until we aren't using it anymore because they disabled it.  Otherwise just hide it.
-		if Tooltip.qTip then Tooltip.qTip:Hide() end
+		if Tooltip.extTip then Tooltip.extTip:Hide() end
 	end)
 	--the battlepet tooltips don't use this, so check for it
 	if objTooltip ~= BattlePetTooltip and objTooltip ~= FloatingBattlePetTooltip then

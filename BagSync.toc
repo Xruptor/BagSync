@@ -26,7 +26,6 @@
 
 libs\LibStub\LibStub.lua
 libs\LibItemScout-1.0\LibItemScout-1.0.lua
-libs\LibQTip-1.0\LibQTip-1.0.lua
 
 wireframe\wrapper.lua
 

@@ -22,6 +22,5 @@ www.manaflux.com
 BagSync embeds the following third-party libraries and code in accordance with their respective licenses:
 
 
-5. LibQTip-1.0 (https://www.wowace.com/projects/libqtip-1-0)
-6. LibStub (https://www.wowace.com/projects/libstub)
-7. LibItemSearch-1.0 (LibItemScout-1.0) (https://github.com/Tuller/LibItemSearch-1.0)
+5. LibStub (https://www.wowace.com/projects/libstub)
+6. LibItemSearch-1.0 (LibItemScout-1.0) (https://github.com/Tuller/LibItemSearch-1.0)

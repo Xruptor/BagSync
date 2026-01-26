@@ -1,8 +1,0 @@
-Changes since tag 9.0.1.2
-
-commit 4c6a3d882373fa0b52c6b71d09acc0b87ec1ae00
-Author: Elkano <elkano@gmx.de>
-Date:   Wed Nov 3 19:49:57 2021 +0100
-
-    update for WoW 9.1.5's new TooltipBackdropTemplate
-
