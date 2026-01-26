@@ -42,7 +42,8 @@ Scanner.pendingMail = {items={}}
 
 function Scanner:ResetTooltips()
 	--the true is to set it to silent and not return an error if not found
-	if BSYC:GetModule("Tooltip", true) then BSYC:GetModule("Tooltip"):ResetLastLink() end
+	local tooltipModule = BSYC:GetModule("Tooltip", true)
+	if tooltipModule then tooltipModule:ResetLastLink() end
 end
 
 --https://warcraft.wiki.gg/wiki/BagID
@@ -177,7 +178,7 @@ function Scanner:SaveBag(bagtype, bagid)
 			if link then
 				local tmpItem = BSYC:ParseItemLink(link, count)
 				Debug(BSYC_DL.FINE, "SaveBag", bagtype, bagid, tmpItem)
-				table.insert(slotItems, tmpItem)
+				slotItems[#slotItems + 1] = tmpItem
 			end
 		end
 
@@ -258,11 +259,11 @@ function Scanner:SaveEquipment()
 
 	for slot = FirstEquipped, LastEquipped do
 		local link = GetInventoryItemLink("player", slot)
-		local count =  GetInventoryItemCount("player", slot)
 		if link then
+			local count = GetInventoryItemCount("player", slot)
 			local tmpItem =  BSYC:ParseItemLink(link, count)
 			Debug(BSYC_DL.FINE, "SaveEquipment", tmpItem, slot)
-			table.insert(slotItems,  tmpItem)
+			slotItems[#slotItems + 1] = tmpItem
 		end
 	end
 
@@ -281,12 +282,11 @@ function Scanner:SaveEquipment()
 			local slotNumber = i + 1
 
 			local link = GetInventoryItemLink("player", slotNumber)
-			local count =  GetInventoryItemCount("player", slotNumber)
-
-			if link and count then
+			if link then
+				local count = GetInventoryItemCount("player", slotNumber)
 				local tmpItem =  BSYC:ParseItemLink(link, count)
 				Debug(BSYC_DL.FINE, "SaveEquipment", "ProfessionSlot", tmpItem, slotNumber)
-				table.insert(slotItems,  tmpItem)
+				slotItems[#slotItems + 1] = tmpItem
 			end
 		end
 
@@ -350,7 +350,7 @@ function Scanner:SaveVoidBank()
 		for i = 1, VOID_STORAGE_MAX do
 			local link = GetVoidItemInfo(tab, i)
 			if link then
-				table.insert(slotItems, BSYC:ParseItemLink(link))
+				slotItems[#slotItems + 1] = BSYC:ParseItemLink(link)
 			end
 		end
 	end
@@ -358,6 +358,10 @@ function Scanner:SaveVoidBank()
 	BSYC.db.player.void = slotItems
 	self:ResetTooltips()
 end
+
+local petCacheByName = {}
+local petCacheByIcon = {}
+local petCachePetCount = 0
 
 local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 	Debug(BSYC_DL.INFO, "findBattlePet", iconTexture, petName, typeSlot, arg1, arg2, C_TooltipInfo and 'C_TooltipInfo', C_PetJournal and 'C_PetJournal')
@@ -417,8 +421,13 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 	end
 
 	if petName and C_PetJournal then
+		local cachedSpeciesId = petCacheByName[petName]
+		if cachedSpeciesId then
+			return cachedSpeciesId
+		end
 		local speciesId = C_PetJournal.FindPetIDByName(petName)
 		if speciesId then
+			petCacheByName[petName] = speciesId
 			return speciesId
 		end
 	end
@@ -426,10 +435,27 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 	--this can be totally inaccurate, but until Blizzard allows us to get more info from the GuildBank in regards to Battle Pets.  This is the fastest way without scanning in tooltips.
 	--Example:  Toxic Wasteling shares the same icon as Jade Oozeling
 	if iconTexture and C_PetJournal and (not data or (data and data.id ~= 82800)) then
-		for index = 1, C_PetJournal.GetNumPets() do
-			local _, speciesID, _, _, _, _, _, _, icon = C_PetJournal.GetPetInfoByIndex(index)
-			if icon == iconTexture then
-				return speciesID
+		local cachedSpeciesId = petCacheByIcon[iconTexture]
+		if cachedSpeciesId then
+			return cachedSpeciesId
+		end
+
+		local numPetsFn = C_PetJournal.GetNumPets
+		local numPets = numPetsFn and numPetsFn() or 0
+		if numPets ~= petCachePetCount then
+			petCachePetCount = numPets
+			for k in pairs(petCacheByIcon) do
+				petCacheByIcon[k] = nil
+			end
+		end
+
+		if numPets > 0 and C_PetJournal.GetPetInfoByIndex then
+			for index = 1, numPets do
+				local _, speciesID, _, _, _, _, _, _, icon = C_PetJournal.GetPetInfoByIndex(index)
+				if icon == iconTexture then
+					petCacheByIcon[iconTexture] = speciesID
+					return speciesID
+				end
 			end
 		end
 	end
@@ -480,7 +506,7 @@ function Scanner:SaveGuildBank(tabID)
 
 					if link then
 						Debug(BSYC_DL.FINE, "SaveGuildBank", tab, slot, iconTexture, link)
-						table.insert(slotItems, link)
+						slotItems[#slotItems + 1] = link
 					end
 				end
 			end
@@ -555,7 +581,9 @@ function Scanner:SaveWarbandBank(bagID)
 
 				for slotID = 1, numSlots do
 					local link = doWarbandSlot(bagID, slotID, tabID)
-					table.insert(slotItems, link)
+					if link then
+						slotItems[#slotItems + 1] = link
+					end
 				end
 			end
 
@@ -573,7 +601,9 @@ function Scanner:SaveWarbandBank(bagID)
 
 			for slotID = 1, numSlots do
 				local link = doWarbandSlot(bagID, slotID, tabID)
-				table.insert(slotItems, link)
+				if link then
+					slotItems[#slotItems + 1] = link
+				end
 			end
 
 			warbandDB.tabs[tabID] = slotItems
@@ -631,7 +661,7 @@ function Scanner:SaveMailbox(isShow)
 
 					if link then
 						Debug(BSYC_DL.FINE, "SaveMailbox", mailIndex, i, link)
-						table.insert(slotItems, link)
+						slotItems[#slotItems + 1] = link
 					end
 				end
 			end
@@ -740,7 +770,7 @@ function Scanner:SaveAuctionHouse()
 
 					local encodeStr = BSYC:EncodeOpts({auction=expTime}, parseLink)
 					if encodeStr then
-						table.insert(slotItems, encodeStr)
+						slotItems[#slotItems + 1] = encodeStr
 					end
 				end
 			end
@@ -772,7 +802,7 @@ function Scanner:SaveAuctionHouse()
 
 						local encodeStr = BSYC:EncodeOpts({auction=expTime}, parseLink)
 						if encodeStr then
-							table.insert(slotItems, encodeStr)
+							slotItems[#slotItems + 1] = encodeStr
 						end
 					end
 				end
@@ -944,8 +974,9 @@ function Scanner:SaveProfessions()
 
 	local recipeData = {}
 	local tmpRecipe = {}
-	local catCheck, catCleanup = {}, {}
+	local catCheck = {}
 	local orderIndex = 0
+	local recipesByCategory = {}
 
 	Scanner.recipeIDs = C_TradeSkillUI.GetAllRecipeIDs()
 	--invert the table, forcing the value to be the key and the key the value, inverted[v] = k  (see TableUtil.lua)
@@ -1012,62 +1043,56 @@ function Scanner:SaveProfessions()
 
 		--store the recipes
 		for i = 1, #Scanner.recipeIDs do
+			recipeData = C_TradeSkillUI.GetRecipeInfo(Scanner.recipeIDs[i])
 
-			if C_TradeSkillUI.GetRecipeInfo(Scanner.recipeIDs[i]) then
+			if recipeData then
+				local categoryID = recipeData.categoryID
+				local categoryData = C_TradeSkillUI.GetCategoryInfo(categoryID)
 
-				--grab the info in a table
-				recipeData = C_TradeSkillUI.GetRecipeInfo(Scanner.recipeIDs[i])
+				--grab the parent name, Engineering, Herbalism, Blacksmithing, etc...
+				if recipeData.learned and categoryData and categoryData.categoryID == categoryID and categoryData.parentCategoryID then
 
-				if recipeData then
+					--grab categories, Legion Engineering, Cateclysm Engineering, etc...
+					local subCatData = C_TradeSkillUI.GetCategoryInfo(categoryData.parentCategoryID)
 
-					local categoryID = recipeData.categoryID
-					local categoryData = C_TradeSkillUI.GetCategoryInfo(categoryID)
+					--make sure we have something to work with, we don't want to store stuff that doesn't have levels
+					if subCatData and subCatData.categoryID == categoryData.parentCategoryID then
 
-					--grab the parent name, Engineering, Herbalism, Blacksmithing, etc...
-					if recipeData.learned and categoryData and categoryData.categoryID == categoryID and categoryData.parentCategoryID then
+						if not BSYC.db.player.professions[parentSkillLineID] then
+							BSYC.db.player.professions[parentSkillLineID] = BSYC.db.player.professions[parentSkillLineID] or {}
+							BSYC.db.player.professions[parentSkillLineID].name = parentSkillLineName
+						end
 
-						--grab categories, Legion Engineering, Cateclysm Engineering, etc...
-						local subCatData = C_TradeSkillUI.GetCategoryInfo(categoryData.parentCategoryID)
+						parentIDSlot.categories = parentIDSlot.categories or {}
 
-						--make sure we have something to work with, we don't want to store stuff that doesn't have levels
-						if subCatData and subCatData.categoryID == categoryData.parentCategoryID then
+						--store the sub category information, Legion Engineering, Cateclysm Engineering, etc...
+						parentIDSlot.categories[subCatData.categoryID] = parentIDSlot.categories[subCatData.categoryID] or {}
+						local subCatSlot = parentIDSlot.categories[subCatData.categoryID]
 
-							if not BSYC.db.player.professions[parentSkillLineID] then
-								BSYC.db.player.professions[parentSkillLineID] = BSYC.db.player.professions[parentSkillLineID] or {}
-								BSYC.db.player.professions[parentSkillLineID].name = parentSkillLineName
+						--always overwrite because we can have a different level or name then last time
+						subCatSlot.name = subCatData.name
+						subCatSlot.skillLineCurrentLevel = subCatData.skillLineCurrentLevel
+						subCatSlot.skillLineMaxLevel = subCatData.skillLineMaxLevel
+
+						if not subCatSlot.orderIndex then
+							subCatSlot.orderIndex = catCheck[subCatData.categoryID]
+						end
+
+						--now store the recipe information, but make sure we don't already have the recipe stored
+						--we have to do this as sometimes the recipe is scanned multiple times.  It will get refreshed once the profession is saved again though.
+						--so technically it will always be up to date
+						if recipeData.recipeID and not tmpRecipe[recipeData.recipeID] then
+							tmpRecipe[recipeData.recipeID] = true
+
+							local recipeList = recipesByCategory[subCatData.categoryID]
+							if not recipeList then
+								recipeList = {}
+								recipesByCategory[subCatData.categoryID] = recipeList
 							end
+							recipeList[#recipeList + 1] = tostring(recipeData.recipeID)
 
-							parentIDSlot.categories = parentIDSlot.categories or {}
-
-							--store the sub category information, Legion Engineering, Cateclysm Engineering, etc...
-							parentIDSlot.categories[subCatData.categoryID] = parentIDSlot.categories[subCatData.categoryID] or {}
-							local subCatSlot = parentIDSlot.categories[subCatData.categoryID]
-
-							--always overwrite because we can have a different level or name then last time
-							subCatSlot.name = subCatData.name
-							subCatSlot.skillLineCurrentLevel = subCatData.skillLineCurrentLevel
-							subCatSlot.skillLineMaxLevel = subCatData.skillLineMaxLevel
-
-							--cleanout the recipe list first time entering the category, otherwise it will constantly have repeats
-							if not catCleanup[subCatData.categoryID] then
-								catCleanup[subCatData.categoryID] = true
-								subCatSlot.recipes = nil
-							end
-							if not subCatSlot.orderIndex then
-								subCatSlot.orderIndex = catCheck[subCatData.categoryID]
-							end
-
-							--now store the recipe information, but make sure we don't already have the recipe stored
-							--we have to do this as sometimes the recipe is scanned multiple times.  It will get refreshed once the profession is saved again though.
-							--so technically it will always be up to date
-							if not tmpRecipe[recipeData.recipeID] then
-								subCatSlot.recipes = (subCatSlot.recipes or "").."|"..recipeData.recipeID
-								tmpRecipe[recipeData.recipeID] = true
-
-								recipeCount = recipeCount + 1
-								parentIDSlot.recipeCount = recipeCount
-							end
-
+							recipeCount = recipeCount + 1
+							parentIDSlot.recipeCount = recipeCount
 						end
 
 					end
@@ -1076,6 +1101,14 @@ function Scanner:SaveProfessions()
 
 			end
 
+		end
+
+		--finalize recipe strings using the existing DB format: "|<id>|<id>|..."
+		for categoryID, recipeList in pairs(recipesByCategory) do
+			local subCatSlot = parentIDSlot.categories and parentIDSlot.categories[categoryID]
+			if subCatSlot and recipeList and #recipeList > 0 then
+				subCatSlot.recipes = "|" .. table.concat(recipeList, "|")
+			end
 		end
 
 	end
@@ -1116,8 +1149,11 @@ function Scanner:CleanupProfessions()
 	--lets remove unlearned tradeskills
 	local tmpList = {}
 
-	for i = 1, select("#", GetProfessions()) do
-		local prof = select(i, GetProfessions())
+	local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions()
+	local profs = {prof1, prof2, archaeology, fishing, cooking, firstAid}
+
+	for i = 1, 6 do
+		local prof = profs[i]
 		if prof then
 			local name, _, _, _, _, _, skillLine = GetProfessionInfo(prof)
 			if name and skillLine then
