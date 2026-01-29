@@ -1361,12 +1361,14 @@ local aboutOptions = {
 		version = {
 			order = 1,
 			type = "description",
-			name = function() return C_AddOns.GetAddOnMetadata("BagSync", "Notes")..
-				"\n\n\n\n"..
-				"|cFF52D386Version|r: "..C_AddOns.GetAddOnMetadata("BagSync", "Version")..
-				"\n\n"..
-				"|cFF52D386Author|r: "..C_AddOns.GetAddOnMetadata("BagSync", "Author")
-			end,
+			name = function()
+				local getMeta = BSYC.API.GetAddOnMetadata
+				return ((getMeta and getMeta("BagSync", "Notes")) or "")..
+					"\n\n\n\n"..
+					"|cFF52D386Version|r: "..((getMeta and getMeta("BagSync", "Version")) or "")..
+					"\n\n"..
+					"|cFF52D386Author|r: "..((getMeta and getMeta("BagSync", "Author")) or "")
+				end,
 		}
 	},
 }
@@ -1379,7 +1381,7 @@ local function LoadAboutFrame()
 	about:Hide()
 
 	local fields = {"Version", "Author"}
-	local notes = C_AddOns.GetAddOnMetadata("BagSync", "Notes")
+	local notes = (BSYC.API.GetAddOnMetadata and BSYC.API.GetAddOnMetadata("BagSync", "Notes")) or ""
 
 	local title = about:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 
@@ -1397,7 +1399,7 @@ local function LoadAboutFrame()
 
 	local anchor
 	for _,field in pairs(fields) do
-		local val = C_AddOns.GetAddOnMetadata("BagSync", field)
+		local val = (BSYC.API.GetAddOnMetadata and BSYC.API.GetAddOnMetadata("BagSync", field)) or nil
 		if val then
 			local title = about:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
 			title:SetWidth(75)

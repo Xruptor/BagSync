@@ -11,17 +11,6 @@ local Search = BSYC:NewModule("Search")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
 
-local DEFAULT_ALLOW_LIST = {
-	bag = true,
-	bank = true,
-	reagents = true,
-	equip = true,
-	mailbox = true,
-	void = true,
-	auction = true,
-	warband = true,
-}
-
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Search", ...) end
 end
@@ -352,7 +341,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch,
 	BSYC.advUnitList = advUnitList
 
 	--items aren't counted into this array, it's just for allowing the search to pass through
-	local allowList = DEFAULT_ALLOW_LIST
+	local allowList = BSYC.DEFAULT_ALLOW_LIST
 
 	--This is used when a player is requesting to view a custom list, such as @bank, @auction, @bag etc...
 	if not isAdvancedSearch and string.len(searchStr) > 1 then
@@ -448,10 +437,10 @@ function Search:RefreshList()
 
 			--while we are updating the scrollframe, is the mouse currently over a button?
 			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
-			if BSYC.GMF() == button then
-				Search:Item_OnLeave() --hide first
-				Search:Item_OnEnter(button)
-			end
+				if BSYC:IsMouseOver(button) then
+					Search:Item_OnLeave() --hide first
+					Search:Item_OnEnter(button)
+				end
 
             button:Show()
         else

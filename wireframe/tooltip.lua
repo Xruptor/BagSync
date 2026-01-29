@@ -43,17 +43,6 @@ local PERM_IGNORE = {
 	[141605] = "Flight Master's Whistle",
 }
 
-local DEFAULT_ALLOW_LIST = {
-	bag = true,
-	bank = true,
-	reagents = true,
-	equip = true,
-	mailbox = true,
-	void = true,
-	auction = true,
-	warband = true,
-}
-
 --https://warcraft.wiki.gg/wiki/AtlasID
 --raceicon-highmountain-male
 --https://wago.tools/db2/UiTextureAtlasMember
@@ -124,6 +113,15 @@ local function WipeTable(tbl)
 		end
 	end
 	return tbl
+end
+
+local function ShallowCopyArray(src)
+	if not src or #src == 0 then return {} end
+	local dst = {}
+	for i = 1, #src do
+		dst[i] = src[i]
+	end
+	return dst
 end
 
 function Tooltip:HexColor(color, str)
@@ -810,7 +808,8 @@ function Tooltip:GetBottomTooltipAnchor(owner)
 	end
 
 	-- Explicit known addon cases (cheap and predictable)
-	if C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
+	local isAddOnLoaded = BSYC.API and BSYC.API.IsAddOnLoaded
+	if isAddOnLoaded and isAddOnLoaded("TradeSkillMaster") then
 		for i = 1, 20 do
 			local t = _G["TSMExtraTip" .. i]
 			if t and t.IsVisible and t:IsVisible() then
@@ -900,7 +899,8 @@ function Tooltip:GetBottomTooltipAnchorCached(owner)
 		end
 	end
 
-	if C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
+	local isAddOnLoaded = BSYC.API and BSYC.API.IsAddOnLoaded
+	if isAddOnLoaded and isAddOnLoaded("TradeSkillMaster") then
 		for i = 1, 20 do
 			local t = _G["TSMExtraTip" .. i]
 			if t and t.IsVisible and t:IsVisible() then
@@ -963,7 +963,8 @@ function Tooltip:GetBottomTooltipAnchorCached(owner)
 		end
 	end
 
-	if C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
+	local isAddOnLoaded = BSYC.API and BSYC.API.IsAddOnLoaded
+	if isAddOnLoaded and isAddOnLoaded("TradeSkillMaster") then
 		for i = 1, 20 do
 			local t = _G["TSMExtraTip" .. i]
 			if t and t.IsVisible and t:IsVisible() then
@@ -1022,7 +1023,9 @@ function Tooltip:UpdateExtTipAnchor()
 end
 
 function Tooltip:ResetCache()
-	if Data.__cache and Data.__cache.tooltip then
+	if Data and Data.ResetTooltipCache then
+		Data:ResetTooltipCache()
+	elseif Data.__cache and Data.__cache.tooltip then
 		Data.__cache.tooltip = {}
 	end
 end
@@ -1149,7 +1152,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local guildObj = Data:GetPlayerGuildObj(player)
 	local warbandObj = Data:GetWarbandBankObj()
 
-	local allowList = DEFAULT_ALLOW_LIST
+	local allowList = BSYC.DEFAULT_ALLOW_LIST
 
 	--the true option for GetModule is to set it to silent and not return an error if not found
 	--only display advanced search results in the BagSync search window, but make sure to show tooltips regularly outside of that by checking isBSYCSearch
@@ -1210,22 +1213,25 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				end
 			end
 
-			--do not cache if we are viewing an advanced search list, otherwise it won't display everything normally
-			--finally, only cache if we have something to work with
-			if not turnOffCache and not advUnitList then
-				--store it in the cache, copy the tables don't reference them
-				Data.__cache.tooltip[origLink] = Data.__cache.tooltip[origLink] or {}
-				--only copy table if we have something to work with, otherwise return empty
-				Data.__cache.tooltip[origLink].unitList = (grandTotal > 0 and CopyTable(unitList)) or {}
-				Data.__cache.tooltip[origLink].grandTotal = grandTotal
+				--do not cache if we are viewing an advanced search list, otherwise it won't display everything normally
+				--finally, only cache if we have something to work with
+				if not turnOffCache and not advUnitList then
+					--store it in the cache (shallow copy to avoid deep-copying DB references)
+					local cachedUnitList = (grandTotal > 0 and ShallowCopyArray(unitList)) or {}
+					if Data and Data.SetTooltipCache then
+						Data:SetTooltipCache(origLink, cachedUnitList, grandTotal)
+					else
+						Data.__cache.tooltip[origLink] = Data.__cache.tooltip[origLink] or {}
+						Data.__cache.tooltip[origLink].unitList = cachedUnitList
+						Data.__cache.tooltip[origLink].grandTotal = grandTotal
+					end
+				end
+			elseif Data.__cache.tooltip[origLink] and not doCurrentPlayerOnly then
+				--use cached results from previous DB searches; copy array so we can append current-player data safely
+				unitList = ShallowCopyArray(Data.__cache.tooltip[origLink].unitList)
+				grandTotal = Data.__cache.tooltip[origLink].grandTotal or 0
+				Debug(BSYC_DL.INFO, "TallyUnits", "|cFF09DBE0CacheUsed|r", origLink)
 			end
-		elseif Data.__cache.tooltip[origLink] and not doCurrentPlayerOnly then
-			--use the cached results from previous DB searches, copy the table don't reference it, 
-			--otherwise we will add to it unintentially below with player data using table.insert()
-			unitList = CopyTable(Data.__cache.tooltip[origLink].unitList)
-			grandTotal = Data.__cache.tooltip[origLink].grandTotal
-			Debug(BSYC_DL.INFO, "TallyUnits", "|cFF09DBE0CacheUsed|r", origLink)
-		end
 
 		Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[AdvChk]|r", advUnitList, advPlayerChk, advPlayerGuildChk)
 
@@ -1411,7 +1417,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			if Data.__cache.items[shortID] then
 				expacID = Data.__cache.items[shortID].expacID
 			else
-				expacID = select(15, C_Item.GetItemInfo(shortID))
+				local xGetItemInfo = BSYC.API and BSYC.API.GetItemInfo
+				expacID = xGetItemInfo and select(15, xGetItemInfo(shortID))
 			end
 			value = self:HexColor(BSYC.colors.second, (expacID and _G["EXPANSION_NAME"..expacID]) or "?")
 
@@ -1430,7 +1437,10 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				classID = Data.__cache.items[shortID].classID
 				subclassID = Data.__cache.items[shortID].subclassID
 			else
-				itemType, itemSubType, _, _, _, _, classID, subclassID = select(6, C_Item.GetItemInfo(shortID))
+				local xGetItemInfo = BSYC.API and BSYC.API.GetItemInfo
+				if xGetItemInfo then
+					itemType, itemSubType, _, _, _, _, classID, subclassID = select(6, xGetItemInfo(shortID))
+				end
 			end
 			local typeString = Tooltip:GetItemTypeString(itemType, itemSubType, classID, subclassID)
 
@@ -1709,12 +1719,14 @@ function Tooltip:HookTooltip(objTooltip)
 
 				local link
 
-				--data.guid is given to items that have additional bonus stats and such and basically do not return a simple itemID #
-				if data.guid then
-					link = C_Item.GetItemLinkByGUID(data.guid)
+					--data.guid is given to items that have additional bonus stats and such and basically do not return a simple itemID #
+					if data.guid then
+						if C_Item and C_Item.GetItemLinkByGUID then
+							link = C_Item.GetItemLinkByGUID(data.guid)
+						end
 
-				elseif data.hyperlink then
-					link = data.hyperlink
+					elseif data.hyperlink then
+						link = data.hyperlink
 
 					local shortID = tonumber(BSYC:GetShortItemID(link))
 

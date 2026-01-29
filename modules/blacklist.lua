@@ -195,10 +195,10 @@ function Blacklist:RefreshList()
 			button.Text:SetText(item.value or "")
 			button.HeaderHighlight:SetAlpha(0)
 
-			if BSYC.GMF() == button then
-				Blacklist:Item_OnLeave() --hide first
-				Blacklist:Item_OnEnter(button)
-			end
+				if BSYC:IsMouseOver(button) then
+					Blacklist:Item_OnLeave() --hide first
+					Blacklist:Item_OnEnter(button)
+				end
 
             button:Show()
         else
@@ -248,17 +248,20 @@ function Blacklist:AddItemID()
 		BSYC.db.blacklist[itemid] = "|cFFCF9FFF"..speciesName.."|r"
 		BSYC:Print(L.ItemIDAdded:format(itemid), speciesName)
 	else
-		if not C_Item.GetItemInfo(itemid) then
+		local xGetItemInfo = BSYC.API.GetItemInfo
+		if not (xGetItemInfo and xGetItemInfo(itemid)) then
 			BSYC:Print(L.ItemIDNotValid:format(itemid))
 			editBox:SetText("")
 			return
 		end
 
-		local dName, dItemLink = C_Item.GetItemInfo(itemid)
+		local dName, dItemLink = xGetItemInfo(itemid)
 
 		BSYC.db.blacklist[itemid] = dItemLink
 		BSYC:Print(L.ItemIDAdded:format(itemid), dItemLink)
 	end
+	Tooltip:ResetCache()
+	Tooltip:ResetLastLink()
 	editBox:SetText("")
 
 	Blacklist:UpdateList()
@@ -274,6 +277,8 @@ function Blacklist:AddGuild()
 
 	BSYC.db.blacklist[Blacklist.selectedGuild.value] = Blacklist.selectedGuild.arg1
 	BSYC:Print(L.GuildAdded:format(Blacklist.selectedGuild.arg1))
+	Tooltip:ResetCache()
+	Tooltip:ResetLastLink()
 
 	Blacklist:UpdateList()
 end
@@ -289,6 +294,7 @@ function Blacklist:RemoveData(entry)
 		Blacklist:UpdateList()
 		--reset tooltip cache since we have blacklisted some items or guilds
 		Tooltip:ResetCache()
+		Tooltip:ResetLastLink()
 	else
 		BSYC:Print(L.BlackListErrorRemove)
 	end

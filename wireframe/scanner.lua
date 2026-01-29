@@ -40,10 +40,19 @@ Scanner.currencyTransferInProgress = false
 Scanner.lastCurrencyID = 0
 Scanner.pendingMail = {items={}}
 
-function Scanner:ResetTooltips()
+--run once we are not queued by a queue check
+function Scanner:_ResetTooltipsNow()
+	self._tooltipResetQueued = nil
 	--the true is to set it to silent and not return an error if not found
 	local tooltipModule = BSYC:GetModule("Tooltip", true)
 	if tooltipModule then tooltipModule:ResetLastLink() end
+end
+
+--lets add a spam check for this because multiple scanners can be requesting it at same time.
+function Scanner:ResetTooltips()
+	if self._tooltipResetQueued then return end
+	self._tooltipResetQueued = true
+	BSYC:StartTimer("BAGSYNC_SCANNER_RESET_TOOLTIPS", 0, Scanner, "_ResetTooltipsNow")
 end
 
 --https://warcraft.wiki.gg/wiki/BagID
@@ -1205,4 +1214,3 @@ function Scanner:CleanupProfessions()
 		end
 	end
 end
-

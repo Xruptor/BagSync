@@ -102,6 +102,11 @@ local tinsert = table.insert
 local cache = {}
 local EMPTY_CACHE = {}
 
+local xGetItemInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
+local xGetItemNameByID = (C_Item and C_Item.GetItemNameByID) or function(item)
+	return xGetItemInfo and select(1, xGetItemInfo(item))
+end
+
 Lib._compiledCache = Lib._compiledCache or setmetatable({}, { __mode = "kv" })
 Lib._tagPrefixCache = Lib._tagPrefixCache or setmetatable({}, { __mode = "kv" })
 Lib._indexDirty = true
@@ -558,7 +563,7 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, item, _, search)
-		local name = cache.itemName or C_Item.GetItemNameByID(item) or item:match('%[(.+)%]') or (item and tostring(item))
+		local name = cache.itemName or xGetItemNameByID(item) or item:match('%[(.+)%]') or (item and tostring(item))
 		return match(search, name)
 	end
 }
@@ -573,7 +578,7 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, item, _, search)
-		return search == (cache.bindType or select(14, C_Item.GetItemInfo(item)))
+		return search == (cache.bindType or (xGetItemInfo and select(14, xGetItemInfo(item))))
 	end,
 
 	keywords = {
@@ -595,7 +600,7 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, item, _, search)
-		local expacID = (cache.expacID or select(15, C_Item.GetItemInfo(item)))
+		local expacID = (cache.expacID or (xGetItemInfo and select(15, xGetItemInfo(item))))
 		local xPacName = expacID and _G["EXPANSION_NAME"..expacID]
 		return match(search, expacID and tostring(expacID), xPacName)
 	end
@@ -617,8 +622,8 @@ Lib:RegisterTypedSearch{
 
 		if cache.itemType then
 			type, subType, equipSlot, classID, subclassID = cache.itemType, cache.itemSubType, cache.itemEquipLoc, cache.classID, cache.subclassID
-		else
-			type, subType, _, equipSlot, _, _, classID, subclassID = select(6, C_Item.GetItemInfo(item))
+		elseif xGetItemInfo then
+			type, subType, _, equipSlot, _, _, classID, subclassID = select(6, xGetItemInfo(item))
 		end
 		--check for battlepets, petcages, companions and such
 		if (search == "battlepet" or search == "petcage") then
@@ -661,7 +666,7 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, link, operator, num)
-		local quality = (cache.itemQuality or select(3, C_Item.GetItemInfo(link)))
+		local quality = (cache.itemQuality or (xGetItemInfo and select(3, xGetItemInfo(link))))
 		return compare(operator, quality, num)
 	end,
 }
@@ -679,7 +684,7 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, link, operator, num)
-		local lvl = (cache.itemLevel or select(4, C_Item.GetItemInfo(link)))
+		local lvl = (cache.itemLevel or (xGetItemInfo and select(4, xGetItemInfo(link))))
 		if lvl then
 			return compare(operator, lvl, num)
 		end
@@ -698,7 +703,7 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, link, operator, num)
-		local lvl = (cache.itemMinLevel or select(5, C_Item.GetItemInfo(link)))
+		local lvl = (cache.itemMinLevel or (xGetItemInfo and select(5, xGetItemInfo(link))))
 		if lvl then
 			return compare(operator, lvl, num)
 		end
@@ -937,4 +942,3 @@ Lib:RegisterTypedSearch{
 		return ES_CheckItem(itemLink, setList)
 	end,
 }
-

@@ -7,7 +7,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
-local Events = BSYC:NewModule("Events", 'AceEvent-3.0')
+local Events = BSYC:NewModule("Events")
 local Unit = BSYC:GetModule("Unit")
 local Scanner = BSYC:GetModule("Scanner")
 local L = BSYC.L
@@ -64,7 +64,7 @@ function Events:OnEnable()
 	end
 
 	--check if voidbank is even enabled on server
-	if CanUseVoidStorage then
+	if CanUseVoidStorage and GetVoidItemInfo then
 		--scan when transfers of any kind are done at the void storage
 		self:RegisterEvent("VOID_TRANSFER_DONE", function() Scanner:SaveVoidBank() end)
 	else

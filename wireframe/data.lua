@@ -120,6 +120,10 @@ local trackingDefaults = {
 Data.__cache = {}
 Data.__cache.items = {}
 Data.__cache.tooltip = {}
+Data.__cache.tooltipOrder = {}
+Data.__cache.tooltipOrderHead = 1
+Data.__cache.tooltipOrderTail = 0
+Data.__cache.tooltipCount = 0
 Data.__cache.ignore = {}
 Data.__cache.pending = Data.__cache.pending or {}
 Data.__cache.itemCacheRun = Data.__cache.itemCacheRun or nil
@@ -141,7 +145,7 @@ local ITEMCACHE_ALLOW_LIST = {
 
 function Data:OnEnable()
 	Debug(BSYC_DL.INFO, "OnEnable")
-	local ver = C_AddOns.GetAddOnMetadata("BagSync","Version") or 0
+	local ver = (BSYC.API.GetAddOnMetadata and BSYC.API.GetAddOnMetadata("BagSync", "Version")) or 0
 
 	--get player information from Unit
 	local player = Unit:GetPlayerInfo(true)
@@ -424,8 +428,97 @@ function Data:LoadSlashCommand()
 end
 
 function Data:RemoveTooltipCacheLink(link)
-	if Data.__cache.tooltip[link] then
+	if not link then return end
+	if Data.__cache and Data.__cache.tooltip and Data.__cache.tooltip[link] then
 		Data.__cache.tooltip[link] = nil
+		Data.__cache.tooltipCount = math.max(0, (Data.__cache.tooltipCount or 0) - 1)
+	end
+end
+
+function Data:ResetTooltipCache()
+	if not Data.__cache then return end
+	Data.__cache.tooltip = {}
+	Data.__cache.tooltipOrder = {}
+	Data.__cache.tooltipOrderHead = 1
+	Data.__cache.tooltipOrderTail = 0
+	Data.__cache.tooltipCount = 0
+end
+
+function Data:EnforceTooltipCacheCap()
+	local maxEntries = tonumber(BSYC and BSYC.TOOLTIP_CACHE_MAX) or 1000
+	if maxEntries <= 0 then return end
+	if not Data.__cache or not Data.__cache.tooltip then return end
+
+	local cache = Data.__cache.tooltip
+	local order = Data.__cache.tooltipOrder or {}
+	local head = Data.__cache.tooltipOrderHead or 1
+	local tail = Data.__cache.tooltipOrderTail or 0
+	local count = Data.__cache.tooltipCount or 0
+
+	if count <= maxEntries then return end
+
+	while count > maxEntries and head <= tail do
+		local key = order[head]
+		order[head] = nil
+		head = head + 1
+
+		if key and cache[key] then
+			cache[key] = nil
+			count = count - 1
+		end
+	end
+
+	Data.__cache.tooltipOrderHead = head
+	Data.__cache.tooltipCount = count
+
+	-- compact queue if head has advanced far enough (avoid ever-growing arrays)
+	if head > 256 and head > (tail / 2) then
+		local new = {}
+		local newTail = 0
+		for i = head, tail do
+			local key = order[i]
+			if key then
+				newTail = newTail + 1
+				new[newTail] = key
+			end
+		end
+		Data.__cache.tooltipOrder = new
+		Data.__cache.tooltipOrderHead = 1
+		Data.__cache.tooltipOrderTail = newTail
+	end
+end
+
+function Data:SetTooltipCache(link, unitList, grandTotal)
+	if not link then return end
+	if not Data.__cache then return end
+
+	local cache = Data.__cache.tooltip
+	if not cache then
+		cache = {}
+		Data.__cache.tooltip = cache
+	end
+
+	local entry = cache[link]
+	local isNew = entry == nil
+	if not entry then
+		entry = {}
+		cache[link] = entry
+	end
+
+	entry.unitList = unitList or {}
+	entry.grandTotal = grandTotal or 0
+
+	if isNew then
+		Data.__cache.tooltipCount = (Data.__cache.tooltipCount or 0) + 1
+		local order = Data.__cache.tooltipOrder
+		if not order then
+			order = {}
+			Data.__cache.tooltipOrder = order
+		end
+		local tail = (Data.__cache.tooltipOrderTail or 0) + 1
+		order[tail] = link
+		Data.__cache.tooltipOrderTail = tail
+		self:EnforceTooltipCacheCap()
 	end
 end
 
@@ -482,8 +575,8 @@ function Data:CacheLink(parseLink)
 			return itemObj
 		else
 
-			--https://wowpedia.fandom.com/wiki/API_C_Item.GetItemInfo
-			--NOTE: C_Item.GetItemInfo doesn't exist on classic, so fallback
+			--https://warcraft.wiki.gg/wiki/API_C_Item.GetItemInfo
+			--Use the addon wrapper for C_Item/GetItemInfo compatibility.
 			local itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent
 
 			-- retail: avoid spamming RequestLoadItemDataByID for the same item repeatedly
@@ -494,11 +587,8 @@ function Data:CacheLink(parseLink)
 				end
 			end
 
-			if C_Item and C_Item.GetItemInfo then
-				itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent = C_Item.GetItemInfo(shortID)
-			else
-				itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID = GetItemInfo(shortID)
-			end
+			local xGetItemInfo = (BSYC.API and BSYC.API.GetItemInfo) or GetItemInfo
+			itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent = xGetItemInfo(shortID)
 
 			--if we are missing itemName and itemLink then request it (retail async cache)
 			if not itemName or not itemLink then
@@ -884,6 +974,11 @@ local function ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, fil
 	end
 
 	local enableCR = GetOption("enableCR", optionsDefaults.enableCR)
+
+	-- blacklist (guilds)
+	if isGuild and BSYC.db and BSYC.db.blacklist and BSYC.db.blacklist[unitKey .. realmKey] then
+		return false
+	end
 
 	-- XR realm suppression
 	if not enableCR and meta.isConnected then

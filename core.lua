@@ -31,16 +31,55 @@ BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 BSYC.IsWLK_C = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
 
 BSYC.DEFAULT_FONT_NAME = BSYC.DEFAULT_FONT_NAME or "Friz Quadrata TT"
+BSYC.TOOLTIP_CACHE_MAX = BSYC.TOOLTIP_CACHE_MAX or 1000
+BSYC.DEFAULT_ALLOW_LIST = BSYC.DEFAULT_ALLOW_LIST or {
+	bag = true,
+	bank = true,
+	reagents = true,
+	equip = true,
+	mailbox = true,
+	void = true,
+	auction = true,
+	warband = true,
+}
 
 -- centralized API compatibility table (preserves fallbacks)
 BSYC.API = BSYC.API or {}
 BSYC.API.GetContainerNumSlots = (C_Container and C_Container.GetContainerNumSlots) or GetContainerNumSlots
 BSYC.API.GetContainerItemInfo = (C_Container and C_Container.GetContainerItemInfo) or GetContainerItemInfo
+BSYC.API.GetAddOnMetadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+BSYC.API.IsAddOnLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded) or IsAddOnLoaded
+BSYC.API.GetItemInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
 
 BSYC.IsBankTabsActive = Enum.BagIndex.CharacterBankTab_1 ~= nil
 BSYC.IsReagentBagActive = (Constants.InventoryConstants.NumReagentBagSlots or 0) > 0
 
-BSYC.GMF = GetMouseFocus or GetMouseFoci
+-- Mouse focus compatibility: some clients provide GetMouseFocus() (single region),
+-- others provide GetMouseFoci() (returns ScriptRegion[]).  Normalize to a single region.
+function BSYC.GMF()
+	if type(_G.GetMouseFocus) == "function" then
+		return _G.GetMouseFocus()
+	end
+	if type(_G.GetMouseFoci) == "function" then
+		local regions = _G.GetMouseFoci()
+		if type(regions) == "table" then
+			return regions[1]
+		end
+	end
+	return nil
+end
+
+-- Unified hover check used throughout scroll lists.  Prefer IsMouseOver() when available.
+function BSYC:IsMouseOver(frame)
+	if not frame then return false end
+	if type(frame.IsMouseOver) == "function" then
+		local ok, res = pcall(frame.IsMouseOver, frame)
+		if ok then
+			return not not res
+		end
+	end
+	return self.GMF and (self.GMF() == frame) or false
+end
 --since FetchPurchasedBankTabData supports Guilds, it's possible in the future they will put it on a classic server with no Warband support.  So lets do it as last resort
 BSYC.isWarbandActive = (C_Container and C_Container.SortAccountBankBags) and (Enum and Enum.BagIndex and Enum.BagIndex.AccountBankTab_1) and (C_Bank and C_Bank.FetchPurchasedBankTabData)
 
@@ -348,17 +387,17 @@ function BSYC:ParseItemLink(link, count)
 
 	-- profession frame bug workaround
 	if shortID and tonumber(shortID) == 0 and TradeSkillFrame then
-		local focus = self.GMF():GetName()
+		local focusObj = self.GMF and self.GMF()
+		local focus = (focusObj and focusObj.GetName and focusObj:GetName()) or nil
 
 		if focus == "TradeSkillSkillIcon" then
-			link = C_TradeSkillUI.GetRecipeItemLink(TradeSkillFrame.selectedSkill)
+			if C_TradeSkillUI and C_TradeSkillUI.GetRecipeItemLink then
+				link = C_TradeSkillUI.GetRecipeItemLink(TradeSkillFrame.selectedSkill)
+			end
 		else
-			local i = focus:match("TradeSkillReagent(%d+)")
-			if i then
-				link = C_TradeSkillUI.GetRecipeReagentItemLink(
-					TradeSkillFrame.selectedSkill,
-					tonumber(i)
-				)
+			local i = type(focus) == "string" and focus:match("TradeSkillReagent(%d+)")
+			if i and C_TradeSkillUI and C_TradeSkillUI.GetRecipeReagentItemLink then
+				link = C_TradeSkillUI.GetRecipeReagentItemLink(TradeSkillFrame.selectedSkill, tonumber(i))
 			end
 		end
 

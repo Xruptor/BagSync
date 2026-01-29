@@ -180,10 +180,10 @@ function Whitelist:RefreshList()
 			button.Text:SetText(item.value or "")
 			button.HeaderHighlight:SetAlpha(0)
 
-			if BSYC.GMF() == button then
-				Whitelist:Item_OnLeave() --hide first
-				Whitelist:Item_OnEnter(button)
-			end
+				if BSYC:IsMouseOver(button) then
+					Whitelist:Item_OnLeave() --hide first
+					Whitelist:Item_OnEnter(button)
+				end
 
             button:Show()
         else
@@ -233,13 +233,14 @@ function Whitelist:AddItemID()
 		BSYC.db.whitelist[itemid] = "|cFFCF9FFF"..speciesName.."|r"
 		BSYC:Print(L.ItemIDAdded:format(itemid), speciesName)
 	else
-		if not C_Item.GetItemInfo(itemid) then
+		local xGetItemInfo = BSYC.API.GetItemInfo
+		if not (xGetItemInfo and xGetItemInfo(itemid)) then
 			BSYC:Print(L.ItemIDNotValid:format(itemid))
 			editBox:SetText("")
 			return
 		end
 
-		local dName, dItemLink = C_Item.GetItemInfo(itemid)
+		local dName, dItemLink = xGetItemInfo(itemid)
 
 		BSYC.db.whitelist[itemid] = dItemLink
 		BSYC:Print(L.ItemIDAdded:format(itemid), dItemLink)

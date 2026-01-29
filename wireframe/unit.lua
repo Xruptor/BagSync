@@ -8,7 +8,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
-local Unit = BSYC:NewModule("Unit", 'AceEvent-3.0')
+local Unit = BSYC:NewModule("Unit")
 local hasMark = BSYC.hasMark
 
 local function Debug(level, ...)
@@ -134,7 +134,7 @@ else
 		Unit:SendMessage('BAGSYNC_EVENT_AUCTION')
 	end)
 
-	if CanUseVoidStorage then
+	if CanUseVoidStorage and GetVoidItemInfo then
 		Unit:RegisterEvent('VOID_STORAGE_OPEN', function()
 			Unit.atVoidBank = true
 			Unit:SendMessage('BAGSYNC_EVENT_VOIDBANK', true)
