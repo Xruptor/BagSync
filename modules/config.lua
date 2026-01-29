@@ -90,8 +90,6 @@ end
 local function setTooltipSortMode(mode)
 	BSYC.options = BSYC.options or {}
 	BSYC.options.tooltipSortMode = mode
-	BSYC.options.sortTooltipByTotals = (mode == "totals")
-	BSYC.options.sortByCustomOrder = (mode == "custom")
 end
 
 local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
@@ -348,14 +346,6 @@ local displayTable = {
 				},
 				{ type = "toggle", label = L.Display_GSC, bind = { "opt", "enable_GSC_Display" }, dirty = "tooltips" },
 				{ type = "toggle", label = L.DisplayFaction .. factionSmall, bind = { "opt", "enableFaction" }, dirty = "tooltips" },
-				{
-					type = "toggle",
-					label = L.DisplayGuildCurrentCharacter,
-					bind = { "opt", "showGuildCurrentCharacter" },
-					disabled = function() return not (BSYC.tracking and BSYC.tracking.guild) end,
-					hidden = function() return not CanGuildBankRepair end,
-					dirty = "tooltips",
-				},
 				{ type = "toggle", label = L.DisplayWhiteListOnly, bind = { "opt", "enableWhitelist" }, dirty = "tooltips" },
 				{
 					type = "button",
@@ -614,4 +604,3 @@ configDialog:AddToBlizOptions("BagSync-Color", colorTable.title, "BagSync")
 
 config:RegisterOptionsTable("BagSync-FAQ", faqTable)
 configDialog:AddToBlizOptions("BagSync-FAQ", faqTable.title, "BagSync")
-

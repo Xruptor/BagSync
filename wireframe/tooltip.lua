@@ -376,11 +376,16 @@ function Tooltip:DoSort(tblData)
 
 	local mode = BSYC.options.tooltipSortMode
 	if not mode or mode == "" then
-		if BSYC.options.sortTooltipByTotals then
-			mode = "totals"
-		elseif BSYC.options.sortByCustomOrder then
-			mode = "custom"
-		else
+		mode = "realm_character"
+	else
+		local validModes = {
+			realm_character = true,
+			character = true,
+			class_character = true,
+			totals = true,
+			custom = true,
+		}
+		if not validModes[mode] then
 			mode = "realm_character"
 		end
 	end
