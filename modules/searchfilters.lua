@@ -175,7 +175,7 @@ function SearchFilters:CreateLists()
 	local playerListTable = {}
 
 	--show simple for ColorizeUnit
-	for unitObj in Data:IterateUnits(true) do
+	for unitObj in Data:IterateUnits(false) do
 		table.insert(playerListTable, {
 			unitObj = unitObj,
 			colorized = Tooltip:ColorizeUnit(unitObj, true)
@@ -220,6 +220,7 @@ function SearchFilters:CreateLists()
 		"mailbox",
 		"void",
 		"auction",
+		"guild",
 		"warband",
 	}
 
@@ -352,6 +353,7 @@ function SearchFilters:Reset()
 	SearchFilters.frame.SearchBox.ClearButton:Hide()
 	SearchFilters.frame.SearchBox.SearchInfo:Show()
 	BSYC.advUnitList = nil
+	BSYC.advAllowList = nil
 	Search:Reset()
 end
 

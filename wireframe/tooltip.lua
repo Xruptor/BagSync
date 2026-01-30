@@ -1178,11 +1178,16 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local guildObj = Data:GetPlayerGuildObj(player)
 	local warbandObj = Data:GetWarbandBankObj()
 
-	local allowList = BSYC.DEFAULT_ALLOW_LIST
-
 	--the true option for GetModule is to set it to silent and not return an error if not found
 	--only display search filters results in the BagSync search window, but make sure to show tooltips regularly outside of that by checking isBSYCSearch
 	local advUnitList = not skipTally and objTooltip.isBSYCSearch and BSYC.advUnitList
+	local advAllowList = not skipTally and objTooltip.isBSYCSearch and BSYC.advAllowList
+	local useFilters = advAllowList ~= nil
+	local allowList = (useFilters and advAllowList) or BSYC.DEFAULT_ALLOW_LIST
+	local function IsAllowed(key)
+		if not useFilters then return true end
+		return allowList[key]
+	end
 	local turnOffCache = (opts.debug.enable and opts.debug.cache and true) or false
 	local advPlayerChk = false
 	local advPlayerGuildChk = false
@@ -1200,7 +1205,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--NOTE: This cache check is ONLY for units (guild, players) that isn't related to the current player.  Since that data doesn't really change we can cache those lines
 		--For the player however, we always want to grab the latest information.  So once it's grabbed we can do a small local cache for that using __lastTally
 		--Search Filters should always be processed and not stored in the cache
-		if turnOffCache or advUnitList or (not Data.__cache.tooltip[origLink] and not doCurrentPlayerOnly) then
+		if turnOffCache or advUnitList or useFilters or (not Data.__cache.tooltip[origLink] and not doCurrentPlayerOnly) then
 
 			--allow search filters matches if found, no need to set to true as advUnitList will default to dumpAll if found
 			for unitObj in Data:IterateUnits(false, advUnitList) do
@@ -1216,7 +1221,9 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 					if unitObj.data ~= BSYC.db.player then
 						Debug(BSYC_DL.SL2, "TallyUnits", "[Unit]", unitObj.name, unitObj.realm)
 						for k in pairs(allowList) do
-							unitTotal = unitTotal + self:AddItems(unitObj, link, k, countList)
+							if k ~= "guild" and k ~= "warband" then
+								unitTotal = unitTotal + self:AddItems(unitObj, link, k, countList)
+							end
 						end
 					elseif advUnitList then
 						advPlayerChk = true
@@ -1225,7 +1232,9 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 					--don't cache the players guild bank, lets get that in real time in case they put stuff in it
 					if not guildObj or (unitObj.data ~= guildObj.data) then
 						Debug(BSYC_DL.SL2, "TallyUnits", "[Guild]", unitObj.name, unitObj.realm)
-						unitTotal = unitTotal + self:AddItems(unitObj, link, "guild", countList)
+						if IsAllowed("guild") then
+							unitTotal = unitTotal + self:AddItems(unitObj, link, "guild", countList)
+						end
 					elseif advUnitList then
 						advPlayerGuildChk = true
 					end
@@ -1241,7 +1250,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 				--do not cache if we are viewing a search filters list, otherwise it won't display everything normally
 				--finally, only cache if we have something to work with
-				if not turnOffCache and not advUnitList then
+				if not turnOffCache and not advUnitList and not useFilters then
 					--store it in the cache (shallow copy to avoid deep-copying DB references)
 					local cachedUnitList = (grandTotal > 0 and ShallowCopyArray(unitList)) or {}
 					if Data and Data.SetTooltipCache then
@@ -1274,67 +1283,89 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			local playerObj = Data:GetPlayerObj(player)
 			Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[CurrentPlayer]|r", playerObj.name, playerObj.realm, link)
 
-			--grab the equip count as we need that below for an accurate count on the bags, bank and reagents
-			playerTotal = playerTotal + self:AddItems(playerObj, link, "equip", countList)
+			local allowBag = IsAllowed("bag")
+			local allowBank = IsAllowed("bank")
+			local allowReagents = IsAllowed("reagents")
+			local allowEquip = IsAllowed("equip")
+			local allowAuction = IsAllowed("auction")
+			local allowVoid = IsAllowed("void")
+			local allowMailbox = IsAllowed("mailbox")
+
+			local equipCount = 0
+			if allowEquip or allowBag or allowBank or allowReagents then
+				--grab the equip count as we need that below for an accurate count on the bags, bank and reagents
+				equipCount = self:AddItems(playerObj, link, "equip", countList)
+				if allowEquip then
+					playerTotal = playerTotal + equipCount
+				else
+					countList.equip = 0
+				end
+			end
+
 			--C_Item.GetItemCount does not work in the auction, void bank or mailbox, so grab it manually
-			playerTotal = playerTotal + self:AddItems(playerObj, link, "auction", countList)
-			playerTotal = playerTotal + self:AddItems(playerObj, link, "void", countList)
-			playerTotal = playerTotal + self:AddItems(playerObj, link, "mailbox", countList)
+			if allowAuction then playerTotal = playerTotal + self:AddItems(playerObj, link, "auction", countList) end
+			if allowVoid then playerTotal = playerTotal + self:AddItems(playerObj, link, "void", countList) end
+			if allowMailbox then playerTotal = playerTotal + self:AddItems(playerObj, link, "mailbox", countList) end
 
 			--C_Item.GetItemCount does not work on battlepet links either, grab bag, bank and reagents
 			if isBattlePet then
-				playerTotal = playerTotal + self:AddItems(playerObj, link, "bag", countList)
-				playerTotal = playerTotal + self:AddItems(playerObj, link, "bank", countList)
-				playerTotal = playerTotal + self:AddItems(playerObj, link, "reagents", countList)
+				if allowBag then playerTotal = playerTotal + self:AddItems(playerObj, link, "bag", countList) end
+				if allowBank then playerTotal = playerTotal + self:AddItems(playerObj, link, "bank", countList) end
+				if allowReagents then playerTotal = playerTotal + self:AddItems(playerObj, link, "reagents", countList) end
 
 			else
-				local equipCount = countList["equip"] or 0
-				local carryCount, bagCount, bankCount, regCount = 0, 0, 0, 0
+				if allowBag or allowBank or allowReagents then
+					local carryCount, bagCount, bankCount, regCount = 0, 0, 0, 0
 
-				carriedCount = carriedCount or ((GetItemCount and GetItemCount(origLink)) or 0) --get the total amount the player is currently carrying (bags + equip)
+					carriedCount = carriedCount or ((GetItemCount and GetItemCount(origLink)) or 0) --get the total amount the player is currently carrying (bags + equip)
 
-				carryCount = carriedCount
-				bagCount = carryCount - equipCount -- subtract the equipment count from the carry amount to get bag count
+					carryCount = carriedCount
+					bagCount = carryCount - equipCount -- subtract the equipment count from the carry amount to get bag count
 
-				if bagCount < 0 then bagCount = 0 end
+					if bagCount < 0 then bagCount = 0 end
 
-				if IsReagentBankUnlocked and IsReagentBankUnlocked() then
-					--C_Item.GetItemCount returns the bag count + reagent regardless of parameters.  So we have to subtract bag and reagents.  This does not include bank totals
-					reagentTotalCount = reagentTotalCount or ((GetItemCount and GetItemCount(origLink, false, false, true, false)) or 0)
+					if IsReagentBankUnlocked and IsReagentBankUnlocked() then
+						--C_Item.GetItemCount returns the bag count + reagent regardless of parameters.  So we have to subtract bag and reagents.  This does not include bank totals
+						reagentTotalCount = reagentTotalCount or ((GetItemCount and GetItemCount(origLink, false, false, true, false)) or 0)
 
-					regCount = reagentTotalCount
-					regCount = regCount - carryCount
-					if regCount < 0 then regCount = 0 end
+						regCount = reagentTotalCount
+						regCount = regCount - carryCount
+						if regCount < 0 then regCount = 0 end
+					end
+
+					--bankCount = C_Item.GetItemCount returns the bag + bank count regardless of parameters.  So we have to subtract the carry totals
+					bankTotalCount = bankTotalCount or ((GetItemCount and GetItemCount(origLink, true, false, false, false)) or 0)
+
+					bankCount = bankTotalCount
+					bankCount = (bankCount - carryCount)
+					if bankCount < 0 then bankCount = 0 end
+
+					-- --now assign the values (check for disabled modules)
+					if not tracking.bag then bagCount = 0 end
+					if not tracking.bank then bankCount = 0 end
+					if not tracking.reagents then regCount = 0 end
+
+					if not allowBag then bagCount = 0 end
+					if not allowBank then bankCount = 0 end
+					if not allowReagents then regCount = 0 end
+
+					if bagCount > 0 then
+						self:GetEquipBags("bag", playerObj, link, countList)
+					end
+					if bankCount > 0 then
+						self:GetEquipBags("bank", playerObj, link, countList)
+					end
+
+					if BSYC.IsBankTabsActive and opts.showBankTabs and allowBank then
+						--we do this so we can grab the btabs, even if we use a real time count from GetItemCount.
+						self:AddItems(playerObj, link, "bank", countList)
+					end
+
+					countList.bag = bagCount
+					countList.bank = bankCount
+					countList.reagents = regCount
+					playerTotal = playerTotal + (bagCount + bankCount + regCount)
 				end
-
-				--bankCount = C_Item.GetItemCount returns the bag + bank count regardless of parameters.  So we have to subtract the carry totals
-				bankTotalCount = bankTotalCount or ((GetItemCount and GetItemCount(origLink, true, false, false, false)) or 0)
-
-				bankCount = bankTotalCount
-				bankCount = (bankCount - carryCount)
-				if bankCount < 0 then bankCount = 0 end
-
-				-- --now assign the values (check for disabled modules)
-				if not tracking.bag then bagCount = 0 end
-				if not tracking.bank then bankCount = 0 end
-				if not tracking.reagents then regCount = 0 end
-
-				if bagCount > 0 then
-					self:GetEquipBags("bag", playerObj, link, countList)
-				end
-				if bankCount > 0 then
-					self:GetEquipBags("bank", playerObj, link, countList)
-				end
-
-				if BSYC.IsBankTabsActive and opts.showBankTabs then
-					--we do this so we can grab the btabs, even if we use a real time count from GetItemCount.
-					self:AddItems(playerObj, link, "bank", countList)
-				end
-
-				countList.bag = bagCount
-				countList.bank = bankCount
-				countList.reagents = regCount
-				playerTotal = playerTotal + (bagCount + bankCount + regCount)
 			end
 
 			if playerTotal > 0 then
@@ -1348,7 +1379,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--We do this separately so that the guild has it's own line in the unitList and not included inline with the player character
 		--We also want to do this in real time and not cache, otherwise they may put stuff in their guild bank which will not be reflected in a cache
 		-----------------
-		if guildObj and (not advUnitList or advPlayerGuildChk) then
+		if IsAllowed("guild") and guildObj and (not advUnitList or advPlayerGuildChk) then
 			Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[CurrentPlayer-Guild]|r", player.guild, player.guildrealm)
 			WipeTable(countList)
 			local guildTotal = self:AddItems(guildObj, link, "guild", countList)
@@ -1360,7 +1391,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		end
 
 		--Warband Bank can updated frequently, so we need to collect in real time and not cached
-		if warbandObj and allowList.warband and not advUnitList then
+		if warbandObj and allowList.warband then
 			Debug(BSYC_DL.SL2, "TallyUnits", "|cFF4DD827[Warband]|r")
 			WipeTable(countList)
 			local warbandTotal = 0

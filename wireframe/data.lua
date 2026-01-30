@@ -988,12 +988,14 @@ local function ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, fil
 	local isGuild = hasMark(unitKey, "©")
 	local hasAnyMark = hasMark(unitKey, "©") or hasMark(unitKey, "§")
 
-	if dumpAll or filterList then
-		local realmFilter = filterList and filterList[realmKey]
+	if dumpAll then
+		return true
+	end
+	if filterList then
+		local realmFilter = filterList[realmKey]
 		if realmFilter and type(realmFilter) == "table" and not realmFilter[unitKey] then
 			return false
 		end
-		return true
 	end
 
 	local enableCR = GetOption("enableCR", optionsDefaults.enableCR)

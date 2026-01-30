@@ -206,6 +206,7 @@ function Search:OnShow()
 	BSYC:SetBSYC_FrameLevel(Search)
 	Data:PopulateItemCache() --do a background caching of items
 	BSYC.advUnitList = nil
+	BSYC.advAllowList = nil
 
 	if not BSYC.options.alwaysShowSearchFilters then
 		C_Timer.After(0.5, function()
@@ -224,6 +225,7 @@ function Search:OnHide()
 	Search.warningFrame:Hide()
 	Search.helpFrame:Hide()
 	BSYC.advUnitList = nil
+	BSYC.advAllowList = nil
 	Search:ShowSearchFilters(false)
 end
 
@@ -339,6 +341,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isSearchFilters, 
 	Tooltip:ResetLastLink()
 
 	BSYC.advUnitList = advUnitList
+	BSYC.advAllowList = advAllowList
 
 	--items aren't counted into this array, it's just for allowing the search to pass through
 	local allowList = BSYC.DEFAULT_ALLOW_LIST
@@ -360,12 +363,14 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isSearchFilters, 
 		for unitObj in Data:IterateUnits(false, advUnitList) do
 			if not unitObj.isGuild then
 				for k in pairs(allowList) do
-					warnTotal = warnTotal + Search:CheckItems(searchStr, unitObj, k, checkList)
+					if k ~= "guild" then
+						warnTotal = warnTotal + Search:CheckItems(searchStr, unitObj, k, checkList)
+					end
 				end
 			else
-				--only do guild if we aren't using a custom adllowlist, otherwise it will always show up regardless of what custom field is selected
+				--only do guild if filters allow it, otherwise it will always show up regardless of what custom field is selected
 				--obviously guilds can't have stuff stored in AH, Mailbox, Void, etc...
-				if not advAllowList then
+				if not advAllowList or advAllowList.guild then
 					warnTotal = warnTotal + Search:CheckItems(searchStr, unitObj, "guild", checkList)
 				end
 			end
@@ -383,7 +388,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isSearchFilters, 
 			warnTotal = warnTotal + Search:CheckItems(searchStr, playerObj, atUserLoc, checkList, true)
 		else
 			--only do guild if we aren't using a custom adllowlist, otherwise it will always show up regardless of what custom field is selected
-			if playerObj.data.guild and not advAllowList then
+			if playerObj.data.guild and (not advAllowList or advAllowList.guild) then
 				local guildObj = Data:GetPlayerGuildObj()
 				if guildObj then
 					warnTotal = warnTotal + Search:CheckItems(searchStr, guildObj, atUserLoc, checkList, true)
@@ -462,12 +467,14 @@ function Search:Reset()
 	Search.frame.SearchBox.ClearButton:Hide()
 	Search.frame.SearchBox.SearchInfo:Show()
 	BSYC.advUnitList = nil
+	BSYC.advAllowList = nil
 	Search.items = {}
 	Search:RefreshList()
 end
 
 function Search:ClearList()
 	BSYC.advUnitList = nil
+	BSYC.advAllowList = nil
 	Search.items = {}
 	Search:RefreshList()
 end
