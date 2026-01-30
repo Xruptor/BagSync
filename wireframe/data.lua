@@ -52,7 +52,7 @@ local optionsDefaults = {
 	showGuildInGoldTooltip = true,
 	focusSearchEditBox = false,
 	enableAccurateBattlePets = true,
-	alwaysShowAdvSearch = false,
+	alwaysShowSearchFilters = false,
 	tooltipSortMode = "realm_character",
 	tooltipModifer = "NONE",
 	singleCharLocations = false,
@@ -167,34 +167,6 @@ function Data:OnEnable()
 	--options DB
 	BSYC:SetDefaults(nil, optionsDefaults)
 
-	-- migrate + prune legacy sort toggles into the new sort mode option
-	do
-		local validModes = {
-			realm_character = true,
-			character = true,
-			class_character = true,
-			totals = true,
-			custom = true,
-		}
-
-		local mode = BSYC.options.tooltipSortMode
-		if not validModes[mode] then
-			if BSYC.options.sortTooltipByTotals then
-				mode = "totals"
-			elseif BSYC.options.sortByCustomOrder then
-				mode = "custom"
-			else
-				mode = "realm_character"
-			end
-			BSYC.options.tooltipSortMode = mode
-		end
-
-		-- legacy flags (no longer used post-config revamp)
-		BSYC.options.sortTooltipByTotals = nil
-		BSYC.options.sortByCustomOrder = nil
-		BSYC.options.showGuildCurrentCharacter = nil
-	end
-
 	--set tracking defaults
 	BSYC:SetDefaults("tracking", trackingDefaults)
 	BSYC.tracking = BSYC.options.tracking
@@ -291,6 +263,43 @@ end
 
 function Data:FixDB()
 	Debug(BSYC_DL.INFO, "FixDB")
+
+	--migrate legacy option name
+	do
+		local legacyKey = "alwaysShowAdvSearch"
+		if BSYC.options[legacyKey] ~= nil then
+			BSYC.options.alwaysShowSearchFilters = BSYC.options[legacyKey]
+			BSYC.options[legacyKey] = nil
+		end
+	end
+
+	-- migrate + prune legacy sort toggles into the new sort mode option
+	do
+		local validModes = {
+			realm_character = true,
+			character = true,
+			class_character = true,
+			totals = true,
+			custom = true,
+		}
+
+		local mode = BSYC.options.tooltipSortMode
+		if not validModes[mode] then
+			if BSYC.options.sortTooltipByTotals then
+				mode = "totals"
+			elseif BSYC.options.sortByCustomOrder then
+				mode = "custom"
+			else
+				mode = "realm_character"
+			end
+			BSYC.options.tooltipSortMode = mode
+		end
+
+		-- legacy flags (no longer used post-config revamp)
+		BSYC.options.sortTooltipByTotals = nil
+		BSYC.options.sortByCustomOrder = nil
+		BSYC.options.showGuildCurrentCharacter = nil
+	end
 
     local storeGuilds = {}
 	if not BSYC.options.unitDBVersion then BSYC.options.unitDBVersion = {} end

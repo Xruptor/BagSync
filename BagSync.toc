@@ -54,7 +54,7 @@ wireframe\tooltip.lua
 
 modules\databroker.lua
 modules\search.lua
-modules\advancedsearch.lua
+modules\searchfilters.lua
 modules\details.lua
 modules\currency.lua
 modules\professions.lua

@@ -63,9 +63,9 @@ L.Search = "搜索"
 L.Debug = "偵錯"
 L.Reset = "重置"
 L.Clear = "清除"
-L.AdvancedSearch = "高級搜索"
-L.AdvancedSearchInformation = "* 使用 BagSync |cffff7d0a[CR]|r 和 |cff3587ff[BNet]|r 設置"
-L.AdvancedLocationInformation = "* 選擇所有因為無預設"
+L.SearchFilters = "搜尋篩選"
+L.SearchFiltersInformation = "* 使用 BagSync |cffff7d0a[CR]|r 和 |cff3587ff[BNet]|r 設置"
+L.SearchFiltersLocationInformation = "* 選擇所有因為無預設"
 L.Units = "名字:"
 L.Locations = "位置:"
 L.Profiles = "訊息"
@@ -168,7 +168,7 @@ L.ModValue_SHIFT = "SHIFT"
 L.EnableExtTooltip = "在單獨框體上顯示物品統計數據"
 L.EnableLoginVersionInfo = "顯示BagSync的登入訊息"
 L.FocusSearchEditBox = "開啟搜尋視窗時聚焦到搜尋框架"
-L.AlwaysShowAdvSearch = "始終顯示BagSync進階搜尋視窗。"
+L.AlwaysShowSearchFilters = "始終顯示BagSync搜尋篩選視窗。"
 L.DisplayTotal = "顯示 [總計] 金額"
 L.DisplayGuildGoldInGoldWindow = "在金幣視窗顯示 [公會] 金幣總數。"
 L.Display_GSC = "顯示[詳細]金額（|cFFFFD700金|r， |cFFC0C0C0銀|r 和 |cFFB87333銅|r）。"
@@ -326,7 +326,7 @@ L.SearchHelp = [[
 @guild <公會>
 @warband <戰隊>
 
-|cffff7d0a進階搜尋|r (|cFF99CC33指令|r | |cFFFFD580範例|r):
+|cffff7d0a搜尋篩選|r (|cFF99CC33指令|r | |cFFFFD580範例|r):
 
 |cff00ffff<物品名稱>|r = |cFF99CC33n|r ; |cFF99CC33name|r | 示例：|cFFFFD580[輸入簡稱]:礦石|r ;  |cFFFFD580[輸入全稱]:寧鐵礦石|r 
 

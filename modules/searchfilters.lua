@@ -1,39 +1,39 @@
 --[[
-	advancedAdvancedSearch.lua
-		A advanced search frame for BagSync items
+	searchfilters.lua
+		A search filters frame for BagSync items
 
 		BagSync - All Rights Reserved - (c) 2025
 		License included with addon.
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
-local AdvancedSearch = BSYC:NewModule("AdvancedSearch")
+local SearchFilters = BSYC:NewModule("SearchFilters")
 local Search = BSYC:GetModule("Search")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
 
 local function Debug(level, ...)
-    if BSYC.DEBUG then BSYC.DEBUG(level, "AdvancedSearch", ...) end
+    if BSYC.DEBUG then BSYC.DEBUG(level, "SearchFilters", ...) end
 end
 
 local L = BSYC.L
 
-function AdvancedSearch:OnEnable()
-	local advFrame = BSYC:UI_CreateModuleFrame(AdvancedSearch, {
+function SearchFilters:OnEnable()
+	local advFrame = BSYC:UI_CreateModuleFrame(SearchFilters, {
 		template = "BagSyncSearchFrameTemplate",
-		title = L.AdvancedSearch,
+		title = L.SearchFilters,
 		width = 400,
 		height = 570,
 		point = { "TOPRIGHT", Search.frame, "TOPLEFT", -10, 0 },
-		onShow = function() AdvancedSearch:OnShow() end,
-		onHide = function() AdvancedSearch:OnHide() end,
+		onShow = function() SearchFilters:OnShow() end,
+		onHide = function() SearchFilters:OnHide() end,
 	})
 	advFrame.HelpButton:Hide()
-	AdvancedSearch.frame = advFrame
+	SearchFilters.frame = advFrame
 
-	--Advanced Search Information
+	--Search Filters Information
 	advFrame.infoText = advFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	advFrame.infoText:SetText(L.AdvancedSearchInformation)
+	advFrame.infoText:SetText(L.SearchFiltersInformation)
 	advFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
 	advFrame.infoText:SetTextColor(1, 165/255, 0)
 	advFrame.infoText:SetPoint("LEFT", advFrame, "TOPLEFT", 15, -65)
@@ -48,16 +48,16 @@ function AdvancedSearch:OnEnable()
 	advFrame.unitTitle:SetJustifyH("LEFT")
 	advFrame.unitTitle:SetWidth(advFrame:GetWidth() - 15)
 
-	AdvancedSearch.playerScroll = BSYC:UI_CreateHybridScrollFrame(advFrame, {
+	SearchFilters.playerScroll = BSYC:UI_CreateHybridScrollFrame(advFrame, {
 		width = 357,
 		pointTopLeft = { "TOPLEFT", advFrame, "TOPLEFT", 13, -90 },
 		-- set ScrollFrame height by altering the distance from the bottom of the frame
 		pointBottomLeft = { "BOTTOMLEFT", advFrame, "BOTTOMLEFT", -25, 240 },
 		buttonTemplate = "BagSyncListItemTemplate",
-		update = function() AdvancedSearch:RefreshPlayerList(); end,
+		update = function() SearchFilters:RefreshPlayerList(); end,
 	})
 	--the items we will work with
-	AdvancedSearch.playerList = {}
+	SearchFilters.playerList = {}
 
 	advFrame.locationTitle = advFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
 	advFrame.locationTitle:SetText(L.Locations)
@@ -68,23 +68,23 @@ function AdvancedSearch:OnEnable()
 	advFrame.locationTitle:SetWidth(advFrame:GetWidth() - 15)
 
 	advFrame.locationInfo = advFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	advFrame.locationInfo:SetText(L.AdvancedLocationInformation)
+	advFrame.locationInfo:SetText(L.SearchFiltersLocationInformation)
 	advFrame.locationInfo:SetFont(STANDARD_TEXT_FONT, 12, "")
 	advFrame.locationInfo:SetTextColor(1, 165/255, 0)
 	advFrame.locationInfo:SetPoint("LEFT", advFrame, "TOPLEFT", 15, -335)
 	advFrame.locationInfo:SetJustifyH("LEFT")
 	advFrame.locationInfo:SetWidth(advFrame:GetWidth() - 15)
 
-	AdvancedSearch.locationScroll = BSYC:UI_CreateHybridScrollFrame(advFrame, {
+	SearchFilters.locationScroll = BSYC:UI_CreateHybridScrollFrame(advFrame, {
 		width = 357,
 		pointTopLeft = { "TOPLEFT", advFrame, "TOPLEFT", 13, -345 },
 		-- set ScrollFrame height by altering the distance from the bottom of the frame
 		pointBottomLeft = { "BOTTOMLEFT", advFrame, "BOTTOMLEFT", -25, 45 },
 		buttonTemplate = "BagSyncListItemTemplate",
-		update = function() AdvancedSearch:RefreshLocationList(); end,
+		update = function() SearchFilters:RefreshLocationList(); end,
 	})
 	--the items we will work with
-	AdvancedSearch.locationList = {}
+	SearchFilters.locationList = {}
 
 	--Reset button
 	advFrame.resetButton = _G.CreateFrame("Button", nil, advFrame, "UIPanelButtonTemplate")
@@ -92,7 +92,7 @@ function AdvancedSearch:OnEnable()
 	advFrame.resetButton:SetHeight(20)
 	advFrame.resetButton:SetWidth(advFrame.resetButton:GetTextWidth() + 30)
 	advFrame.resetButton:SetPoint("RIGHT", advFrame, "BOTTOMRIGHT", -10, 23)
-	advFrame.resetButton:SetScript("OnClick", function() AdvancedSearch:Reset() end)
+	advFrame.resetButton:SetScript("OnClick", function() SearchFilters:Reset() end)
 
 	--Select All button
 	advFrame.selectAllButton = _G.CreateFrame("Button", nil, advFrame, "UIPanelButtonTemplate")
@@ -100,13 +100,13 @@ function AdvancedSearch:OnEnable()
 	advFrame.selectAllButton:SetHeight(20)
 	advFrame.selectAllButton:SetWidth(advFrame.selectAllButton:GetTextWidth() + 30)
 	advFrame.selectAllButton:SetPoint("LEFT", advFrame, "BOTTOMLEFT", 13, 23)
-	advFrame.selectAllButton:SetScript("OnClick", function() AdvancedSearch:SelectAll() end)
+	advFrame.selectAllButton:SetScript("OnClick", function() SearchFilters:SelectAll() end)
 
 	advFrame:Hide() --important
 end
 
-function AdvancedSearch:OnShow()
-	BSYC:SetBSYC_FrameLevel(AdvancedSearch)
+function SearchFilters:OnShow()
+	BSYC:SetBSYC_FrameLevel(SearchFilters)
 
 	--Hide some of the regular search frame stuff
 	Search.frame.SearchBox:Hide()
@@ -116,17 +116,17 @@ function AdvancedSearch:OnShow()
 
 	C_Timer.After(0.5, function()
 		if BSYC.options.focusSearchEditBox then
-			AdvancedSearch.frame.SearchBox:ClearFocus()
-			AdvancedSearch.frame.SearchBox:SetFocus()
+			SearchFilters.frame.SearchBox:ClearFocus()
+			SearchFilters.frame.SearchBox:SetFocus()
 		end
 	end)
 
-	AdvancedSearch:CreateLists()
-	AdvancedSearch:RefreshLists()
+	SearchFilters:CreateLists()
+	SearchFilters:RefreshLists()
 end
 
-function AdvancedSearch:OnHide()
-	AdvancedSearch:Reset()
+function SearchFilters:OnHide()
+	SearchFilters:Reset()
 	--Show some of the regular search frame stuff
 	Search.frame.SearchBox:Show()
 	Search.frame.RefreshButton:Show()
@@ -134,24 +134,24 @@ function AdvancedSearch:OnHide()
 	Search.frame.resetButton:Show()
 end
 
-function AdvancedSearch:DoSearch(searchStr)
-	if not searchStr then searchStr = AdvancedSearch.frame.SearchBox:GetText() end
+function SearchFilters:DoSearch(searchStr)
+	if not searchStr then searchStr = SearchFilters.frame.SearchBox:GetText() end
 
 	local advUnitList = {}
 	local advAllowList = {}
 	local unitCount = 0
 	local locCount = 0
 
-	for i=1, #AdvancedSearch.playerList do
-		local item = AdvancedSearch.playerList[i]
+	for i=1, #SearchFilters.playerList do
+		local item = SearchFilters.playerList[i]
 		if not item.isHeader and item.isSelected then
 			if not advUnitList[item.unitObj.realm] then advUnitList[item.unitObj.realm] = {} end
 			advUnitList[item.unitObj.realm][item.unitObj.name] = true
 			unitCount = unitCount + 1
 		end
 	end
-	for i=1, #AdvancedSearch.locationList do
-		local item = AdvancedSearch.locationList[i]
+	for i=1, #SearchFilters.locationList do
+		local item = SearchFilters.locationList[i]
 		if not item.isHeader and item.isSelected then
 			advAllowList[item.source] = true
 			locCount = locCount + 1
@@ -168,9 +168,9 @@ function AdvancedSearch:DoSearch(searchStr)
 	Search:DoSearch(searchStr, advUnitList, advAllowList, true)
 end
 
-function AdvancedSearch:CreateLists()
-	AdvancedSearch.playerList = {}
-	AdvancedSearch.locationList = {}
+function SearchFilters:CreateLists()
+	SearchFilters.playerList = {}
+	SearchFilters.locationList = {}
 
 	local playerListTable = {}
 
@@ -195,7 +195,7 @@ function AdvancedSearch:CreateLists()
 		for i=1, #playerListTable do
 			if lastHeader ~= playerListTable[i].unitObj.realm then
 				--add header
-				table.insert(AdvancedSearch.playerList, {
+				table.insert(SearchFilters.playerList, {
 					colorized = playerListTable[i].unitObj.realm,
 					isHeader = true,
 					isSelected = false
@@ -203,7 +203,7 @@ function AdvancedSearch:CreateLists()
 				lastHeader = playerListTable[i].unitObj.realm
 			end
 			--add player
-			table.insert(AdvancedSearch.playerList, {
+			table.insert(SearchFilters.playerList, {
 				unitObj = playerListTable[i].unitObj,
 				colorized = playerListTable[i].colorized,
 				isSelected = false
@@ -226,7 +226,7 @@ function AdvancedSearch:CreateLists()
 	for k, v in ipairs(allowList) do
 		if BSYC.tracking[v] then
 			--only add if enabled
-			table.insert(AdvancedSearch.locationList, {
+			table.insert(SearchFilters.locationList, {
 				name = L["Tooltip_"..v],
 				source = v,
 				isSelected = false
@@ -235,15 +235,15 @@ function AdvancedSearch:CreateLists()
 	end
 end
 
-function AdvancedSearch:RefreshPlayerList()
-    local items = AdvancedSearch.playerList
-    local buttons = HybridScrollFrame_GetButtons(AdvancedSearch.playerScroll)
-    local offset = HybridScrollFrame_GetOffset(AdvancedSearch.playerScroll)
+function SearchFilters:RefreshPlayerList()
+    local items = SearchFilters.playerList
+    local buttons = HybridScrollFrame_GetButtons(SearchFilters.playerScroll)
+    local offset = HybridScrollFrame_GetOffset(SearchFilters.playerScroll)
 	if not buttons then return end
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		button.parentHandler = AdvancedSearch
+		button.parentHandler = SearchFilters
 
         local itemIndex = buttonIndex + offset
 
@@ -254,7 +254,7 @@ function AdvancedSearch:RefreshPlayerList()
 			button.listData = item
 			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "")
 			button.Text:SetTextColor(1, 1, 1)
-            button:SetWidth(AdvancedSearch.playerScroll.scrollChild:GetWidth())
+            button:SetWidth(SearchFilters.playerScroll.scrollChild:GetWidth())
 			button.DetailsButton:Hide()
 
 			button.Icon:SetTexture(nil)
@@ -279,8 +279,8 @@ function AdvancedSearch:RefreshPlayerList()
 			--while we are updating the scrollframe, is the mouse currently over a button?
 			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
 			if BSYC:IsMouseOver(button) then
-				AdvancedSearch:Item_OnLeave() --hide first
-				AdvancedSearch:Item_OnEnter(button)
+				SearchFilters:Item_OnLeave() --hide first
+				SearchFilters:Item_OnEnter(button)
 			end
 
             button:Show()
@@ -289,22 +289,22 @@ function AdvancedSearch:RefreshPlayerList()
         end
     end
 
-    local buttonHeight = AdvancedSearch.playerScroll.buttonHeight
+    local buttonHeight = SearchFilters.playerScroll.buttonHeight
     local totalHeight = #items * buttonHeight
     local shownHeight = #buttons * buttonHeight
 
-    HybridScrollFrame_Update(AdvancedSearch.playerScroll, totalHeight, shownHeight)
+    HybridScrollFrame_Update(SearchFilters.playerScroll, totalHeight, shownHeight)
 end
 
-function AdvancedSearch:RefreshLocationList()
-    local items = AdvancedSearch.locationList
-    local buttons = HybridScrollFrame_GetButtons(AdvancedSearch.locationScroll)
-    local offset = HybridScrollFrame_GetOffset(AdvancedSearch.locationScroll)
+function SearchFilters:RefreshLocationList()
+    local items = SearchFilters.locationList
+    local buttons = HybridScrollFrame_GetButtons(SearchFilters.locationScroll)
+    local offset = HybridScrollFrame_GetOffset(SearchFilters.locationScroll)
 	if not buttons then return end
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		button.parentHandler = AdvancedSearch
+		button.parentHandler = SearchFilters
 
         local itemIndex = buttonIndex + offset
 
@@ -315,7 +315,7 @@ function AdvancedSearch:RefreshLocationList()
 			button.listData = item
 			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "")
 			button.Text:SetTextColor(1, 1, 1)
-            button:SetWidth(AdvancedSearch.locationScroll.scrollChild:GetWidth())
+            button:SetWidth(SearchFilters.locationScroll.scrollChild:GetWidth())
 			button.DetailsButton:Hide()
 			button.Text:SetJustifyH("LEFT")
 			button.HeaderHighlight:SetAlpha(0)
@@ -334,53 +334,53 @@ function AdvancedSearch:RefreshLocationList()
         end
     end
 
-    local buttonHeight = AdvancedSearch.locationScroll.buttonHeight
+    local buttonHeight = SearchFilters.locationScroll.buttonHeight
     local totalHeight = #items * buttonHeight
     local shownHeight = #buttons * buttonHeight
 
-    HybridScrollFrame_Update(AdvancedSearch.locationScroll, totalHeight, shownHeight)
+    HybridScrollFrame_Update(SearchFilters.locationScroll, totalHeight, shownHeight)
 end
 
-function AdvancedSearch:RefreshLists()
-	AdvancedSearch:RefreshPlayerList()
-	AdvancedSearch:RefreshLocationList()
+function SearchFilters:RefreshLists()
+	SearchFilters:RefreshPlayerList()
+	SearchFilters:RefreshLocationList()
 end
 
-function AdvancedSearch:Reset()
-	AdvancedSearch.frame.SearchBox:SetText("")
-	AdvancedSearch:SelectAll(true)
-	AdvancedSearch.frame.SearchBox.ClearButton:Hide()
-	AdvancedSearch.frame.SearchBox.SearchInfo:Show()
+function SearchFilters:Reset()
+	SearchFilters.frame.SearchBox:SetText("")
+	SearchFilters:SelectAll(true)
+	SearchFilters.frame.SearchBox.ClearButton:Hide()
+	SearchFilters.frame.SearchBox.SearchInfo:Show()
 	BSYC.advUnitList = nil
 	Search:Reset()
 end
 
-function AdvancedSearch:SelectAll(uncheck)
-	for i=1, #AdvancedSearch.playerList do
-		local item = AdvancedSearch.playerList[i]
+function SearchFilters:SelectAll(uncheck)
+	for i=1, #SearchFilters.playerList do
+		local item = SearchFilters.playerList[i]
 		if not item.isHeader then
 			item.isSelected = (not uncheck and true) or false
 		end
 	end
-	for i=1, #AdvancedSearch.locationList do
-		local item = AdvancedSearch.locationList[i]
+	for i=1, #SearchFilters.locationList do
+		local item = SearchFilters.locationList[i]
 		if not item.isHeader then
 			item.isSelected = (not uncheck and true) or false
 		end
 	end
-	AdvancedSearch:RefreshLists()
+	SearchFilters:RefreshLists()
 end
 
-function AdvancedSearch:RefreshClick()
-	AdvancedSearch:DoSearch()
+function SearchFilters:RefreshClick()
+	SearchFilters:DoSearch()
 end
 
-function AdvancedSearch:SearchBox_ResetSearch(btn)
+function SearchFilters:SearchBox_ResetSearch(btn)
 	btn:Hide()
-	AdvancedSearch.frame.SearchBox:SetText("")
+	SearchFilters.frame.SearchBox:SetText("")
 end
 
-function AdvancedSearch:Item_OnClick(btn)
+function SearchFilters:Item_OnClick(btn)
 	if not btn.isHeader then
 		if not btn.listData.isSelected then
 			btn.listData.isSelected = true
@@ -394,11 +394,11 @@ function AdvancedSearch:Item_OnClick(btn)
 	Search:ClearList()
 end
 
-function AdvancedSearch:SearchBox_OnEnterPressed(text)
-	AdvancedSearch:DoSearch(text)
+function SearchFilters:SearchBox_OnEnterPressed(text)
+	SearchFilters:DoSearch(text)
 end
 
-function AdvancedSearch:Item_OnEnter(btn)
+function SearchFilters:Item_OnEnter(btn)
 	if btn.isHeader and btn.Highlight:IsVisible() then
 		btn.Highlight:Hide()
 	elseif not btn.isHeader and not btn.Highlight:IsVisible() then
@@ -406,10 +406,10 @@ function AdvancedSearch:Item_OnEnter(btn)
 	end
 end
 
-function AdvancedSearch:Item_OnLeave()
+function SearchFilters:Item_OnLeave()
 	GameTooltip:Hide()
 end
 
-function AdvancedSearch:PlusClick()
+function SearchFilters:PlusClick()
 	Search.savedSearch:SetShown(not Search.savedSearch:IsShown())
 end

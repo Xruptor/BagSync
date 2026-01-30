@@ -50,20 +50,20 @@ function Search:OnEnable()
 	searchFrame.totalText:SetPoint("LEFT", searchFrame, "BOTTOMLEFT", 15, 20)
 	searchFrame.totalText:SetJustifyH("LEFT")
 
-	--Advanced Search button
-	searchFrame.advSearchBtn = _G.CreateFrame("Button", nil, searchFrame, "UIPanelButtonTemplate")
-	searchFrame.advSearchBtn:SetText(L.AdvancedSearch)
-	searchFrame.advSearchBtn:SetHeight(20)
-	searchFrame.advSearchBtn:SetWidth(searchFrame.advSearchBtn:GetTextWidth() + 30)
-	searchFrame.advSearchBtn:SetPoint("RIGHT", searchFrame, "BOTTOMRIGHT", -10, 23)
-	searchFrame.advSearchBtn:SetScript("OnClick", function() Search:ShowAdvanced() end)
+	--Search Filters button
+	searchFrame.searchFiltersBtn = _G.CreateFrame("Button", nil, searchFrame, "UIPanelButtonTemplate")
+	searchFrame.searchFiltersBtn:SetText(L.SearchFilters)
+	searchFrame.searchFiltersBtn:SetHeight(20)
+	searchFrame.searchFiltersBtn:SetWidth(searchFrame.searchFiltersBtn:GetTextWidth() + 30)
+	searchFrame.searchFiltersBtn:SetPoint("RIGHT", searchFrame, "BOTTOMRIGHT", -10, 23)
+	searchFrame.searchFiltersBtn:SetScript("OnClick", function() Search:ShowSearchFilters() end)
 
 	--Reset button
 	searchFrame.resetButton = _G.CreateFrame("Button", nil, searchFrame, "UIPanelButtonTemplate")
 	searchFrame.resetButton:SetText(L.Reset)
 	searchFrame.resetButton:SetHeight(20)
 	searchFrame.resetButton:SetWidth(searchFrame.resetButton:GetTextWidth() + 30)
-	searchFrame.resetButton:SetPoint("RIGHT", searchFrame.advSearchBtn, "LEFT", 0, 0)
+	searchFrame.resetButton:SetPoint("RIGHT", searchFrame.searchFiltersBtn, "LEFT", 0, 0)
 	searchFrame.resetButton:SetScript("OnClick", function() Search:Reset() end)
 
 	--Warning Frame
@@ -207,7 +207,7 @@ function Search:OnShow()
 	Data:PopulateItemCache() --do a background caching of items
 	BSYC.advUnitList = nil
 
-	if not BSYC.options.alwaysShowAdvSearch then
+	if not BSYC.options.alwaysShowSearchFilters then
 		C_Timer.After(0.5, function()
 			if BSYC.options.focusSearchEditBox then
 				Search.frame.SearchBox:ClearFocus()
@@ -215,7 +215,7 @@ function Search:OnShow()
 			end
 		end)
 	else
-		Search:ShowAdvanced(true)
+		Search:ShowSearchFilters(true)
 	end
     Search:RefreshList()
 end
@@ -224,12 +224,12 @@ function Search:OnHide()
 	Search.warningFrame:Hide()
 	Search.helpFrame:Hide()
 	BSYC.advUnitList = nil
-	Search:ShowAdvanced(false)
+	Search:ShowSearchFilters(false)
 end
 
-function Search:ShowAdvanced(visible)
-	if BSYC:GetModule("AdvancedSearch", true) then
-		local frame = BSYC:GetModule("AdvancedSearch", true).frame
+function Search:ShowSearchFilters(visible)
+	if BSYC:GetModule("SearchFilters", true) then
+		local frame = BSYC:GetModule("SearchFilters", true).frame
 		if frame then
 			if visible == nil then
 				frame:SetShown(not frame:IsShown())
@@ -322,10 +322,10 @@ function Search:CheckItems(searchStr, unitObj, target, checkList, atUserLoc)
 	return total
 end
 
-function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch, warnCount)
+function Search:DoSearch(searchStr, advUnitList, advAllowList, isSearchFilters, warnCount)
 
-	--only check for specifics when not using advanced search
-	if not isAdvancedSearch then
+	--only check for specifics when not using search filters
+	if not isSearchFilters then
 		if not searchStr then searchStr = Search.frame.SearchBox:GetText() end
 		if string.len(searchStr) <= 0 then return end
 	end
@@ -335,7 +335,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch,
 	local warnTotal = 0
 	local atUserLoc
 
-	--make sure to always be using updated information, especially if processing items from Advanced Frame
+	--make sure to always be using updated information, especially if processing items from Search Filters frame
 	Tooltip:ResetLastLink()
 
 	BSYC.advUnitList = advUnitList
@@ -344,7 +344,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch,
 	local allowList = BSYC.DEFAULT_ALLOW_LIST
 
 	--This is used when a player is requesting to view a custom list, such as @bank, @auction, @bag etc...
-	if not isAdvancedSearch and string.len(searchStr) > 1 then
+	if not isSearchFilters and string.len(searchStr) > 1 then
 		atUserLoc = searchStr:match("@(.+)")
 		--check it to verify it's a valid command
 		if atUserLoc and (string.len(atUserLoc) < 1 or (atUserLoc ~= "guild" and not allowList[atUserLoc])) then atUserLoc = nil end
@@ -352,7 +352,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch,
 
 	--overwrite the allowlist with the advance one if it isn't empty
 	allowList = advAllowList or allowList
-	Debug(BSYC_DL.INFO, "init:DoSearch", searchStr, atUserLoc, advUnitList, advAllowList, isAdvancedSearch, warnCount)
+	Debug(BSYC_DL.INFO, "init:DoSearch", searchStr, atUserLoc, advUnitList, advAllowList, isSearchFilters, warnCount)
 
 	local warbandObj = Data:GetWarbandBankObj()
 
@@ -401,7 +401,7 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isAdvancedSearch,
 		--lets not do TOO many refreshes
 		if not warnCount or warnCount <= 5 then
 			warnCount = (warnCount or 0) + 1
-			BSYC:StartTimer("SearchCacheChk", 0.5, Search, "DoSearch", searchStr, advUnitList, advAllowList, isAdvancedSearch, warnCount)
+			BSYC:StartTimer("SearchCacheChk", 0.5, Search, "DoSearch", searchStr, advUnitList, advAllowList, isSearchFilters, warnCount)
 			return
 		end
 	else
@@ -518,7 +518,7 @@ end
 
 function Search:Item_OnEnter(btn)
 	if BSYC.advUnitList then
-		--reset the last cache link when using the advanced search to prevent improper listings from being cached
+		--reset the last cache link when using the search filters to prevent improper listings from being cached
 		Tooltip:ResetLastLink()
 	end
     if btn.data then
@@ -538,7 +538,7 @@ end
 
 function Search:Item_OnLeave()
 	if BSYC.advUnitList then
-		--reset the last cache link when using the advanced search to prevent improper listings from being cached
+		--reset the last cache link when using the search filters to prevent improper listings from being cached
 		Tooltip:ResetLastLink()
 	end
 	GameTooltip.isBSYCSearch = nil
@@ -642,8 +642,8 @@ function Search:SavedSearch_AddItem()
 	local storeText = ""
 	local frame = Search.frame
 
-	if BSYC:GetModule("AdvancedSearch", true) and BSYC:GetModule("AdvancedSearch").frame:IsVisible() then
-		frame = BSYC:GetModule("AdvancedSearch").frame
+	if BSYC:GetModule("SearchFilters", true) and BSYC:GetModule("SearchFilters").frame:IsVisible() then
+		frame = BSYC:GetModule("SearchFilters").frame
 	end
 	storeText = frame.SearchBox:GetText()
 	if not storeText or string.len(storeText) < 1 then
@@ -663,18 +663,18 @@ end
 
 function Search:SavedSearch_Item_OnClick(btn)
 	local frame = Search.frame
-	local isAdvanced = false
+	local isSearchFilters = false
 
-	if BSYC:GetModule("AdvancedSearch", true) and BSYC:GetModule("AdvancedSearch").frame:IsVisible() then
-		frame = BSYC:GetModule("AdvancedSearch").frame
-		isAdvanced = true
+	if BSYC:GetModule("SearchFilters", true) and BSYC:GetModule("SearchFilters").frame:IsVisible() then
+		frame = BSYC:GetModule("SearchFilters").frame
+		isSearchFilters = true
 	end
 
 	frame.SearchBox.SearchInfo:Hide()
 	frame.SearchBox:SetText(btn.data.value)
 
-	if isAdvanced then
-		BSYC:GetModule("AdvancedSearch"):DoSearch()
+	if isSearchFilters then
+		BSYC:GetModule("SearchFilters"):DoSearch()
 	else
 		Search:DoSearch()
 	end

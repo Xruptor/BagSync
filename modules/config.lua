@@ -173,7 +173,7 @@ local generalTable = {
 				{ type = "toggle", label = L.DisplayTooltipOnlySearch, bind = { "opt", "tooltipOnlySearch" }, dirty = "tooltips" },
 				{ type = "toggle", label = L.DisplayTooltipCurrencyData, bind = { "opt", "enableCurrencyWindowTooltipData" }, dirty = "tooltips" },
 				{ type = "toggle", label = L.FocusSearchEditBox, bind = { "opt", "focusSearchEditBox" } },
-				{ type = "toggle", label = L.AlwaysShowAdvSearch, bind = { "opt", "alwaysShowAdvSearch" } },
+				{ type = "toggle", label = L.AlwaysShowSearchFilters, bind = { "opt", "alwaysShowSearchFilters" } },
 				{ type = "toggle", label = L.DisplayMinimap, bind = { "minimapEnable" }, dirty = "minimap" },
 				{ type = "toggle", label = L.EnableLoginVersionInfo, bind = { "opt", "enableLoginVersionInfo" } },
 			},

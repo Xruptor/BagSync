@@ -61,9 +61,9 @@ L.Search = "Поиск"
 L.Debug = "Отладка"
 L.Reset = "Сброс"
 L.Clear = "Очистить"
-L.AdvancedSearch = "Расширенный поиск"
-L.AdvancedSearchInformation = "* Использует настройки BagSync |cffff7d0a[CR]|r и |cff3587ff[BNet]|r."
-L.AdvancedLocationInformation = "* Если ничего не выбрано, выбирается ВСЕ."
+L.SearchFilters = "Фильтры поиска"
+L.SearchFiltersInformation = "* Использует настройки BagSync |cffff7d0a[CR]|r и |cff3587ff[BNet]|r."
+L.SearchFiltersLocationInformation = "* Если ничего не выбрано, выбирается ВСЕ."
 L.Units = "Юниты:"
 L.Locations = "Местоположения:"
 L.Profiles = "Профили"
@@ -166,7 +166,7 @@ L.ModValue_SHIFT = "SHIFT"
 L.EnableExtTooltip = "Отображать данные о количестве предметов во внешней всплывающей подсказке."
 L.EnableLoginVersionInfo = "Отображать текст версии BagSync при входе в игру."
 L.FocusSearchEditBox = "Фокусировать поле поиска при открытии окна поиска."
-L.AlwaysShowAdvSearch = "Всегда показывать окно расширенного поиска BagSync."
+L.AlwaysShowSearchFilters = "Всегда показывать окно фильтров поиска BagSync."
 L.DisplayTotal = "Отображать общее количество [Итого]."
 L.DisplayGuildGoldInGoldWindow = "Отображать общее количество золота [Гильдия] в окне золота."
 L.Display_GSC = "Отображать |cFFFFD700Золото|r, |cFFC0C0C0Серебро|r и |cFFB87333Медь|r в окне золота."
@@ -324,7 +324,7 @@ L.SearchHelp = [[
 @guild
 @warband
 
-|cffff7d0aРасширенный поиск|r (|cFF99CC33команды|r | |cFFFFD580пример|r):
+|cffff7d0aФильтры поиска|r (|cFF99CC33команды|r | |cFFFFD580пример|r):
 
 |cff00ffff<имя предмета>|r = |cFF99CC33n|r ; |cFF99CC33name|r | |cFFFFD580n:<текст>|r ; |cFFFFD580name:<текст>|r (n:руда ; name:руда)
 

@@ -60,9 +60,9 @@ L.Search = "Buscar"
 L.Debug = "Depuración"
 L.Reset = "Restablecer"
 L.Clear = "Limpiar"
-L.AdvancedSearch = "Búsqueda avanzada"
-L.AdvancedSearchInformation = "* Utiliza la configuración BagSync |cffff7d0a[CR]|r y |cff3587ff[BNet]|r."
-L.AdvancedLocationInformation = "* Seleccionar ninguno predeterminado para seleccionar TODO."
+L.SearchFilters = "Filtros de búsqueda"
+L.SearchFiltersInformation = "* Utiliza la configuración BagSync |cffff7d0a[CR]|r y |cff3587ff[BNet]|r."
+L.SearchFiltersLocationInformation = "* Seleccionar ninguno predeterminado para seleccionar TODO."
 L.Units = "Unidades:"
 L.Locations = "Lugares:"
 L.Profiles = "Perfiles"
@@ -165,7 +165,7 @@ L.ModValue_SHIFT = "SHIFT"
 L.EnableExtTooltip = "Mostrar datos del recuento de elementos en una herramienta externa."
 L.EnableLoginVersionInfo = "Mostrar texto de la versión BagSync al iniciar sesión."
 L.FocusSearchEditBox = "Enfoque el cuadro de búsqueda al abrir la ventana de búsqueda."
-L.AlwaysShowAdvSearch = "Mostrar siempre la ventana de búsqueda avanzada Bagsync."
+L.AlwaysShowSearchFilters = "Mostrar siempre la ventana de filtros de búsqueda de Bagsync."
 L.DisplayTotal = "Mostrar [Total] la cantidad."
 L.DisplayGuildGoldInGoldWindow = "Mostrar los totales de oro de la [Hermandad] en la ventana de oro."
 L.Display_GSC = "Mostrar |cFFFFD700Gold|r, |cFFC0C0C0Silver|r y |cFFB87333Copper|r en la ventana de oro."
@@ -329,7 +329,7 @@ L.SearchHelp = [[
 @guild
 @warband
 
-|cffff7d0aAdvanced Search|r (|cFF99CC33commands|r | |cFFFFD580example|r):
+|cffff7d0aFiltros de búsqueda|r (|cFF99CC33commands|r | |cFFFFD580example|r):
 
 |cff00ffff<item name>|r = |cFF99CC33n|r ; |cFF99CC33name|r | |cFFFFD580n:<text>|r ; |cFFFFD580name:<text>|r (n:ore ; name:ore)
 

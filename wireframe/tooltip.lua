@@ -1181,7 +1181,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local allowList = BSYC.DEFAULT_ALLOW_LIST
 
 	--the true option for GetModule is to set it to silent and not return an error if not found
-	--only display advanced search results in the BagSync search window, but make sure to show tooltips regularly outside of that by checking isBSYCSearch
+	--only display search filters results in the BagSync search window, but make sure to show tooltips regularly outside of that by checking isBSYCSearch
 	local advUnitList = not skipTally and objTooltip.isBSYCSearch and BSYC.advUnitList
 	local turnOffCache = (opts.debug.enable and opts.debug.cache and true) or false
 	local advPlayerChk = false
@@ -1199,10 +1199,10 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--CACHE CHECK
 		--NOTE: This cache check is ONLY for units (guild, players) that isn't related to the current player.  Since that data doesn't really change we can cache those lines
 		--For the player however, we always want to grab the latest information.  So once it's grabbed we can do a small local cache for that using __lastTally
-		--Advanced Searches should always be processed and not stored in the cache
+		--Search Filters should always be processed and not stored in the cache
 		if turnOffCache or advUnitList or (not Data.__cache.tooltip[origLink] and not doCurrentPlayerOnly) then
 
-			--allow advance search matches if found, no need to set to true as advUnitList will default to dumpAll if found
+			--allow search filters matches if found, no need to set to true as advUnitList will default to dumpAll if found
 			for unitObj in Data:IterateUnits(false, advUnitList) do
 
 				WipeTable(countList)
@@ -1239,7 +1239,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				end
 			end
 
-				--do not cache if we are viewing an advanced search list, otherwise it won't display everything normally
+				--do not cache if we are viewing a search filters list, otherwise it won't display everything normally
 				--finally, only cache if we have something to work with
 				if not turnOffCache and not advUnitList then
 					--store it in the cache (shallow copy to avoid deep-copying DB references)

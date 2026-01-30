@@ -65,9 +65,9 @@ L.Search = "검색"
 L.Debug = "디버그"
 L.Reset = "초기화"
 L.Clear = "초기화"
-L.AdvancedSearch = "심화 검색"
-L.AdvancedSearchInformation = "* BagSync |cffff7d0a[CR]|r 과 |cff3587ff[BNet]|r 설정을 사용합니다."
-L.AdvancedLocationInformation = "* 아무 선택이 없으면 모두 선택한 것이 기본값입니다."
+L.SearchFilters = "검색 필터"
+L.SearchFiltersInformation = "* BagSync |cffff7d0a[CR]|r 과 |cff3587ff[BNet]|r 설정을 사용합니다."
+L.SearchFiltersLocationInformation = "* 아무 선택이 없으면 모두 선택한 것이 기본값입니다."
 L.Units = "유닛:"
 L.Locations = "위치:"
 L.Profiles = "프로필"
@@ -170,7 +170,7 @@ L.ModValue_SHIFT = "SHIFT"
 L.EnableExtTooltip = "아이템 수량을 별도의 툴팁으로 표시합니다."
 L.EnableLoginVersionInfo = "접속 시 BagSync 버전을 표시합니다."
 L.FocusSearchEditBox = "검색 창을 열면 검색 입력창에 위치합니다."
-L.AlwaysShowAdvSearch = "아이템 검색시 항상 심화 검색창을 같이 표시합니다."
+L.AlwaysShowSearchFilters = "아이템 검색시 항상 검색 필터 창을 같이 표시합니다."
 L.DisplayTotal = "[총] 수량을 표시합니다."
 L.DisplayGuildGoldInGoldWindow = "소지금 툴팁에 [길드]의 총 골드를 표시합니다."
 L.Display_GSC = "소지금 창에 |cFFFFD700골드|r, |cFFC0C0C0실버|r 및 |cFFB87333코퍼|r를 표시합니다."
@@ -323,7 +323,7 @@ L.SearchHelp = [[
 @void
 @auction
 @guild
-|cffff7d0aAdvanced Search|r (|cFF99CC33commands|r | |cFFFFD580example|r):
+|cffff7d0a검색 필터|r (|cFF99CC33commands|r | |cFFFFD580example|r):
 |cff00ffff<item name>|r = |cFF99CC33n|r ; |cFF99CC33name|r | |cFFFFD580n:<text>|r ; |cFFFFD580name:<text>|r (n:ore ; name:ore)
 |cff00ffff<item bind>|r = |cFF99CC33bind|r | |cFFFFD580bind:<type>|r ; types (boe, bop, bou, boq) i.e boe = bind on equip
 |cff00ffff<quality>|r = |cFF99CC33q|r ; |cFF99CC33quality|r | |cFFFFD580q<op><text>|r ; |cFFFFD580q<op><digit>|r (q:rare ; q:>2 ; q:>=3)
