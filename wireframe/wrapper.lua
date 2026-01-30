@@ -317,19 +317,58 @@ local function attachTooltip(frame, title, body)
 	end)
 end
 
-local function createTitle(parent, text, y)
+local function applyTitleColor(fs, color)
+	if not fs or not color then return end
+	local r, g, b
+	if type(color) == "table" then
+		r = color.r or color[1]
+		g = color.g or color[2]
+		b = color.b or color[3]
+	end
+	if r and g and b then
+		fs:SetTextColor(r, g, b)
+	end
+end
+
+local function createTitle(parent, text, y, color)
 	local fs = parent:CreateFontString(nil, "ARTWORK", "GameFontNormal")
 	fs:SetPoint("TOPLEFT", parent, "TOPLEFT", 16, y)
 	fs:SetJustifyH("LEFT")
 	fs:SetText(text or "")
+	applyTitleColor(fs, color)
 	return fs, y - (fs:GetStringHeight() + 8)
+end
+
+local function getContentWidth(parent)
+	if not parent or type(parent.GetWidth) ~= "function" then
+		return 560
+	end
+	local w = parent:GetWidth() or 0
+	if not w or w <= 1 then
+		local p = parent:GetParent()
+		if p and type(p.GetWidth) == "function" then
+			w = p:GetWidth() or 0
+		end
+	end
+	if w and w > 1 then
+		return math.max(100, w - 32)
+	end
+	return 560
 end
 
 local function createDescription(parent, text, y, fontTemplate)
 	local fs = parent:CreateFontString(nil, "ARTWORK", fontTemplate or "GameFontHighlight")
 	fs:SetPoint("TOPLEFT", parent, "TOPLEFT", 16, y)
-	fs:SetPoint("RIGHT", parent, "RIGHT", -16, 0)
 	fs:SetJustifyH("LEFT")
+	fs:SetJustifyV("TOP")
+	local width = getContentWidth(parent)
+	if width and width > 0 then
+		fs:SetWidth(width)
+	else
+		fs:SetPoint("RIGHT", parent, "RIGHT", -16, 0)
+	end
+	if fs.SetWordWrap then fs:SetWordWrap(true) end
+	if fs.SetNonSpaceWrap then fs:SetNonSpaceWrap(true) end
 	fs:SetText(text or "")
 	return fs, y - (fs:GetStringHeight() + 10)
 end
@@ -340,6 +379,10 @@ local function createCheckbox(parent, label, y)
 	local textRegion = cb.Text or _G[cb:GetName() .. "Text"]
 	if textRegion then
 		textRegion:SetText(label or "")
+		local font, size, flags = textRegion:GetFont()
+		if font and size then
+			textRegion:SetFont(font, size + 1, flags)
+		end
 	end
 	return cb, y - 26
 end
@@ -353,6 +396,50 @@ local function createButton(parent, label, y)
 	return btn, y - 28
 end
 
+local function createKeybind(parent, label, y)
+	local title = parent:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+	title:SetPoint("TOPLEFT", parent, "TOPLEFT", 16, y)
+	title:SetJustifyH("LEFT")
+	title:SetText(label or "")
+
+	local btn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+	btn:SetPoint("TOPLEFT", title, "BOTTOMLEFT", -2, -4)
+	btn:SetPoint("RIGHT", parent, "RIGHT", -28, 0)
+	btn:SetHeight(20)
+	btn:SetText("")
+	return btn, title, y - (title:GetStringHeight() + 30)
+end
+
+local function createColorRow(parent, label, y)
+	local row = CreateFrame("Button", nil, parent)
+	row:SetPoint("TOPLEFT", parent, "TOPLEFT", 16, y)
+	row:SetPoint("RIGHT", parent, "RIGHT", -16, 0)
+	row:SetHeight(20)
+	row:EnableMouse(true)
+
+	local swatch = row:CreateTexture(nil, "ARTWORK")
+	swatch:SetSize(14, 14)
+	swatch:SetPoint("LEFT", row, "LEFT", 0, 0)
+	swatch:SetColorTexture(1, 1, 1, 1)
+
+	local border = row:CreateTexture(nil, "OVERLAY")
+	border:SetTexture("Interface\\Buttons\\UI-Quickslot2")
+	border:SetSize(18, 18)
+	border:SetPoint("CENTER", swatch, "CENTER", 0, 0)
+	border:SetTexCoord(0.2, 0.8, 0.2, 0.8)
+
+	local highlight = row:CreateTexture(nil, "HIGHLIGHT")
+	highlight:SetColorTexture(1, 1, 1, 0.08)
+	highlight:SetPoint("TOPLEFT", row, "TOPLEFT", -2, 2)
+	highlight:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 2, -2)
+
+	local text = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	text:SetPoint("LEFT", swatch, "RIGHT", 6, 0)
+	text:SetJustifyH("LEFT")
+	text:SetText(label or "")
+	return row, swatch, text, y - 22
+end
+
 local function createSlider(parent, label, y)
 	local slider = CreateFrame("Slider", uiName("Slider"), parent, "OptionsSliderTemplate")
 	slider:SetPoint("TOPLEFT", parent, "TOPLEFT", 16, y)
@@ -364,15 +451,108 @@ local function createSlider(parent, label, y)
 	return slider, y - 48
 end
 
+local DROPDOWN_TOP_PADDING = 6
+local DROPDOWN_WIDTH_PADDING = 40
+local DROPDOWN_MIN_WIDTH = 140
+
 local function createDropdown(parent, label, y)
 	local title = parent:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-	title:SetPoint("TOPLEFT", parent, "TOPLEFT", 16, y)
+	title:SetPoint("TOPLEFT", parent, "TOPLEFT", 16, y - DROPDOWN_TOP_PADDING)
 	title:SetJustifyH("LEFT")
 	title:SetText(label or "")
 
 	local dd = CreateFrame("Frame", uiName("DropDown"), parent, "UIDropDownMenuTemplate")
 	dd:SetPoint("TOPLEFT", title, "BOTTOMLEFT", -16, -2)
-	return dd, title, y - 56
+	return dd, title, y - (56 + DROPDOWN_TOP_PADDING)
+end
+
+local function getDropdownText(dd)
+	if not dd or not dd.GetName then return nil end
+	return _G[dd:GetName() .. "Text"] or dd.Text
+end
+
+local function getMeasureFontString(dd, text)
+	if not dd then return nil end
+	local measure = dd._bsycMeasureText
+	if not measure then
+		measure = dd:CreateFontString(nil, "ARTWORK")
+		measure:Hide()
+		dd._bsycMeasureText = measure
+	end
+	if text and text.GetFontObject and text:GetFontObject() then
+		measure:SetFontObject(text:GetFontObject())
+	elseif text and text.GetFont then
+		local font, size, flags = text:GetFont()
+		if font then
+			measure:SetFont(font, size, flags)
+		end
+	end
+	return measure
+end
+
+local function applyDropdownSizing(dd, entries, parent, force)
+	if not dd or type(entries) ~= "table" or #entries == 0 then return end
+	if dd._bsycWidth and not force then
+		if UIDropDownMenu_SetWidth then
+			UIDropDownMenu_SetWidth(dd, dd._bsycWidth)
+		else
+			dd:SetWidth(dd._bsycWidth)
+		end
+		return
+	end
+
+	if not dd._bsycDefaultWidth then
+		local curWidth = dd.GetWidth and dd:GetWidth() or 0
+		if curWidth and curWidth > 0 then
+			dd._bsycDefaultWidth = curWidth
+		end
+	end
+
+	local text = getDropdownText(dd)
+	local measure = getMeasureFontString(dd, text)
+	if not measure or not measure.SetText then return end
+
+	local maxWidth = 0
+	for i = 1, #entries do
+		local label = tostring(entries[i].label or "")
+		measure:SetText(label)
+		local w = measure:GetStringWidth() or 0
+		if w > maxWidth then
+			maxWidth = w
+		end
+	end
+	if maxWidth <= 0 then return end
+
+	local width = math.floor(maxWidth + DROPDOWN_WIDTH_PADDING + 0.5)
+	local minWidth = dd._bsycDefaultWidth or DROPDOWN_MIN_WIDTH
+	if width < minWidth then width = minWidth end
+	local maxAllowed = getContentWidth(parent)
+	if maxAllowed and maxAllowed > 0 then
+		maxAllowed = maxAllowed + 16
+		if width > maxAllowed then width = maxAllowed end
+	end
+
+	dd._bsycWidth = width
+	if UIDropDownMenu_SetWidth then
+		UIDropDownMenu_SetWidth(dd, width)
+	else
+		dd:SetWidth(width)
+	end
+end
+
+local function updateSliderText(slider, label, value, minVal, maxVal, showValue)
+	local textRegion = slider.Text or _G[slider:GetName() .. "Text"]
+	if textRegion then
+		if showValue and label and label ~= "" then
+			textRegion:SetText(("%s: %s"):format(label, tostring(value)))
+		else
+			textRegion:SetText(label or "")
+		end
+	end
+	local low = slider.Low or _G[slider:GetName() .. "Low"]
+	if low then low:SetText(tostring(minVal)) end
+	local high = slider.High or _G[slider:GetName() .. "High"]
+	if high then high:SetText(tostring(maxVal)) end
 end
 
 local function applyFontPreview(dropdownFrame, fontPath)
@@ -597,18 +777,19 @@ local function renderItems(parent, items, widgets, y)
 					end
 					box:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, y)
 					box:SetPoint("RIGHT", parent, "RIGHT", -10, 0)
-					createTitle(box, title, -10)
-					y = y - 24
+					local _, innerTop = createTitle(box, title, -8, item.titleColor)
 
 					local inner = CreateFrame("Frame", nil, box)
-					inner:SetPoint("TOPLEFT", box, "TOPLEFT", 0, -28)
+					inner:SetPoint("TOPLEFT", box, "TOPLEFT", 0, innerTop)
 					inner:SetPoint("RIGHT", box, "RIGHT", 0, 0)
 					local innerY = -6
 					innerY = renderItems(inner, item.items, widgets, innerY)
-					box:SetHeight(math.max(40, -innerY + 14))
+					local topOffset = -innerTop
+					local contentHeight = -innerY + 6
+					box:SetHeight(math.max(40, topOffset + contentHeight + 10))
 					y = y - box:GetHeight() - 10
 				else
-					_, y = createTitle(parent, title, y)
+					_, y = createTitle(parent, title, y, item.titleColor)
 					y = renderItems(parent, item.items, widgets, y)
 				end
 
@@ -668,6 +849,7 @@ local function renderItems(parent, items, widgets, y)
 						UIDropDownMenu_AddButton(b, level)
 					end
 				end)
+				applyDropdownSizing(dd, entries, parent, false)
 
 				table.insert(widgets, {
 					refresh = function()
@@ -682,6 +864,7 @@ local function renderItems(parent, items, widgets, y)
 						if item.control == "font" and type(BSYC.GetFontPath) == "function" then
 							applyFontPreview(dd, BSYC:GetFontPath(t ~= "" and t or tostring(selected or "")))
 						end
+						applyDropdownSizing(dd, entries, parent, item.control == "font")
 					end
 				})
 
@@ -701,6 +884,7 @@ local function renderItems(parent, items, widgets, y)
 				if slider.SetObeyStepOnDrag then
 					slider:SetObeyStepOnDrag(true)
 				end
+				updateSliderText(slider, label, minVal, minVal, maxVal, item.showValue)
 
 				slider._bsycUpdating = false
 				slider._bsycDragging = false
@@ -714,6 +898,12 @@ local function renderItems(parent, items, widgets, y)
 				slider:SetScript("OnValueChanged", function(self, value)
 					if self._bsycUpdating then return end
 					value = tonumber(value) or minVal
+					if step and step > 0 then
+						value = math.floor((value / step) + 0.5) * step
+					end
+					if value < minVal then value = minVal end
+					if value > maxVal then value = maxVal end
+					updateSliderText(self, label, value, minVal, maxVal, item.showValue)
 					if binding and binding.set then binding.set(value) end
 					if not self._bsycDragging then
 						applyDirty(item.dirty)
@@ -725,9 +915,16 @@ local function renderItems(parent, items, widgets, y)
 					refresh = function()
 						local v = binding and binding.get and tonumber(binding.get()) or item.default
 						v = tonumber(v) or minVal
+						local orig = v
+						if v < minVal then v = minVal end
+						if v > maxVal then v = maxVal end
+						if binding and binding.set and v ~= orig then
+							binding.set(v)
+						end
 						slider._bsycUpdating = true
 						slider:SetValue(v)
 						slider._bsycUpdating = false
+						updateSliderText(slider, label, v, minVal, maxVal, item.showValue)
 						slider:SetEnabled(not evalBool(item.disabled))
 					end
 				})
@@ -749,12 +946,12 @@ local function renderItems(parent, items, widgets, y)
 
 			elseif itemType == "color" then
 				local label = resolveText(item.label or item.name) or ""
-				local btn
-				btn, y = createButton(parent, label, y)
-				attachTooltip(btn, label, resolveText(item.desc) or "")
+				local row, swatch, text
+				row, swatch, text, y = createColorRow(parent, label, y)
+				attachTooltip(row, label, resolveText(item.desc) or "")
 
 				local binding = compileBinding(item)
-				btn:SetScript("OnClick", function()
+				row:SetScript("OnClick", function()
 					local r, g, b = 1, 1, 1
 					if binding and binding.get then
 						r, g, b = binding.get()
@@ -770,26 +967,76 @@ local function renderItems(parent, items, widgets, y)
 						for _, w in ipairs(widgets) do w.refresh() end
 					end
 
-					_G.ColorPickerFrame.hasOpacity = false
-					_G.ColorPickerFrame.previousValues = { r, g, b }
-					_G.ColorPickerFrame.func = applyColor
-					_G.ColorPickerFrame.cancelFunc = function()
-						local prev = _G.ColorPickerFrame.previousValues
-						if prev and binding and binding.set then
-							binding.set(prev[1], prev[2], prev[3])
+					local picker = _G.ColorPickerFrame
+					if picker.SetupColorPickerAndShow then
+						local function cancelFunc(previous)
+							local pr, pg, pb = r, g, b
+							if type(previous) == "table" then
+								pr = previous.r or previous[1] or pr
+								pg = previous.g or previous[2] or pg
+								pb = previous.b or previous[3] or pb
+							end
+							if binding and binding.set then
+								binding.set(pr, pg, pb)
+							end
+							applyDirty(item.dirty)
+							for _, w in ipairs(widgets) do w.refresh() end
 						end
-						applyDirty(item.dirty)
-						for _, w in ipairs(widgets) do w.refresh() end
+
+						picker:SetupColorPickerAndShow({
+							r = r, g = g, b = b,
+							hasOpacity = false,
+							opacity = 1,
+							swatchFunc = applyColor,
+							cancelFunc = cancelFunc,
+						})
+					else
+						--fall back to classic
+						picker.hasOpacity = false
+						picker.previousValues = { r, g, b }
+						picker.func = applyColor
+						picker.cancelFunc = function()
+							local prev = picker.previousValues
+							if prev and binding and binding.set then
+								binding.set(prev[1], prev[2], prev[3])
+							end
+							applyDirty(item.dirty)
+							for _, w in ipairs(widgets) do w.refresh() end
+						end
+						if picker.SetColorRGB then
+							picker:SetColorRGB(r, g, b)
+						elseif picker.Content and picker.Content.ColorPicker and picker.Content.ColorPicker.SetColorRGB then
+							picker.Content.ColorPicker:SetColorRGB(r, g, b)
+						end
+						picker:Show()
 					end
-					_G.ColorPickerFrame:SetColorRGB(r, g, b)
-					_G.ColorPickerFrame:Show()
 				end)
-				table.insert(widgets, { refresh = function() btn:SetEnabled(not evalBool(item.disabled)) end })
+				table.insert(widgets, {
+					refresh = function()
+						local disabled = evalBool(item.disabled)
+						row:SetEnabled(not disabled)
+						if text then
+							if disabled then
+								text:SetTextColor(0.5, 0.5, 0.5)
+							else
+								text:SetTextColor(1, 0.82, 0)
+							end
+						end
+						if swatch and binding and binding.get then
+							local r, g, b = binding.get()
+							r, g, b = tonumber(r) or 1, tonumber(g) or 1, tonumber(b) or 1
+							swatch:SetColorTexture(r, g, b, 1)
+							if swatch.SetDesaturated then
+								swatch:SetDesaturated(disabled)
+							end
+						end
+					end
+				})
 
 			elseif itemType == "keybind" then
 				local label = resolveText(item.label or item.name) or ""
 				local btn
-				btn, y = createButton(parent, label, y)
+				btn, _, y = createKeybind(parent, label, y)
 				attachTooltip(btn, label, resolveText(item.desc) or "")
 
 				local binding = compileBinding(item)
@@ -842,9 +1089,9 @@ local function renderItems(parent, items, widgets, y)
 						btn:SetEnabled(not evalBool(item.disabled))
 						local v = currentBinding()
 						if v ~= "" then
-							btn:SetText(("%s: %s"):format(label, v))
+							btn:SetText(v)
 						else
-							btn:SetText(("%s: %s"):format(label, BSYC.L.None or "None"))
+							btn:SetText(_G.NOT_BOUND or BSYC.L.None or "None")
 						end
 					end
 				})
@@ -922,7 +1169,7 @@ function BSYC.ConfigDialog:AddToBlizOptions(appName, name, parentName)
 		local y = -12
 		local title = resolveText(optionsTable.title or optionsTable.name) or ""
 		if title ~= "" then
-			_, y = createTitle(content, title, y)
+			_, y = createTitle(content, title, y, optionsTable.titleColor)
 		end
 		local desc = resolveText(optionsTable.description or optionsTable.desc) or ""
 		if desc ~= "" then

@@ -703,6 +703,13 @@ function BSYC:CreateFonts()
 	end
 	fontObject:SetFont(BSYC:GetFontPath(fontName), BSYC.options.extTT_FontSize, flags)
 	BSYC.__font = fontObject
+
+	if BSYC.GetModule then
+		local tooltip = BSYC:GetModule("Tooltip", true)
+		if tooltip and tooltip.ApplyExtTipFont then
+			pcall(tooltip.ApplyExtTipFont, tooltip)
+		end
+	end
 end
 
 --------------------

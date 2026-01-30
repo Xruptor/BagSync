@@ -10,6 +10,7 @@ local BSYC = select(2, ...) --grab the addon namespace
 local L = BSYC.L
 local config = BSYC.Config
 local configDialog = BSYC.ConfigDialog
+local TITLE_WHITE = { 1, 1, 1 }
 
 local function ShowModuleFrame(name)
 	local module = BSYC.GetModule and BSYC:GetModule(name, true)
@@ -164,6 +165,7 @@ local generalTable = {
 		{
 			type = "group",
 			title = "BagSync",
+			titleColor = TITLE_WHITE,
 			inline = true,
 			items = {
 				{ type = "toggle", label = L.EnableBagSyncTooltip, bind = { "opt", "enableTooltips" }, dirty = "tooltips" },
@@ -179,6 +181,7 @@ local generalTable = {
 		{
 			type = "group",
 			title = L.ConfigExternalTooltip,
+			titleColor = TITLE_WHITE,
 			inline = true,
 			items = {
 				{
@@ -208,9 +211,10 @@ local generalTable = {
 				{
 					type = "range",
 					label = L.ConfigFontSize,
-					min = 10,
-					max = 200,
+					min = 12,
+					max = 72,
 					step = 1,
+					showValue = true,
 					bind = { "opt", "extTT_FontSize" },
 					default = 12,
 					dirty = { "fonts", "tooltips" },
@@ -262,6 +266,7 @@ local trackingTable = {
 		{
 			type = "group",
 			title = L.ConfigTrackingModules,
+			titleColor = TITLE_WHITE,
 			inline = true,
 			items = {
 				{ type = "toggle", label = L.TrackingModule_Bag, bind = { "tracking", "bag" }, dirty = "tooltips" },
@@ -323,6 +328,7 @@ local displayTable = {
 		{
 			type = "group",
 			title = L.DisplayTooltipStorage,
+			titleColor = TITLE_WHITE,
 			inline = true,
 			hidden = function() return not BSYC.IsRetail end,
 			items = {
@@ -332,6 +338,7 @@ local displayTable = {
 		{
 			type = "group",
 			title = L.DisplayTooltipExtra,
+			titleColor = TITLE_WHITE,
 			inline = true,
 			items = {
 				{ type = "toggle", label = L.DisplayLineSeparator, bind = { "opt", "enableTooltipSeparator" }, dirty = "tooltips" },
@@ -391,6 +398,7 @@ local displayTable = {
 		{
 			type = "group",
 			title = L.Currency,
+			titleColor = TITLE_WHITE,
 			inline = true,
 			hidden = function() return not (BSYC.CanDoCurrency and BSYC:CanDoCurrency()) end,
 			items = {
@@ -400,6 +408,7 @@ local displayTable = {
 		{
 			type = "group",
 			title = L.DisplaySorting,
+			titleColor = TITLE_WHITE,
 			inline = true,
 			items = {
 				{ type = "text", text = "|cFFFFD700" .. (L.DisplaySortInfo or "") .. "|r" },
@@ -423,6 +432,7 @@ local displayTable = {
 		{
 			type = "group",
 			title = L.DisplayTooltipTags,
+			titleColor = TITLE_WHITE,
 			inline = true,
 			items = {
 				{ type = "toggle", label = string.format(L.DisplayGreenCheck, ReadyCheck), bind = { "opt", "enableTooltipGreenCheck" }, dirty = "tooltips" },
@@ -436,13 +446,14 @@ local displayTable = {
 					set = setLocationStyle,
 					dirty = "tooltips",
 				},
-				{ type = "text", text = "        " .. charLocations },
-				{ type = "text", text = "        " .. iconLocations },
+				{ type = "text", font = "GameFontHighlightSmall", text = "        " .. charLocations },
+				{ type = "text", font = "GameFontHighlightSmall", text = "        " .. iconLocations },
 			},
 		},
 		{
 			type = "group",
 			title = L.DisplayCurrentCharacter,
+			titleColor = TITLE_WHITE,
 			inline = true,
 			items = {
 				{ type = "toggle", label = L.DisplayCurrentCharacterOnly, bind = { "opt", "showCurrentCharacterOnly" }, dirty = "tooltips" },
@@ -452,6 +463,7 @@ local displayTable = {
 		{
 			type = "group",
 			title = L.DisplayTooltipAccountWide,
+			titleColor = TITLE_WHITE,
 			inline = true,
 			items = {
 				{ type = "toggle", label = L.DisplayCurrentRealmName, bind = { "opt", "enableCurrentRealmName" }, dirty = "tooltips" },
@@ -500,6 +512,7 @@ local displayTable = {
 		{
 			type = "group",
 			title = L.DisplayShowUniqueItemsTotalsTitle,
+			titleColor = TITLE_WHITE,
 			inline = true,
 			items = {
 				{ type = "text", font = "GameFontNormal", text = L.DisplayShowUniqueItemsTotals },
@@ -529,6 +542,7 @@ local colorTable = {
 		{ type = "color", label = L.ColorWarbandTabs, bind = { "color", "warbandtabs" }, dirty = "tooltips" },
 		{ type = "color", label = L.ColorBankTabs, bind = { "color", "banktabs" }, dirty = "tooltips" },
 		{ type = "color", label = L.ColorBagSlots, bind = { "color", "bagslots" }, dirty = "tooltips" },
+		{ type = "text", text = "" },
 		{
 			type = "button",
 			label = L.DefaultColors,
@@ -547,6 +561,7 @@ local colorTable = {
 		{
 			type = "group",
 			title = L.ConfigDisplay,
+			titleColor = TITLE_WHITE,
 			inline = true,
 			items = {
 				{ type = "toggle", label = L.DisplayClassColor, bind = { "opt", "enableUnitClass" }, dirty = "tooltips" },
@@ -567,10 +582,17 @@ local function buildFAQItems()
 			items[#items + 1] = { type = "text", font = "GameFontNormalLarge", text = function() return "|cffffd200" .. (L[qKey] or "") .. "|r" end }
 		end
 		if a and a ~= "" then
-			items[#items + 1] = { type = "text", font = "GameFontHighlight", text = function() return L[aKey] or "" end }
+			items[#items + 1] = {
+				type = "group",
+				title = "",
+				inline = true,
+				items = {
+					{ type = "text", font = "GameFontHighlight", text = function() return L[aKey] or "" end },
+				},
+			}
 		end
 		if i < 7 then
-			items[#items + 1] = { type = "text", text = "|cff5c5c5c--------------------------------------------------|r" }
+			items[#items + 1] = { type = "text", text = " " }
 		end
 	end
 	return items

@@ -723,6 +723,26 @@ function Tooltip:EnsureExtTip()
 	Tooltip.extTip = extTip
 end
 
+function Tooltip:ApplyExtTipFont()
+	if not Tooltip.extTip or not BSYC.__font then return end
+	local fontPath, fontSize, fontFlags = BSYC.__font:GetFont()
+	if not fontPath or not fontSize then return end
+
+	local tip = Tooltip.extTip
+	local name = tip:GetName()
+	local numLines = tip:NumLines() or 0
+	for i = 1, numLines do
+		local left = _G[name .. "TextLeft" .. i]
+		if left and left.SetFont then
+			left:SetFont(fontPath, fontSize, fontFlags)
+		end
+		local right = _G[name .. "TextRight" .. i]
+		if right and right.SetFont then
+			right:SetFont(fontPath, fontSize, fontFlags)
+		end
+	end
+end
+
 function Tooltip:ExtTipCheck(source, isBattlePet)
 	local opts = BSYC.options
 	local shouldShow = (opts.enableExtTooltip or isBattlePet) and true or false
@@ -1110,6 +1130,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			end
 			objTooltip:Show()
 			if showExtTip then
+				Tooltip:ApplyExtTipFont()
 				Tooltip.extTip:Show()
 				Tooltip:UpdateExtTipAnchor()
 			end
@@ -1485,6 +1506,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	if showExtTip then
 		if #unitList > 0 then
+			Tooltip:ApplyExtTipFont()
 			Tooltip.extTip:Show()
 			Tooltip:UpdateExtTipAnchor()
 		else
@@ -1521,6 +1543,7 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 			end
 			objTooltip:Show()
 			if showExtTip then
+				Tooltip:ApplyExtTipFont()
 				Tooltip.extTip:Show()
 				Tooltip:UpdateExtTipAnchor()
 			end
@@ -1634,6 +1657,7 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	objTooltip.__tooltipUpdated = true
 	objTooltip:Show()
 	if showExtTip then
+		Tooltip:ApplyExtTipFont()
 		Tooltip.extTip:Show()
 		Tooltip.objTooltip = objTooltip
 		Tooltip:UpdateExtTipAnchor()
