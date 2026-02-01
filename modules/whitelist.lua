@@ -91,6 +91,9 @@ function Whitelist:OnEnable()
 	warningFrame.infoText2:SetPoint("LEFT", warningFrame.infoText1, "BOTTOMLEFT", 5, -200)
 	warningFrame.infoText2:SetJustifyH("CENTER")
 	Whitelist.warningFrame = warningFrame
+	if warningFrame.CloseButton then
+		warningFrame.CloseButton:SetScript("OnClick", function(self) self:GetParent():Hide() end)
+	end
 
 	StaticPopupDialogs["BAGSYNC_WHITELIST_REMOVE"] = {
 		text = L.WhiteListRemove,
@@ -163,7 +166,7 @@ function Whitelist:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		button.parentHandler = Whitelist
+		BSYC:UI_AttachListItemHandlers(button, Whitelist)
 
         local itemIndex = buttonIndex + offset
 

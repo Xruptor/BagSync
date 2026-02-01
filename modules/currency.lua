@@ -150,7 +150,7 @@ function Currency:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		button.parentHandler = Currency
+		BSYC:UI_AttachListItemHandlers(button, Currency)
 
         local itemIndex = buttonIndex + offset
 

@@ -31,6 +31,66 @@ function SearchFilters:OnEnable()
 	advFrame.HelpButton:Hide()
 	SearchFilters.frame = advFrame
 
+	local searchBox = advFrame.SearchBox
+	if searchBox then
+		searchBox.parentHandler = SearchFilters
+		if searchBox.ClearButton then
+			searchBox.ClearButton.parentHandler = SearchFilters
+			searchBox.ClearButton:SetScript("OnEnter", function(self)
+				self.Texture:SetAlpha(1.0)
+			end)
+			searchBox.ClearButton:SetScript("OnLeave", function(self)
+				self.Texture:SetAlpha(0.5)
+			end)
+			searchBox.ClearButton:SetScript("OnMouseDown", function(self)
+				self.Texture:SetPoint("TOPLEFT", -1, -2)
+			end)
+			searchBox.ClearButton:SetScript("OnMouseUp", function(self)
+				self.Texture:SetPoint("TOPLEFT", 0, 0)
+			end)
+			searchBox.ClearButton:SetScript("OnShow", function(self)
+				self.Texture:SetPoint("TOPLEFT", 0, 0)
+			end)
+			searchBox.ClearButton:SetScript("OnClick", function(self)
+				BSYC:UI_CallHandler(self, "SearchBox_ResetSearch", self)
+			end)
+		end
+		searchBox:SetScript("OnEscapePressed", function(self)
+			self:ClearFocus()
+			BSYC:UI_CallHandler(self, "SearchBox_OnEscapePressed", self:GetText())
+		end)
+		searchBox:SetScript("OnEnterPressed", function(self)
+			self:ClearFocus()
+			BSYC:UI_CallHandler(self, "SearchBox_OnEnterPressed", self:GetText())
+		end)
+		searchBox:SetScript("OnEditFocusLost", function(self)
+			self.SearchIcon:SetVertexColor(0.6, 0.6, 0.6)
+			self.SearchInfo:SetShown(self:GetText():len() == 0)
+			self.ClearButton:SetShown(self:GetText():len() > 0)
+		end)
+		searchBox:SetScript("OnEditFocusGained", function(self)
+			self.SearchIcon:SetVertexColor(1.0, 1.0, 1.0)
+			self.ClearButton:Show()
+			self.SearchInfo:Hide()
+		end)
+		searchBox:SetScript("OnTextChanged", function(self, userInput)
+			BSYC:UI_CallHandler(self, "SearchBox_OnTextChanged", userInput)
+		end)
+	end
+
+	if advFrame.PlusButton then
+		advFrame.PlusButton.parentHandler = SearchFilters
+		advFrame.PlusButton:SetScript("OnClick", function(self)
+			BSYC:UI_CallHandler(self, "PlusClick")
+		end)
+	end
+	if advFrame.RefreshButton then
+		advFrame.RefreshButton.parentHandler = SearchFilters
+		advFrame.RefreshButton:SetScript("OnClick", function(self)
+			BSYC:UI_CallHandler(self, "RefreshClick")
+		end)
+	end
+
 	--Search Filters Information
 	advFrame.infoText = advFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
 	advFrame.infoText:SetText(L.SearchFiltersInformation)
@@ -244,7 +304,7 @@ function SearchFilters:RefreshPlayerList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		button.parentHandler = SearchFilters
+		BSYC:UI_AttachListItemHandlers(button, SearchFilters)
 
         local itemIndex = buttonIndex + offset
 
@@ -305,7 +365,7 @@ function SearchFilters:RefreshLocationList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		button.parentHandler = SearchFilters
+		BSYC:UI_AttachListItemHandlers(button, SearchFilters)
 
         local itemIndex = buttonIndex + offset
 

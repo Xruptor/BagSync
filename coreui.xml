@@ -53,45 +53,8 @@
                 </Anchors>
                 <NormalTexture setAllPoints="true" atlas="shop-games-magnifyingglass"/>
                 <HighlightTexture setAllPoints="true" atlas="shop-games-magnifyingglass" alphaMode="ADD"/>
-                <Scripts>
-                    <OnClick>
-						if self:GetParent().parentHandler and self:GetParent().parentHandler.ItemDetails then
-							self:GetParent().parentHandler:ItemDetails(self);
-						end
-                    </OnClick>
-					<OnEnter>
-						self:GetParent().DetailsHighlight:SetAlpha(0.75);
-						if self:GetParent().parentHandler and self:GetParent().parentHandler.ItemDetails_OnEnter then
-							self:GetParent().parentHandler:ItemDetails_OnEnter(self);
-						end
-					</OnEnter>
-					<OnLeave>
-						self:GetParent().DetailsHighlight:SetAlpha(0);
-						if self:GetParent().parentHandler and self:GetParent().parentHandler.ItemDetails_OnLeave then
-							self:GetParent().parentHandler:ItemDetails_OnLeave(self);
-						end
-					</OnLeave>
-                </Scripts>
             </Button>
         </Frames>
-		<Scripts>
-			<OnClick>
-				<!-- self:<scrollframe><parentObject> -->
-				if self.parentHandler and self.parentHandler.Item_OnClick then
-					self.parentHandler:Item_OnClick(self);
-				end
-			</OnClick>
-			<OnEnter>
-				if self.parentHandler and self.parentHandler.Item_OnEnter then
-					self.parentHandler:Item_OnEnter(self);
-				end
-			</OnEnter>
-			<OnLeave>
-				if self.parentHandler and self.parentHandler.Item_OnLeave then
-					self.parentHandler:Item_OnLeave(self);
-				end
-			</OnLeave>
-		</Scripts>
     </Frame>
 
 	<Frame name="BagSyncListSimpleItemTemplate" virtual="true">
@@ -130,24 +93,6 @@
                 </Texture>
             </Layer>
         </Layers>
-		<Scripts>
-			<OnClick>
-				<!-- self:<scrollframe><parentObject> -->
-				if self.parentHandler and self.parentHandler.Item_OnClick then
-					self.parentHandler:Item_OnClick(self);
-				end
-			</OnClick>
-			<OnEnter>
-				if self.parentHandler and self.parentHandler.Item_OnEnter then
-					self.parentHandler:Item_OnEnter(self);
-				end
-			</OnEnter>
-			<OnLeave>
-				if self.parentHandler and self.parentHandler.Item_OnLeave then
-					self.parentHandler:Item_OnLeave(self);
-				end
-			</OnLeave>
-		</Scripts>
     </Frame>
 
 	<Frame name="BagSyncListSortItemTemplate" virtual="true">
@@ -187,45 +132,8 @@
 					<Anchor point="RIGHT" relativeKey="$parent" relativePoint="RIGHT" x="-10" y="0"/>
 				</Anchors>
 				<FontString inherits="GameFontHighlight"/>
-				<Scripts>
-					<OnEscapePressed>
-						self:ClearFocus()
-						if self:GetParent().parentHandler and self:GetParent().parentHandler.SortBox_OnEscapePressed then
-							self:GetParent().parentHandler:SortBox_OnEscapePressed(self:GetText(), self);
-						end
-					</OnEscapePressed>
-					<OnEnterPressed>
-						self:ClearFocus()
-						if self:GetParent().parentHandler and self:GetParent().parentHandler.SortBox_OnEnterPressed then
-							self:GetParent().parentHandler:SortBox_OnEnterPressed(self:GetText(), self);
-						end
-					</OnEnterPressed>
-					<OnTextChanged>
-						if self:GetParent().parentHandler and self:GetParent().parentHandler.SortBox_OnTextChanged then
-							self:GetParent().parentHandler:SortBox_OnTextChanged(userInput, self);
-						end
-					</OnTextChanged>
-				</Scripts>
 			</EditBox>
 		</Frames>
-		<Scripts>
-			<OnClick>
-				<!-- self:<scrollframe><parentObject> -->
-				if self.parentHandler and self.parentHandler.Item_OnClick then
-					self.parentHandler:Item_OnClick(self);
-				end
-			</OnClick>
-			<OnEnter>
-				if self.parentHandler and self.parentHandler.Item_OnEnter then
-					self.parentHandler:Item_OnEnter(self);
-				end
-			</OnEnter>
-			<OnLeave>
-				if self.parentHandler and self.parentHandler.Item_OnLeave then
-					self.parentHandler:Item_OnLeave(self);
-				end
-			</OnLeave>
-		</Scripts>
     </Frame>
 
     <Frame name="BagSyncSavedListTemplate" virtual="true">
@@ -266,33 +174,8 @@
                 </Anchors>
                 <NormalTexture setAllPoints="true" atlas="transmog-icon-remove"/>
                 <HighlightTexture setAllPoints="true" atlas="transmog-icon-remove" alphaMode="ADD"/>
-                <Scripts>
-                    <OnClick>
-						if self:GetParent().parentHandler and self:GetParent().parentHandler.SavedSearch_Delete then
-							self:GetParent().parentHandler:SavedSearch_Delete(self);
-						end
-                    </OnClick>
-                </Scripts>
             </Button>
         </Frames>
-		<Scripts>
-			<OnClick>
-				<!-- self:<scrollframe><parentObject> -->
-				if self.parentHandler and self.parentHandler.SavedSearch_Item_OnClick then
-					self.parentHandler:SavedSearch_Item_OnClick(self);
-				end
-			</OnClick>
-			<OnEnter>
-				if self.parentHandler and self.parentHandler.SavedSearch_Item_OnEnter then
-					self.parentHandler:SavedSearch_Item_OnEnter(self);
-				end
-			</OnEnter>
-			<OnLeave>
-				if self.parentHandler and self.parentHandler.SavedSearch_Item_OnLeave then
-					self.parentHandler:SavedSearch_Item_OnLeave(self);
-				end
-			</OnLeave>
-		</Scripts>
     </Frame>
 
 <!--
@@ -438,99 +321,27 @@
 								</Texture>
 							</Layer>
 						</Layers>
-						<Scripts>
-							<OnEnter>
-								self.Texture:SetAlpha(1.0);
-							</OnEnter>
-							<OnLeave>
-								self.Texture:SetAlpha(0.5)
-							</OnLeave>
-							<OnMouseDown>
-								self.Texture:SetPoint("TOPLEFT",-1,-2)
-							</OnMouseDown>
-							<OnMouseUp>
-								self.Texture:SetPoint("TOPLEFT",0,0)
-							</OnMouseUp>
-							<OnShow>
-								self.Texture:SetPoint("TOPLEFT",0,0)
-							</OnShow>
-							<OnClick>
-								if self:GetParent():GetParent().SearchBox_ResetSearch then
-									self:GetParent():GetParent():SearchBox_ResetSearch(self);
-								end
-							</OnClick>
-						</Scripts>
 					</Button>
 				</Frames>
 				<FontString inherits="GameFontHighlight"/>
-				<Scripts>
-					<OnEscapePressed>
-						self:ClearFocus()
-						if self:GetParent().SearchBox_OnEscapePressed then
-							self:GetParent():SearchBox_OnEscapePressed(self:GetText());
-						end
-					</OnEscapePressed>
-					<OnEnterPressed>
-						self:ClearFocus()
-						if self:GetParent().SearchBox_OnEnterPressed then
-							self:GetParent():SearchBox_OnEnterPressed(self:GetText());
-						end
-					</OnEnterPressed>
-					<OnEditFocusLost>
-						self.SearchIcon:SetVertexColor(0.6,0.6,0.6)
-						self.SearchInfo:SetShown(self:GetText():len()==0)
-						self.ClearButton:SetShown(self:GetText():len()>0)
-					</OnEditFocusLost>
-					<OnEditFocusGained>
-						self.SearchIcon:SetVertexColor(1.0,1.0,1.0)
-						self.ClearButton:Show()
-						self.SearchInfo:Hide()
-					</OnEditFocusGained>
-					<OnTextChanged>
-						if self:GetParent().SearchBox_OnTextChanged then
-							self:GetParent():SearchBox_OnTextChanged(userInput);
-						end
-					</OnTextChanged>
-				</Scripts>
 			</EditBox>
             <Button parentKey="PlusButton" inherits="UIPanelButtonTemplate" text="+">
                 <Size x="20" y="20"/>
                 <Anchors>
                     <Anchor point="TOPRIGHT" x="-113" y="-32"/>
                 </Anchors>
-                <Scripts>
-                    <OnClick>
-						if self:GetParent().PlusClick then
-							self:GetParent():PlusClick();
-						end
-                    </OnClick>
-                </Scripts>
             </Button>
             <Button parentKey="RefreshButton" inherits="UIPanelButtonTemplate" text="REFRESH">
                 <Size x="80" y="20"/>
                 <Anchors>
                     <Anchor point="TOPRIGHT" x="-28" y="-32"/>
                 </Anchors>
-                <Scripts>
-                    <OnClick>
-						if self:GetParent().RefreshClick then
-							self:GetParent():RefreshClick();
-						end
-                    </OnClick>
-                </Scripts>
             </Button>
             <Button parentKey="HelpButton" inherits="UIPanelButtonTemplate" text="?">
                 <Size x="20" y="20"/>
                 <Anchors>
                     <Anchor point="TOPRIGHT" x="-8" y="-32"/>
                 </Anchors>
-                <Scripts>
-                    <OnClick>
-						if self:GetParent().HelpClick then
-							self:GetParent():HelpClick();
-						end
-                    </OnClick>
-                </Scripts>
             </Button>
 		</Frames>		
 	</Frame>
@@ -563,11 +374,6 @@
 				<Anchors>
 					<Anchor point="TOPRIGHT" x="1" y="0"/>
 				</Anchors>
-				<Scripts>
-					<OnClick>
-						self:GetParent():Hide();
-					</OnClick>
-				</Scripts>
 				<NormalTexture file="Interface\Buttons\UI-Panel-MinimizeButton-Up"/>
 				<PushedTexture file="Interface\Buttons\UI-Panel-MinimizeButton-Down"/>
 				<HighlightTexture file="Interface\Buttons\UI-Panel-MinimizeButton-Highlight" alphaMode="ADD"/>

@@ -68,6 +68,9 @@ function SortOrder:OnEnable()
 	warningFrame.infoText2:SetPoint("LEFT", warningFrame.infoText1, "BOTTOMLEFT", 5, -100)
 	warningFrame.infoText2:SetJustifyH("CENTER")
 	SortOrder.warningFrame = warningFrame
+	if warningFrame.CloseButton then
+		warningFrame.CloseButton:SetScript("OnClick", function(self) self:GetParent():Hide() end)
+	end
 
 	sortorderFrame:Hide()
 end
@@ -165,7 +168,22 @@ function SortOrder:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		button.parentHandler = SortOrder
+		BSYC:UI_AttachListItemHandlers(button, SortOrder)
+		if button.SortBox and not button.SortBox.__bsycHandlers then
+			button.SortBox.parentHandler = SortOrder
+			button.SortBox:SetScript("OnEscapePressed", function(self)
+				self:ClearFocus()
+				BSYC:UI_CallHandler(self, "SortBox_OnEscapePressed", self:GetText(), self)
+			end)
+			button.SortBox:SetScript("OnEnterPressed", function(self)
+				self:ClearFocus()
+				BSYC:UI_CallHandler(self, "SortBox_OnEnterPressed", self:GetText(), self)
+			end)
+			button.SortBox:SetScript("OnTextChanged", function(self, userInput)
+				BSYC:UI_CallHandler(self, "SortBox_OnTextChanged", userInput, self)
+			end)
+			button.SortBox.__bsycHandlers = true
+		end
 
         local itemIndex = buttonIndex + offset
 

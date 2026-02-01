@@ -173,7 +173,7 @@ function Blacklist:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		button.parentHandler = Blacklist
+		BSYC:UI_AttachListItemHandlers(button, Blacklist)
 
         local itemIndex = buttonIndex + offset
 

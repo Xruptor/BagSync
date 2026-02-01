@@ -54,32 +54,6 @@ BSYC.API.GetItemInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
 BSYC.IsBankTabsActive = Enum.BagIndex.CharacterBankTab_1 ~= nil
 BSYC.IsReagentBagActive = (Constants.InventoryConstants.NumReagentBagSlots or 0) > 0
 
--- Mouse focus compatibility: some clients provide GetMouseFocus() (single region),
--- others provide GetMouseFoci() (returns ScriptRegion[]).  Normalize to a single region.
-function BSYC.GMF()
-	if type(_G.GetMouseFocus) == "function" then
-		return _G.GetMouseFocus()
-	end
-	if type(_G.GetMouseFoci) == "function" then
-		local regions = _G.GetMouseFoci()
-		if type(regions) == "table" then
-			return regions[1]
-		end
-	end
-	return nil
-end
-
--- Unified hover check used throughout scroll lists.  Prefer IsMouseOver() when available.
-function BSYC:IsMouseOver(frame)
-	if not frame then return false end
-	if type(frame.IsMouseOver) == "function" then
-		local ok, res = pcall(frame.IsMouseOver, frame)
-		if ok then
-			return not not res
-		end
-	end
-	return self.GMF and (self.GMF() == frame) or false
-end
 --since FetchPurchasedBankTabData supports Guilds, it's possible in the future they will put it on a classic server with no Warband support.  So lets do it as last resort
 BSYC.isWarbandActive = (C_Container and C_Container.SortAccountBankBags) and (Enum and Enum.BagIndex and Enum.BagIndex.AccountBankTab_1) and (C_Bank and C_Bank.FetchPurchasedBankTabData)
 
@@ -177,6 +151,33 @@ BSYC.hasMark = hasMark
 
 --use /framestack to debug windows and show tooltip information
 --if you press SHIFT while doing the above command it gives you a bit more information
+
+-- Mouse focus compatibility: some clients provide GetMouseFocus() (single region),
+-- others provide GetMouseFoci() (returns ScriptRegion[]).  Normalize to a single region.
+function BSYC.GMF()
+	if type(_G.GetMouseFocus) == "function" then
+		return _G.GetMouseFocus()
+	end
+	if type(_G.GetMouseFoci) == "function" then
+		local regions = _G.GetMouseFoci()
+		if type(regions) == "table" then
+			return regions[1]
+		end
+	end
+	return nil
+end
+
+-- Unified hover check used throughout scroll lists.  Prefer IsMouseOver() when available.
+function BSYC:IsMouseOver(frame)
+	if not frame then return false end
+	if type(frame.IsMouseOver) == "function" then
+		local ok, res = pcall(frame.IsMouseOver, frame)
+		if ok then
+			return not not res
+		end
+	end
+	return self.GMF and (self.GMF() == frame) or false
+end
 
 --this is only for hash tables that aren't indexed with 1,2,3,4 etc.. but use custom index keys
 --if you are using table.insert() or tables that are indexed with numbers then use # instead for table length.  #table as example
@@ -799,6 +800,77 @@ end
 -- ------------------------------------------------------------
 -- UI helpers (backbone only; preserves existing layout/behavior)
 -- ------------------------------------------------------------
+
+function BSYC:UI_FindHandler(widget)
+	if not widget then return nil end
+	if widget.parentHandler then return widget.parentHandler end
+
+	local p = widget
+	while p do
+		if p.parentHandler then
+			widget.parentHandler = p.parentHandler
+			return p.parentHandler
+		end
+		p = p:GetParent()
+	end
+end
+
+function BSYC:UI_CallHandler(widget, method, ...)
+	local handler = self:UI_FindHandler(widget)
+	local fn = handler and handler[method]
+	if type(fn) == "function" then
+		return fn(handler, ...)
+	end
+end
+
+function BSYC:UI_AttachListItemHandlers(button, handler, opts)
+	if not button or button.__bsycHandlers then return end
+
+	opts = opts or {}
+	local onClick = opts.onClick or "Item_OnClick"
+	local onEnter = opts.onEnter or "Item_OnEnter"
+	local onLeave = opts.onLeave or "Item_OnLeave"
+
+	button.parentHandler = handler
+	button:SetScript("OnClick", function(self)
+		BSYC:UI_CallHandler(self, onClick, self)
+	end)
+	button:SetScript("OnEnter", function(self)
+		BSYC:UI_CallHandler(self, onEnter, self)
+	end)
+	button:SetScript("OnLeave", function(self)
+		BSYC:UI_CallHandler(self, onLeave, self)
+	end)
+
+	local details = opts.detailsButton and button[opts.detailsButton]
+	if details then
+		local onDetailsClick = opts.onDetailsClick or "ItemDetails"
+		local onDetailsEnter = opts.onDetailsEnter or "ItemDetails_OnEnter"
+		local onDetailsLeave = opts.onDetailsLeave or "ItemDetails_OnLeave"
+		details.parentHandler = handler
+		details:SetScript("OnClick", function(self)
+			BSYC:UI_CallHandler(self, onDetailsClick, self)
+		end)
+		if onDetailsEnter ~= false then
+			details:SetScript("OnEnter", function(self)
+				if self:GetParent().DetailsHighlight then
+					self:GetParent().DetailsHighlight:SetAlpha(0.75)
+				end
+				BSYC:UI_CallHandler(self, onDetailsEnter, self)
+			end)
+		end
+		if onDetailsLeave ~= false then
+			details:SetScript("OnLeave", function(self)
+				if self:GetParent().DetailsHighlight then
+					self:GetParent().DetailsHighlight:SetAlpha(0)
+				end
+				BSYC:UI_CallHandler(self, onDetailsLeave, self)
+			end)
+		end
+	end
+
+	button.__bsycHandlers = true
+end
 
 function BSYC:UI_CreateModuleFrame(module, opts)
 	opts = opts or {}

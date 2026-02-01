@@ -165,7 +165,7 @@ function Recipes:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		button.parentHandler = Recipes
+		BSYC:UI_AttachListItemHandlers(button, Recipes)
 
         local itemIndex = buttonIndex + offset
 

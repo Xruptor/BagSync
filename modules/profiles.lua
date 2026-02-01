@@ -136,7 +136,7 @@ function Profiles:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		button.parentHandler = Profiles
+		BSYC:UI_AttachListItemHandlers(button, Profiles)
 
         local itemIndex = buttonIndex + offset
 

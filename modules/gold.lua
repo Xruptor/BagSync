@@ -157,7 +157,7 @@ function Gold:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		button.parentHandler = Gold
+		BSYC:UI_AttachListItemHandlers(button, Gold)
 
         local itemIndex = buttonIndex + offset
 

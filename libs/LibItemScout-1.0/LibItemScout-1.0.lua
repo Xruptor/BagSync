@@ -101,6 +101,7 @@ local strfind, strlower, strsub, strlen = string.find, string.lower, string.sub,
 local tinsert = table.insert
 local cache = {}
 local EMPTY_CACHE = {}
+local link_FindSearchInTooltip
 
 local xGetItemInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
 local xGetItemNameByID = (C_Item and C_Item.GetItemNameByID) or function(item)
@@ -420,6 +421,9 @@ local function splitPlain(delim, text)
 end
 
 local function evalTerm(itemLink, term)
+	if term.alwaysTrue then
+		return true
+	end
 	local primitive = term.defaultPrimitive
 	for i = 1, #term.entries do
 		local e = term.entries[i]
@@ -453,10 +457,10 @@ function Lib:_CompileTerm(text)
 		if useful(rest) then
 			raw = rest
 		else
-			-- preserve legacy behavior: invalid tagged search is ignored (true), unless negated (!tag:) which becomes false
+			-- preserve legacy behavior: invalid tagged search is ignored (always true)
 			return {
 				negated = negated,
-				defaultPrimitive = (not negated),
+				alwaysTrue = true,
 				entries = {},
 			}
 		end
@@ -465,9 +469,10 @@ function Lib:_CompileTerm(text)
 	local operator
 	operator, raw = parseOperator(raw)
 	if not useful(raw) then
+		-- invalid search term; preserve legacy behavior (always true)
 		return {
 			negated = negated,
-			defaultPrimitive = (tag and not negated) and true or false,
+			alwaysTrue = true,
 			entries = {},
 		}
 	end
@@ -475,6 +480,14 @@ function Lib:_CompileTerm(text)
 	local candidates
 	if tag then
 		candidates = self:_GetSearchTypesForTagPrefix(tag) or {}
+		if #candidates == 0 then
+			-- unknown tag; preserve legacy behavior (always true)
+			return {
+				negated = negated,
+				alwaysTrue = true,
+				entries = {},
+			}
+		end
 	else
 		self:_RebuildIndex()
 		candidates = self._freeSearchTypes
@@ -491,8 +504,7 @@ function Lib:_CompileTerm(text)
 
 	return {
 		negated = negated,
-		-- legacy: tagged terms default to true unless negated
-		defaultPrimitive = (tag and not negated) and true or false,
+		defaultPrimitive = false,
 		entries = entries,
 	}
 end
@@ -574,18 +586,48 @@ Lib:RegisterTypedSearch{
 	onlyTags = true,
 
 	canSearch = function(self, operator, search)
-		return not operator and self.keywords[search]
+		if operator then return nil end
+		return self.keywords[search]
 	end,
 
 	findItem = function(self, item, _, search)
-		return search == (cache.bindType or (xGetItemInfo and select(14, xGetItemInfo(item))))
+		if not search then return false end
+		local bindType = cache.bindType or (xGetItemInfo and select(14, xGetItemInfo(item)))
+		if bindType == nil then return false end
+
+		if type(search) == "table" then
+			if type(bindType) == "number" and search.value ~= nil then
+				return bindType == search.value
+			end
+			if type(bindType) == "string" and search.text ~= nil then
+				return bindType == search.text
+			end
+			if search.text and type(item) == "string" then
+				return link_FindSearchInTooltip(item, search.text)
+			end
+			return false
+		end
+
+		return search == bindType
 	end,
 
 	keywords = {
-		['boe'] = LE_ITEM_BIND_ON_EQUIP,
-		['bop'] = LE_ITEM_BIND_ON_ACQUIRE,
-		['bou'] = LE_ITEM_BIND_ON_USE,
-		['boq'] = LE_ITEM_BIND_QUEST,
+		['boe'] = {
+			value = (Enum and Enum.ItemBind and Enum.ItemBind.OnEquip) or LE_ITEM_BIND_ON_EQUIP,
+			text = ITEM_BIND_ON_EQUIP,
+		},
+		['bop'] = {
+			value = (Enum and Enum.ItemBind and Enum.ItemBind.OnAcquire) or LE_ITEM_BIND_ON_ACQUIRE,
+			text = ITEM_BIND_ON_PICKUP,
+		},
+		['bou'] = {
+			value = (Enum and Enum.ItemBind and Enum.ItemBind.OnUse) or LE_ITEM_BIND_ON_USE,
+			text = ITEM_BIND_ON_USE,
+		},
+		['boq'] = {
+			value = (Enum and Enum.ItemBind and Enum.ItemBind.Quest) or LE_ITEM_BIND_QUEST,
+			text = ITEM_BIND_QUEST,
+		},
 	}
 }
 
@@ -737,7 +779,21 @@ local function stripColor(text)
 	return (text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
 end
 
-local function link_FindSearchInTooltip(itemLink, search)
+local function getLineText(line)
+	if not line then return nil end
+	if line.args and line.args[2] and line.args[2].stringVal then
+		return line.args[2].stringVal
+	end
+	if line.leftText then
+		return line.leftText
+	end
+	if line.text then
+		return line.text
+	end
+	return nil
+end
+
+link_FindSearchInTooltip = function(itemLink, search)
 	local itemID = itemLink:match('item:(%d+)')
 	if not itemID then
 		return
@@ -752,7 +808,7 @@ local function link_FindSearchInTooltip(itemLink, search)
 	local data = Lib.Tooltip.GetHyperlink(itemLink)
 	if data then
 		for i, line in ipairs(data.lines) do
-			local text = line.args[2].stringVal
+			local text = getLineText(line)
 			if text then
 				text = stripColor(text)
 				if text == search then
@@ -820,10 +876,10 @@ Lib:RegisterTypedSearch{
 	end,
 
 	findItem = function(self, link, _, search)
-		local data = Lib.Tooltip.GetHyperlink(link)
+	local data = Lib.Tooltip.GetHyperlink(link)
         if data then
             for i, line in ipairs(data.lines) do
-				local text = line.args[2].stringVal
+				local text = getLineText(line)
 				if text then
 					text = stripColor(text)
 					if text and strlower(text):find(search, 1, true) then
@@ -861,10 +917,10 @@ Lib:RegisterTypedSearch{
 		local result = false
 		local pattern = string.gsub(ITEM_CLASSES_ALLOWED:lower(), "%%s", "(.+)")
 
-		local data = Lib.Tooltip.GetHyperlink(link)
+	local data = Lib.Tooltip.GetHyperlink(link)
         if data then
             for i, line in ipairs(data.lines) do
-				local text = line.args[2].stringVal
+				local text = getLineText(line)
 				if text then
 					text = text:lower()
 					local textChk = string.find(text, pattern)

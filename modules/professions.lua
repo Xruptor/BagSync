@@ -134,7 +134,7 @@ function Professions:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		button.parentHandler = Professions
+		BSYC:UI_AttachListItemHandlers(button, Professions)
 
         local itemIndex = buttonIndex + offset
 

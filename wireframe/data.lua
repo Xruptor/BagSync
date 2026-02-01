@@ -251,6 +251,9 @@ function Data:ShowInfoWindow()
 	bgsInfoWindow.okBTN:SetScript("OnClick", function() BSYC.options.showBNETCRInfoWindow = false; bgsInfoWindow:Hide()  end)
 
 	bgsInfoWindow.CloseButton:Hide()
+	if bgsInfoWindow.CloseButton then
+		bgsInfoWindow.CloseButton:SetScript("OnClick", function(self) self:GetParent():Hide() end)
+	end
 	bgsInfoWindow:Show()
 end
 

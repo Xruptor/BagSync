@@ -94,6 +94,9 @@ function Search:OnEnable()
 	warningFrame.infoText2:SetPoint("LEFT", warningFrame.infoText1, "BOTTOMLEFT", 5, -70)
 	warningFrame.infoText2:SetJustifyH("CENTER")
 	Search.warningFrame = warningFrame
+	if warningFrame.CloseButton then
+		warningFrame.CloseButton:SetScript("OnClick", function(self) self:GetParent():Hide() end)
+	end
 
 	--Help Frame
 	local helpFrame = _G.CreateFrame("Frame", nil, searchFrame, "BagSyncInfoFrameTemplate")
@@ -129,6 +132,9 @@ function Search:OnEnable()
 	helpFrame.EditBox:SetTextColor(1, 1, 1) --set default to white
 	helpFrame.ScrollFrame:EnableMouse(false)
 	Search.helpFrame = helpFrame
+	if helpFrame.CloseButton then
+		helpFrame.CloseButton:SetScript("OnClick", function(self) self:GetParent():Hide() end)
+	end
 
 	--Saved Search Frame
 	local savedSearch = _G.CreateFrame("Frame", nil, searchFrame, "BagSyncInfoFrameTemplate")
@@ -147,6 +153,9 @@ function Search:OnEnable()
 	savedSearch.TitleText:SetTextColor(1, 1, 1)
 	savedSearch:SetScript("OnShow", function() Search:SavedSearch_UpdateList() end)
 	Search.savedSearch = savedSearch
+	if savedSearch.CloseButton then
+		savedSearch.CloseButton:SetScript("OnClick", function(self) self:GetParent():Hide() end)
+	end
 	savedSearch.scrollFrame = BSYC:UI_CreateHybridScrollFrame(savedSearch, {
 		width = 357,
 		pointTopLeft = { "TOPLEFT", savedSearch, "TOPLEFT", 13, -32 },
@@ -197,6 +206,72 @@ function Search:OnEnable()
 		modulesButtonIcon:SetSize(17, 17)
 		modulesButtonIcon:SetTexture("Interface\\AddOns\\BagSync\\media\\icon")
 		modulesButtonIcon:SetPoint("TOPLEFT", 7, -6)
+	end
+
+	local searchBox = searchFrame.SearchBox
+	if searchBox then
+		searchBox.parentHandler = Search
+		if searchBox.ClearButton then
+			searchBox.ClearButton.parentHandler = Search
+			searchBox.ClearButton:SetScript("OnEnter", function(self)
+				self.Texture:SetAlpha(1.0)
+			end)
+			searchBox.ClearButton:SetScript("OnLeave", function(self)
+				self.Texture:SetAlpha(0.5)
+			end)
+			searchBox.ClearButton:SetScript("OnMouseDown", function(self)
+				self.Texture:SetPoint("TOPLEFT", -1, -2)
+			end)
+			searchBox.ClearButton:SetScript("OnMouseUp", function(self)
+				self.Texture:SetPoint("TOPLEFT", 0, 0)
+			end)
+			searchBox.ClearButton:SetScript("OnShow", function(self)
+				self.Texture:SetPoint("TOPLEFT", 0, 0)
+			end)
+			searchBox.ClearButton:SetScript("OnClick", function(self)
+				BSYC:UI_CallHandler(self, "SearchBox_ResetSearch", self)
+			end)
+		end
+		searchBox:SetScript("OnEscapePressed", function(self)
+			self:ClearFocus()
+			BSYC:UI_CallHandler(self, "SearchBox_OnEscapePressed", self:GetText())
+		end)
+		searchBox:SetScript("OnEnterPressed", function(self)
+			self:ClearFocus()
+			BSYC:UI_CallHandler(self, "SearchBox_OnEnterPressed", self:GetText())
+		end)
+		searchBox:SetScript("OnEditFocusLost", function(self)
+			self.SearchIcon:SetVertexColor(0.6, 0.6, 0.6)
+			self.SearchInfo:SetShown(self:GetText():len() == 0)
+			self.ClearButton:SetShown(self:GetText():len() > 0)
+		end)
+		searchBox:SetScript("OnEditFocusGained", function(self)
+			self.SearchIcon:SetVertexColor(1.0, 1.0, 1.0)
+			self.ClearButton:Show()
+			self.SearchInfo:Hide()
+		end)
+		searchBox:SetScript("OnTextChanged", function(self, userInput)
+			BSYC:UI_CallHandler(self, "SearchBox_OnTextChanged", userInput)
+		end)
+	end
+
+	if searchFrame.PlusButton then
+		searchFrame.PlusButton.parentHandler = Search
+		searchFrame.PlusButton:SetScript("OnClick", function(self)
+			BSYC:UI_CallHandler(self, "PlusClick")
+		end)
+	end
+	if searchFrame.RefreshButton then
+		searchFrame.RefreshButton.parentHandler = Search
+		searchFrame.RefreshButton:SetScript("OnClick", function(self)
+			BSYC:UI_CallHandler(self, "RefreshClick")
+		end)
+	end
+	if searchFrame.HelpButton then
+		searchFrame.HelpButton.parentHandler = Search
+		searchFrame.HelpButton:SetScript("OnClick", function(self)
+			BSYC:UI_CallHandler(self, "HelpClick")
+		end)
 	end
 
 	searchFrame:Hide() --important
@@ -424,7 +499,7 @@ function Search:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		button.parentHandler = Search
+		BSYC:UI_AttachListItemHandlers(button, Search, { detailsButton = "DetailsButton" })
 
         local itemIndex = buttonIndex + offset
 
@@ -568,7 +643,10 @@ function Search:ItemDetails_OnEnter(btn)
 	GameTooltip:AddLine("|cFFFFFFFF"..L.TooltipDetailsInfo.."|r")
 	GameTooltip:AddLine(" ")
 	if item and item.data then
-		GameTooltip:AddLine("|cFFCF9FFF"..item.data.entry.."|r")
+		local entry = item.data.entry or item.data.parseLink or item.data.link
+		if entry then
+			GameTooltip:AddLine("|cFFCF9FFF"..entry.."|r")
+		end
 	end
 	GameTooltip:Show()
 end
@@ -610,7 +688,15 @@ function Search:SavedSearch_RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		button.parentHandler = Search
+		BSYC:UI_AttachListItemHandlers(button, Search, {
+			onClick = "SavedSearch_Item_OnClick",
+			onEnter = "SavedSearch_Item_OnEnter",
+			onLeave = "SavedSearch_Item_OnLeave",
+			detailsButton = "DeleteButton",
+			onDetailsClick = "SavedSearch_Delete",
+			onDetailsEnter = false,
+			onDetailsLeave = false,
+		})
 
         local itemIndex = buttonIndex + offset
 
