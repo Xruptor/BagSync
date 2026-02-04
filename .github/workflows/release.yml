@@ -10,8 +10,7 @@ on:
     tags:
       - '!v*.*.*-*'
       - '!v*.*-*'
-      - 'v*.*.*'
-      - 'v*.*'
+      - 'v*'
 
 # a workflow is built up as jobs, and within these jobs are steps
 jobs:
@@ -35,10 +34,10 @@ jobs:
     steps:
       # we first have to clone the AddOn project, this is a required step
       - name: Clone project
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # Package and release the retail version
-      # It should create Retail, Classic and Progression server Packages so long as the (## Interface) has multiple client versions
-      # Example: ## Interface: 110005, 110007, 11504, 40401
-      - name: Create Retail Package
-        uses: BigWigsMods/packager@master
+      # Package and release (auto-detects supported game versions from TOC)
+      - name: Package and release
+        uses: BigWigsMods/packager@v2
