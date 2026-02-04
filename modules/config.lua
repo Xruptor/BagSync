@@ -110,6 +110,12 @@ local fontOutlineValues = {
 	{ "THICKOUTLINE", L.ConfigFontOutline_THICKOUTLINE },
 }
 
+local extTooltipAnchorValues = {
+	{ "BOTTOM", L.ExtTooltipAnchor_Bottom },
+	{ "LEFT", L.ExtTooltipAnchor_Left },
+	{ "RIGHT", L.ExtTooltipAnchor_Right },
+}
+
 local tooltipSortModes = {
 	{ "realm_character", L.SortMode_RealmCharacter },
 	{ "character", L.SortMode_Character },
@@ -199,6 +205,14 @@ local generalTable = {
 					bind = { "opt", "extTT_Font" },
 					default = BSYC.DEFAULT_FONT_NAME,
 					dirty = { "fonts", "tooltips" },
+				},
+				{
+					type = "select",
+					label = L.ConfigExtTooltipAnchor,
+					values = extTooltipAnchorValues,
+					bind = { "opt", "extTT_Anchor" },
+					default = "BOTTOM",
+					dirty = "tooltips",
 				},
 				{
 					type = "select",

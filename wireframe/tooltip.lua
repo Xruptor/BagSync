@@ -790,22 +790,58 @@ local function QuantizeCoord(v)
 	return math.floor(v * 10 + 0.5) -- tenth-pixel-ish granularity, avoids jitter
 end
 
-function Tooltip:GetBottomTooltipAnchor(owner)
+local function NormalizeAnchorMode(mode)
+	mode = tostring(mode or ""):upper()
+	if mode == "LEFT" or mode == "RIGHT" or mode == "BOTTOM" then
+		return mode
+	end
+	return "BOTTOM"
+end
+
+local function IsOffscreen(frame)
+	if not frame or not frame.GetLeft then return false end
+	local left, right = frame:GetLeft(), frame:GetRight()
+	local top, bottom = frame:GetTop(), frame:GetBottom()
+	if not left or not right or not top or not bottom then return false end
+	local width = UIParent and UIParent.GetWidth and UIParent:GetWidth() or 0
+	local height = UIParent and UIParent.GetHeight and UIParent:GetHeight() or 0
+	if width <= 0 or height <= 0 then return false end
+	return (left < 0) or (right > width) or (bottom < 0) or (top > height)
+end
+
+function Tooltip:GetBottomTooltipAnchor(owner, anchorMode)
 	if not owner then return nil end
+	anchorMode = NormalizeAnchorMode(anchorMode)
 
 	local bestFrame = owner
-	local bestPos = owner:GetBottom()
+	local bestPos = (anchorMode == "LEFT" and owner:GetLeft())
+		or (anchorMode == "RIGHT" and owner:GetRight())
+		or owner:GetBottom()
 
 	local candidates = WipeTable(self.__scratchAnchorCandidates or {})
 	self.__scratchAnchorCandidates = candidates
 
 	local function consider(frame)
-		if not frame or not frame.GetBottom then return end
+		if not frame or (anchorMode == "LEFT" and not frame.GetLeft)
+			or (anchorMode == "RIGHT" and not frame.GetRight)
+			or (anchorMode == "BOTTOM" and not frame.GetBottom) then
+			return
+		end
 		if not IsRelatedTooltipFrame(frame, owner) then return end
-		local bottom = frame:GetBottom()
-		if bottom and (not bestPos or bottom < bestPos) then
-			bestPos = bottom
-			bestFrame = frame
+		local pos = (anchorMode == "LEFT" and frame:GetLeft())
+			or (anchorMode == "RIGHT" and frame:GetRight())
+			or frame:GetBottom()
+		if not pos then return end
+		if anchorMode == "RIGHT" then
+			if not bestPos or pos > bestPos then
+				bestPos = pos
+				bestFrame = frame
+			end
+		else
+			if not bestPos or pos < bestPos then
+				bestPos = pos
+				bestFrame = frame
+			end
 		end
 	end
 
@@ -862,13 +898,15 @@ function Tooltip:GetBottomTooltipAnchor(owner)
 	return bestFrame, bestPos
 end
 
-function Tooltip:GetBottomTooltipAnchorCached(owner)
+function Tooltip:GetBottomTooltipAnchorCached(owner, anchorMode)
 	if not owner then return nil end
+	anchorMode = NormalizeAnchorMode(anchorMode)
 
 	-- Single-cache is enough: ExtTip shows for only one owner at a time.
 	local cachedOwner = self.__extTipAnchorOwner
 	local cachedSig = self.__extTipAnchorSig
 	local cachedAnchor = self.__extTipAnchorFrame
+	local cachedMode = self.__extTipAnchorMode
 
 	local sig = 5381
 
@@ -877,7 +915,9 @@ function Tooltip:GetBottomTooltipAnchorCached(owner)
 	end
 
 	local function consider(frame, weight)
-		if not frame or not frame.GetBottom then
+		if not frame or (anchorMode == "LEFT" and not frame.GetLeft)
+			or (anchorMode == "RIGHT" and not frame.GetRight)
+			or (anchorMode == "BOTTOM" and not frame.GetBottom) then
 			sigAdd(7 + (weight or 0))
 			return nil
 		end
@@ -888,17 +928,20 @@ function Tooltip:GetBottomTooltipAnchorCached(owner)
 			return nil
 		end
 
-		local bottom = frame:GetBottom()
-		local q = QuantizeCoord(bottom)
+		local pos = (anchorMode == "LEFT" and frame:GetLeft())
+			or (anchorMode == "RIGHT" and frame:GetRight())
+			or frame:GetBottom()
+		local q = QuantizeCoord(pos)
 		sigAdd((q * 31) + (weight or 0))
 
-		return frame, bottom
+		return frame, pos
 	end
 
 	-- Owner position affects where we anchor (TOP/BOTTOM and LEFT/RIGHT logic).
 	local cx, cy = owner:GetCenter()
 	sigAdd(QuantizeCoord(cx))
 	sigAdd(QuantizeCoord(cy))
+	sigAdd(anchorMode == "LEFT" and 11 or anchorMode == "RIGHT" and 17 or 23)
 
 	-- Compute signature across the same candidate set used for anchoring.
 	consider(owner, 1)
@@ -951,21 +994,38 @@ function Tooltip:GetBottomTooltipAnchorCached(owner)
 	end
 
 	-- Cache hit: ensure the cached anchor still qualifies.
-	if cachedOwner == owner and cachedSig == sig and cachedAnchor and IsRelatedTooltipFrame(cachedAnchor, owner) then
+	if cachedOwner == owner and cachedSig == sig and cachedMode == anchorMode
+		and cachedAnchor and IsRelatedTooltipFrame(cachedAnchor, owner) then
 		return cachedAnchor
 	end
 
 	-- Cache miss: compute best anchor and store signature.
 	local bestFrame = owner
-	local bestPos = owner:GetBottom()
+	local bestPos = (anchorMode == "LEFT" and owner:GetLeft())
+		or (anchorMode == "RIGHT" and owner:GetRight())
+		or owner:GetBottom()
 
 	local function pick(frame)
-		if not frame or not frame.GetBottom then return end
+		if not frame or (anchorMode == "LEFT" and not frame.GetLeft)
+			or (anchorMode == "RIGHT" and not frame.GetRight)
+			or (anchorMode == "BOTTOM" and not frame.GetBottom) then
+			return
+		end
 		if not IsRelatedTooltipFrame(frame, owner) then return end
-		local bottom = frame:GetBottom()
-		if bottom and (not bestPos or bottom < bestPos) then
-			bestPos = bottom
-			bestFrame = frame
+		local pos = (anchorMode == "LEFT" and frame:GetLeft())
+			or (anchorMode == "RIGHT" and frame:GetRight())
+			or frame:GetBottom()
+		if not pos then return end
+		if anchorMode == "RIGHT" then
+			if not bestPos or pos > bestPos then
+				bestPos = pos
+				bestFrame = frame
+			end
+		else
+			if not bestPos or pos < bestPos then
+				bestPos = pos
+				bestFrame = frame
+			end
 		end
 	end
 
@@ -1017,24 +1077,59 @@ function Tooltip:GetBottomTooltipAnchorCached(owner)
 	self.__extTipAnchorOwner = owner
 	self.__extTipAnchorSig = sig
 	self.__extTipAnchorFrame = bestFrame
+	self.__extTipAnchorMode = anchorMode
 
 	return bestFrame
 end
 
-function Tooltip:SetExtTipAnchor(owner, anchor, extTip)
+function Tooltip:SetExtTipAnchor(owner, anchor, extTip, anchorMode)
 	Debug(BSYC_DL.SL2, "SetExtTipAnchor", owner, anchor, extTip)
 
 	anchor = anchor or owner
+	anchorMode = NormalizeAnchorMode(anchorMode)
 	local x, y = owner:GetCenter()
 	if not x or not y then
-		extTip:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT")
+		if anchorMode == "LEFT" then
+			extTip:SetPoint("TOPRIGHT", anchor, "TOPLEFT")
+		elseif anchorMode == "RIGHT" then
+			extTip:SetPoint("TOPLEFT", anchor, "TOPRIGHT")
+		else
+			extTip:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT")
+		end
 		return
 	end
 
-	local hhalf = (x > UIParent:GetWidth() * 2 / 3) and "LEFT" or (x < UIParent:GetWidth() / 3) and "RIGHT" or ""
-	local vhalf = (y > UIParent:GetHeight() / 4) and "TOP" or "BOTTOM"
+	local function place(mode, vhalfOverride)
+		mode = NormalizeAnchorMode(mode)
+		local vhalf = vhalfOverride or ((y > UIParent:GetHeight() / 4) and "TOP" or "BOTTOM")
+		if mode == "LEFT" then
+			extTip:SetPoint(vhalf .. "RIGHT", anchor, vhalf .. "LEFT")
+			return vhalf
+		elseif mode == "RIGHT" then
+			extTip:SetPoint(vhalf .. "LEFT", anchor, vhalf .. "RIGHT")
+			return vhalf
+		else
+			local hhalf = (x > UIParent:GetWidth() * 2 / 3) and "LEFT" or (x < UIParent:GetWidth() / 3) and "RIGHT" or ""
+			extTip:SetPoint(vhalf .. hhalf, anchor, (vhalf == "TOP" and "BOTTOM" or "TOP") .. hhalf)
+			return vhalf, hhalf
+		end
+	end
 
-	extTip:SetPoint(vhalf .. hhalf, anchor, (vhalf == "TOP" and "BOTTOM" or "TOP") .. hhalf)
+	extTip:ClearAllPoints()
+	local usedVhalf, usedHhalf = place(anchorMode)
+	if IsOffscreen(extTip) then
+		extTip:ClearAllPoints()
+		if anchorMode == "LEFT" then
+			place("RIGHT")
+		elseif anchorMode == "RIGHT" then
+			place("LEFT")
+		else
+			-- bottom preference: flip vertical side if off-screen
+			local flipVhalf = (usedVhalf == "TOP") and "BOTTOM" or "TOP"
+			local hhalf = usedHhalf or ((x > UIParent:GetWidth() * 2 / 3) and "LEFT" or (x < UIParent:GetWidth() / 3) and "RIGHT" or "")
+			extTip:SetPoint(flipVhalf .. hhalf, anchor, (flipVhalf == "TOP" and "BOTTOM" or "TOP") .. hhalf)
+		end
+	end
 end
 
 function Tooltip:UpdateExtTipAnchor()
@@ -1042,9 +1137,10 @@ function Tooltip:UpdateExtTipAnchor()
 	if not frame or not extTip or not extTip:IsShown() then return end
 
 	extTip:ClearAllPoints()
-	local anchor = self:GetBottomTooltipAnchorCached(frame) or frame
+	local anchorMode = NormalizeAnchorMode(BSYC.options and BSYC.options.extTT_Anchor)
+	local anchor = self:GetBottomTooltipAnchorCached(frame, anchorMode) or frame
 	if anchor == extTip then anchor = frame end
-	self:SetExtTipAnchor(frame, anchor, extTip)
+	self:SetExtTipAnchor(frame, anchor, extTip, anchorMode)
 end
 
 function Tooltip:ResetCache()
@@ -1714,6 +1810,7 @@ function Tooltip:HookTooltip(objTooltip)
 		Tooltip.__extTipAnchorOwner = nil
 		Tooltip.__extTipAnchorSig = nil
 		Tooltip.__extTipAnchorFrame = nil
+		Tooltip.__extTipAnchorMode = nil
 	end)
 	--the battlepet tooltips don't use this, so check for it
 	if objTooltip ~= BattlePetTooltip and objTooltip ~= FloatingBattlePetTooltip then

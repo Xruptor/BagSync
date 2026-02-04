@@ -69,6 +69,7 @@ local optionsDefaults = {
 	extTT_FontSize = 12,
 	extTT_FontOutline = "OUTLINE",
 	extTT_FontMonochrome = false,
+	extTT_Anchor = "BOTTOM",
 	enable_GSC_Display = false,
 	enableCurrentRealmName = false,
 	enableCurrentRealmShortName = false,
@@ -273,6 +274,13 @@ function Data:FixDB()
 		if BSYC.options[legacyKey] ~= nil then
 			BSYC.options.alwaysShowSearchFilters = BSYC.options[legacyKey]
 			BSYC.options[legacyKey] = nil
+		end
+	end
+
+	-- ensure new ext tooltip anchor option is present
+	do
+		if BSYC.options.extTT_Anchor == nil then
+			BSYC.options.extTT_Anchor = optionsDefaults.extTT_Anchor
 		end
 	end
 

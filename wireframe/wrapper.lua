@@ -12,8 +12,13 @@ _G[addonName] = BSYC
 -- Locale (AceLocale replacement)
 -- ---------------------------------------------------------------------------
 
+local currentLocale = (type(_G.GetLocale) == "function" and _G.GetLocale()) or "enUS"
+if currentLocale == "enGB" then
+	currentLocale = "enUS"
+end
+
 BSYC._locales = BSYC._locales or {
-	current = (type(_G.GetLocale) == "function" and _G.GetLocale()) or "enUS",
+	current = currentLocale,
 	default = nil,
 	locales = {},
 }

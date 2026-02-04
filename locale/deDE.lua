@@ -259,12 +259,16 @@ L.ConfigKeybindings = "Keybindings"
 L.ConfigKeybindingsHeader = "Tastenbelegungseinstellungen für BagSync Funktionen."
 L.ConfigExternalTooltip = "Externer Tooltip"
 L.ConfigFont = "Schriftart"
+L.ConfigExtTooltipAnchor = "Position"
 L.ConfigFontSize = "Schriftart Größe"
 L.ConfigFontOutline = "Outline"
 L.ConfigFontOutline_NONE = "Nichts"
 L.ConfigFontOutline_OUTLINE = "Outline"
 L.ConfigFontOutline_THICKOUTLINE = "ThickOutline"
 L.ConfigFontMonochrome = "Monochrome"
+L.ExtTooltipAnchor_Bottom = "Unten"
+L.ExtTooltipAnchor_Left = "Links"
+L.ExtTooltipAnchor_Right = "Rechts"
 L.ConfigTracking = "Verfolgung"
 L.ConfigTrackingHeader = "Verfolgungs Einstellungen für alle gespeicherten BagSync Datenbankstandorte."
 L.ConfigTrackingCaution = "Achtung"
@@ -422,4 +426,3 @@ Für eine vollständige Liste besuche bitte:
 
 Die Option heißt:
 ]]
-
