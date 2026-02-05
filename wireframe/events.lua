@@ -11,6 +11,7 @@ local Events = BSYC:NewModule("Events")
 local Unit = BSYC:GetModule("Unit")
 local Scanner = BSYC:GetModule("Scanner")
 local L = BSYC.L
+local wipe = _G.wipe
 
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Events", ...) end
@@ -192,6 +193,7 @@ end
 
 function Events:BAG_UPDATE(event, bagid)
 	Debug(BSYC_DL.SL3, "BAG_UPDATE", bagid)
+	if not bagid then return end
 	if not self.SpamBagQueue then self.SpamBagQueue = {} end
 	local wasQueued = self.SpamBagQueue[bagid]
 	self.SpamBagQueue[bagid] = true

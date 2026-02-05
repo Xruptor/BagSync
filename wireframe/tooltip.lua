@@ -14,6 +14,12 @@ local Scanner = BSYC:GetModule("Scanner")
 local L = BSYC.L
 local tinsert, tconcat, tsort = table.insert, table.concat, table.sort
 local wipe = _G.wipe
+local GetRealmName = _G.GetRealmName
+local CURRENT_REALM = type(GetRealmName) == "function" and GetRealmName() or nil
+
+local function GetCurrentRealm()
+	return CURRENT_REALM or (type(GetRealmName) == "function" and GetRealmName()) or ""
+end
 
 --https://github.com/tomrus88/BlizzardInterfaceCode/blob/classic/Interface/GlueXML/CharacterCreate.lua
 local RACE_ICON_TCOORDS = _G.RACE_ICON_TCOORDS or {
@@ -128,7 +134,7 @@ function Tooltip:HexColor(color, str)
 	if type(color) == "table" then
 		return string.format("|cff%s%s|r", RGBPercToHex(color.r, color.g, color.b), tostring(str))
 	end
-	if string.len(color) == 8 then
+	if #color == 8 then
 		return string.format("|c%s%s|r", tostring(color), tostring(str))
 	else
 		return string.format("|cff%s%s|r", tostring(color), tostring(str))
@@ -171,11 +177,12 @@ end
 
 function Tooltip:GetSortIndex(unitObj)
 	if unitObj then
+		local currentRealm = GetCurrentRealm()
 		if BSYC.options.sortShowCurrentPlayerOnTop and unitObj.data == BSYC.db.player then
 			return 1
-		elseif not unitObj.isGuild and unitObj.realm == _G.GetRealmName() then
+		elseif not unitObj.isGuild and unitObj.realm == currentRealm then
 			return 2
-		elseif unitObj.isGuild and unitObj.realm == _G.GetRealmName() then
+		elseif unitObj.isGuild and unitObj.realm == currentRealm then
 			return 3
 		elseif not unitObj.isGuild and unitObj.isConnectedRealm then
 			return 4
@@ -247,6 +254,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 	local tmpTag = ""
 	local realm = unitObj.realm
 	local realmTag = ""
+	local currentRealm = GetCurrentRealm()
 	--bypass: shows colorized names, checkmark, and faction icons but no CR or BNET tags
 	--forceRealm: adds realm tags forcefully
 
@@ -326,7 +334,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 		realm = ""
 	end
 
-	if BSYC.options.enableCurrentRealmName and unitObj.realm == _G.GetRealmName() then
+	if BSYC.options.enableCurrentRealmName and unitObj.realm == currentRealm then
 		realm = unitObj.realm
 		if BSYC.options.enableCurrentRealmShortName then
 			realm = string.sub(realm, 1, 5)
@@ -344,7 +352,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 			end
 		end
 
-		if (forceXRBNET or BSYC.options.enableCR) and unitObj.isConnectedRealm and unitObj.realm ~= _G.GetRealmName() then
+		if (forceXRBNET or BSYC.options.enableCR) and unitObj.isConnectedRealm and unitObj.realm ~= currentRealm then
 			realmTag = (BSYC.options.enableRealmIDTags and L.TooltipCR_Tag..delimiter) or ""
 			if realm ~= "" or realmTag ~= "" then
 				addStr = self:HexColor(BSYC.colors.cr, "["..realmTag..realm.."]")
@@ -353,7 +361,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 	else
 		--if it's a connected realm guild the player belongs to, then show the CR tag.  This option only true if the CR and BNET options are off.
 		realmTag = (BSYC.options.enableRealmIDTags and L.TooltipCR_Tag..delimiter) or ""
-		realm = (string.len(realm) > 1 and realm) or "" --lets make sure we have more than just an asterick for the realm name otherwiose it would be [+] we want [+]
+		realm = (#realm > 1 and realm) or "" --lets make sure we have more than just an asterick for the realm name otherwiose it would be [+] we want [+]
 		addStr = self:HexColor(BSYC.colors.cr, "[+"..realmTag..realm.."]")
 	end
 
@@ -367,7 +375,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 	end
 
 	if not bypass then
-		Debug(BSYC_DL.INFO, "ColorizeUnit", tmpTag, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, _G.GetRealmName())
+		Debug(BSYC_DL.INFO, "ColorizeUnit", tmpTag, unitObj.realm, unitObj.isConnectedRealm, unitObj.isXRGuild, currentRealm)
 	end
 	return tmpTag
 end

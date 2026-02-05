@@ -45,11 +45,23 @@ BSYC.DEFAULT_ALLOW_LIST = BSYC.DEFAULT_ALLOW_LIST or {
 
 -- centralized API compatibility table (preserves fallbacks)
 BSYC.API = BSYC.API or {}
-BSYC.API.GetContainerNumSlots = (C_Container and C_Container.GetContainerNumSlots) or GetContainerNumSlots
-BSYC.API.GetContainerItemInfo = (C_Container and C_Container.GetContainerItemInfo) or GetContainerItemInfo
+local xGetContainerNumSlots = (C_Container and C_Container.GetContainerNumSlots) or GetContainerNumSlots
+local xGetContainerItemInfo = (C_Container and C_Container.GetContainerItemInfo) or GetContainerItemInfo
+BSYC.API.GetContainerNumSlots = xGetContainerNumSlots
+BSYC.API.GetContainerItemInfo = xGetContainerItemInfo
 BSYC.API.GetAddOnMetadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
 BSYC.API.IsAddOnLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded) or IsAddOnLoaded
 BSYC.API.GetItemInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
+-- normalize container item link + count across Classic/Retail
+BSYC.API.GetContainerItemLinkCount = function(bagID, slotID)
+	if not xGetContainerItemInfo then return nil, nil end
+	local info, count, _, _, _, _, link = xGetContainerItemInfo(bagID, slotID)
+	if type(info) == "table" then
+		link = info.hyperlink
+		count = info.stackCount or 1
+	end
+	return link, count, info
+end
 
 BSYC.IsBankTabsActive = Enum.BagIndex.CharacterBankTab_1 ~= nil
 BSYC.IsReagentBagActive = (Constants.InventoryConstants.NumReagentBagSlots or 0) > 0

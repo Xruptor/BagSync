@@ -961,7 +961,17 @@ local function GetOption(key, defaultValue)
 	return value
 end
 
-local function ShouldIncludeRealm(realmKey, meta, dumpAll, filterList)
+local function GetUnitFilterOptions()
+	local tracking = BSYC.tracking or (BSYC.options and BSYC.options.tracking) or {}
+	return {
+		enableBNET = GetOption("enableBNET", optionsDefaults.enableBNET),
+		enableCR = GetOption("enableCR", optionsDefaults.enableCR),
+		enableFaction = GetOption("enableFaction", optionsDefaults.enableFaction),
+		trackingGuild = tracking.guild ~= false,
+	}
+end
+
+local function ShouldIncludeRealm(realmKey, meta, dumpAll, filterList, opts)
 	if hasMark(realmKey, "§") then
 		return false
 	end
@@ -971,8 +981,8 @@ local function ShouldIncludeRealm(realmKey, meta, dumpAll, filterList)
 
 	if meta.isCurrent then return true end
 
-	local enableBNET = GetOption("enableBNET", optionsDefaults.enableBNET)
-	local enableCR = GetOption("enableCR", optionsDefaults.enableCR)
+	local enableBNET = opts.enableBNET
+	local enableCR = opts.enableCR
 
 	if enableBNET then
 		-- allow all realms, but preserve legacy equivalence safety
@@ -997,9 +1007,10 @@ local function ShouldIncludeRealm(realmKey, meta, dumpAll, filterList)
 	return false
 end
 
-local function ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, filterList, currentFaction)
+local function ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, filterList, currentFaction, opts)
 	local isGuild = hasMark(unitKey, "©")
-	local hasAnyMark = hasMark(unitKey, "©") or hasMark(unitKey, "§")
+	local hasSystemMark = hasMark(unitKey, "§")
+	local hasAnyMark = isGuild or hasSystemMark
 
 	if dumpAll then
 		return true
@@ -1011,7 +1022,7 @@ local function ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, fil
 		end
 	end
 
-	local enableCR = GetOption("enableCR", optionsDefaults.enableCR)
+	local enableCR = opts.enableCR
 
 	-- blacklist (guilds)
 	if isGuild and BSYC.db and BSYC.db.blacklist and BSYC.db.blacklist[unitKey .. realmKey] then
@@ -1024,7 +1035,7 @@ local function ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, fil
 	end
 
 	-- faction filtering (characters only)
-	local enableFaction = GetOption("enableFaction", optionsDefaults.enableFaction)
+	local enableFaction = opts.enableFaction
 	if not isGuild and not hasAnyMark and not enableFaction then
 		if currentFaction and unitData.faction and unitData.faction ~= currentFaction then
 			return false
@@ -1032,7 +1043,7 @@ local function ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, fil
 	end
 
 	-- guild toggle
-	if isGuild and BSYC.tracking and BSYC.tracking.guild == false then
+	if isGuild and not opts.trackingGuild then
 		return false
 	end
 
@@ -1047,6 +1058,7 @@ end
 
 function Data:IterateUnits(dumpAll, filterList)
 	local currentFaction = (BSYC.db and BSYC.db.player and BSYC.db.player.faction) or _G.UnitFactionGroup("player")
+	local opts = GetUnitFilterOptions()
 
 	-- snapshot realm keys (FixDB-safe)
 	local realmKeys = {}
@@ -1084,7 +1096,7 @@ function Data:IterateUnits(dumpAll, filterList)
 				currentRealmData = BagSyncDB[realmKey]
 				local meta = realmMeta[realmKey]
 
-				if currentRealmData and meta and ShouldIncludeRealm(realmKey, meta, dumpAll, filterList) then
+				if currentRealmData and meta and ShouldIncludeRealm(realmKey, meta, dumpAll, filterList, opts) then
 					-- snapshot unit keys for this realm
 					unitKeys = {}
 					for unitKey in pairs(currentRealmData) do
@@ -1104,9 +1116,9 @@ function Data:IterateUnits(dumpAll, filterList)
 					local unitData = currentRealmData[unitKey]
 					local meta = realmMeta[realmKey]
 
-					if unitData and ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, filterList, currentFaction) then
+					if unitData and ShouldIncludeUnit(realmKey, unitKey, unitData, meta, dumpAll, filterList, currentFaction, opts) then
 						local isGuild = hasMark(unitKey, "©")
-						local enableCR = GetOption("enableCR", optionsDefaults.enableCR)
+						local enableCR = opts.enableCR
 						local isXRGuild = (not enableCR and meta.isConnected and isGuild)
 
 						return {

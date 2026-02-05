@@ -169,7 +169,7 @@ function Scanner:SaveBag(bagtype, bagid)
 	BSYC.db.player[bagtype][bagid] = nil
 
 	local xGetNumSlots = BSYC.API.GetContainerNumSlots
-	local xGetContainerInfo = BSYC.API.GetContainerItemInfo
+	local xGetContainerLinkCount = BSYC.API.GetContainerItemLinkCount
 
 	local numSlots = xGetNumSlots(bagid)
 
@@ -177,13 +177,7 @@ function Scanner:SaveBag(bagtype, bagid)
 		local slotItems = {}
 
 		for slot = 1, numSlots do
-			local xObj, count, _,_,_,_, link = xGetContainerInfo(bagid, slot)
-
-			--lets check for C_Container
-			if xObj and xObj.hyperlink then
-				link = xObj.hyperlink
-				count = xObj.stackCount or 1
-			end
+			local link, count = xGetContainerLinkCount(bagid, slot)
 			if link then
 				local tmpItem = BSYC:ParseItemLink(link, count)
 				Debug(BSYC_DL.FINE, "SaveBag", bagtype, bagid, tmpItem)
@@ -559,17 +553,11 @@ function Scanner:SaveWarbandBank(bagID)
 
 	local allTabs = C_Bank.FetchPurchasedBankTabData(Enum.BankType.Account)
 	local xGetNumSlots = BSYC.API.GetContainerNumSlots
-	local xGetContainerInfo = BSYC.API.GetContainerItemInfo
+	local xGetContainerLinkCount = BSYC.API.GetContainerItemLinkCount
 
 	local function doWarbandSlot(bagID, slotID, tabID)
 		if not bagID or not slotID then return end
-		local xObj, count, _,_,_,_, link = xGetContainerInfo(bagID, slotID)
-
-		--lets check for C_Container
-		if xObj and xObj.hyperlink then
-			link = xObj.hyperlink
-			count = xObj.stackCount or 1
-		end
+		local link, count = xGetContainerLinkCount(bagID, slotID)
 		if link then
 			local tmpItem = BSYC:ParseItemLink(link, count)
 			Debug(BSYC_DL.FINE, "doWarbandSlot", bagID, slotID, tabID, tmpItem)

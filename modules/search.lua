@@ -18,6 +18,29 @@ end
 local L = BSYC.L
 local ItemScout = LibStub("LibItemScout-1.0")
 
+local function CreateInfoFrame(parent, opts)
+	local frame = _G.CreateFrame("Frame", nil, parent, "BagSyncInfoFrameTemplate")
+	frame:Hide()
+	if opts.width then frame:SetWidth(opts.width) end
+	if opts.height then frame:SetHeight(opts.height) end
+	frame:SetBackdropColor(0, 0, 0, 0.75)
+	frame:EnableMouse(true) --don't allow clickthrough
+	frame:SetMovable(false)
+	frame:SetResizable(false)
+	frame:SetFrameStrata(opts.strata or "HIGH")
+	frame:ClearAllPoints()
+	if opts.point then frame:SetPoint(unpack(opts.point)) end
+	if frame.TitleText and opts.title then
+		frame.TitleText:SetText(opts.title)
+		frame.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
+		frame.TitleText:SetTextColor(1, 1, 1)
+	end
+	if frame.CloseButton then
+		frame.CloseButton:SetScript("OnClick", function(self) self:GetParent():Hide() end)
+	end
+	return frame
+end
+
 function Search:OnEnable()
 	local searchFrame = BSYC:UI_CreateModuleFrame(Search, {
 		template = "BagSyncSearchFrameTemplate",
@@ -67,18 +90,10 @@ function Search:OnEnable()
 	searchFrame.resetButton:SetScript("OnClick", function() Search:Reset() end)
 
 	--Warning Frame
-	local warningFrame = _G.CreateFrame("Frame", nil, searchFrame, "BagSyncInfoFrameTemplate")
-	warningFrame:Hide()
-	warningFrame:SetBackdropColor(0, 0, 0, 0.75)
-    warningFrame:EnableMouse(true) --don't allow clickthrough
-    warningFrame:SetMovable(false)
-	warningFrame:SetResizable(false)
-    warningFrame:SetFrameStrata("HIGH")
-	warningFrame:ClearAllPoints()
-	warningFrame:SetPoint("BOTTOMLEFT", searchFrame, "BOTTOMRIGHT", 5, 0)
-	warningFrame.TitleText:SetText(L.WarningHeader)
-	warningFrame.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
-	warningFrame.TitleText:SetTextColor(1, 1, 1)
+	local warningFrame = CreateInfoFrame(searchFrame, {
+		title = L.WarningHeader,
+		point = { "BOTTOMLEFT", searchFrame, "BOTTOMRIGHT", 5, 0 },
+	})
 	warningFrame.infoText1 = warningFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
 	warningFrame.infoText1:SetText(L.WarningItemSearch)
 	warningFrame.infoText1:SetFont(STANDARD_TEXT_FONT, 14, "")
@@ -94,25 +109,14 @@ function Search:OnEnable()
 	warningFrame.infoText2:SetPoint("LEFT", warningFrame.infoText1, "BOTTOMLEFT", 5, -70)
 	warningFrame.infoText2:SetJustifyH("CENTER")
 	Search.warningFrame = warningFrame
-	if warningFrame.CloseButton then
-		warningFrame.CloseButton:SetScript("OnClick", function(self) self:GetParent():Hide() end)
-	end
 
 	--Help Frame
-	local helpFrame = _G.CreateFrame("Frame", nil, searchFrame, "BagSyncInfoFrameTemplate")
-	helpFrame:Hide()
-	helpFrame:SetWidth(500)
-	helpFrame:SetHeight(300)
-	helpFrame:SetBackdropColor(0, 0, 0, 0.75)
-    helpFrame:EnableMouse(true) --don't allow clickthrough
-    helpFrame:SetMovable(false)
-	helpFrame:SetResizable(false)
-    helpFrame:SetFrameStrata("HIGH")
-	helpFrame:ClearAllPoints()
-	helpFrame:SetPoint("BOTTOMLEFT", searchFrame, "BOTTOMRIGHT", 5, 0)
-	helpFrame.TitleText:SetText(L.SearchHelpHeader)
-	helpFrame.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
-	helpFrame.TitleText:SetTextColor(1, 1, 1)
+	local helpFrame = CreateInfoFrame(searchFrame, {
+		title = L.SearchHelpHeader,
+		width = 500,
+		height = 300,
+		point = { "BOTTOMLEFT", searchFrame, "BOTTOMRIGHT", 5, 0 },
+	})
 	helpFrame.ScrollFrame = CreateFrame("ScrollFrame", nil, helpFrame, "UIPanelScrollFrameTemplate")
 	helpFrame.ScrollFrame:SetPoint("TOPLEFT", helpFrame, "TOPLEFT", 8, -30)
 	helpFrame.ScrollFrame:SetPoint("BOTTOMRIGHT", helpFrame, "BOTTOMRIGHT", -30, 8)
@@ -132,30 +136,16 @@ function Search:OnEnable()
 	helpFrame.EditBox:SetTextColor(1, 1, 1) --set default to white
 	helpFrame.ScrollFrame:EnableMouse(false)
 	Search.helpFrame = helpFrame
-	if helpFrame.CloseButton then
-		helpFrame.CloseButton:SetScript("OnClick", function(self) self:GetParent():Hide() end)
-	end
 
 	--Saved Search Frame
-	local savedSearch = _G.CreateFrame("Frame", nil, searchFrame, "BagSyncInfoFrameTemplate")
-	savedSearch:Hide()
-	savedSearch:SetHeight(200)
-	savedSearch:SetWidth(400)
-	savedSearch:SetBackdropColor(0, 0, 0, 0.75)
-    savedSearch:EnableMouse(true) --don't allow clickthrough
-    savedSearch:SetMovable(false)
-	savedSearch:SetResizable(false)
-    savedSearch:SetFrameStrata("HIGH")
-	savedSearch:ClearAllPoints()
-	savedSearch:SetPoint("TOPLEFT", searchFrame, "TOPRIGHT", 5, 0)
-	savedSearch.TitleText:SetText(L.SavedSearch)
-	savedSearch.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
-	savedSearch.TitleText:SetTextColor(1, 1, 1)
+	local savedSearch = CreateInfoFrame(searchFrame, {
+		title = L.SavedSearch,
+		width = 400,
+		height = 200,
+		point = { "TOPLEFT", searchFrame, "TOPRIGHT", 5, 0 },
+	})
 	savedSearch:SetScript("OnShow", function() Search:SavedSearch_UpdateList() end)
 	Search.savedSearch = savedSearch
-	if savedSearch.CloseButton then
-		savedSearch.CloseButton:SetScript("OnClick", function(self) self:GetParent():Hide() end)
-	end
 	savedSearch.scrollFrame = BSYC:UI_CreateHybridScrollFrame(savedSearch, {
 		width = 357,
 		pointTopLeft = { "TOPLEFT", savedSearch, "TOPLEFT", 13, -32 },
