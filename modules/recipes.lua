@@ -74,8 +74,8 @@ function Recipes:CreateList(data)
 	Recipes.recipesList = {}
 	Recipes.frame.infoText:SetText(data.colorized.." | "..data.skillData.name)
 
-	local xGetSpellInfo = (C_Spell and C_Spell.GetSpellInfo) or GetSpellInfo
-	local xGetRecipeInfo = (C_TradeSkillUI and C_TradeSkillUI.GetRecipeInfo) or nil
+	local getSpellInfo = BSYC.API and BSYC.API.GetSpellInfo
+	local getRecipeInfo = BSYC.API and BSYC.API.GetRecipeInfo
 	local recipeData = {}
 
 	for k, v in pairs(data.skillData.categories) do
@@ -86,11 +86,14 @@ function Recipes:CreateList(data)
 				for idx = 1, #recipeList do
 					if recipeList[idx] and recipeList[idx] ~= "" then
 						local recipeID = tonumber(recipeList[idx]) or recipeList[idx]
-						local recipe_info = xGetRecipeInfo and xGetRecipeInfo(recipeID) or nil
+						local recipe_info = getRecipeInfo and getRecipeInfo(recipeID) or nil
 						local recipeName = recipeID
 						local iconTexture = "Interface\\Icons\\INV_Misc_QuestionMark"
 
-						local gName, _, gIcon = xGetSpellInfo(recipeID)
+						local gName, _, gIcon
+						if getSpellInfo then
+							gName, _, gIcon = getSpellInfo(recipeID)
+						end
 
 						if recipe_info and recipe_info.name then
 							recipeName = recipe_info.name

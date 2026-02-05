@@ -232,14 +232,14 @@ function Whitelist:AddItemID()
 		BSYC.db.whitelist[itemid] = "|cFFCF9FFF"..speciesName.."|r"
 		BSYC:Print(L.ItemIDAdded:format(itemid), speciesName)
 	else
-		local xGetItemInfo = BSYC.API.GetItemInfo
-		if not (xGetItemInfo and xGetItemInfo(itemid)) then
+		local getItemInfo = BSYC.API.GetItemInfo
+		if not (getItemInfo and getItemInfo(itemid)) then
 			BSYC:Print(L.ItemIDNotValid:format(itemid))
 			editBox:SetText("")
 			return
 		end
 
-		local dName, dItemLink = xGetItemInfo(itemid)
+		local dName, dItemLink = getItemInfo(itemid)
 
 		BSYC.db.whitelist[itemid] = dItemLink
 		BSYC:Print(L.ItemIDAdded:format(itemid), dItemLink)

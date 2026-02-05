@@ -1187,7 +1187,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	local opts = BSYC.options
 	local tracking = BSYC.tracking
-	local GetItemCount = C_Item and C_Item.GetItemCount
+	local GetItemCount = BSYC.API and BSYC.API.GetItemCount
+	local IsReagentBankUnlocked = _G.IsReagentBankUnlocked
 
 	--check for modifier option only in windows that isn't BagSync search
 	if not self:CheckModifier() and not objTooltip.isBSYCSearch then return end
@@ -1580,8 +1581,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			if Data.__cache.items[shortID] then
 				expacID = Data.__cache.items[shortID].expacID
 			else
-				local xGetItemInfo = BSYC.API and BSYC.API.GetItemInfo
-				expacID = xGetItemInfo and select(15, xGetItemInfo(shortID))
+				local getItemInfo = BSYC.API and BSYC.API.GetItemInfo
+				expacID = getItemInfo and select(15, getItemInfo(shortID))
 			end
 			value = self:HexColor(BSYC.colors.second, (expacID and _G["EXPANSION_NAME"..expacID]) or "?")
 
@@ -1600,9 +1601,9 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				classID = Data.__cache.items[shortID].classID
 				subclassID = Data.__cache.items[shortID].subclassID
 			else
-				local xGetItemInfo = BSYC.API and BSYC.API.GetItemInfo
-				if xGetItemInfo then
-					itemType, itemSubType, _, _, _, _, classID, subclassID = select(6, xGetItemInfo(shortID))
+				local getItemInfo = BSYC.API and BSYC.API.GetItemInfo
+				if getItemInfo then
+					itemType, itemSubType, _, _, _, _, classID, subclassID = select(6, getItemInfo(shortID))
 				end
 			end
 			local typeString = Tooltip:GetItemTypeString(itemType, itemSubType, classID, subclassID)
@@ -1922,8 +1923,8 @@ function Tooltip:HookTooltip(objTooltip)
 
 				if currencyID then
 					--WOTLK still uses the old API functions, check for it
-					local xGetCurrencyInfo = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo) or GetCurrencyInfo
-					local currencyData = xGetCurrencyInfo(currencyID)
+					local getCurrencyInfo = BSYC.API and BSYC.API.GetCurrencyInfo
+					local currencyData = getCurrencyInfo and getCurrencyInfo(currencyID)
 					if currencyData then
 						Tooltip:CurrencyTooltip(tooltip, currencyData.name, currencyData.iconFileID, currencyID, "OnTooltipSetCurrency")
 					end
@@ -1972,8 +1973,9 @@ function Tooltip:HookTooltip(objTooltip)
 		--https://www.townlong-yak.com/framexml/live/Blizzard_TokenUI/Blizzard_TokenUI.lua#383
 		if objTooltip.SetCurrencyToken then
 			hooksecurefunc(objTooltip, "SetCurrencyToken", function(self, currencyIndex)
-				local link = C_CurrencyInfo.GetCurrencyListLink(currencyIndex)
-				local xGetCurrencyInfo = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo) or GetCurrencyInfo
+				local getCurrencyListLink = BSYC.API and BSYC.API.GetCurrencyListLink
+				local getCurrencyInfo = BSYC.API and BSYC.API.GetCurrencyInfo
+				local link = getCurrencyListLink and getCurrencyListLink(currencyIndex)
 				if link then
 					--local id = tonumber(string.match(link,"currency:(%d+)"))
 					--local name = C_CurrencyInfo.GetCurrencyInfo(id).name
@@ -1990,7 +1992,7 @@ function Tooltip:HookTooltip(objTooltip)
 
 					if currencyID then
 						--WOTLK still uses the old API functions, check for it
-						local currencyData = xGetCurrencyInfo(currencyID)
+						local currencyData = getCurrencyInfo and getCurrencyInfo(currencyID)
 						if currencyData and currencyData.name and currencyData.iconFileID then
 							Tooltip:CurrencyTooltip(objTooltip, currencyData.name, currencyData.iconFileID, currencyID, "SetCurrencyToken")
 						end

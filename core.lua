@@ -104,19 +104,27 @@ function BSYC:GetDefaultAllowListKeys(includeGuild)
 	return list
 end
 
--- centralized API compatibility table (preserves fallbacks)
+-- centralized API compatibility table (preserves fallbacks for older clients like classic)
 BSYC.API = BSYC.API or {}
-local xGetContainerNumSlots = (C_Container and C_Container.GetContainerNumSlots) or GetContainerNumSlots
-local xGetContainerItemInfo = (C_Container and C_Container.GetContainerItemInfo) or GetContainerItemInfo
-BSYC.API.GetContainerNumSlots = xGetContainerNumSlots
-BSYC.API.GetContainerItemInfo = xGetContainerItemInfo
+local getContainerNumSlots = (C_Container and C_Container.GetContainerNumSlots) or GetContainerNumSlots
+local getContainerItemInfo = (C_Container and C_Container.GetContainerItemInfo) or GetContainerItemInfo
+BSYC.API.GetContainerNumSlots = getContainerNumSlots
+BSYC.API.GetContainerItemInfo = getContainerItemInfo
 BSYC.API.GetAddOnMetadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
 BSYC.API.IsAddOnLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded) or IsAddOnLoaded
 BSYC.API.GetItemInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
+BSYC.API.GetItemCount = (C_Item and C_Item.GetItemCount) or GetItemCount
+BSYC.API.GetSpellInfo = (C_Spell and C_Spell.GetSpellInfo) or GetSpellInfo
+BSYC.API.GetRecipeInfo = (C_TradeSkillUI and C_TradeSkillUI.GetRecipeInfo) or nil
+BSYC.API.GetCurrencyInfo = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo) or GetCurrencyInfo
+BSYC.API.GetCurrencyListSize = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListSize) or GetCurrencyListSize
+BSYC.API.GetCurrencyListInfo = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListInfo) or GetCurrencyListInfo
+BSYC.API.GetCurrencyListLink = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListLink) or GetCurrencyListLink
+BSYC.API.ExpandCurrencyList = (C_CurrencyInfo and C_CurrencyInfo.ExpandCurrencyList) or ExpandCurrencyList
 -- normalize container item link + count across Classic/Retail
 BSYC.API.GetContainerItemLinkCount = function(bagID, slotID)
-	if not xGetContainerItemInfo then return nil, nil end
-	local info, count, _, _, _, _, link = xGetContainerItemInfo(bagID, slotID)
+	if not getContainerItemInfo then return nil, nil end
+	local info, count, _, _, _, _, link = getContainerItemInfo(bagID, slotID)
 	if type(info) == "table" then
 		link = info.hyperlink
 		count = info.stackCount or 1

@@ -386,30 +386,37 @@ function Data:LoadSlashCommand()
 		local cmd, args = strlower(parts[1] or ""), table.concat(parts, " ", 2)
 
 		if string.len(cmd) > 0 then
+			local function showModuleFrame(name)
+				local module = BSYC:GetModule(name, true)
+				if module and module.frame and module.frame.Show then
+					module.frame:Show()
+					return module
+				end
+			end
 
 			if cmd == L.SlashSearch then
-				BSYC:GetModule("Search").frame:Show()
+				showModuleFrame("Search")
 				return true
 			elseif cmd == L.SlashGold or cmd == L.SlashMoney then
-				BSYC:GetModule("Gold").frame:Show()
+				showModuleFrame("Gold")
 				return true
 			elseif cmd == L.SlashCurrency and BSYC:CanDoCurrency() and BSYC.tracking.currency then
-				BSYC:GetModule("Currency").frame:Show()
+				showModuleFrame("Currency")
 				return true
 			elseif cmd == L.SlashProfiles then
-				BSYC:GetModule("Profiles").frame:Show()
+				showModuleFrame("Profiles")
 				return true
 			elseif cmd == L.SlashProfessions and BSYC:CanDoProfessions() and BSYC.tracking.professions then
-				BSYC:GetModule("Professions").frame:Show()
+				showModuleFrame("Professions")
 				return true
 			elseif cmd == L.SlashBlacklist then
-				BSYC:GetModule("Blacklist").frame:Show()
+				showModuleFrame("Blacklist")
 				return true
 			elseif cmd == L.SlashWhitelist then
-				BSYC:GetModule("Whitelist").frame:Show()
+				showModuleFrame("Whitelist")
 				return true
 			elseif cmd == L.SlashSortOrder then
-				BSYC:GetModule("SortOrder").frame:Show()
+				showModuleFrame("SortOrder")
 				return true
 			elseif cmd == L.SlashFixDB then
 				self:FixDB()
@@ -424,14 +431,18 @@ function Data:LoadSlashCommand()
 				BSYC:OpenConfig()
 				return true
 			elseif cmd == L.SlashDebug then
-				BSYC:GetModule("Debug").frame:Show()
+				showModuleFrame("Debug")
 				return true
 			else
 				--do an item search, use the full command to search
-				BSYC:GetModule("Search").frame:Show()
-				BSYC:GetModule("Search").frame.SearchBox:SetText(input)
-				BSYC:GetModule("Search").frame.SearchBox.SearchInfo:Hide()
-				BSYC:GetModule("Search"):DoSearch()
+				local search = showModuleFrame("Search")
+				if search and search.frame and search.frame.SearchBox then
+					search.frame.SearchBox:SetText(input)
+					if search.frame.SearchBox.SearchInfo then
+						search.frame.SearchBox.SearchInfo:Hide()
+					end
+					search:DoSearch()
+				end
 				return true
 			end
 
@@ -623,8 +634,8 @@ function Data:CacheLink(parseLink)
 				end
 			end
 
-			local xGetItemInfo = (BSYC.API and BSYC.API.GetItemInfo) or GetItemInfo
-			itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent = xGetItemInfo(shortID)
+			local getItemInfo = BSYC.API and BSYC.API.GetItemInfo
+			itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent = getItemInfo(shortID)
 
 			--if we are missing itemName and itemLink then request it (retail async cache)
 			if not itemName or not itemLink then

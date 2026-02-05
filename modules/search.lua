@@ -254,17 +254,16 @@ function Search:OnHide()
 end
 
 function Search:ShowSearchFilters(visible)
-	if BSYC:GetModule("SearchFilters", true) then
-		local frame = BSYC:GetModule("SearchFilters", true).frame
-		if frame then
-			if visible == nil then
-				frame:SetShown(not frame:IsShown())
-			elseif visible == true then
-				frame:Show()
-			else
-				frame:Hide()
-			end
-		end
+	local searchFilters = BSYC:GetModule("SearchFilters", true)
+	if not (searchFilters and searchFilters.frame) then return end
+
+	local frame = searchFilters.frame
+	if visible == nil then
+		frame:SetShown(not frame:IsShown())
+	elseif visible == true then
+		frame:Show()
+	else
+		frame:Hide()
 	end
 end
 
