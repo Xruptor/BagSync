@@ -7,6 +7,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
+local UI = BSYC:GetModule("UI")
 local Gold = BSYC:NewModule("Gold")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
@@ -18,7 +19,7 @@ end
 local L = BSYC.L
 
 function Gold:OnEnable()
-	local goldFrame = BSYC:UI_CreateModuleFrame(Gold, {
+	local goldFrame = UI:CreateModuleFrame(Gold, {
 		template = "BagSyncFrameTemplate",
 		globalName = "BagSyncGoldFrame",
 		title = "BagSync - "..L.Gold,
@@ -29,7 +30,7 @@ function Gold:OnEnable()
 	})
 	Gold.frame = goldFrame
 
-	Gold.scrollFrame = BSYC:UI_CreateHybridScrollFrame(goldFrame, {
+	Gold.scrollFrame = UI:CreateHybridScrollFrame(goldFrame, {
 		width = 397,
 		pointTopLeft = { "TOPLEFT", goldFrame, "TOPLEFT", 13, -29 },
 		-- set ScrollFrame height by altering the distance from the bottom of the frame
@@ -103,19 +104,18 @@ local function CustomMoneyString(money, separateThousands, showAll)
 end
 
 function Gold:CreateList()
-	Gold.goldList = {}
-	local usrData = {}
+	local goldList = {}
 	local total = 0
 
 	for unitObj in Data:IterateUnits() do
 		if unitObj.data.money and unitObj.data.money > 0 then
 			if not unitObj.isGuild or (unitObj.isGuild and BSYC.tracking.guild and BSYC.options.showGuildInGoldTooltip) then
-				table.insert(usrData, {
+				goldList[#goldList + 1] = {
 					unitObj = unitObj,
 					colorized = Tooltip:ColorizeUnit(unitObj, true, false, true, true),
 					sortIndex = Tooltip:GetSortIndex(unitObj),
 					count = unitObj.data.money --we use count because of the DoSort() function
-				})
+				}
 			end
 		end
 	end
@@ -123,30 +123,27 @@ function Gold:CreateList()
 	--add warband
 	local warbandObj = Data:GetWarbandBankObj()
 	if warbandObj then
-		table.insert(usrData, {
+		goldList[#goldList + 1] = {
 			unitObj = warbandObj,
 			colorized = Tooltip:ColorizeUnit(warbandObj, true, false, false, false),
 			sortIndex = Tooltip:GetSortIndex(warbandObj),
 			count = warbandObj.data.money --we use count because of the DoSort() function
-		})
+		}
 	end
 
-	if #usrData > 0 then
-		usrData = Tooltip:DoSort(usrData)
+	if #goldList > 0 then
+		goldList = Tooltip:DoSort(goldList)
 
-		for i=1, #usrData do
-			total = total + usrData[i].count
-			table.insert(Gold.goldList, {
-				unitObj = usrData[i].unitObj,
-				colorized = usrData[i].colorized,
-				sortIndex = usrData[i].sortIndex,
-				count = usrData[i].count,
-				moneyString = CustomMoneyString(usrData[i].count, true, BSYC.options.enable_GSC_Display)
-			})
+		for i = 1, #goldList do
+			local entry = goldList[i]
+			total = total + entry.count
+			entry.moneyString = CustomMoneyString(entry.count, true, BSYC.options.enable_GSC_Display)
 		end
 
 		Gold.frame.totalText:SetText("|cFFF4A460"..L.TooltipTotal.."|r  "..GetMoneyString(total, true))
 	end
+
+	Gold.goldList = goldList
 end
 
 function Gold:RefreshList()
@@ -157,7 +154,7 @@ function Gold:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		BSYC:UI_AttachListItemHandlers(button, Gold)
+		UI:AttachListItemHandlers(button, Gold)
 
         local itemIndex = buttonIndex + offset
 
@@ -192,10 +189,10 @@ function Gold:RefreshList()
 
 			--while we are updating the scrollframe, is the mouse currently over a button?
 			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
-				if BSYC:IsMouseOver(button) then
-					Gold:Item_OnLeave() --hide first
-					Gold:Item_OnEnter(button)
-				end
+			if BSYC:IsMouseOver(button) then
+				Gold:Item_OnLeave() --hide first
+				Gold:Item_OnEnter(button)
+			end
 
             button:Show()
         else

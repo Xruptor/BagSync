@@ -45,6 +45,7 @@ locale\esMX.lua
 core.lua
 coreui.xml
 
+wireframe\ui.lua
 wireframe\debug.lua
 wireframe\unit.lua
 wireframe\data.lua

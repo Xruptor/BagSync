@@ -21,27 +21,21 @@ function Events:OnEnable()
 	Debug(BSYC_DL.INFO, "OnEnable")
 
 	self:RegisterEvent("PLAYER_MONEY")
-	self:RegisterEvent("GUILD_ROSTER_UPDATE", function() Events:UpdateGuildRoster() end)
-	self:RegisterEvent("PLAYER_GUILD_UPDATE", function() Events:UpdateGuildRoster() end)
+	self:RegisterEvent("GUILD_ROSTER_UPDATE", "UpdateGuildRoster")
+	self:RegisterEvent("PLAYER_GUILD_UPDATE", "UpdateGuildRoster")
 
 	self:RegisterEvent("TRADE_SKILL_SHOW")
 	self:RegisterEvent("TRADE_SKILL_LIST_UPDATE")
 	self:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
 
 	--this event is when we trigger a CheckInbox()
-	self:RegisterEvent("MAIL_INBOX_UPDATE", function()
-		BSYC:StartTimer("MAIL_INBOX_UPDATE", 0.3, Scanner, "SaveMailbox")
-	end)
-	self:RegisterEvent("MAIL_SEND_SUCCESS", function()
-		Scanner:SendMail(nil, true)
-	end)
+	self:RegisterEvent("MAIL_INBOX_UPDATE", "MAIL_INBOX_UPDATE")
+	self:RegisterEvent("MAIL_SEND_SUCCESS", "MAIL_SEND_SUCCESS")
     hooksecurefunc("SendMail", function(mailTo)
 		Scanner:SendMail(mailTo, false)
     end)
 
-	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", function(event, slotID)
-		Scanner:SaveBank(true)
-	end)
+	self:RegisterEvent("PLAYERBANKSLOTS_CHANGED", "PLAYERBANKSLOTS_CHANGED")
 
 	--register our custom Event Handlers
 	self:RegisterMessage('BAGSYNC_EVENT_MAILBOX')
@@ -53,10 +47,8 @@ function Events:OnEnable()
 
 	--check to see if the ReagentBank is even enabled on server
 	if IsReagentBankUnlocked then
-		self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED", function(event, slotID)
-			Scanner:SaveReagents()
-		end)
-		self:RegisterEvent("REAGENTBANK_PURCHASED", function() Scanner:SaveReagents() end)
+		self:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED", "PLAYERREAGENTBANKSLOTS_CHANGED")
+		self:RegisterEvent("REAGENTBANK_PURCHASED", "REAGENTBANK_PURCHASED")
 	else
 		BSYC.tracking.reagents = false
 		--delete the reagents db if we have anything stored in the database, that way we don't have weird numbers
@@ -67,7 +59,7 @@ function Events:OnEnable()
 	--check if voidbank is even enabled on server
 	if CanUseVoidStorage and GetVoidItemInfo then
 		--scan when transfers of any kind are done at the void storage
-		self:RegisterEvent("VOID_TRANSFER_DONE", function() Scanner:SaveVoidBank() end)
+		self:RegisterEvent("VOID_TRANSFER_DONE", "VOID_TRANSFER_DONE")
 	else
 		BSYC.tracking.void = false
 		--delete the void db if we have anything stored in the database, that way we don't have weird numbers
@@ -77,11 +69,9 @@ function Events:OnEnable()
 
 	--check to see if guildbanks are even enabled on server
 	if CanGuildBankRepair then
-		self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED", function()
-			BSYC:StartTimer("GUILDBANKBAGSLOTS_CHANGED", 1, Events, "GuildBank_Changed")
-		end)
-		self:RegisterEvent("GUILDBANK_UPDATE_MONEY", function() Scanner:SaveGuildBankMoney() end)
-		self:RegisterEvent("GUILDBANK_UPDATE_WITHDRAWMONEY", function() Scanner:SaveGuildBankMoney() end)
+		self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED", "GUILDBANKBAGSLOTS_CHANGED")
+		self:RegisterEvent("GUILDBANK_UPDATE_MONEY", "GUILDBANK_UPDATE_MONEY")
+		self:RegisterEvent("GUILDBANK_UPDATE_WITHDRAWMONEY", "GUILDBANK_UPDATE_WITHDRAWMONEY")
 	else
 		BSYC.tracking.guild = false
 		Debug(BSYC_DL.WARN, "Module-Inactive", "guild")
@@ -90,8 +80,8 @@ function Events:OnEnable()
 	--check to see if warband banks are even enabled on server
 	if BSYC.isWarbandActive then
 		--C_Bank.CanPurchaseBankTab(Enum.BankType.Account)
-		self:RegisterEvent("PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED", function() Scanner:SaveWarbandBank() end)
-		self:RegisterEvent("ACCOUNT_MONEY", function() Scanner:SaveWarbandBankMoney() end)
+		self:RegisterEvent("PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED", "PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED")
+		self:RegisterEvent("ACCOUNT_MONEY", "ACCOUNT_MONEY")
 	else
 		BSYC.tracking.warband = false
 		Debug(BSYC_DL.WARN, "Module-Inactive", "warband")
@@ -103,10 +93,7 @@ function Events:OnEnable()
 
 		--check for the ability to do currency transfer
 		if C_CurrencyInfo and C_CurrencyInfo.RequestCurrencyFromAccountCharacter then
-			self:RegisterEvent("CURRENCY_TRANSFER_LOG_UPDATE", function()
-				Scanner:ProcessCurrencyTransfer(true)
-				Scanner.currencyTransferInProgress = false
-			end)
+			self:RegisterEvent("CURRENCY_TRANSFER_LOG_UPDATE", "CURRENCY_TRANSFER_LOG_UPDATE")
 
 			hooksecurefunc(C_CurrencyInfo, "RequestCurrencyFromAccountCharacter", function(sourceGUID, currencyID, transferAmt)
 				Scanner:ProcessCurrencyTransfer(false, sourceGUID, currencyID, transferAmt)
@@ -181,6 +168,50 @@ function Events:BAGSYNC_EVENT_WARBANDBANK(event, isOpen)
 		Scanner:SaveWarbandBank()
 		Scanner:SaveWarbandBankMoney()
 	end
+end
+
+function Events:MAIL_INBOX_UPDATE()
+	BSYC:StartTimer("MAIL_INBOX_UPDATE", 0.3, Scanner, "SaveMailbox")
+end
+
+function Events:MAIL_SEND_SUCCESS()
+	Scanner:SendMail(nil, true)
+end
+
+function Events:PLAYERBANKSLOTS_CHANGED()
+	Scanner:SaveBank(true)
+end
+
+function Events:PLAYERREAGENTBANKSLOTS_CHANGED()
+	Scanner:SaveReagents()
+end
+
+function Events:REAGENTBANK_PURCHASED()
+	Scanner:SaveReagents()
+end
+
+function Events:VOID_TRANSFER_DONE()
+	Scanner:SaveVoidBank()
+end
+
+function Events:GUILDBANKBAGSLOTS_CHANGED()
+	BSYC:StartTimer("GUILDBANKBAGSLOTS_CHANGED", 1, Events, "GuildBank_Changed")
+end
+
+function Events:GUILDBANK_UPDATE_MONEY()
+	Scanner:SaveGuildBankMoney()
+end
+
+function Events:GUILDBANK_UPDATE_WITHDRAWMONEY()
+	Scanner:SaveGuildBankMoney()
+end
+
+function Events:PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED()
+	Scanner:SaveWarbandBank()
+end
+
+function Events:ACCOUNT_MONEY()
+	Scanner:SaveWarbandBankMoney()
 end
 
 function Events:PLAYER_MONEY()
@@ -328,4 +359,9 @@ function Events:TRADE_SKILL_DATA_SOURCE_CHANGED()
 		self._TradeSkillEvent = true
 		--this will trigger TRADE_SKILL_LIST_UPDATE and SaveProfessions which will save all the recipesIDs to Scanner.recipeIDs
 	end
+end
+
+function Events:CURRENCY_TRANSFER_LOG_UPDATE()
+	Scanner:ProcessCurrencyTransfer(true)
+	Scanner.currencyTransferInProgress = false
 end

@@ -7,6 +7,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
+local UI = BSYC:GetModule("UI")
 local L = BSYC.L
 local Debug = BSYC:NewModule("Debug")
 
@@ -413,7 +414,7 @@ function Debug:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		BSYC:UI_AttachListItemHandlers(button, Debug)
+		UI:AttachListItemHandlers(button, Debug)
 
         local itemIndex = buttonIndex + offset
 

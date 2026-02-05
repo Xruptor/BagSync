@@ -7,6 +7,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
+local UI = BSYC:GetModule("UI")
 local Blacklist = BSYC:NewModule("Blacklist")
 local Data = BSYC:GetModule("Data")
 local Unit = BSYC:GetModule("Unit")
@@ -19,7 +20,7 @@ end
 local L = BSYC.L
 
 function Blacklist:OnEnable()
-	local blacklistFrame = BSYC:UI_CreateModuleFrame(Blacklist, {
+	local blacklistFrame = UI:CreateModuleFrame(Blacklist, {
 		template = "BagSyncFrameTemplate",
 		globalName = "BagSyncBlacklistFrame",
 		title = "BagSync - "..L.Blacklist,
@@ -68,7 +69,7 @@ function Blacklist:OnEnable()
 	blacklistFrame.infoText:SetJustifyH("LEFT")
 	blacklistFrame.infoText:SetWidth(blacklistFrame:GetWidth() - 15)
 
-	Blacklist.scrollFrame = BSYC:UI_CreateHybridScrollFrame(blacklistFrame, {
+	Blacklist.scrollFrame = UI:CreateHybridScrollFrame(blacklistFrame, {
 		width = 337,
 		pointTopLeft = { "TOPLEFT", blacklistFrame, "TOPLEFT", 13, -100 },
 		-- set ScrollFrame height by altering the distance from the bottom of the frame
@@ -116,7 +117,7 @@ function Blacklist:UpdateList()
 end
 
 function Blacklist:CreateList()
-	Blacklist.listItems = {}
+	local listItems = {}
 	Blacklist.selectedGuild = nil
 
 	--do the dropdown first
@@ -144,25 +145,19 @@ function Blacklist:CreateList()
 		end
 	end)
 
-	local dataObj = {}
-
 	--loop through our blacklist
 	for k, v in pairs(BSYC.db.blacklist) do
-		table.insert(dataObj, {
+		listItems[#listItems + 1] = {
 			key = k,
 			value = v
-		})
+		}
 	end
 
-	if #dataObj > 0 then
-		table.sort(dataObj, function(a,b) return (a.value < b.value) end)
-		for i=1, #dataObj do
-			table.insert(Blacklist.listItems, {
-				key = dataObj[i].key,
-				value = dataObj[i].value
-			})
-		end
+	if #listItems > 0 then
+		table.sort(listItems, function(a, b) return (a.value or "") < (b.value or "") end)
 	end
+
+	Blacklist.listItems = listItems
 end
 
 function Blacklist:RefreshList()
@@ -173,7 +168,7 @@ function Blacklist:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		BSYC:UI_AttachListItemHandlers(button, Blacklist)
+		UI:AttachListItemHandlers(button, Blacklist)
 
         local itemIndex = buttonIndex + offset
 
@@ -195,10 +190,10 @@ function Blacklist:RefreshList()
 			button.Text:SetText(item.value or "")
 			button.HeaderHighlight:SetAlpha(0)
 
-				if BSYC:IsMouseOver(button) then
-					Blacklist:Item_OnLeave() --hide first
-					Blacklist:Item_OnEnter(button)
-				end
+			if BSYC:IsMouseOver(button) then
+				Blacklist:Item_OnLeave() --hide first
+				Blacklist:Item_OnEnter(button)
+			end
 
             button:Show()
         else

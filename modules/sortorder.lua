@@ -7,6 +7,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
+local UI = BSYC:GetModule("UI")
 local SortOrder = BSYC:NewModule("SortOrder")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
@@ -18,7 +19,7 @@ end
 local L = BSYC.L
 
 function SortOrder:OnEnable()
-	local sortorderFrame = BSYC:UI_CreateModuleFrame(SortOrder, {
+	local sortorderFrame = UI:CreateModuleFrame(SortOrder, {
 		template = "BagSyncFrameTemplate",
 		globalName = "BagSyncSortOrderFrame",
 		title = "BagSync - "..L.SortOrder,
@@ -29,7 +30,7 @@ function SortOrder:OnEnable()
 	})
 	SortOrder.frame = sortorderFrame
 
-	SortOrder.scrollFrame = BSYC:UI_CreateHybridScrollFrame(sortorderFrame, {
+	SortOrder.scrollFrame = UI:CreateHybridScrollFrame(sortorderFrame, {
 		width = 397,
 		pointTopLeft = { "TOPLEFT", sortorderFrame, "TOPLEFT", 13, -29 },
 		-- set ScrollFrame height by altering the distance from the bottom of the frame
@@ -98,8 +99,20 @@ function SortOrder:CreateList()
 	SortOrder.sortorderList = {}
 	local usrData = {}
 	local SortIndex = 0
+	local function normalizeSortIndex(unitObj)
+		if not unitObj or not unitObj.data then return end
+		local v = unitObj.data.SortIndex
+		if v == nil then return end
+		local n = tonumber(v)
+		if n then
+			unitObj.data.SortIndex = n
+		else
+			unitObj.data.SortIndex = nil
+		end
+	end
 
 	for unitObj in Data:IterateUnits(true) do
+		normalizeSortIndex(unitObj)
 		table.insert(usrData, {
 			unitObj = unitObj,
 			name = unitObj.name,
@@ -111,6 +124,7 @@ function SortOrder:CreateList()
 	--add warband
 	local warbandObj = Data:GetWarbandBankObj()
 	if warbandObj then
+		normalizeSortIndex(warbandObj)
 		table.insert(usrData, {
 			unitObj = warbandObj,
 			name = warbandObj.name,
@@ -168,19 +182,19 @@ function SortOrder:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		BSYC:UI_AttachListItemHandlers(button, SortOrder)
+		UI:AttachListItemHandlers(button, SortOrder)
 		if button.SortBox and not button.SortBox.__bsycHandlers then
 			button.SortBox.parentHandler = SortOrder
 			button.SortBox:SetScript("OnEscapePressed", function(self)
 				self:ClearFocus()
-				BSYC:UI_CallHandler(self, "SortBox_OnEscapePressed", self:GetText(), self)
+				UI:CallHandler(self, "SortBox_OnEscapePressed", self:GetText(), self)
 			end)
 			button.SortBox:SetScript("OnEnterPressed", function(self)
 				self:ClearFocus()
-				BSYC:UI_CallHandler(self, "SortBox_OnEnterPressed", self:GetText(), self)
+				UI:CallHandler(self, "SortBox_OnEnterPressed", self:GetText(), self)
 			end)
 			button.SortBox:SetScript("OnTextChanged", function(self, userInput)
-				BSYC:UI_CallHandler(self, "SortBox_OnTextChanged", userInput, self)
+				UI:CallHandler(self, "SortBox_OnTextChanged", userInput, self)
 			end)
 			button.SortBox.__bsycHandlers = true
 		end
@@ -214,10 +228,10 @@ function SortOrder:RefreshList()
 
 			--while we are updating the scrollframe, is the mouse currently over a button?
 			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
-				if BSYC:IsMouseOver(button) then
-					SortOrder:Item_OnLeave() --hide first
-					SortOrder:Item_OnEnter(button)
-				end
+			if BSYC:IsMouseOver(button) then
+				SortOrder:Item_OnLeave() --hide first
+				SortOrder:Item_OnEnter(button)
+			end
 
             button:Show()
         else

@@ -639,13 +639,15 @@ function Scanner:SaveMailbox(isShow)
 
 	local slotItems = {}
 	local numInbox = GetInboxNumItems()
+	local xGetInboxItem = GetInboxItem
+	local xGetInboxItemLink = GetInboxItemLink
 
 	--scan the inbox
 	if (numInbox > 0) then
 		for mailIndex = 1, numInbox do
 			for i = 1, ATTACHMENTS_MAX_RECEIVE do
-				local name, itemID, itemTexture, count = GetInboxItem(mailIndex, i)
-				local link = GetInboxItemLink(mailIndex, i)
+				local name, itemID, itemTexture, count = xGetInboxItem(mailIndex, i)
+				local link = xGetInboxItemLink(mailIndex, i)
 
 				if name and link then
 
@@ -682,12 +684,14 @@ function Scanner:SendMail(mailTo, addMail)
 		Scanner.pendingMail = Scanner.pendingMail or {items={}}
 		Scanner.pendingMail.mailTo = mailTo
 		Scanner.pendingMail.items = {}
+		local xGetSendMailItem = _G.GetSendMailItem
+		local xGetSendMailItemLink = _G.GetSendMailItemLink
 
 		for i=1, ATTACHMENTS_MAX_SEND do
-			local name, itemID, texture, count, quality = _G.GetSendMailItem(i)
+			local name, itemID, texture, count, quality = xGetSendMailItem(i)
 			if itemID then
 				--we don't have to worry about BattlePets as the actual itemLink is returned instead of the PetCage
-				local sendLink = _G.GetSendMailItemLink(i)
+				local sendLink = xGetSendMailItemLink(i)
 				local link = BSYC:ParseItemLink(sendLink, count)
 				Debug(BSYC_DL.FINE, "SendMail-Queue", mailTo, name, itemID, count, quality, link)
 

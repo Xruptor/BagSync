@@ -7,6 +7,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
+local UI = BSYC:GetModule("UI")
 local Currency = BSYC:NewModule("Currency")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
@@ -18,7 +19,7 @@ end
 local L = BSYC.L
 
 function Currency:OnEnable()
-	local currencyFrame = BSYC:UI_CreateModuleFrame(Currency, {
+	local currencyFrame = UI:CreateModuleFrame(Currency, {
 		template = "BagSyncFrameTemplate",
 		globalName = "BagSyncCurrencyFrame",
 		title = "BagSync - "..L.Currency,
@@ -29,7 +30,7 @@ function Currency:OnEnable()
 	})
 	Currency.frame = currencyFrame
 
-	Currency.scrollFrame = BSYC:UI_CreateHybridScrollFrame(currencyFrame, {
+	Currency.scrollFrame = UI:CreateHybridScrollFrame(currencyFrame, {
 		width = 337,
 		pointTopLeft = { "TOPLEFT", currencyFrame, "TOPLEFT", 13, -30 },
 		-- set ScrollFrame height by altering the distance from the bottom of the frame
@@ -150,7 +151,7 @@ function Currency:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		BSYC:UI_AttachListItemHandlers(button, Currency)
+		UI:AttachListItemHandlers(button, Currency)
 
         local itemIndex = buttonIndex + offset
 
@@ -184,10 +185,10 @@ function Currency:RefreshList()
 
 			--while we are updating the scrollframe, is the mouse currently over a button?
 			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
-				if BSYC:IsMouseOver(button) then
-					Currency:Item_OnLeave() --hide first
-					Currency:Item_OnEnter(button)
-				end
+			if BSYC:IsMouseOver(button) then
+				Currency:Item_OnLeave() --hide first
+				Currency:Item_OnEnter(button)
+			end
 
             button:Show()
         else

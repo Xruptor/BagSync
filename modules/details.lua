@@ -7,6 +7,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
+local UI = BSYC:GetModule("UI")
 local Details = BSYC:NewModule("Details")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
@@ -23,7 +24,7 @@ local function comma_value(n)
 end
 
 function Details:OnEnable()
-	local detailsFrame = BSYC:UI_CreateModuleFrame(Details, {
+	local detailsFrame = UI:CreateModuleFrame(Details, {
 		template = "BagSyncFrameTemplate",
 		globalName = "BagSyncDetailsFrame",
 		title = "BagSync - "..L.Details,
@@ -42,7 +43,7 @@ function Details:OnEnable()
 	detailsFrame.infoText:SetJustifyH("LEFT")
 	detailsFrame.infoText:SetWidth(detailsFrame:GetWidth() - 15)
 
-	Details.scrollFrame = BSYC:UI_CreateHybridScrollFrame(detailsFrame, {
+	Details.scrollFrame = UI:CreateHybridScrollFrame(detailsFrame, {
 		width = 557,
 		pointTopLeft = { "TOPLEFT", detailsFrame, "TOPLEFT", 13, -45 },
 		-- set ScrollFrame height by altering the distance from the bottom of the frame
@@ -134,16 +135,7 @@ function Details:CreateList(itemID)
 	Details.items = {}
 
 	local usrData = {}
-	local allowList = {
-		bag = true,
-		bank = true,
-		reagents = true,
-		equip = true,
-		mailbox = true,
-		void = true,
-		auction = true,
-		warband = true,
-	}
+	local allowList = BSYC.DEFAULT_ALLOW_LIST
 	if BSYC.options.enableShowUniqueItemsTotals then itemID = BSYC:GetShortItemID(itemID) end
 
 	for unitObj in Data:IterateUnits(true) do
@@ -224,7 +216,7 @@ function Details:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		BSYC:UI_AttachListItemHandlers(button, Details)
+		UI:AttachListItemHandlers(button, Details)
 
         local itemIndex = buttonIndex + offset
 
@@ -298,10 +290,10 @@ function Details:RefreshList()
 
 			--while we are updating the scrollframe, is the mouse currently over a button?
 			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
-				if BSYC:IsMouseOver(button) then
-					Details:Item_OnLeave() --hide first
-					Details:Item_OnEnter(button)
-				end
+			if BSYC:IsMouseOver(button) then
+				Details:Item_OnLeave() --hide first
+				Details:Item_OnEnter(button)
+			end
 
             button:Show()
         else

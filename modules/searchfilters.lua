@@ -7,6 +7,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
+local UI = BSYC:GetModule("UI")
 local SearchFilters = BSYC:NewModule("SearchFilters")
 local Search = BSYC:GetModule("Search")
 local Data = BSYC:GetModule("Data")
@@ -19,7 +20,7 @@ end
 local L = BSYC.L
 
 function SearchFilters:OnEnable()
-	local advFrame = BSYC:UI_CreateModuleFrame(SearchFilters, {
+	local advFrame = UI:CreateModuleFrame(SearchFilters, {
 		template = "BagSyncSearchFrameTemplate",
 		title = L.SearchFilters,
 		width = 400,
@@ -33,61 +34,19 @@ function SearchFilters:OnEnable()
 
 	local searchBox = advFrame.SearchBox
 	if searchBox then
-		searchBox.parentHandler = SearchFilters
-		if searchBox.ClearButton then
-			searchBox.ClearButton.parentHandler = SearchFilters
-			searchBox.ClearButton:SetScript("OnEnter", function(self)
-				self.Texture:SetAlpha(1.0)
-			end)
-			searchBox.ClearButton:SetScript("OnLeave", function(self)
-				self.Texture:SetAlpha(0.5)
-			end)
-			searchBox.ClearButton:SetScript("OnMouseDown", function(self)
-				self.Texture:SetPoint("TOPLEFT", -1, -2)
-			end)
-			searchBox.ClearButton:SetScript("OnMouseUp", function(self)
-				self.Texture:SetPoint("TOPLEFT", 0, 0)
-			end)
-			searchBox.ClearButton:SetScript("OnShow", function(self)
-				self.Texture:SetPoint("TOPLEFT", 0, 0)
-			end)
-			searchBox.ClearButton:SetScript("OnClick", function(self)
-				BSYC:UI_CallHandler(self, "SearchBox_ResetSearch", self)
-			end)
-		end
-		searchBox:SetScript("OnEscapePressed", function(self)
-			self:ClearFocus()
-			BSYC:UI_CallHandler(self, "SearchBox_OnEscapePressed", self:GetText())
-		end)
-		searchBox:SetScript("OnEnterPressed", function(self)
-			self:ClearFocus()
-			BSYC:UI_CallHandler(self, "SearchBox_OnEnterPressed", self:GetText())
-		end)
-		searchBox:SetScript("OnEditFocusLost", function(self)
-			self.SearchIcon:SetVertexColor(0.6, 0.6, 0.6)
-			self.SearchInfo:SetShown(self:GetText():len() == 0)
-			self.ClearButton:SetShown(self:GetText():len() > 0)
-		end)
-		searchBox:SetScript("OnEditFocusGained", function(self)
-			self.SearchIcon:SetVertexColor(1.0, 1.0, 1.0)
-			self.ClearButton:Show()
-			self.SearchInfo:Hide()
-		end)
-		searchBox:SetScript("OnTextChanged", function(self, userInput)
-			BSYC:UI_CallHandler(self, "SearchBox_OnTextChanged", userInput)
-		end)
+		UI:SetupSearchBox(searchBox, SearchFilters)
 	end
 
 	if advFrame.PlusButton then
 		advFrame.PlusButton.parentHandler = SearchFilters
 		advFrame.PlusButton:SetScript("OnClick", function(self)
-			BSYC:UI_CallHandler(self, "PlusClick")
+			UI:CallHandler(self, "PlusClick")
 		end)
 	end
 	if advFrame.RefreshButton then
 		advFrame.RefreshButton.parentHandler = SearchFilters
 		advFrame.RefreshButton:SetScript("OnClick", function(self)
-			BSYC:UI_CallHandler(self, "RefreshClick")
+			UI:CallHandler(self, "RefreshClick")
 		end)
 	end
 
@@ -108,7 +67,7 @@ function SearchFilters:OnEnable()
 	advFrame.unitTitle:SetJustifyH("LEFT")
 	advFrame.unitTitle:SetWidth(advFrame:GetWidth() - 15)
 
-	SearchFilters.playerScroll = BSYC:UI_CreateHybridScrollFrame(advFrame, {
+	SearchFilters.playerScroll = UI:CreateHybridScrollFrame(advFrame, {
 		width = 357,
 		pointTopLeft = { "TOPLEFT", advFrame, "TOPLEFT", 13, -90 },
 		-- set ScrollFrame height by altering the distance from the bottom of the frame
@@ -135,7 +94,7 @@ function SearchFilters:OnEnable()
 	advFrame.locationInfo:SetJustifyH("LEFT")
 	advFrame.locationInfo:SetWidth(advFrame:GetWidth() - 15)
 
-	SearchFilters.locationScroll = BSYC:UI_CreateHybridScrollFrame(advFrame, {
+	SearchFilters.locationScroll = UI:CreateHybridScrollFrame(advFrame, {
 		width = 357,
 		pointTopLeft = { "TOPLEFT", advFrame.locationInfo, "BOTTOMLEFT", -2, -5 },
 		-- set ScrollFrame height by altering the distance from the bottom of the frame
@@ -222,8 +181,6 @@ function SearchFilters:DoSearch(searchStr)
 	if unitCount < 1 then advUnitList = nil end
 	if locCount < 1 then advAllowList = nil end
 
-	--global for tooltip checks
-	Search.advUnitList = advUnitList
 	--send it off to the regular search
 	Search:DoSearch(searchStr, advUnitList, advAllowList, true)
 end
@@ -272,20 +229,10 @@ function SearchFilters:CreateLists()
 	end
 
 	--locations
-	local allowList = {
-		"bag",
-		"bank",
-		"reagents",
-		"equip",
-		"mailbox",
-		"void",
-		"auction",
-		"guild",
-		"warband",
-	}
-
-	for k, v in ipairs(allowList) do
-		if BSYC.tracking[v] then
+	local allowList = BSYC:GetDefaultAllowListKeys(true)
+	for i = 1, #allowList do
+		local v = allowList[i]
+		if BSYC.tracking and BSYC.tracking[v] then
 			--only add if enabled
 			table.insert(SearchFilters.locationList, {
 				name = L["Tooltip_"..v],
@@ -304,7 +251,7 @@ function SearchFilters:RefreshPlayerList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		BSYC:UI_AttachListItemHandlers(button, SearchFilters)
+		UI:AttachListItemHandlers(button, SearchFilters)
 
         local itemIndex = buttonIndex + offset
 
@@ -365,7 +312,7 @@ function SearchFilters:RefreshLocationList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		BSYC:UI_AttachListItemHandlers(button, SearchFilters)
+		UI:AttachListItemHandlers(button, SearchFilters)
 
         local itemIndex = buttonIndex + offset
 
@@ -412,22 +359,21 @@ function SearchFilters:Reset()
 	SearchFilters:SelectAll(true)
 	SearchFilters.frame.SearchBox.ClearButton:Hide()
 	SearchFilters.frame.SearchBox.SearchInfo:Show()
-	BSYC.advUnitList = nil
-	BSYC.advAllowList = nil
 	Search:Reset()
 end
 
 function SearchFilters:SelectAll(uncheck)
+	local selected = not uncheck
 	for i=1, #SearchFilters.playerList do
 		local item = SearchFilters.playerList[i]
 		if not item.isHeader then
-			item.isSelected = (not uncheck and true) or false
+			item.isSelected = selected
 		end
 	end
 	for i=1, #SearchFilters.locationList do
 		local item = SearchFilters.locationList[i]
 		if not item.isHeader then
-			item.isSelected = (not uncheck and true) or false
+			item.isSelected = selected
 		end
 	end
 	SearchFilters:RefreshLists()
@@ -440,6 +386,7 @@ end
 function SearchFilters:SearchBox_ResetSearch(btn)
 	btn:Hide()
 	SearchFilters.frame.SearchBox:SetText("")
+	SearchFilters.frame.SearchBox.SearchInfo:Show()
 end
 
 function SearchFilters:Item_OnClick(btn)

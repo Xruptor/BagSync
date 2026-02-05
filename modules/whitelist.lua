@@ -7,6 +7,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
+local UI = BSYC:GetModule("UI")
 local Whitelist = BSYC:NewModule("Whitelist")
 local Tooltip = BSYC:GetModule("Tooltip")
 
@@ -17,7 +18,7 @@ end
 local L = BSYC.L
 
 function Whitelist:OnEnable()
-	local whitelistFrame = BSYC:UI_CreateModuleFrame(Whitelist, {
+	local whitelistFrame = UI:CreateModuleFrame(Whitelist, {
 		template = "BagSyncFrameTemplate",
 		globalName = "BagSyncWhitelistFrame",
 		title = "BagSync - "..L.Whitelist,
@@ -51,7 +52,7 @@ function Whitelist:OnEnable()
 	whitelistFrame.infoText:SetJustifyH("LEFT")
 	whitelistFrame.infoText:SetWidth(whitelistFrame:GetWidth() - 15)
 
-	Whitelist.scrollFrame = BSYC:UI_CreateHybridScrollFrame(whitelistFrame, {
+	Whitelist.scrollFrame = UI:CreateHybridScrollFrame(whitelistFrame, {
 		width = 337,
 		pointTopLeft = { "TOPLEFT", whitelistFrame, "TOPLEFT", 13, -70 },
 		-- set ScrollFrame height by altering the distance from the bottom of the frame
@@ -136,26 +137,21 @@ function Whitelist:UpdateList()
 end
 
 function Whitelist:CreateList()
-	Whitelist.listItems = {}
-	local dataObj = {}
+	local listItems = {}
 
 	--loop through our whitelist
 	for k, v in pairs(BSYC.db.whitelist) do
-		table.insert(dataObj, {
+		listItems[#listItems + 1] = {
 			key = k,
 			value = v
-		})
+		}
 	end
 
-	if #dataObj > 0 then
-		table.sort(dataObj, function(a,b) return (a.value < b.value) end)
-		for i=1, #dataObj do
-			table.insert(Whitelist.listItems, {
-				key = dataObj[i].key,
-				value = dataObj[i].value
-			})
-		end
+	if #listItems > 0 then
+		table.sort(listItems, function(a, b) return (a.value or "") < (b.value or "") end)
 	end
+
+	Whitelist.listItems = listItems
 end
 
 function Whitelist:RefreshList()
@@ -166,7 +162,7 @@ function Whitelist:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		BSYC:UI_AttachListItemHandlers(button, Whitelist)
+		UI:AttachListItemHandlers(button, Whitelist)
 
         local itemIndex = buttonIndex + offset
 
@@ -183,10 +179,10 @@ function Whitelist:RefreshList()
 			button.Text:SetText(item.value or "")
 			button.HeaderHighlight:SetAlpha(0)
 
-				if BSYC:IsMouseOver(button) then
-					Whitelist:Item_OnLeave() --hide first
-					Whitelist:Item_OnEnter(button)
-				end
+			if BSYC:IsMouseOver(button) then
+				Whitelist:Item_OnLeave() --hide first
+				Whitelist:Item_OnEnter(button)
+			end
 
             button:Show()
         else

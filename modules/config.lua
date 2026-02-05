@@ -11,6 +11,7 @@ local L = BSYC.L
 local config = BSYC.Config
 local configDialog = BSYC.ConfigDialog
 local TITLE_WHITE = { 1, 1, 1 }
+local tconcat = table.concat
 
 local function ShowModuleFrame(name)
 	local module = BSYC.GetModule and BSYC:GetModule(name, true)
@@ -32,26 +33,16 @@ local function buildFactionIcons()
 end
 
 local function buildLocationLegend()
-	local allowList = {
-		"bag",
-		"bank",
-		"reagents",
-		"guild",
-		"equip",
-		"mailbox",
-		"void",
-		"auction",
-		"warband",
-	}
+	local allowList = BSYC:GetDefaultAllowListKeys(true)
 
-	local charLocations = ""
-	local iconLocations = ""
+	local charParts = {}
+	local iconParts = {}
 	for i = 1, #allowList do
 		local k = allowList[i]
-		charLocations = charLocations .. "|cFF4DD827" .. (L["TooltipSmall_" .. k] or "") .. "|r=|cFFFFD580" .. (L["Tooltip_" .. k] or "") .. "|r, "
-		iconLocations = iconLocations .. (L["TooltipIcon_" .. k] or ""):gsub("13:13", "16:16") .. "=|cFFFFD580" .. (L["Tooltip_" .. k] or "") .. "|r, "
+		charParts[#charParts + 1] = "|cFF4DD827" .. (L["TooltipSmall_" .. k] or "") .. "|r=|cFFFFD580" .. (L["Tooltip_" .. k] or "") .. "|r"
+		iconParts[#iconParts + 1] = (L["TooltipIcon_" .. k] or ""):gsub("13:13", "16:16") .. "=|cFFFFD580" .. (L["Tooltip_" .. k] or "") .. "|r"
 	end
-	return charLocations, iconLocations
+	return tconcat(charParts, ", "), tconcat(iconParts, ", ")
 end
 
 local function getRealmNameStyle()

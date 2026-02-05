@@ -7,6 +7,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
+local UI = BSYC:GetModule("UI")
 local Profiles = BSYC:NewModule("Profiles")
 local Data = BSYC:GetModule("Data")
 local Unit = BSYC:GetModule("Unit")
@@ -19,7 +20,7 @@ end
 local L = BSYC.L
 
 function Profiles:OnEnable()
-	local profilesFrame = BSYC:UI_CreateModuleFrame(Profiles, {
+	local profilesFrame = UI:CreateModuleFrame(Profiles, {
 		template = "BagSyncFrameTemplate",
 		globalName = "BagSyncProfilesFrame",
 		title = "BagSync - "..L.Profiles,
@@ -38,7 +39,7 @@ function Profiles:OnEnable()
 	profilesFrame.infoText:SetJustifyH("LEFT")
 	profilesFrame.infoText:SetWidth(profilesFrame:GetWidth() - 15)
 
-	Profiles.scrollFrame = BSYC:UI_CreateHybridScrollFrame(profilesFrame, {
+	Profiles.scrollFrame = UI:CreateHybridScrollFrame(profilesFrame, {
 		width = 397,
 		pointTopLeft = { "TOPLEFT", profilesFrame, "TOPLEFT", 13, -48 },
 		-- set ScrollFrame height by altering the distance from the bottom of the frame
@@ -136,7 +137,7 @@ function Profiles:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		BSYC:UI_AttachListItemHandlers(button, Profiles)
+		UI:AttachListItemHandlers(button, Profiles)
 
         local itemIndex = buttonIndex + offset
 
@@ -163,10 +164,10 @@ function Profiles:RefreshList()
 
 			--while we are updating the scrollframe, is the mouse currently over a button?
 			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
-				if BSYC:IsMouseOver(button) then
-					Profiles:Item_OnLeave() --hide first
-					Profiles:Item_OnEnter(button)
-				end
+			if BSYC:IsMouseOver(button) then
+				Profiles:Item_OnLeave() --hide first
+				Profiles:Item_OnEnter(button)
+			end
 
             button:Show()
         else
@@ -184,20 +185,28 @@ end
 function Profiles:DeleteUnit(entry)
 	if not entry then BSYC:Print(L.ErrorUserNotFound) return end
 
+	local realmDB = BagSyncDB and BagSyncDB[entry.unitObj.realm]
+
 	if not entry.unitObj.isGuild then
 		if entry.unitObj.data == BSYC.db.player then
 			--it's the current player so we have to do a reloadui
-			BagSyncDB[entry.unitObj.realm][entry.unitObj.name] = nil
+			if realmDB then
+				realmDB[entry.unitObj.name] = nil
+			end
 			Data:FixDB()
 			ReloadUI()
 			return
 		else
 			BSYC:Print(L.ProfileBeenRemoved:format(entry.colorized, entry.unitObj.realm))
-			BagSyncDB[entry.unitObj.realm][entry.unitObj.name] = nil
+			if realmDB then
+				realmDB[entry.unitObj.name] = nil
+			end
 		end
 	else
 		BSYC:Print(L.GuildRemoved:format(entry.colorized))
-		BagSyncDB[entry.unitObj.realm][entry.unitObj.name] = nil
+		if realmDB then
+			realmDB[entry.unitObj.name] = nil
+		end
 	end
 	Data:FixDB()
 	Profiles:UpdateList()

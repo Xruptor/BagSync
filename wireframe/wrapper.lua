@@ -861,7 +861,11 @@ local function renderItems(parent, items, widgets, y)
 					refresh = function()
 						local selected = binding and binding.get and binding.get()
 						UIDropDownMenu_SetSelectedValue(dd, selected)
-						local t = labelByValue[selected] or ""
+						local t = labelByValue[selected]
+						if t == nil and selected ~= nil then
+							t = tostring(selected)
+						end
+						t = t or ""
 						UIDropDownMenu_SetText(dd, t)
 						UIDropDownMenu_DisableDropDown(dd)
 						if not evalBool(item.disabled) then

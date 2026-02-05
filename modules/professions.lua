@@ -7,6 +7,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
+local UI = BSYC:GetModule("UI")
 local Professions = BSYC:NewModule("Professions")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
@@ -18,7 +19,7 @@ end
 local L = BSYC.L
 
 function Professions:OnEnable()
-	local professionsFrame = BSYC:UI_CreateModuleFrame(Professions, {
+	local professionsFrame = UI:CreateModuleFrame(Professions, {
 		template = "BagSyncFrameTemplate",
 		globalName = "BagSyncProfessionsFrame",
 		title = "BagSync - "..L.Professions,
@@ -37,7 +38,7 @@ function Professions:OnEnable()
 	professionsFrame.infoText:SetJustifyH("LEFT")
 	professionsFrame.infoText:SetWidth(professionsFrame:GetWidth() - 15)
 
-	Professions.scrollFrame = BSYC:UI_CreateHybridScrollFrame(professionsFrame, {
+	Professions.scrollFrame = UI:CreateHybridScrollFrame(professionsFrame, {
 		width = 337,
 		pointTopLeft = { "TOPLEFT", professionsFrame, "TOPLEFT", 13, -48 },
 		-- set ScrollFrame height by altering the distance from the bottom of the frame
@@ -72,10 +73,9 @@ function Professions:CreateList()
 
 			for skillID, skillData in pairs(unitObj.data.professions) do
 				if skillData.name then
-					local hasRecipes = false
-					if (skillData.recipeCount and skillData.recipeCount > 0) or (skillData.categoryCount and skillData.categoryCount > 0) then
-						hasRecipes = true
-					end
+					local recipeCount = tonumber(skillData.recipeCount) or 0
+					local categoryCount = tonumber(skillData.categoryCount) or 0
+					local hasRecipes = (recipeCount > 0) or (categoryCount > 0)
 					table.insert(usrData, {
 						skillID = skillID,
 						skillData = skillData,
@@ -134,7 +134,7 @@ function Professions:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		BSYC:UI_AttachListItemHandlers(button, Professions)
+		UI:AttachListItemHandlers(button, Professions)
 
         local itemIndex = buttonIndex + offset
 
@@ -172,10 +172,10 @@ function Professions:RefreshList()
 
 			--while we are updating the scrollframe, is the mouse currently over a button?
 			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
-				if BSYC:IsMouseOver(button) then
-					Professions:Item_OnLeave() --hide first
-					Professions:Item_OnEnter(button)
-				end
+			if BSYC:IsMouseOver(button) then
+				Professions:Item_OnLeave() --hide first
+				Professions:Item_OnEnter(button)
+			end
 
             button:Show()
         else
@@ -220,6 +220,9 @@ end
 
 function Professions:Item_OnClick(btn)
 	if not btn.isHeader and btn.data.hasRecipes then
-		BSYC:GetModule("Recipes"):ViewRecipes(btn.data)
+		local recipes = BSYC:GetModule("Recipes", true)
+		if recipes and recipes.ViewRecipes then
+			recipes:ViewRecipes(btn.data)
+		end
 	end
 end

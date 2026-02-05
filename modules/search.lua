@@ -7,6 +7,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
+local UI = BSYC:GetModule("UI")
 local Search = BSYC:NewModule("Search")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
@@ -42,7 +43,7 @@ local function CreateInfoFrame(parent, opts)
 end
 
 function Search:OnEnable()
-	local searchFrame = BSYC:UI_CreateModuleFrame(Search, {
+	local searchFrame = UI:CreateModuleFrame(Search, {
 		template = "BagSyncSearchFrameTemplate",
 		globalName = "BagSyncSearchFrame",
 		title = "BagSync - "..L.Search,
@@ -54,7 +55,7 @@ function Search:OnEnable()
 	})
 	Search.frame = searchFrame
 
-	Search.scrollFrame = BSYC:UI_CreateHybridScrollFrame(searchFrame, {
+	Search.scrollFrame = UI:CreateHybridScrollFrame(searchFrame, {
 		width = 357,
 		pointTopLeft = { "TOPLEFT", searchFrame, "TOPLEFT", 13, -60 },
 		-- set ScrollFrame height by altering the distance from the bottom of the frame
@@ -146,7 +147,7 @@ function Search:OnEnable()
 	})
 	savedSearch:SetScript("OnShow", function() Search:SavedSearch_UpdateList() end)
 	Search.savedSearch = savedSearch
-	savedSearch.scrollFrame = BSYC:UI_CreateHybridScrollFrame(savedSearch, {
+	savedSearch.scrollFrame = UI:CreateHybridScrollFrame(savedSearch, {
 		width = 357,
 		pointTopLeft = { "TOPLEFT", savedSearch, "TOPLEFT", 13, -32 },
 		-- set ScrollFrame height by altering the distance from the bottom of the frame
@@ -200,67 +201,25 @@ function Search:OnEnable()
 
 	local searchBox = searchFrame.SearchBox
 	if searchBox then
-		searchBox.parentHandler = Search
-		if searchBox.ClearButton then
-			searchBox.ClearButton.parentHandler = Search
-			searchBox.ClearButton:SetScript("OnEnter", function(self)
-				self.Texture:SetAlpha(1.0)
-			end)
-			searchBox.ClearButton:SetScript("OnLeave", function(self)
-				self.Texture:SetAlpha(0.5)
-			end)
-			searchBox.ClearButton:SetScript("OnMouseDown", function(self)
-				self.Texture:SetPoint("TOPLEFT", -1, -2)
-			end)
-			searchBox.ClearButton:SetScript("OnMouseUp", function(self)
-				self.Texture:SetPoint("TOPLEFT", 0, 0)
-			end)
-			searchBox.ClearButton:SetScript("OnShow", function(self)
-				self.Texture:SetPoint("TOPLEFT", 0, 0)
-			end)
-			searchBox.ClearButton:SetScript("OnClick", function(self)
-				BSYC:UI_CallHandler(self, "SearchBox_ResetSearch", self)
-			end)
-		end
-		searchBox:SetScript("OnEscapePressed", function(self)
-			self:ClearFocus()
-			BSYC:UI_CallHandler(self, "SearchBox_OnEscapePressed", self:GetText())
-		end)
-		searchBox:SetScript("OnEnterPressed", function(self)
-			self:ClearFocus()
-			BSYC:UI_CallHandler(self, "SearchBox_OnEnterPressed", self:GetText())
-		end)
-		searchBox:SetScript("OnEditFocusLost", function(self)
-			self.SearchIcon:SetVertexColor(0.6, 0.6, 0.6)
-			self.SearchInfo:SetShown(self:GetText():len() == 0)
-			self.ClearButton:SetShown(self:GetText():len() > 0)
-		end)
-		searchBox:SetScript("OnEditFocusGained", function(self)
-			self.SearchIcon:SetVertexColor(1.0, 1.0, 1.0)
-			self.ClearButton:Show()
-			self.SearchInfo:Hide()
-		end)
-		searchBox:SetScript("OnTextChanged", function(self, userInput)
-			BSYC:UI_CallHandler(self, "SearchBox_OnTextChanged", userInput)
-		end)
+		UI:SetupSearchBox(searchBox, Search)
 	end
 
 	if searchFrame.PlusButton then
 		searchFrame.PlusButton.parentHandler = Search
 		searchFrame.PlusButton:SetScript("OnClick", function(self)
-			BSYC:UI_CallHandler(self, "PlusClick")
+			UI:CallHandler(self, "PlusClick")
 		end)
 	end
 	if searchFrame.RefreshButton then
 		searchFrame.RefreshButton.parentHandler = Search
 		searchFrame.RefreshButton:SetScript("OnClick", function(self)
-			BSYC:UI_CallHandler(self, "RefreshClick")
+			UI:CallHandler(self, "RefreshClick")
 		end)
 	end
 	if searchFrame.HelpButton then
 		searchFrame.HelpButton.parentHandler = Search
 		searchFrame.HelpButton:SetScript("OnClick", function(self)
-			BSYC:UI_CallHandler(self, "HelpClick")
+			UI:CallHandler(self, "HelpClick")
 		end)
 	end
 
@@ -489,7 +448,7 @@ function Search:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		BSYC:UI_AttachListItemHandlers(button, Search, { detailsButton = "DetailsButton" })
+		UI:AttachListItemHandlers(button, Search, { detailsButton = "DetailsButton" })
 
         local itemIndex = buttonIndex + offset
 
@@ -507,10 +466,10 @@ function Search:RefreshList()
 
 			--while we are updating the scrollframe, is the mouse currently over a button?
 			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
-				if BSYC:IsMouseOver(button) then
-					Search:Item_OnLeave() --hide first
-					Search:Item_OnEnter(button)
-				end
+			if BSYC:IsMouseOver(button) then
+				Search:Item_OnLeave() --hide first
+				Search:Item_OnEnter(button)
+			end
 
             button:Show()
         else
@@ -558,10 +517,11 @@ function Search:SearchBox_ResetSearch(btn)
 end
 
 function Search:ItemDetails(btn)
-	if BSYC:GetModule("Details", true) then
+	local details = BSYC:GetModule("Details", true)
+	if details and details.ShowItem then
 		local item = btn:GetParent()
 		if item and item.data then
-			BSYC:GetModule("Details"):ShowItem(item.data.parseLink, item.data.entry)
+			details:ShowItem(item.data.parseLink, item.data.entry)
 		end
 	end
 end
@@ -678,7 +638,7 @@ function Search:SavedSearch_RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		BSYC:UI_AttachListItemHandlers(button, Search, {
+		UI:AttachListItemHandlers(button, Search, {
 			onClick = "SavedSearch_Item_OnClick",
 			onEnter = "SavedSearch_Item_OnEnter",
 			onLeave = "SavedSearch_Item_OnLeave",
@@ -725,8 +685,9 @@ function Search:SavedSearch_AddItem()
 	local storeText = ""
 	local frame = Search.frame
 
-	if BSYC:GetModule("SearchFilters", true) and BSYC:GetModule("SearchFilters").frame:IsVisible() then
-		frame = BSYC:GetModule("SearchFilters").frame
+	local searchFilters = BSYC:GetModule("SearchFilters", true)
+	if searchFilters and searchFilters.frame and searchFilters.frame:IsVisible() then
+		frame = searchFilters.frame
 	end
 	storeText = frame.SearchBox:GetText()
 	if not storeText or string.len(storeText) < 1 then
@@ -748,8 +709,9 @@ function Search:SavedSearch_Item_OnClick(btn)
 	local frame = Search.frame
 	local isSearchFilters = false
 
-	if BSYC:GetModule("SearchFilters", true) and BSYC:GetModule("SearchFilters").frame:IsVisible() then
-		frame = BSYC:GetModule("SearchFilters").frame
+	local searchFilters = BSYC:GetModule("SearchFilters", true)
+	if searchFilters and searchFilters.frame and searchFilters.frame:IsVisible() then
+		frame = searchFilters.frame
 		isSearchFilters = true
 	end
 
@@ -757,7 +719,7 @@ function Search:SavedSearch_Item_OnClick(btn)
 	frame.SearchBox:SetText(btn.data.value)
 
 	if isSearchFilters then
-		BSYC:GetModule("SearchFilters"):DoSearch()
+		searchFilters:DoSearch()
 	else
 		Search:DoSearch()
 	end

@@ -7,6 +7,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
+local UI = BSYC:GetModule("UI")
 local Recipes = BSYC:NewModule("Recipes")
 local Tooltip = BSYC:GetModule("Tooltip")
 local Professions = BSYC:GetModule("Professions")
@@ -18,7 +19,7 @@ end
 local L = BSYC.L
 
 function Recipes:OnEnable()
-	local recipesFrame = BSYC:UI_CreateModuleFrame(Recipes, {
+	local recipesFrame = UI:CreateModuleFrame(Recipes, {
 		template = "BagSyncFrameTemplate",
 		globalName = "BagSyncRecipesFrame",
 		title = "BagSync - "..L.Recipes,
@@ -37,7 +38,7 @@ function Recipes:OnEnable()
 	recipesFrame.infoText:SetJustifyH("CENTER")
 	recipesFrame.infoText:SetWidth(recipesFrame:GetWidth() - 15)
 
-	Recipes.scrollFrame = BSYC:UI_CreateHybridScrollFrame(recipesFrame, {
+	Recipes.scrollFrame = UI:CreateHybridScrollFrame(recipesFrame, {
 		width = 527,
 		pointTopLeft = { "TOPLEFT", recipesFrame, "TOPLEFT", 13, -48 },
 		-- set ScrollFrame height by altering the distance from the bottom of the frame
@@ -73,7 +74,8 @@ function Recipes:CreateList(data)
 	Recipes.recipesList = {}
 	Recipes.frame.infoText:SetText(data.colorized.." | "..data.skillData.name)
 
-	local xGetSpellInfo = C_Spell and C_Spell.GetSpellInfo or GetSpellInfo
+	local xGetSpellInfo = (C_Spell and C_Spell.GetSpellInfo) or GetSpellInfo
+	local xGetRecipeInfo = (C_TradeSkillUI and C_TradeSkillUI.GetRecipeInfo) or nil
 	local recipeData = {}
 
 	for k, v in pairs(data.skillData.categories) do
@@ -82,12 +84,13 @@ function Recipes:CreateList(data)
 
 			if #recipeList > 0 then
 				for idx = 1, #recipeList do
-					if recipeList[idx] and string.len(recipeList[idx]) > 0 then
-						local recipe_info = _G.C_TradeSkillUI.GetRecipeInfo(recipeList[idx])
-						local recipeName = recipeList[idx]
+					if recipeList[idx] and recipeList[idx] ~= "" then
+						local recipeID = tonumber(recipeList[idx]) or recipeList[idx]
+						local recipe_info = xGetRecipeInfo and xGetRecipeInfo(recipeID) or nil
+						local recipeName = recipeID
 						local iconTexture = "Interface\\Icons\\INV_Misc_QuestionMark"
 
-						local gName, _, gIcon = xGetSpellInfo(recipeList[idx])
+						local gName, _, gIcon = xGetSpellInfo(recipeID)
 
 						if recipe_info and recipe_info.name then
 							recipeName = recipe_info.name
@@ -96,7 +99,7 @@ function Recipes:CreateList(data)
 							recipeName = gName
 							iconTexture = gIcon
 						else
-							recipeName = L.RecipesFailedRequest:format(recipeList[idx])
+							recipeName = L.RecipesFailedRequest:format(recipeID)
 						end
 
 						table.insert(recipeData, {
@@ -104,7 +107,7 @@ function Recipes:CreateList(data)
 							tierData = v,
 							tierIndex = v.orderIndex,
 							recipeName = recipeName,
-							recipeID = recipeList[idx],
+							recipeID = recipeID,
 							recipeIcon = iconTexture,
 							hasRecipes = true
 						})
@@ -165,7 +168,7 @@ function Recipes:RefreshList()
 
     for buttonIndex = 1, #buttons do
         local button = buttons[buttonIndex]
-		BSYC:UI_AttachListItemHandlers(button, Recipes)
+		UI:AttachListItemHandlers(button, Recipes)
 
         local itemIndex = buttonIndex + offset
 
@@ -199,10 +202,10 @@ function Recipes:RefreshList()
 
 			--while we are updating the scrollframe, is the mouse currently over a button?
 			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
-				if BSYC:IsMouseOver(button) then
-					Recipes:Item_OnLeave() --hide first
-					Recipes:Item_OnEnter(button)
-				end
+			if BSYC:IsMouseOver(button) then
+				Recipes:Item_OnLeave() --hide first
+				Recipes:Item_OnEnter(button)
+			end
 
             button:Show()
         else
@@ -225,7 +228,12 @@ function Recipes:Item_OnEnter(btn)
 	end
     if not btn.isHeader then
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
-		GameTooltip:SetSpellByID(btn.data.recipeID)
+		local recipeID = tonumber(btn.data.recipeID)
+		if recipeID then
+			GameTooltip:SetSpellByID(recipeID)
+		else
+			GameTooltip:AddLine(btn.data.recipeName or "")
+		end
 		GameTooltip:Show()
 		return
 	end
@@ -238,6 +246,10 @@ end
 
 function Recipes:Item_OnClick(btn)
 	if not btn.isHeader and IsModifiedClick("CHATLINK") then
-		ChatEdit_InsertLink(GetSpellLink(btn.data.recipeID))
+		local recipeID = tonumber(btn.data.recipeID) or btn.data.recipeID
+		local link = GetSpellLink(recipeID)
+		if link then
+			ChatEdit_InsertLink(link)
+		end
 	end
 end

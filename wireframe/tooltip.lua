@@ -100,15 +100,6 @@ local function GetTotalForItem(data, itemID, useUniqueTotals)
 	return total
 end
 
-local function ConcatNumeric(tbl, delim)
-	if not tbl or #tbl == 0 then return "" end
-	local tmp = {}
-	for i = 1, #tbl do
-		tmp[i] = tostring(tbl[i])
-	end
-	return tconcat(tmp, delim or ",")
-end
-
 local function WipeTable(tbl)
 	if not tbl then return {} end
 	if wipe then
@@ -119,6 +110,17 @@ local function WipeTable(tbl)
 		end
 	end
 	return tbl
+end
+
+local NUMERIC_SCRATCH = {}
+local function ConcatNumeric(tbl, delim)
+	if not tbl or #tbl == 0 then return "" end
+	for i = 1, #tbl do
+		NUMERIC_SCRATCH[i] = tostring(tbl[i])
+	end
+	local out = tconcat(NUMERIC_SCRATCH, delim or ",")
+	WipeTable(NUMERIC_SCRATCH)
+	return out
 end
 
 local function ShallowCopyArray(src)
