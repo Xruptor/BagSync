@@ -19,27 +19,13 @@ end
 local L = BSYC.L
 local ItemScout = LibStub("LibItemScout-1.0")
 
-local function CreateInfoFrame(parent, opts)
-	local frame = _G.CreateFrame("Frame", nil, parent, "BagSyncInfoFrameTemplate")
-	frame:Hide()
-	if opts.width then frame:SetWidth(opts.width) end
-	if opts.height then frame:SetHeight(opts.height) end
-	frame:SetBackdropColor(0, 0, 0, 0.75)
-	frame:EnableMouse(true) --don't allow clickthrough
-	frame:SetMovable(false)
-	frame:SetResizable(false)
-	frame:SetFrameStrata(opts.strata or "HIGH")
-	frame:ClearAllPoints()
-	if opts.point then frame:SetPoint(unpack(opts.point)) end
-	if frame.TitleText and opts.title then
-		frame.TitleText:SetText(opts.title)
-		frame.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
-		frame.TitleText:SetTextColor(1, 1, 1)
+function Search:Toggle()
+	if not self.frame then return end
+	if self.frame:IsShown() then
+		self.frame:Hide()
+	else
+		self.frame:Show()
 	end
-	if frame.CloseButton then
-		frame.CloseButton:SetScript("OnClick", function(self) self:GetParent():Hide() end)
-	end
-	return frame
 end
 
 function Search:OnEnable()
@@ -67,69 +53,85 @@ function Search:OnEnable()
 	Search.items = {}
 
 	--total counter
-	searchFrame.totalText = searchFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	searchFrame.totalText:SetText(L.TooltipTotal.." |cFFFFFFFF0|r")
-	searchFrame.totalText:SetFont(STANDARD_TEXT_FONT, 12, "")
-	searchFrame.totalText:SetTextColor(1, 165/255, 0)
-	searchFrame.totalText:SetPoint("LEFT", searchFrame, "BOTTOMLEFT", 15, 20)
-	searchFrame.totalText:SetJustifyH("LEFT")
+	searchFrame.totalText = UI:CreateFontString(searchFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.TooltipTotal.." |cFFFFFFFF0|r",
+		font = { STANDARD_TEXT_FONT, 12, "" },
+		textColor = { 1, 165/255, 0 },
+		point = { "LEFT", searchFrame, "BOTTOMLEFT", 15, 20 },
+		justifyH = "LEFT",
+	})
 
 	--Search Filters button
-	searchFrame.searchFiltersBtn = _G.CreateFrame("Button", nil, searchFrame, "UIPanelButtonTemplate")
-	searchFrame.searchFiltersBtn:SetText(L.SearchFilters)
-	searchFrame.searchFiltersBtn:SetHeight(20)
-	searchFrame.searchFiltersBtn:SetWidth(searchFrame.searchFiltersBtn:GetTextWidth() + 30)
-	searchFrame.searchFiltersBtn:SetPoint("RIGHT", searchFrame, "BOTTOMRIGHT", -10, 23)
-	searchFrame.searchFiltersBtn:SetScript("OnClick", function() Search:ShowSearchFilters() end)
+	searchFrame.searchFiltersBtn = UI:CreateButton(searchFrame, {
+		template = "UIPanelButtonTemplate",
+		text = L.SearchFilters,
+		height = 20,
+		autoWidth = true,
+		point = { "RIGHT", searchFrame, "BOTTOMRIGHT", -10, 23 },
+		onClick = function() Search:ShowSearchFilters() end,
+	})
 
 	--Reset button
-	searchFrame.resetButton = _G.CreateFrame("Button", nil, searchFrame, "UIPanelButtonTemplate")
-	searchFrame.resetButton:SetText(L.Reset)
-	searchFrame.resetButton:SetHeight(20)
-	searchFrame.resetButton:SetWidth(searchFrame.resetButton:GetTextWidth() + 30)
-	searchFrame.resetButton:SetPoint("RIGHT", searchFrame.searchFiltersBtn, "LEFT", 0, 0)
-	searchFrame.resetButton:SetScript("OnClick", function() Search:Reset() end)
+	searchFrame.resetButton = UI:CreateButton(searchFrame, {
+		template = "UIPanelButtonTemplate",
+		text = L.Reset,
+		height = 20,
+		autoWidth = true,
+		point = { "RIGHT", searchFrame.searchFiltersBtn, "LEFT", 0, 0 },
+		onClick = function() Search:Reset() end,
+	})
 
 	--Warning Frame
-	local warningFrame = CreateInfoFrame(searchFrame, {
+	local warningFrame = UI:CreateInfoFrame(searchFrame, {
 		title = L.WarningHeader,
 		point = { "BOTTOMLEFT", searchFrame, "BOTTOMRIGHT", 5, 0 },
+		backdropColor = { 0, 0, 0, 0.75 },
 	})
-	warningFrame.infoText1 = warningFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	warningFrame.infoText1:SetText(L.WarningItemSearch)
-	warningFrame.infoText1:SetFont(STANDARD_TEXT_FONT, 14, "")
-	warningFrame.infoText1:SetTextColor(1, 165/255, 0) --orange, red is just too much sometimes
-	warningFrame.infoText1:SetJustifyH("CENTER")
-	warningFrame.infoText1:SetWidth(warningFrame:GetWidth() - 30)
-	warningFrame.infoText1:SetPoint("LEFT", warningFrame, "TOPLEFT", 10, -100)
-	warningFrame.infoText2 = warningFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	warningFrame.infoText2:SetText(L.ObsoleteWarning)
-	warningFrame.infoText2:SetFont(STANDARD_TEXT_FONT, 14, "")
-	warningFrame.infoText2:SetTextColor(50/255, 165/255, 0)
-	warningFrame.infoText2:SetWidth(warningFrame:GetWidth() - 30)
-	warningFrame.infoText2:SetPoint("LEFT", warningFrame.infoText1, "BOTTOMLEFT", 5, -70)
-	warningFrame.infoText2:SetJustifyH("CENTER")
+	warningFrame.infoText1 = UI:CreateFontString(warningFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.WarningItemSearch,
+		font = { STANDARD_TEXT_FONT, 14, "" },
+		textColor = { 1, 165/255, 0 }, --orange, red is just too much sometimes
+		justifyH = "CENTER",
+		width = warningFrame:GetWidth() - 30,
+		point = { "LEFT", warningFrame, "TOPLEFT", 10, -100 },
+	})
+	warningFrame.infoText2 = UI:CreateFontString(warningFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.ObsoleteWarning,
+		font = { STANDARD_TEXT_FONT, 14, "" },
+		textColor = { 50/255, 165/255, 0 },
+		width = warningFrame:GetWidth() - 30,
+		point = { "LEFT", warningFrame.infoText1, "BOTTOMLEFT", 5, -70 },
+		justifyH = "CENTER",
+	})
 	Search.warningFrame = warningFrame
 
 	--Help Frame
-	local helpFrame = CreateInfoFrame(searchFrame, {
+	local helpFrame = UI:CreateInfoFrame(searchFrame, {
 		title = L.SearchHelpHeader,
 		width = 500,
 		height = 300,
 		point = { "BOTTOMLEFT", searchFrame, "BOTTOMRIGHT", 5, 0 },
+		backdropColor = { 0, 0, 0, 0.75 },
 	})
-	helpFrame.ScrollFrame = CreateFrame("ScrollFrame", nil, helpFrame, "UIPanelScrollFrameTemplate")
-	helpFrame.ScrollFrame:SetPoint("TOPLEFT", helpFrame, "TOPLEFT", 8, -30)
-	helpFrame.ScrollFrame:SetPoint("BOTTOMRIGHT", helpFrame, "BOTTOMRIGHT", -30, 8)
-	helpFrame.EditBox = _G.CreateFrame("EditBox", nil, helpFrame.ScrollFrame)
+	helpFrame.ScrollFrame = UI:CreateScrollFrame(helpFrame, {
+		points = {
+			{ "TOPLEFT", helpFrame, "TOPLEFT", 8, -30 },
+			{ "BOTTOMRIGHT", helpFrame, "BOTTOMRIGHT", -30, 8 },
+		},
+	})
+	helpFrame.EditBox = UI:CreateEditBox(helpFrame.ScrollFrame, {
+		fontObject = ChatFontNormal,
+		multiLine = true,
+		autoFocus = false,
+		maxLetters = 0,
+		countInvisibleLetters = false,
+		text = L.SearchHelp,
+		width = 465, --set the boundaries for word wrapping on the scrollbar, if smaller than the frame it will wrap it
+	})
 	helpFrame.EditBox:SetAllPoints()
-	helpFrame.EditBox:SetFontObject(ChatFontNormal)
-	helpFrame.EditBox:SetMultiLine(true)
-	helpFrame.EditBox:SetAutoFocus(false)
-	helpFrame.EditBox:SetMaxLetters(0)
-	helpFrame.EditBox:SetCountInvisibleLetters(false)
-	helpFrame.EditBox:SetText(L.SearchHelp)
-	helpFrame.EditBox:SetWidth(465) --set the boundaries for word wrapping on the scrollbar, if smaller than the frame it will wrap it
 	helpFrame.ScrollFrame:SetScrollChild(helpFrame.EditBox)
 	--lets set it to disabled to prevent editing
 	helpFrame.EditBox:ClearFocus()
@@ -139,11 +141,12 @@ function Search:OnEnable()
 	Search.helpFrame = helpFrame
 
 	--Saved Search Frame
-	local savedSearch = CreateInfoFrame(searchFrame, {
+	local savedSearch = UI:CreateInfoFrame(searchFrame, {
 		title = L.SavedSearch,
 		width = 400,
 		height = 200,
 		point = { "TOPLEFT", searchFrame, "TOPRIGHT", 5, 0 },
+		backdropColor = { 0, 0, 0, 0.75 },
 	})
 	savedSearch:SetScript("OnShow", function() Search:SavedSearch_UpdateList() end)
 	Search.savedSearch = savedSearch
@@ -158,24 +161,31 @@ function Search:OnEnable()
 	--the items we will work with
 	savedSearch.items = {}
 	--Add Search Button
-	savedSearch.addSavedBtn = _G.CreateFrame("Button", nil, savedSearch, "UIPanelButtonTemplate")
-	savedSearch.addSavedBtn:SetText(L.SavedSearch_Add)
-	savedSearch.addSavedBtn:SetHeight(20)
-	savedSearch.addSavedBtn:SetWidth(savedSearch.addSavedBtn:GetTextWidth() + 30)
-	savedSearch.addSavedBtn:SetPoint("BOTTOM", savedSearch, "BOTTOM", 0, 5)
-	savedSearch.addSavedBtn:SetScript("OnClick", function() Search:SavedSearch_AddItem() end)
+	savedSearch.addSavedBtn = UI:CreateButton(savedSearch, {
+		template = "UIPanelButtonTemplate",
+		text = L.SavedSearch_Add,
+		height = 20,
+		autoWidth = true,
+		point = { "BOTTOM", savedSearch, "BOTTOM", 0, 5 },
+		onClick = function() Search:SavedSearch_AddItem() end,
+	})
 
 	--Modules Button (credit to LibDBIcon-1.0.lua for initial button design)
-	searchFrame.modulesButton = _G.CreateFrame("Button", nil, searchFrame)
-	searchFrame.modulesButton:SetSize(31, 31)
-	searchFrame.modulesButton:RegisterForClicks("anyUp")
-	searchFrame.modulesButton:SetHighlightTexture(136477) --"Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight"
-	searchFrame.modulesButton:SetPoint("TOPLEFT", searchFrame, "TOPLEFT", 0, 0)
-	searchFrame.modulesButton:SetScript("OnClick", function() if BSYC.bgsMinimapDD then ToggleDropDownMenu(1, nil, BSYC.bgsMinimapDD, 'cursor', 0, 0) end end)
+	searchFrame.modulesButton = UI:CreateButton(searchFrame, {
+		size = { 31, 31 },
+		registerForClicks = "anyUp",
+		highlightTexture = 136477, --"Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight"
+		point = { "TOPLEFT", searchFrame, "TOPLEFT", 0, 0 },
+		onClick = function()
+			if BSYC.bgsMinimapDD then
+				ToggleDropDownMenu(1, nil, BSYC.bgsMinimapDD, "cursor", 0, 0)
+			end
+		end,
+	})
 
-	local modulesButtonOverlay = searchFrame.modulesButton:CreateTexture(nil, "OVERLAY")
-	local modulesButtonBG = searchFrame.modulesButton:CreateTexture(nil, "BACKGROUND")
-	local modulesButtonIcon = searchFrame.modulesButton:CreateTexture(nil, "ARTWORK")
+	local modulesButtonOverlay = UI:CreateTexture(searchFrame.modulesButton, { layer = "OVERLAY" })
+	local modulesButtonBG = UI:CreateTexture(searchFrame.modulesButton, { layer = "BACKGROUND" })
+	local modulesButtonIcon = UI:CreateTexture(searchFrame.modulesButton, { layer = "ARTWORK" })
 
 	if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
 		modulesButtonOverlay:SetSize(50, 50)

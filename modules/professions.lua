@@ -30,13 +30,15 @@ function Professions:OnEnable()
 	})
 	Professions.frame = professionsFrame
 
-	professionsFrame.infoText = professionsFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	professionsFrame.infoText:SetText(L.ProfessionInformation)
-	professionsFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
-	professionsFrame.infoText:SetTextColor(1, 165/255, 0)
-	professionsFrame.infoText:SetPoint("LEFT", professionsFrame, "TOPLEFT", 15, -35)
-	professionsFrame.infoText:SetJustifyH("LEFT")
-	professionsFrame.infoText:SetWidth(professionsFrame:GetWidth() - 15)
+	professionsFrame.infoText = UI:CreateFontString(professionsFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.ProfessionInformation,
+		font = { STANDARD_TEXT_FONT, 12, "" },
+		textColor = { 1, 165/255, 0 },
+		point = { "LEFT", professionsFrame, "TOPLEFT", 15, -35 },
+		justifyH = "LEFT",
+		width = professionsFrame:GetWidth() - 15,
+	})
 
 	Professions.scrollFrame = UI:CreateHybridScrollFrame(professionsFrame, {
 		width = 337,

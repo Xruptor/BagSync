@@ -35,13 +35,15 @@ function Details:OnEnable()
 	})
 	Details.frame = detailsFrame
 
-	detailsFrame.infoText = detailsFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	detailsFrame.infoText:SetText(L.Details)
-	detailsFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
-	detailsFrame.infoText:SetTextColor(1, 165/255, 0)
-	detailsFrame.infoText:SetPoint("LEFT", detailsFrame, "TOPLEFT", 15, -35)
-	detailsFrame.infoText:SetJustifyH("LEFT")
-	detailsFrame.infoText:SetWidth(detailsFrame:GetWidth() - 15)
+	detailsFrame.infoText = UI:CreateFontString(detailsFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.Details,
+		font = { STANDARD_TEXT_FONT, 12, "" },
+		textColor = { 1, 165/255, 0 },
+		point = { "LEFT", detailsFrame, "TOPLEFT", 15, -35 },
+		justifyH = "LEFT",
+		width = detailsFrame:GetWidth() - 15,
+	})
 
 	Details.scrollFrame = UI:CreateHybridScrollFrame(detailsFrame, {
 		width = 557,

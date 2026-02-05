@@ -29,28 +29,34 @@ function Whitelist:OnEnable()
 	})
 	Whitelist.frame = whitelistFrame
 
-	local itemIDBox = CreateFrame("EditBox", nil, whitelistFrame, "InputBoxTemplate")
-	itemIDBox:SetSize(210, 20)
-	itemIDBox:SetPoint("LEFT", whitelistFrame, "TOPLEFT", 20, -40)
-	itemIDBox:SetAutoFocus(false)
-	itemIDBox:SetText("")
+	local itemIDBox = UI:CreateEditBox(whitelistFrame, {
+		template = "InputBoxTemplate",
+		size = { 210, 20 },
+		point = { "LEFT", whitelistFrame, "TOPLEFT", 20, -40 },
+		autoFocus = false,
+		text = "",
+	})
 	whitelistFrame.itemIDBox = itemIDBox
 
 	--add itemID button
-	whitelistFrame.addItemIDBtn = _G.CreateFrame("Button", nil, whitelistFrame, "UIPanelButtonTemplate")
-	whitelistFrame.addItemIDBtn:SetText(L.AddItemID)
-	whitelistFrame.addItemIDBtn:SetHeight(20)
-	whitelistFrame.addItemIDBtn:SetWidth(whitelistFrame.addItemIDBtn:GetTextWidth() + 30)
-	whitelistFrame.addItemIDBtn:SetPoint("LEFT", itemIDBox, "RIGHT", 5, 2)
-	whitelistFrame.addItemIDBtn:SetScript("OnClick", function() Whitelist:AddItemID() end)
+	whitelistFrame.addItemIDBtn = UI:CreateButton(whitelistFrame, {
+		template = "UIPanelButtonTemplate",
+		text = L.AddItemID,
+		height = 20,
+		autoWidth = true,
+		point = { "LEFT", itemIDBox, "RIGHT", 5, 2 },
+		onClick = function() Whitelist:AddItemID() end,
+	})
 
-	whitelistFrame.infoText = whitelistFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	whitelistFrame.infoText:SetText(L.UseFakeID)
-	whitelistFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
-	whitelistFrame.infoText:SetTextColor(1, 165/255, 0)
-	whitelistFrame.infoText:SetPoint("LEFT", whitelistFrame, "TOPLEFT", 15, -60)
-	whitelistFrame.infoText:SetJustifyH("LEFT")
-	whitelistFrame.infoText:SetWidth(whitelistFrame:GetWidth() - 15)
+	whitelistFrame.infoText = UI:CreateFontString(whitelistFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.UseFakeID,
+		font = { STANDARD_TEXT_FONT, 12, "" },
+		textColor = { 1, 165/255, 0 },
+		point = { "LEFT", whitelistFrame, "TOPLEFT", 15, -60 },
+		justifyH = "LEFT",
+		width = whitelistFrame:GetWidth() - 15,
+	})
 
 	Whitelist.scrollFrame = UI:CreateHybridScrollFrame(whitelistFrame, {
 		width = 337,
@@ -64,38 +70,32 @@ function Whitelist:OnEnable()
 	Whitelist.listItems = {}
 
 	--Warning Frame
-	local warningFrame = _G.CreateFrame("Frame", nil, whitelistFrame, "BagSyncInfoFrameTemplate")
-	warningFrame:Hide()
-	warningFrame:SetHeight(500)
-	warningFrame:SetBackdropColor(0, 0, 0, 0.75)
-    warningFrame:EnableMouse(true) --don't allow clickthrough
-    warningFrame:SetMovable(false)
-	warningFrame:SetResizable(false)
-    warningFrame:SetFrameStrata("FULLSCREEN_DIALOG")
-	warningFrame:ClearAllPoints()
-	warningFrame:SetPoint("TOPLEFT", whitelistFrame, "TOPRIGHT", 5, 0)
-	warningFrame.TitleText:SetText(L.DisplayWhitelistHelp)
-	warningFrame.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
-	warningFrame.TitleText:SetTextColor(1, 1, 1)
-	warningFrame.infoText1 = warningFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	warningFrame.infoText1:SetText(L.DisplayWhitelistStatus)
-	warningFrame.infoText1:SetFont(STANDARD_TEXT_FONT, 14, "")
-	warningFrame.infoText1:SetTextColor(1, 165/255, 0) --orange, red is just too much sometimes
-	warningFrame.infoText1:SetJustifyH("CENTER")
-	warningFrame.infoText1:SetWidth(warningFrame:GetWidth() - 30)
-	warningFrame.infoText1:SetPoint("LEFT", warningFrame, "TOPLEFT", 10, -40)
-	warningFrame.infoText2 = warningFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	warningFrame.infoText2:SetText(L.DisplayWhitelistHelpInfo..L.DisplayWhitelistHelpInfo2)
-	warningFrame.infoText2:SetFont(STANDARD_TEXT_FONT, 14, "")
-	warningFrame.infoText2:SetTextColor(50/255, 165/255, 0)
-	warningFrame.infoText2:SetWidth(warningFrame:GetWidth() - 30)
-	warningFrame.infoText2:SetPoint("LEFT", warningFrame.infoText1, "BOTTOMLEFT", 5, -200)
-	warningFrame.infoText2:SetJustifyH("CENTER")
+	local warningFrame = UI:CreateInfoFrame(whitelistFrame, {
+		title = L.DisplayWhitelistHelp,
+		height = 500,
+		point = { "TOPLEFT", whitelistFrame, "TOPRIGHT", 5, 0 },
+		backdropColor = { 0, 0, 0, 0.75 },
+		frameStrata = "FULLSCREEN_DIALOG",
+	})
+	warningFrame.infoText1 = UI:CreateFontString(warningFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.DisplayWhitelistStatus,
+		font = { STANDARD_TEXT_FONT, 14, "" },
+		textColor = { 1, 165/255, 0 }, --orange, red is just too much sometimes
+		justifyH = "CENTER",
+		width = warningFrame:GetWidth() - 30,
+		point = { "LEFT", warningFrame, "TOPLEFT", 10, -40 },
+	})
+	warningFrame.infoText2 = UI:CreateFontString(warningFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.DisplayWhitelistHelpInfo..L.DisplayWhitelistHelpInfo2,
+		font = { STANDARD_TEXT_FONT, 14, "" },
+		textColor = { 50/255, 165/255, 0 },
+		width = warningFrame:GetWidth() - 30,
+		point = { "LEFT", warningFrame.infoText1, "BOTTOMLEFT", 5, -200 },
+		justifyH = "CENTER",
+	})
 	Whitelist.warningFrame = warningFrame
-	if warningFrame.CloseButton then
-		warningFrame.CloseButton:SetScript("OnClick", function(self) self:GetParent():Hide() end)
-	end
-
 	StaticPopupDialogs["BAGSYNC_WHITELIST_REMOVE"] = {
 		text = L.WhiteListRemove,
 		button1 = "Yes",

@@ -31,13 +31,15 @@ function Profiles:OnEnable()
 	})
 	Profiles.frame = profilesFrame
 
-	profilesFrame.infoText = profilesFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	profilesFrame.infoText:SetText(L.DeleteWarning)
-	profilesFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
-	profilesFrame.infoText:SetTextColor(1, 0, 0)
-	profilesFrame.infoText:SetPoint("LEFT", profilesFrame, "TOPLEFT", 15, -35)
-	profilesFrame.infoText:SetJustifyH("LEFT")
-	profilesFrame.infoText:SetWidth(profilesFrame:GetWidth() - 15)
+	profilesFrame.infoText = UI:CreateFontString(profilesFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.DeleteWarning,
+		font = { STANDARD_TEXT_FONT, 12, "" },
+		textColor = { 1, 0, 0 },
+		point = { "LEFT", profilesFrame, "TOPLEFT", 15, -35 },
+		justifyH = "LEFT",
+		width = profilesFrame:GetWidth() - 15,
+	})
 
 	Profiles.scrollFrame = UI:CreateHybridScrollFrame(profilesFrame, {
 		width = 397,

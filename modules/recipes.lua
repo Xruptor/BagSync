@@ -30,13 +30,15 @@ function Recipes:OnEnable()
 	})
 	Recipes.frame = recipesFrame
 
-	recipesFrame.infoText = recipesFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	recipesFrame.infoText:SetText(L.ProfessionInformation)
-	recipesFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
-	recipesFrame.infoText:SetTextColor(1, 165/255, 0)
-	recipesFrame.infoText:SetPoint("LEFT", recipesFrame, "TOPLEFT", 15, -35)
-	recipesFrame.infoText:SetJustifyH("CENTER")
-	recipesFrame.infoText:SetWidth(recipesFrame:GetWidth() - 15)
+	recipesFrame.infoText = UI:CreateFontString(recipesFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.ProfessionInformation,
+		font = { STANDARD_TEXT_FONT, 12, "" },
+		textColor = { 1, 165/255, 0 },
+		point = { "LEFT", recipesFrame, "TOPLEFT", 15, -35 },
+		justifyH = "CENTER",
+		width = recipesFrame:GetWidth() - 15,
+	})
 
 	Recipes.scrollFrame = UI:CreateHybridScrollFrame(recipesFrame, {
 		width = 527,

@@ -42,37 +42,31 @@ function SortOrder:OnEnable()
 	SortOrder.sortorderList = {}
 
 	--Warning Frame
-	local warningFrame = _G.CreateFrame("Frame", nil, sortorderFrame, "BagSyncInfoFrameTemplate")
-	warningFrame:Hide()
-	warningFrame:SetBackdropColor(0, 0, 0, 0.75)
-    warningFrame:EnableMouse(true) --don't allow clickthrough
-    warningFrame:SetMovable(false)
-	warningFrame:SetResizable(false)
-    warningFrame:SetFrameStrata("FULLSCREEN_DIALOG")
-	warningFrame:ClearAllPoints()
-	warningFrame:SetPoint("TOPLEFT", sortorderFrame, "TOPRIGHT", 5, 0)
-	warningFrame.TitleText:SetText(L.DisplaySortOrderHelp)
-	warningFrame.TitleText:SetFont(STANDARD_TEXT_FONT, 14, "")
-	warningFrame.TitleText:SetTextColor(1, 1, 1)
-	warningFrame.infoText1 = warningFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	warningFrame.infoText1:SetText(L.DisplaySortOrderStatus)
-	warningFrame.infoText1:SetFont(STANDARD_TEXT_FONT, 14, "")
-	warningFrame.infoText1:SetTextColor(1, 165/255, 0) --orange, red is just too much sometimes
-	warningFrame.infoText1:SetJustifyH("CENTER")
-	warningFrame.infoText1:SetWidth(warningFrame:GetWidth() - 30)
-	warningFrame.infoText1:SetPoint("LEFT", warningFrame, "TOPLEFT", 10, -40)
-	warningFrame.infoText2 = warningFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	warningFrame.infoText2:SetText(L.CustomSortInfo.."\n\n"..L.CustomSortInfoWarn)
-	warningFrame.infoText2:SetFont(STANDARD_TEXT_FONT, 14, "")
-	warningFrame.infoText2:SetTextColor(50/255, 165/255, 0)
-	warningFrame.infoText2:SetWidth(warningFrame:GetWidth() - 30)
-	warningFrame.infoText2:SetPoint("LEFT", warningFrame.infoText1, "BOTTOMLEFT", 5, -100)
-	warningFrame.infoText2:SetJustifyH("CENTER")
+	local warningFrame = UI:CreateInfoFrame(sortorderFrame, {
+		title = L.DisplaySortOrderHelp,
+		point = { "TOPLEFT", sortorderFrame, "TOPRIGHT", 5, 0 },
+		backdropColor = { 0, 0, 0, 0.75 },
+		frameStrata = "FULLSCREEN_DIALOG",
+	})
+	warningFrame.infoText1 = UI:CreateFontString(warningFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.DisplaySortOrderStatus,
+		font = { STANDARD_TEXT_FONT, 14, "" },
+		textColor = { 1, 165/255, 0 }, --orange, red is just too much sometimes
+		justifyH = "CENTER",
+		width = warningFrame:GetWidth() - 30,
+		point = { "LEFT", warningFrame, "TOPLEFT", 10, -40 },
+	})
+	warningFrame.infoText2 = UI:CreateFontString(warningFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.CustomSortInfo.."\n\n"..L.CustomSortInfoWarn,
+		font = { STANDARD_TEXT_FONT, 14, "" },
+		textColor = { 50/255, 165/255, 0 },
+		width = warningFrame:GetWidth() - 30,
+		point = { "LEFT", warningFrame.infoText1, "BOTTOMLEFT", 5, -100 },
+		justifyH = "CENTER",
+	})
 	SortOrder.warningFrame = warningFrame
-	if warningFrame.CloseButton then
-		warningFrame.CloseButton:SetScript("OnClick", function(self) self:GetParent():Hide() end)
-	end
-
 	sortorderFrame:Hide()
 end
 

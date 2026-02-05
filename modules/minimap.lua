@@ -7,6 +7,7 @@
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
+local UI = BSYC:GetModule("UI")
 local MinimapModule = BSYC:NewModule("Minimap")
 
 local function Debug(level, ...)
@@ -38,7 +39,10 @@ local minimapShapes = {
 }
 
 -- Dropdown menu
-local menuFrame = CreateFrame("Frame", "BagSyncMinimapMenu", UIParent, "UIDropDownMenuTemplate")
+local menuFrame = UI:CreateDropdown(UIParent, {
+  globalName = "BagSyncMinimapMenu",
+})
+local menuInitialized = false
 
 local function ShowModuleFrame(name)
   local module = BSYC.GetModule and BSYC:GetModule(name, true)
@@ -47,13 +51,22 @@ local function ShowModuleFrame(name)
   end
 end
 
+local function GetLibDBIcon()
+  if _G.LibStub then
+    return _G.LibStub("LibDBIcon-1.0", true)
+  end
+end
+
+local function GetLDBObject()
+  return BSYC and BSYC.LDBObject
+end
+
 local function DoFixDB()
   local data = BSYC.GetModule and BSYC:GetModule("Data", true)
   if data and data.FixDB then
     data:FixDB()
   end
 end
-
 
 local function OpenConfig()
   if BSYC.OpenConfig then
@@ -106,6 +119,13 @@ local function InitMinimapMenu(_, level)
   AddButton(level, L.Close, function() CloseDropDownMenus() end)
 end
 
+local function InitMenuFrame()
+  if menuInitialized then return end
+  menuFrame.displayMode = "MENU"
+  UIDropDownMenu_Initialize(menuFrame, InitMinimapMenu, "MENU")
+  menuInitialized = true
+end
+
 -- Shape-aware positioning (LibDBIcon logic)
 local function SetButtonAngle(button, angle)
   if not MinimapFrame or not MinimapFrame.GetWidth or not MinimapFrame.GetHeight then return end
@@ -139,12 +159,33 @@ end
 function MinimapModule:SaveAngle(angle)
   BSYC.options = BSYC.options or {}
   BSYC.options.minimapPos = angle
+  if self.libDBIconDB then
+    -- ------
+    -- LibDBIcon: keep registered icon position in sync
+    -- ------
+    self.libDBIconDB.minimapPos = angle
+    local ldbicon = GetLibDBIcon()
+    if self.usingLibDBIcon and ldbicon and ldbicon.Refresh then
+      ldbicon:Refresh("BagSync", self.libDBIconDB)
+    end
+  end
 end
 
 function MinimapModule:ResetPosition()
   BSYC.options = BSYC.options or {}
   BSYC.options.enableMinimap = true
   BSYC.options.minimapPos = DEFAULT_ANGLE
+  if self.libDBIconDB then
+    -- ------
+    -- LibDBIcon: reset to defaults and refresh if active
+    -- ------
+    self.libDBIconDB.hide = false
+    self.libDBIconDB.minimapPos = DEFAULT_ANGLE
+    local ldbicon = GetLibDBIcon()
+    if self.usingLibDBIcon and ldbicon and ldbicon.Refresh then
+      ldbicon:Refresh("BagSync", self.libDBIconDB)
+    end
+  end
   if self.button then
     self.button:Show()
     self:LoadPosition()
@@ -152,6 +193,16 @@ function MinimapModule:ResetPosition()
 end
 
 function MinimapModule:LoadPosition()
+  if self.usingLibDBIcon then
+    -- ------
+    -- LibDBIcon: position is handled by LibDBIcon; just refresh
+    -- ------
+    local ldbicon = GetLibDBIcon()
+    if ldbicon and ldbicon.Refresh and self.libDBIconDB then
+      ldbicon:Refresh("BagSync", self.libDBIconDB)
+    end
+    return
+  end
   self.button:ClearAllPoints()
   local angle = DEFAULT_ANGLE
   if BSYC.options then
@@ -165,8 +216,75 @@ function MinimapModule:LoadPosition()
   SetButtonAngle(self.button, angle)
 end
 
+--------------------------------------------------------
+--------------------------------------------------------
+--- LDB and LibDBIcon fallback checks
+
+function MinimapModule:InitLibDBIconDB()
+  if self.libDBIconDB then return self.libDBIconDB end
+  local angle = DEFAULT_ANGLE
+  if BSYC.options and BSYC.options.minimapPos then
+    angle = tonumber(BSYC.options.minimapPos) or DEFAULT_ANGLE
+  end
+  self.libDBIconDB = {
+    minimapPos = angle,
+    hide = BSYC.options and BSYC.options.enableMinimap == false,
+  }
+  return self.libDBIconDB
+end
+
+function MinimapModule:TryEnableLibDBIcon()
+  -- ------
+  -- LibDBIcon: use it only if already loaded and we have an LDB object
+  -- ------
+  if self.usingLibDBIcon then return true end
+  local ldbicon = GetLibDBIcon()
+  if not ldbicon then return false end
+  local obj = GetLDBObject()
+  if not obj then return false end
+
+  local db = self:InitLibDBIconDB()
+  if ldbicon.GetMinimapButton and ldbicon:GetMinimapButton("BagSync") then
+    self.usingLibDBIcon = true
+    if self.button then self.button:Hide() end
+    return true
+  end
+
+  local ok, err = pcall(ldbicon.Register, ldbicon, "BagSync", obj, db)
+  if not ok then
+    Debug(1, "LibDBIcon register failed:", err)
+    return false
+  end
+  self.usingLibDBIcon = true
+  if self.button then self.button:Hide() end
+  if ldbicon.Refresh then
+    ldbicon:Refresh("BagSync", db)
+  end
+  return true
+end
+
+function MinimapModule:SetupLibDBIconWatcher()
+  -- ------
+  -- LibDBIcon: watch for late-loading libs and switch over if available
+  -- ------
+  if self.libDBIconWaitFrame then return end
+  if self.usingLibDBIcon then return end
+  local waitFrame = UI:CreateFrame(UIParent, {})
+  waitFrame:RegisterEvent("ADDON_LOADED")
+  waitFrame:SetScript("OnEvent", function()
+    if self:TryEnableLibDBIcon() then
+      waitFrame:UnregisterEvent("ADDON_LOADED")
+    end
+  end)
+  self.libDBIconWaitFrame = waitFrame
+end
+
+--------------------------------------------------------
+--------------------------------------------------------
+
 function MinimapModule:Create()
   if self.button then return end
+  if self.usingLibDBIcon then return end
   if not MinimapFrame then
     Debug(1, "Minimap frame missing; minimap icon not created.")
     return
@@ -183,37 +301,60 @@ function MinimapModule:Create()
     BSYC.options.minimap = nil
   end
 
-  local f = CreateFrame("Button", "BagSyncMinimapButton", MinimapFrame)
-  f:SetFrameStrata("MEDIUM")
-  f:SetFrameLevel(8)
-  f:SetSize(31, 31)
-  local overlay = f:CreateTexture(nil, "OVERLAY")
-  overlay:SetSize(53, 53)
+  local f = UI:CreateButton(MinimapFrame, {
+    globalName = "BagSyncMinimapButton",
+    size = { 31, 31 },
+    frameStrata = "MEDIUM",
+    frameLevel = 8,
+    registerForClicks = { "LeftButtonUp", "RightButtonUp" },
+    registerForDrag = "LeftButton",
+  })
+  local overlay = UI:CreateTexture(f, { layer = "OVERLAY" })
   overlay:SetTexture("Interface/Minimap/MiniMap-TrackingBorder")
-  overlay:SetPoint("TOPLEFT")
 
-  local background = f:CreateTexture(nil, "BACKGROUND")
-  background:SetSize(20, 20)
+  local background = UI:CreateTexture(f, { layer = "BACKGROUND" })
   background:SetTexture("Interface/Minimap/UI-Minimap-Background")
-  background:SetPoint("TOPLEFT", 7, -5)
 
-  local icon = f:CreateTexture(nil, "ARTWORK")
-  icon:SetSize(32, 32)
-  icon:SetTexture("Interface/AddOns/BagSync/media/minimap.tga")
-  icon:SetPoint("TOPLEFT", 0, -1)
+  local icon = UI:CreateTexture(f, {
+    layer = "ARTWORK",
+    globalName = "BagSyncMinimapButtonIcon",
+  })
+  icon:SetTexture("Interface/AddOns/BagSync/media/icon")
+
+  if BSYC.IsRetail then
+    overlay:SetSize(50, 50)
+    overlay:SetPoint("TOPLEFT", f, "TOPLEFT", 0, 0)
+
+    background:SetSize(24, 24)
+    background:SetPoint("CENTER", f, "CENTER", 0, 1)
+
+    icon:SetSize(18, 18)
+    icon:SetPoint("CENTER", f, "CENTER", 0, 1)
+  else
+    overlay:SetSize(53, 53)
+    overlay:SetPoint("TOPLEFT")
+
+    background:SetSize(20, 20)
+    background:SetPoint("TOPLEFT", 7, -5)
+
+    icon:SetSize(17, 17)
+    icon:SetPoint("TOPLEFT", 7, -6)
+  end
   f.icon = icon
 
-  local highlight = f:CreateTexture(nil, "HIGHLIGHT")
+  local highlight = UI:CreateTexture(f, { layer = "HIGHLIGHT" })
   highlight:SetAllPoints()
   highlight:SetTexture("Interface/Minimap/UI-Minimap-ZoomButton-Highlight")
   highlight:SetBlendMode("ADD")
 
-  f:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-  f:RegisterForDrag("LeftButton")
-
   f:SetScript("OnClick", function(_, button)
     if button == "LeftButton" then
-      ShowModuleFrame("Search")
+      local search = BSYC.GetModule and BSYC:GetModule("Search", true)
+      if search and search.Toggle then
+        search:Toggle()
+      else
+        ShowModuleFrame("Search")
+      end
     else
       ToggleDropDownMenu(1, nil, menuFrame, f, 0, 0)
     end
@@ -246,7 +387,7 @@ function MinimapModule:Create()
   end)
   self.button = f
   self:LoadPosition()
-  UIDropDownMenu_Initialize(menuFrame, InitMinimapMenu, "MENU")
+  InitMenuFrame()
   if BSYC.options and BSYC.options.enableMinimap == false then
     f:Hide()
   end
@@ -262,6 +403,19 @@ function MinimapModule:Create()
 end
 
 function MinimapModule:UpdateVisibility()
+  if self.usingLibDBIcon then
+    -- ------
+    -- LibDBIcon: reflect BagSync visibility in the LibDBIcon db
+    -- ------
+    local ldbicon = GetLibDBIcon()
+    if self.libDBIconDB then
+      self.libDBIconDB.hide = BSYC.options and BSYC.options.enableMinimap == false
+      if ldbicon and ldbicon.Refresh then
+        ldbicon:Refresh("BagSync", self.libDBIconDB)
+      end
+    end
+    return
+  end
   if not self.button then return end
   if BSYC.options and BSYC.options.enableMinimap == false then
     self.button:Hide()
@@ -271,12 +425,16 @@ function MinimapModule:UpdateVisibility()
 end
 
 function MinimapModule:OnEnable()
+  InitMenuFrame()
+  self:TryEnableLibDBIcon()
   self:Create()
   self:UpdateVisibility()
+  self:SetupLibDBIconWatcher()
 end
 
 function MinimapModule:AddonCompartmentFunc()
   if InCombatLockdown and InCombatLockdown() then return end
+  InitMenuFrame()
   local anchor = _G.AddonCompartmentFrame or UIParent
   ToggleDropDownMenu(1, nil, menuFrame, anchor, 0, 0)
 end

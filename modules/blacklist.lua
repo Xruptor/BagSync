@@ -32,42 +32,51 @@ function Blacklist:OnEnable()
 	Blacklist.frame = blacklistFrame
 
 	--guild dropdown
-	local guildDD = CreateFrame("Frame", nil, blacklistFrame, "UIDropDownMenuTemplate")
-	guildDD:SetPoint("LEFT", blacklistFrame, "TOPLEFT", 0, -40)
-	UIDropDownMenu_SetWidth(guildDD, 200)
-	UIDropDownMenu_SetText(guildDD, L.Tooltip_guild)
+	local guildDD = UI:CreateDropdown(blacklistFrame, {
+		point = { "LEFT", blacklistFrame, "TOPLEFT", 0, -40 },
+		width = 200,
+		text = L.Tooltip_guild,
+	})
 	blacklistFrame.guildDD = guildDD
 
 	--add guild button
-	blacklistFrame.addGuildBtn = _G.CreateFrame("Button", nil, blacklistFrame, "UIPanelButtonTemplate")
-	blacklistFrame.addGuildBtn:SetText(L.AddGuild)
-	blacklistFrame.addGuildBtn:SetHeight(20)
-	blacklistFrame.addGuildBtn:SetWidth(blacklistFrame.addGuildBtn:GetTextWidth() + 30)
-	blacklistFrame.addGuildBtn:SetPoint("LEFT", guildDD, "RIGHT", -10, 2)
-	blacklistFrame.addGuildBtn:SetScript("OnClick", function() Blacklist:AddGuild() end)
+	blacklistFrame.addGuildBtn = UI:CreateButton(blacklistFrame, {
+		template = "UIPanelButtonTemplate",
+		text = L.AddGuild,
+		height = 20,
+		autoWidth = true,
+		point = { "LEFT", guildDD, "RIGHT", -10, 2 },
+		onClick = function() Blacklist:AddGuild() end,
+	})
 
-	local itemIDBox = CreateFrame("EditBox", nil, blacklistFrame, "InputBoxTemplate")
-	itemIDBox:SetSize(210, 20)
-	itemIDBox:SetPoint("LEFT", blacklistFrame, "TOPLEFT", 20, -70)
-	itemIDBox:SetAutoFocus(false)
-	itemIDBox:SetText("")
+	local itemIDBox = UI:CreateEditBox(blacklistFrame, {
+		template = "InputBoxTemplate",
+		size = { 210, 20 },
+		point = { "LEFT", blacklistFrame, "TOPLEFT", 20, -70 },
+		autoFocus = false,
+		text = "",
+	})
 	blacklistFrame.itemIDBox = itemIDBox
 
 	--add itemID button
-	blacklistFrame.addItemIDBtn = _G.CreateFrame("Button", nil, blacklistFrame, "UIPanelButtonTemplate")
-	blacklistFrame.addItemIDBtn:SetText(L.AddItemID)
-	blacklistFrame.addItemIDBtn:SetHeight(20)
-	blacklistFrame.addItemIDBtn:SetWidth(blacklistFrame.addItemIDBtn:GetTextWidth() + 30)
-	blacklistFrame.addItemIDBtn:SetPoint("LEFT", itemIDBox, "RIGHT", 5, 2)
-	blacklistFrame.addItemIDBtn:SetScript("OnClick", function() Blacklist:AddItemID() end)
+	blacklistFrame.addItemIDBtn = UI:CreateButton(blacklistFrame, {
+		template = "UIPanelButtonTemplate",
+		text = L.AddItemID,
+		height = 20,
+		autoWidth = true,
+		point = { "LEFT", itemIDBox, "RIGHT", 5, 2 },
+		onClick = function() Blacklist:AddItemID() end,
+	})
 
-	blacklistFrame.infoText = blacklistFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	blacklistFrame.infoText:SetText(L.UseFakeID)
-	blacklistFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
-	blacklistFrame.infoText:SetTextColor(1, 165/255, 0)
-	blacklistFrame.infoText:SetPoint("LEFT", blacklistFrame, "TOPLEFT", 15, -90)
-	blacklistFrame.infoText:SetJustifyH("LEFT")
-	blacklistFrame.infoText:SetWidth(blacklistFrame:GetWidth() - 15)
+	blacklistFrame.infoText = UI:CreateFontString(blacklistFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.UseFakeID,
+		font = { STANDARD_TEXT_FONT, 12, "" },
+		textColor = { 1, 165/255, 0 },
+		point = { "LEFT", blacklistFrame, "TOPLEFT", 15, -90 },
+		justifyH = "LEFT",
+		width = blacklistFrame:GetWidth() - 15,
+	})
 
 	Blacklist.scrollFrame = UI:CreateHybridScrollFrame(blacklistFrame, {
 		width = 337,

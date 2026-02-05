@@ -42,12 +42,14 @@ function Gold:OnEnable()
 	Gold.goldList = {}
 
 	--total counter
-	goldFrame.totalText = goldFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	goldFrame.totalText:SetText("|cFFF4A460"..L.TooltipTotal.."|r  "..GetMoneyString(0, true))
-	goldFrame.totalText:SetFont(STANDARD_TEXT_FONT, 12, "")
-	goldFrame.totalText:SetTextColor(1, 165/255, 0)
-	goldFrame.totalText:SetPoint("LEFT", goldFrame, "BOTTOMLEFT", 15, 20)
-	goldFrame.totalText:SetJustifyH("LEFT")
+	goldFrame.totalText = UI:CreateFontString(goldFrame, {
+		template = "GameFontHighlightSmall",
+		text = "|cFFF4A460"..L.TooltipTotal.."|r  "..GetMoneyString(0, true),
+		font = { STANDARD_TEXT_FONT, 12, "" },
+		textColor = { 1, 165/255, 0 },
+		point = { "LEFT", goldFrame, "BOTTOMLEFT", 15, 20 },
+		justifyH = "LEFT",
+	})
 	goldFrame.totalText:SetTextColor(1, 1, 1)
 
 	goldFrame:Hide()

@@ -11,25 +11,30 @@ end
 local function RegisterLDB()
   if not LDB then return end
   if LDB.GetDataObjectByName and LDB:GetDataObjectByName("BagSync") then
+    BagSync.LDBObject = LDB:GetDataObjectByName("BagSync")
     return
   end
 
-  LDB:NewDataObject("BagSync", {
+  BagSync.LDBObject = LDB:NewDataObject("BagSync", {
     type = "launcher",
     icon = "Interface/AddOns/BagSync/media/icon",
     label = "BagSync",
 
-    OnClick = function(_, button)
+    OnClick = function(frame, button)
       local search = BagSync.GetModule and BagSync:GetModule("Search", true)
       if button == "LeftButton" then
         if search and search.Toggle then
           search:Toggle()
+        elseif search and search.frame and search.frame.Show then
+          search.frame:Show()
         end
       else
         local minimap = BagSync.GetModule and BagSync:GetModule("Minimap", true)
-        if minimap and minimap.button then
-          ToggleDropDownMenu(1, nil, _G.BagSyncMinimapMenu, minimap.button, 0, 0)
+        local anchor = frame
+        if not anchor and minimap and minimap.button then
+          anchor = minimap.button
         end
+        ToggleDropDownMenu(1, nil, _G.BagSyncMinimapMenu, anchor or UIParent, 0, 0)
       end
     end,
 
@@ -43,7 +48,8 @@ end
 
 --lets wait for LibDataBroker-1.1 to actually load, otherwise it won't show in ElvUI
 if not LDB then
-  local waitFrame = CreateFrame("Frame")
+  local UI = BagSync:GetModule("UI")
+  local waitFrame = UI:CreateFrame(UIParent, {})
   waitFrame:RegisterEvent("ADDON_LOADED")
   waitFrame:SetScript("OnEvent", function()
     if not LDB and _G.LibStub then

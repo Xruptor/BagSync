@@ -51,21 +51,25 @@ function SearchFilters:OnEnable()
 	end
 
 	--Search Filters Information
-	advFrame.infoText = advFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	advFrame.infoText:SetText(L.SearchFiltersInformation)
-	advFrame.infoText:SetFont(STANDARD_TEXT_FONT, 12, "")
-	advFrame.infoText:SetTextColor(1, 165/255, 0)
-	advFrame.infoText:SetPoint("LEFT", advFrame, "TOPLEFT", 15, -65)
-	advFrame.infoText:SetJustifyH("LEFT")
-	advFrame.infoText:SetWidth(advFrame:GetWidth() - 15)
+	advFrame.infoText = UI:CreateFontString(advFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.SearchFiltersInformation,
+		font = { STANDARD_TEXT_FONT, 12, "" },
+		textColor = { 1, 165/255, 0 },
+		point = { "LEFT", advFrame, "TOPLEFT", 15, -65 },
+		justifyH = "LEFT",
+		width = advFrame:GetWidth() - 15,
+	})
 
-	advFrame.unitTitle = advFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	advFrame.unitTitle:SetText(L.Units)
-	advFrame.unitTitle:SetFont(STANDARD_TEXT_FONT, 12, "")
-	advFrame.unitTitle:SetTextColor(0, 1, 0)
-	advFrame.unitTitle:SetPoint("LEFT", advFrame, "TOPLEFT", 15, -80)
-	advFrame.unitTitle:SetJustifyH("LEFT")
-	advFrame.unitTitle:SetWidth(advFrame:GetWidth() - 15)
+	advFrame.unitTitle = UI:CreateFontString(advFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.Units,
+		font = { STANDARD_TEXT_FONT, 12, "" },
+		textColor = { 0, 1, 0 },
+		point = { "LEFT", advFrame, "TOPLEFT", 15, -80 },
+		justifyH = "LEFT",
+		width = advFrame:GetWidth() - 15,
+	})
 
 	SearchFilters.playerScroll = UI:CreateHybridScrollFrame(advFrame, {
 		width = 357,
@@ -78,21 +82,25 @@ function SearchFilters:OnEnable()
 	--the items we will work with
 	SearchFilters.playerList = {}
 
-	advFrame.locationTitle = advFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	advFrame.locationTitle:SetText(L.Locations)
-	advFrame.locationTitle:SetFont(STANDARD_TEXT_FONT, 12, "")
-	advFrame.locationTitle:SetTextColor(0, 1, 0)
-	advFrame.locationTitle:SetPoint("TOPLEFT", SearchFilters.playerScroll, "BOTTOMLEFT", 2, -10)
-	advFrame.locationTitle:SetJustifyH("LEFT")
-	advFrame.locationTitle:SetWidth(advFrame:GetWidth() - 15)
+	advFrame.locationTitle = UI:CreateFontString(advFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.Locations,
+		font = { STANDARD_TEXT_FONT, 12, "" },
+		textColor = { 0, 1, 0 },
+		point = { "TOPLEFT", SearchFilters.playerScroll, "BOTTOMLEFT", 2, -10 },
+		justifyH = "LEFT",
+		width = advFrame:GetWidth() - 15,
+	})
 
-	advFrame.locationInfo = advFrame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-	advFrame.locationInfo:SetText(L.SearchFiltersLocationInformation)
-	advFrame.locationInfo:SetFont(STANDARD_TEXT_FONT, 12, "")
-	advFrame.locationInfo:SetTextColor(1, 165/255, 0)
-	advFrame.locationInfo:SetPoint("TOPLEFT", advFrame.locationTitle, "BOTTOMLEFT", 0, -5)
-	advFrame.locationInfo:SetJustifyH("LEFT")
-	advFrame.locationInfo:SetWidth(advFrame:GetWidth() - 15)
+	advFrame.locationInfo = UI:CreateFontString(advFrame, {
+		template = "GameFontHighlightSmall",
+		text = L.SearchFiltersLocationInformation,
+		font = { STANDARD_TEXT_FONT, 12, "" },
+		textColor = { 1, 165/255, 0 },
+		point = { "TOPLEFT", advFrame.locationTitle, "BOTTOMLEFT", 0, -5 },
+		justifyH = "LEFT",
+		width = advFrame:GetWidth() - 15,
+	})
 
 	SearchFilters.locationScroll = UI:CreateHybridScrollFrame(advFrame, {
 		width = 357,
@@ -106,20 +114,24 @@ function SearchFilters:OnEnable()
 	SearchFilters.locationList = {}
 
 	--Reset button
-	advFrame.resetButton = _G.CreateFrame("Button", nil, advFrame, "UIPanelButtonTemplate")
-	advFrame.resetButton:SetText(L.Reset)
-	advFrame.resetButton:SetHeight(20)
-	advFrame.resetButton:SetWidth(advFrame.resetButton:GetTextWidth() + 30)
-	advFrame.resetButton:SetPoint("RIGHT", advFrame, "BOTTOMRIGHT", -10, 23)
-	advFrame.resetButton:SetScript("OnClick", function() SearchFilters:Reset() end)
+	advFrame.resetButton = UI:CreateButton(advFrame, {
+		template = "UIPanelButtonTemplate",
+		text = L.Reset,
+		height = 20,
+		autoWidth = true,
+		point = { "RIGHT", advFrame, "BOTTOMRIGHT", -10, 23 },
+		onClick = function() SearchFilters:Reset() end,
+	})
 
 	--Select All button
-	advFrame.selectAllButton = _G.CreateFrame("Button", nil, advFrame, "UIPanelButtonTemplate")
-	advFrame.selectAllButton:SetText(L.SelectAll)
-	advFrame.selectAllButton:SetHeight(20)
-	advFrame.selectAllButton:SetWidth(advFrame.selectAllButton:GetTextWidth() + 30)
-	advFrame.selectAllButton:SetPoint("LEFT", advFrame, "BOTTOMLEFT", 13, 23)
-	advFrame.selectAllButton:SetScript("OnClick", function() SearchFilters:SelectAll() end)
+	advFrame.selectAllButton = UI:CreateButton(advFrame, {
+		template = "UIPanelButtonTemplate",
+		text = L.SelectAll,
+		height = 20,
+		autoWidth = true,
+		point = { "LEFT", advFrame, "BOTTOMLEFT", 13, 23 },
+		onClick = function() SearchFilters:SelectAll() end,
+	})
 
 	advFrame:Hide() --important
 end
