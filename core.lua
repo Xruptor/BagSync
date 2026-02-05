@@ -247,6 +247,7 @@ function BSYC:OpenConfig()
 	return false
 end
 
+
 function BSYC:DecodeOpts(tblString, mergeOpts)
 	--Example = "petdata=245:12:4:5:3|auction=124567|foo=bar|tickle=elmo|test=12:3:4|forthe=horde"
 	local t = mergeOpts or {}

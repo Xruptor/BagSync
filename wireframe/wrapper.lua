@@ -4,9 +4,9 @@
 		module/event/message/console/locale/config behavior stable across Classic → Retail.
 --]]
 
-local addonName, BSYC = ...
+local ADDON_NAME, BSYC = ...
 BSYC = BSYC or {}
-_G[addonName] = BSYC
+_G[ADDON_NAME] = BSYC
 
 -- ---------------------------------------------------------------------------
 -- Locale (AceLocale replacement)
@@ -62,7 +62,11 @@ BSYC.L = BSYC.L or setmetatable({}, {
 BSYC._chatCommands = BSYC._chatCommands or {}
 
 function BSYC:Print(...)
-	local msg = string.join(" ", tostringall(...))
+	local prefix = ""
+	if ADDON_NAME then
+		prefix = "|cFF99CC33" .. ADDON_NAME .. "|r: "
+	end
+	local msg = prefix .. string.join(" ", tostringall(...))
 	if _G.DEFAULT_CHAT_FRAME and _G.DEFAULT_CHAT_FRAME.AddMessage then
 		_G.DEFAULT_CHAT_FRAME:AddMessage(msg)
 	else
@@ -279,7 +283,7 @@ BSYC.ConfigDialog = BSYC.ConfigDialog or { _settingsCategories = {} }
 local uiNameCounter = 0
 local function uiName(kind)
 	uiNameCounter = uiNameCounter + 1
-	return ("%s_%s_%d"):format(addonName, tostring(kind or "UI"), uiNameCounter)
+	return ("%s_%s_%d"):format(ADDON_NAME or "BagSync", tostring(kind or "UI"), uiNameCounter)
 end
 
 local function resolveText(v, ctx)
@@ -702,15 +706,12 @@ local function compileBinding(item)
 				local opts = BSYC.options
 				if not opts then return true end
 				if opts.enableMinimap == false then return false end
-				if opts.minimap and opts.minimap.hide then return false end
 				return true
 			end,
 			set = function(enabled)
 				enabled = enabled and true or false
 				BSYC.options = BSYC.options or {}
 				BSYC.options.enableMinimap = enabled
-				BSYC.options.minimap = BSYC.options.minimap or {}
-				BSYC.options.minimap.hide = not enabled
 			end,
 		}
 	end
@@ -1201,7 +1202,7 @@ local modulesEnabled = false
 
 eventFrame:HookScript("OnEvent", function(_, eventName, arg1)
 	if eventName == "ADDON_LOADED" then
-		if arg1 ~= addonName or coreEnabled then return end
+		if arg1 ~= ADDON_NAME or coreEnabled then return end
 		coreEnabled = true
 		if type(BSYC.OnEnable) == "function" then
 			pcall(BSYC.OnEnable, BSYC)

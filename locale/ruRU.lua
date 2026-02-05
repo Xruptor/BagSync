@@ -171,6 +171,7 @@ L.DisplayTotal = "Отображать общее количество [Итог
 L.DisplayGuildGoldInGoldWindow = "Отображать общее количество золота [Гильдия] в окне золота."
 L.Display_GSC = "Отображать |cFFFFD700Золото|r, |cFFC0C0C0Серебро|r и |cFFB87333Медь|r в окне золота."
 L.DisplayMinimap = "Отображать кнопку миникарты BagSync."
+L.ResetMinimapBtn = "Сбросить позицию кнопки миникарты."
 L.DisplayFaction = "Отображать предметы для обеих фракций (|cff3587ffАльянс|r/|cFFDF2B2BОрда|r)."
 L.DisplayClassColor = "Отображать цвета классов для имен персонажей."
 L.DisplayItemTotalsByClassColor = "Отображать общее количество предметов по цвету класса персонажа."

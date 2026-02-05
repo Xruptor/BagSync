@@ -181,6 +181,12 @@ local generalTable = {
 				{ type = "toggle", label = L.FocusSearchEditBox, bind = { "opt", "focusSearchEditBox" } },
 				{ type = "toggle", label = L.AlwaysShowSearchFilters, bind = { "opt", "alwaysShowSearchFilters" } },
 				{ type = "toggle", label = L.DisplayMinimap, bind = { "minimapEnable" }, dirty = "minimap" },
+				{ type = "button", label = L.ResetMinimapBtn, onClick = function()
+					local minimap = BSYC.GetModule and BSYC:GetModule("Minimap", true)
+					if minimap and minimap.ResetPosition then
+						minimap:ResetPosition()
+					end
+				end },
 				{ type = "toggle", label = L.EnableLoginVersionInfo, bind = { "opt", "enableLoginVersionInfo" } },
 			},
 		},

@@ -54,6 +54,7 @@ local function DoFixDB()
   end
 end
 
+
 local function OpenConfig()
   if BSYC.OpenConfig then
     BSYC:OpenConfig()
@@ -102,11 +103,12 @@ local function InitMinimapMenu(_, level)
   AddButton(level, L.FixDB, DoFixDB)
   AddButton(level, L.Config, OpenConfig)
   AddButton(level, "", nil, true)
-  AddButton(level, L.Close, CloseDropDownMenus)
+  AddButton(level, L.Close, function() CloseDropDownMenus() end)
 end
 
 -- Shape-aware positioning (LibDBIcon logic)
 local function SetButtonAngle(button, angle)
+  if not MinimapFrame or not MinimapFrame.GetWidth or not MinimapFrame.GetHeight then return end
   local rad = math.rad(angle)
   local x, y = math.cos(rad), math.sin(rad)
 
@@ -115,6 +117,7 @@ local function SetButtonAngle(button, angle)
 
   local w = (MinimapFrame:GetWidth() / 2) + ICON_PADDING
   local h = (MinimapFrame:GetHeight() / 2) + ICON_PADDING
+  if w <= 0 or h <= 0 then return end
 
   local q = 1
   if x < 0 then q = q + 1 end
@@ -138,14 +141,27 @@ function MinimapModule:SaveAngle(angle)
   BSYC.options.minimapPos = angle
 end
 
+function MinimapModule:ResetPosition()
+  BSYC.options = BSYC.options or {}
+  BSYC.options.enableMinimap = true
+  BSYC.options.minimapPos = DEFAULT_ANGLE
+  if self.button then
+    self.button:Show()
+    self:LoadPosition()
+  end
+end
+
 function MinimapModule:LoadPosition()
   self.button:ClearAllPoints()
   local angle = DEFAULT_ANGLE
   if BSYC.options then
-    angle = BSYC.options.minimapPos
-      or (BSYC.options.minimap and BSYC.options.minimap.minimapPos)
-      or DEFAULT_ANGLE
+    angle = BSYC.options.minimapPos or DEFAULT_ANGLE
   end
+  angle = tonumber(angle)
+  if not angle then
+    angle = DEFAULT_ANGLE
+  end
+  angle = angle % 360
   SetButtonAngle(self.button, angle)
 end
 
@@ -154,6 +170,17 @@ function MinimapModule:Create()
   if not MinimapFrame then
     Debug(1, "Minimap frame missing; minimap icon not created.")
     return
+  end
+
+  --migrate the older format to a more flatter approach, to use enableMinimap and minimapPos
+  if BSYC.options and BSYC.options.minimap then
+    if BSYC.options.minimapPos == nil and BSYC.options.minimap.minimapPos ~= nil then
+      BSYC.options.minimapPos = BSYC.options.minimap.minimapPos
+    end
+    if BSYC.options.enableMinimap == nil and BSYC.options.minimap.hide ~= nil then
+      BSYC.options.enableMinimap = not BSYC.options.minimap.hide
+    end
+    BSYC.options.minimap = nil
   end
 
   local f = CreateFrame("Button", "BagSyncMinimapButton", MinimapFrame)
@@ -204,8 +231,9 @@ function MinimapModule:Create()
   f:SetScript("OnDragStart", function(self)
     self:SetScript("OnUpdate", function()
       local mx, my = MinimapFrame:GetCenter()
+      if not mx or not my then return end
       local px, py = GetCursorPosition()
-      local scale = UIParent:GetScale()
+      local scale = (MinimapFrame.GetEffectiveScale and MinimapFrame:GetEffectiveScale()) or UIParent:GetScale()
       px, py = px / scale, py / scale
 
       local angle = math.deg(math.atan2(py - my, px - mx)) % 360
@@ -219,15 +247,23 @@ function MinimapModule:Create()
   self.button = f
   self:LoadPosition()
   UIDropDownMenu_Initialize(menuFrame, InitMinimapMenu, "MENU")
-  if BSYC.options and (BSYC.options.enableMinimap == false or (BSYC.options.minimap and BSYC.options.minimap.hide)) then
+  if BSYC.options and BSYC.options.enableMinimap == false then
     f:Hide()
   end
+
+  f:RegisterEvent("PLAYER_LOGIN")
+  f:RegisterEvent("PLAYER_ENTERING_WORLD")
+  f:RegisterEvent("MINIMAP_UPDATE_SHAPE")
+  f:RegisterEvent("UI_SCALE_CHANGED")
+  f:SetScript("OnEvent", function()
+    MinimapModule:LoadPosition()
+  end)
 
 end
 
 function MinimapModule:UpdateVisibility()
   if not self.button then return end
-  if BSYC.options and (BSYC.options.enableMinimap == false or (BSYC.options.minimap and BSYC.options.minimap.hide)) then
+  if BSYC.options and BSYC.options.enableMinimap == false then
     self.button:Hide()
   else
     self.button:Show()
@@ -237,4 +273,19 @@ end
 function MinimapModule:OnEnable()
   self:Create()
   self:UpdateVisibility()
+end
+
+function MinimapModule:AddonCompartmentFunc()
+  if InCombatLockdown and InCombatLockdown() then return end
+  local anchor = _G.AddonCompartmentFrame or UIParent
+  ToggleDropDownMenu(1, nil, menuFrame, anchor, 0, 0)
+end
+
+_G.BagSync_AddonCompartmentFunc = function()
+  local minimap = BSYC.GetModule and BSYC:GetModule("Minimap", true)
+  if minimap and minimap.AddonCompartmentFunc then
+    minimap:AddonCompartmentFunc()
+  elseif BSYC and BSYC.OpenConfig then
+    BSYC:OpenConfig()
+  end
 end

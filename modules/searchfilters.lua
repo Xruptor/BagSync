@@ -123,7 +123,7 @@ function SearchFilters:OnEnable()
 	advFrame.locationTitle:SetText(L.Locations)
 	advFrame.locationTitle:SetFont(STANDARD_TEXT_FONT, 12, "")
 	advFrame.locationTitle:SetTextColor(0, 1, 0)
-	advFrame.locationTitle:SetPoint("LEFT", advFrame, "TOPLEFT", 15, -320)
+	advFrame.locationTitle:SetPoint("TOPLEFT", SearchFilters.playerScroll, "BOTTOMLEFT", 2, -10)
 	advFrame.locationTitle:SetJustifyH("LEFT")
 	advFrame.locationTitle:SetWidth(advFrame:GetWidth() - 15)
 
@@ -131,13 +131,13 @@ function SearchFilters:OnEnable()
 	advFrame.locationInfo:SetText(L.SearchFiltersLocationInformation)
 	advFrame.locationInfo:SetFont(STANDARD_TEXT_FONT, 12, "")
 	advFrame.locationInfo:SetTextColor(1, 165/255, 0)
-	advFrame.locationInfo:SetPoint("LEFT", advFrame, "TOPLEFT", 15, -335)
+	advFrame.locationInfo:SetPoint("TOPLEFT", advFrame.locationTitle, "BOTTOMLEFT", 0, -5)
 	advFrame.locationInfo:SetJustifyH("LEFT")
 	advFrame.locationInfo:SetWidth(advFrame:GetWidth() - 15)
 
 	SearchFilters.locationScroll = BSYC:UI_CreateHybridScrollFrame(advFrame, {
 		width = 357,
-		pointTopLeft = { "TOPLEFT", advFrame, "TOPLEFT", 13, -345 },
+		pointTopLeft = { "TOPLEFT", advFrame.locationInfo, "BOTTOMLEFT", -2, -5 },
 		-- set ScrollFrame height by altering the distance from the bottom of the frame
 		pointBottomLeft = { "BOTTOMLEFT", advFrame, "BOTTOMLEFT", -25, 45 },
 		buttonTemplate = "BagSyncListItemTemplate",

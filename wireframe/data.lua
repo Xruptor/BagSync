@@ -6,7 +6,7 @@
 		License included with addon.
 --]]
 
-local BSYC = select(2, ...) --grab the addon namespace
+local ADDON_NAME, BSYC = ... --grab the addon namespace
 local Data = BSYC:NewModule("Data")
 local hasMark = BSYC.hasMark
 local Unit = BSYC:GetModule("Unit")
@@ -211,7 +211,9 @@ function Data:OnEnable()
 	self:ShowInfoWindow()
 
 	if BSYC.options.enableLoginVersionInfo then
-		BSYC:Print("[v|cFF20ff20"..ver.."|r] /bgs, /bagsync")
+		local getMeta = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+		local ver = (type(getMeta) == "function" and getMeta(ADDON_NAME, "Version")) or "1.0"
+		BSYC:Print(string.format("[v|cFF20ff20%s|r] loaded:   /bgs, /bagsync", ver))
 	end
 	if BSYC.options.debug.enable then
 		BSYC:Print(L.DebugWarning)
