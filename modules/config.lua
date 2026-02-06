@@ -79,6 +79,83 @@ local function setLocationStyle(style)
 	end
 end
 
+local function getCacheSpeedSetting()
+	local speed = BSYC.options and BSYC.options.cacheThrottle
+	if speed == "slow" or speed == "medium" or speed == "fast" or speed == "disabled" then
+		return speed
+	end
+	return "slow"
+end
+
+local function setCacheSpeedSetting(speed)
+	BSYC.options = BSYC.options or {}
+	BSYC.options.cacheThrottle = speed
+
+	local data = BSYC.GetModule and BSYC:GetModule("Data", true)
+	if data and data.ApplyCacheSpeed then
+		data:ApplyCacheSpeed()
+	end
+
+	local panel = BSYC.cachePanel
+	if panel and panel.IsShown and panel:IsShown() then
+		for _, w in ipairs(panel._widgets or {}) do
+			w.refresh()
+		end
+	end
+end
+
+local function buildCacheSpeedSummary()
+	local data = BSYC.GetModule and BSYC:GetModule("Data", true)
+	local info = data and data.GetCacheThrottleInfo and data:GetCacheThrottleInfo()
+	if not info then return "" end
+
+	local speed = getCacheSpeedSetting()
+	local lines = {}
+	local function colorizeNumbers(line)
+		return (line or ""):gsub("(%d+%.?%d*)", "|cFFFFFFFF%1|r")
+	end
+	local function addLine(line)
+		lines[#lines + 1] = colorizeNumbers(line)
+	end
+	local function padLines(target)
+		while #lines < target do
+			lines[#lines + 1] = " "
+		end
+	end
+
+	if speed == "slow" then
+		if info.rampInterval then
+			addLine(string.format(L.CacheSpeedRampIntro, info.rampInterval))
+		end
+		local steps = info.ramp or {}
+		for i = 1, #steps do
+			local step = steps[i]
+			local perSec = 0
+			if step.tick and step.tick > 0 then
+				perSec = math.floor((step.batch / step.tick) + 0.5)
+			end
+			addLine(string.format(L.CacheSpeedRampLine, i, step.batch, step.tick, perSec))
+		end
+		padLines(5)
+	elseif speed == "disabled" then
+		addLine(string.format(L.CacheSpeedSingleLine, 0, 0, 0))
+		padLines(5)
+	else
+		local mode = (speed == "medium") and "medium" or "full"
+		local cfg = info.throttle and info.throttle[mode]
+		if cfg then
+			local perSec = 0
+			if cfg.tick and cfg.tick > 0 then
+				perSec = math.floor((cfg.batch / cfg.tick) + 0.5)
+			end
+			addLine(string.format(L.CacheSpeedSingleLine, cfg.batch, cfg.tick, perSec))
+		end
+		padLines(5)
+	end
+
+	return tconcat(lines, "\n")
+end
+
 local function setTooltipSortMode(mode)
 	BSYC.options = BSYC.options or {}
 	BSYC.options.tooltipSortMode = mode
@@ -126,6 +203,13 @@ local locationStyleValues = {
 	{ "full", L.DisplayStorageLocStyle_Full or "Display full storage location text." },
 	{ "short", L.DisplaySingleCharLocs },
 	{ "icons", L.DisplayIconLocs },
+}
+
+local cacheSpeedValues = {
+	{ "slow", L.CacheSpeedSlow },
+	{ "medium", L.CacheSpeedMedium },
+	{ "fast", L.CacheSpeedFast },
+	{ "disabled", L.CacheSpeedDisabled },
 }
 
 local function getFontNames()
@@ -582,6 +666,50 @@ local colorTable = {
 	},
 }
 
+local cacheTable = {
+	title = L.ConfigCache,
+	description = L.ConfigCacheHeader,
+	items = {
+		{
+			type = "group",
+			title = L.ConfigCacheHowTitle,
+			titleColor = TITLE_WHITE,
+			inline = true,
+			items = {
+				{ type = "text", font = "GameFontNormal", text = L.ConfigCacheHowText_1 },
+				{ type = "text", font = "GameFontNormal", text = L.ConfigCacheHowText_2 },
+				{ type = "text", font = "GameFontNormal", text = L.ConfigCacheHowText_3 },
+			},
+		},
+		{
+			type = "group",
+			title = L.ConfigCacheRatesTitle,
+			titleColor = TITLE_WHITE,
+			inline = true,
+			items = {
+				{ type = "text", font = "GameFontNormal", text = buildCacheSpeedSummary },
+			},
+		},
+		{
+			type = "group",
+			title = L.ConfigCacheSpeedTitle,
+			titleColor = TITLE_WHITE,
+			inline = true,
+			items = {
+				{
+					type = "select",
+					label = L.ConfigCacheSpeedLabel,
+					values = cacheSpeedValues,
+					get = getCacheSpeedSetting,
+					set = setCacheSpeedSetting,
+					default = "slow",
+				},
+				{ type = "text", font = "GameFontNormal", text = L.ConfigCacheSpeedHelp },
+			},
+		},
+	},
+}
+
 local function buildFAQItems()
 	local items = {}
 	for i = 1, 7 do
@@ -634,6 +762,9 @@ configDialog:AddToBlizOptions("BagSync-Display", displayTable.title, "BagSync")
 
 config:RegisterOptionsTable("BagSync-Color", colorTable)
 configDialog:AddToBlizOptions("BagSync-Color", colorTable.title, "BagSync")
+
+config:RegisterOptionsTable("BagSync-Cache", cacheTable)
+BSYC.cachePanel = configDialog:AddToBlizOptions("BagSync-Cache", cacheTable.title, "BagSync")
 
 config:RegisterOptionsTable("BagSync-FAQ", faqTable)
 configDialog:AddToBlizOptions("BagSync-FAQ", faqTable.title, "BagSync")

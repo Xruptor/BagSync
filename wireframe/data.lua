@@ -81,6 +81,7 @@ local optionsDefaults = {
 	sortCurrencyByExpansion = true,
 	showBNETCRInfoWindow = true,
 	sortShowCurrentPlayerOnTop = false,
+	cacheThrottle = "slow",
 }
 
 local colorsDefaults = {
@@ -126,6 +127,9 @@ Data.__cache.tooltipCount = 0
 Data.__cache.ignore = {}
 Data.__cache.pending = Data.__cache.pending or {}
 Data.__cache.itemCacheRun = Data.__cache.itemCacheRun or nil
+Data.__cache.throttleMode = Data.__cache.throttleMode or "background"
+Data.__cache.backgroundThrottle = Data.__cache.backgroundThrottle or nil
+Data.__cache.rampIndex = Data.__cache.rampIndex or 1
 
 local ITEMCACHE_ALLOW_LIST = {
 	bag = true,
@@ -137,6 +141,55 @@ local ITEMCACHE_ALLOW_LIST = {
 	auction = true,
 	equipbags = true,
 }
+
+-- Item cache throttle tiers (batch size / tick delay):
+-- background: 8 per 0.30s (~27 items/sec) for login idle
+-- medium: 30 per 0.15s (~200 items/sec) for search window open
+-- full: 60 per 0.10s (~600 items/sec) for active searches
+-- Optional ramp idea (every 90s, gentle steps to avoid FPS spikes):
+-- 8 per 0.30s (~27/sec) -> 12 per 0.26s (~46/sec) -> 16 per 0.24s (~67/sec) -> 20 per 0.22s (~91/sec)
+local ITEMCACHE_THROTTLE = {
+	-- batch = items processed per tick
+	-- tick = delay between ticks within a pass (seconds)
+	-- pass = delay between passes (seconds)
+	background = { batch = 8, tick = 0.30, pass = 0.60 },
+	medium = { batch = 30, tick = 0.15, pass = 0.30 },
+	full = { batch = 60, tick = 0.10, pass = 0.20 },
+}
+
+-- Background ramp (safe cap for FPS); advances every 90s while in background mode
+local ITEMCACHE_RAMP_INTERVAL = 90
+local ITEMCACHE_RAMP_STEPS = {
+	{ batch = 8, tick = 0.30, pass = 0.60 }, -- ~27/sec
+	{ batch = 12, tick = 0.26, pass = 0.52 }, -- ~46/sec
+	{ batch = 16, tick = 0.24, pass = 0.48 }, -- ~67/sec
+	{ batch = 20, tick = 0.22, pass = 0.44 }, -- ~91/sec (cap)
+}
+
+local CACHE_SPEED_MODES = {
+	slow = "background",
+	medium = "medium",
+	fast = "full",
+	disabled = "background",
+}
+
+local function GetThrottleConfig(mode)
+	if mode == "background" and Data.__cache.backgroundThrottle then
+		return Data.__cache.backgroundThrottle
+	end
+	return ITEMCACHE_THROTTLE[mode] or ITEMCACHE_THROTTLE.background
+end
+
+local function GetCacheRemaining(run)
+	if not run or not run.running then return 0 end
+	local remaining = 0
+	if run.queue then
+		local curRemaining = #run.queue - (run.pos or 1) + 1
+		if curRemaining < 0 then curRemaining = 0 end
+		remaining = curRemaining + (#run.nextQueue or 0)
+	end
+	return remaining
+end
 
 ----------------------
 --   DB Functions   --
@@ -168,6 +221,8 @@ function Data:OnEnable()
 
 	--options DB
 	BSYC:SetDefaults(nil, optionsDefaults)
+	--prune removed options
+	BSYC.options.enableAddonCompartment = nil
 
 	--set tracking defaults
 	BSYC:SetDefaults("tracking", trackingDefaults)
@@ -283,6 +338,14 @@ function Data:FixDB()
 	do
 		if BSYC.options.extTT_Anchor == nil then
 			BSYC.options.extTT_Anchor = optionsDefaults.extTT_Anchor
+		end
+	end
+
+	-- ensure cache throttle setting is present
+	do
+		local speed = BSYC.options.cacheThrottle
+		if speed ~= "slow" and speed ~= "medium" and speed ~= "fast" and speed ~= "disabled" then
+			BSYC.options.cacheThrottle = optionsDefaults.cacheThrottle
 		end
 	end
 
@@ -676,10 +739,133 @@ function Data:CacheLink(parseLink)
 	return nil
 end
 
-local ITEMCACHE_BATCH_SIZE = 200
+function Data:StopBackgroundRamp()
+	BSYC:StopTimer("DataCacheRamp")
+end
+
+function Data:AdvanceBackgroundRamp()
+	if Data:GetCacheThrottle() ~= "background" then return end
+
+	local idx = Data.__cache.rampIndex or 1
+	if idx < #ITEMCACHE_RAMP_STEPS then
+		idx = idx + 1
+		Data.__cache.rampIndex = idx
+		Data.__cache.backgroundThrottle = ITEMCACHE_RAMP_STEPS[idx]
+		Debug(BSYC_DL.SL2, "CacheThrottle-Ramp", "background", idx, "batch", Data.__cache.backgroundThrottle.batch, "tick", Data.__cache.backgroundThrottle.tick, "pass", Data.__cache.backgroundThrottle.pass)
+		Debug(BSYC_DL.SL3, "CacheThrottle-Remaining", GetCacheRemaining(Data.__cache.itemCacheRun))
+		Data:SetCacheThrottle("background")
+		BSYC:StartTimer("DataCacheRamp", ITEMCACHE_RAMP_INTERVAL, Data, "AdvanceBackgroundRamp")
+	end
+end
+
+function Data:StartBackgroundRamp()
+	Data.__cache.rampIndex = 1
+	Data.__cache.backgroundThrottle = ITEMCACHE_RAMP_STEPS[1]
+	Debug(BSYC_DL.SL2, "CacheThrottle-Ramp", "background", Data.__cache.rampIndex, "batch", Data.__cache.backgroundThrottle.batch, "tick", Data.__cache.backgroundThrottle.tick, "pass", Data.__cache.backgroundThrottle.pass)
+	Debug(BSYC_DL.SL3, "CacheThrottle-Remaining", GetCacheRemaining(Data.__cache.itemCacheRun))
+	Data:SetCacheThrottle("background")
+	BSYC:StartTimer("DataCacheRamp", ITEMCACHE_RAMP_INTERVAL, Data, "AdvanceBackgroundRamp")
+end
+
+function Data:GetCacheSpeedSetting()
+	local speed = BSYC.options and BSYC.options.cacheThrottle
+	if speed == "slow" or speed == "medium" or speed == "fast" or speed == "disabled" then
+		return speed
+	end
+	return "slow"
+end
+
+function Data:IsCacheDisabled()
+	return Data:GetCacheSpeedSetting() == "disabled"
+end
+
+function Data:GetCacheSpeedMode()
+	local speed = Data:GetCacheSpeedSetting()
+	return CACHE_SPEED_MODES[speed] or "background"
+end
+
+function Data:ApplyCacheSpeed()
+	local speed = Data:GetCacheSpeedSetting()
+	if speed == "disabled" then
+		Data:StopBackgroundRamp()
+		local run = Data.__cache.itemCacheRun
+		if run and run.running then
+			run.running = false
+			Data.__cache.itemCacheRun = nil
+		end
+		Data.__cache.throttleMode = "background"
+		return
+	end
+
+	if speed == "slow" then
+		Data:StartBackgroundRamp()
+		return
+	end
+
+	Data:StopBackgroundRamp()
+	Data:SetCacheThrottle(Data:GetCacheSpeedMode())
+end
+
+function Data:GetCacheThrottleInfo()
+	return {
+		throttle = ITEMCACHE_THROTTLE,
+		ramp = ITEMCACHE_RAMP_STEPS,
+		rampInterval = ITEMCACHE_RAMP_INTERVAL,
+	}
+end
+
+function Data:SetCacheThrottle(mode)
+	local throttleMode = ITEMCACHE_THROTTLE[mode] and mode or "background"
+	local cfg = GetThrottleConfig(throttleMode)
+	local prevMode = Data.__cache.throttleMode
+	Data.__cache.throttleMode = throttleMode
+
+	if prevMode ~= throttleMode then
+		Debug(BSYC_DL.SL2, "CacheThrottle-Mode", prevMode, "->", throttleMode, "batch", cfg.batch, "tick", cfg.tick, "pass", cfg.pass)
+		Debug(BSYC_DL.SL3, "CacheThrottle-Remaining", GetCacheRemaining(run))
+	end
+
+	local run = Data.__cache.itemCacheRun
+	if run and run.running then
+		run.batchSize = cfg.batch
+		run.tickDelay = cfg.tick
+		run.passDelay = cfg.pass
+		run.mode = Data.__cache.throttleMode
+	end
+
+	if throttleMode ~= "background" then
+		Data:StopBackgroundRamp()
+	end
+end
+
+function Data:GetCacheThrottle()
+	return Data.__cache.throttleMode or "background"
+end
+
+function Data:GetItemCacheStatus()
+	local run = Data.__cache.itemCacheRun
+	if not run or not run.running then return false, 0, 0, Data:GetCacheThrottle() end
+
+	local remaining = 0
+	if run.queue then
+		local curRemaining = #run.queue - (run.pos or 1) + 1
+		if curRemaining < 0 then curRemaining = 0 end
+		remaining = curRemaining + (#run.nextQueue or 0)
+	end
+
+	return true, remaining, (run.totalQueued or 0), (run.mode or Data:GetCacheThrottle())
+end
+
 local ITEMCACHE_MAX_PASSES = 20
 
-function Data:PopulateItemCache()
+function Data:PopulateItemCache(mode)
+	if mode == "background" then
+		if Data:IsCacheDisabled() then return end
+		Data:ApplyCacheSpeed()
+	elseif mode then
+		Data:SetCacheThrottle(mode)
+	end
+
 	-- already running
 	if Data.__cache.itemCacheRun and Data.__cache.itemCacheRun.running then return end
 
@@ -740,6 +926,8 @@ function Data:PopulateItemCache()
 
 	if #queue < 1 then return end
 
+	local throttle = GetThrottleConfig(Data:GetCacheThrottle())
+
 	Data.__cache.itemCacheRun = {
 		running = true,
 		pass = 0,
@@ -748,11 +936,16 @@ function Data:PopulateItemCache()
 		nextQueue = {},
 		cachedThisPass = 0,
 		totalThisPass = 0,
+		totalQueued = #queue,
 		noProgress = 0,
 		lastRemaining = nil,
+		batchSize = throttle.batch,
+		tickDelay = throttle.tick,
+		passDelay = throttle.pass,
+		mode = Data:GetCacheThrottle(),
 	}
 
-	BSYC:StartTimer("DataDumpCache", 0.1, Data, "ProcessItemCacheRun")
+	BSYC:StartTimer("DataDumpCache", Data.__cache.itemCacheRun.tickDelay, Data, "ProcessItemCacheRun")
 end
 
 function Data:ProcessItemCacheRun()
@@ -760,7 +953,8 @@ function Data:ProcessItemCacheRun()
 	if not run or not run.running then return end
 
 	local startPos = run.pos
-	local endPos = math.min(#run.queue, startPos + ITEMCACHE_BATCH_SIZE - 1)
+	local batchSize = run.batchSize or 10
+	local endPos = math.min(#run.queue, startPos + batchSize - 1)
 
 	for i = startPos, endPos do
 		local link = run.queue[i]
@@ -779,7 +973,7 @@ function Data:ProcessItemCacheRun()
 
 	-- still more work in this pass
 	if run.pos <= #run.queue then
-		BSYC:StartTimer("DataDumpCache", 0.05, Data, "ProcessItemCacheRun")
+		BSYC:StartTimer("DataDumpCache", run.tickDelay or 0.1, Data, "ProcessItemCacheRun")
 		return
 	end
 
@@ -827,7 +1021,7 @@ function Data:ProcessItemCacheRun()
 	run.cachedThisPass = 0
 	run.totalThisPass = 0
 
-	BSYC:StartTimer("DataDumpCache", 0.3, Data, "ProcessItemCacheRun")
+	BSYC:StartTimer("DataDumpCache", run.passDelay or 0.2, Data, "ProcessItemCacheRun")
 end
 
 function Data:CheckExpiredAuctions()

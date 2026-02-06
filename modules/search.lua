@@ -52,6 +52,42 @@ function Search:OnEnable()
 	--the items we will work with
 	Search.items = {}
 
+	-- Cache overlay (spinner + remaining count), centered over the item list
+	local cacheOverlay = UI:CreateFrame(searchFrame, {
+		frameStrata = "DIALOG",
+		frameLevel = searchFrame:GetFrameLevel() + 20,
+		enableMouse = true,
+		points = {
+			{ "TOPLEFT", Search.scrollFrame, "TOPLEFT", 0, 0 },
+			{ "BOTTOMRIGHT", Search.scrollFrame, "BOTTOMRIGHT", 0, 0 },
+		},
+	})
+	cacheOverlay:Hide()
+	cacheOverlay.bg = UI:CreateTexture(cacheOverlay, {
+		layer = "BACKGROUND",
+		allPoints = cacheOverlay,
+		color = { 0, 0, 0, 0.35 },
+	})
+	cacheOverlay.spinner = UI:CreateTexture(cacheOverlay, {
+		layer = "ARTWORK",
+		size = { 32, 32 },
+		texture = "Interface\\Common\\WaitSpinner",
+		point = { "CENTER", cacheOverlay, "CENTER", 0, 10 },
+	})
+	cacheOverlay.spinner.anim = cacheOverlay.spinner:CreateAnimationGroup()
+	cacheOverlay.spinner.anim:SetLooping("REPEAT")
+	local rot = cacheOverlay.spinner.anim:CreateAnimation("Rotation")
+	rot:SetDuration(1.0)
+	rot:SetOrder(1)
+	rot:SetDegrees(-360)
+	cacheOverlay.text = UI:CreateFontString(cacheOverlay, {
+		layer = "ARTWORK",
+		template = "GameFontHighlight",
+		point = { "TOP", cacheOverlay.spinner, "BOTTOM", 0, -6 },
+		justifyH = "CENTER",
+	})
+	Search.cacheOverlay = cacheOverlay
+
 	--total counter
 	searchFrame.totalText = UI:CreateFontString(searchFrame, {
 		template = "GameFontHighlightSmall",
@@ -238,7 +274,11 @@ end
 
 function Search:OnShow()
 	BSYC:SetBSYC_FrameLevel(Search)
-	Data:PopulateItemCache() --do a background caching of items
+	if Data.IsCacheDisabled and Data:IsCacheDisabled() then
+		Data:PopulateItemCache("full") --disabled: cache only while open, use full throttle
+	else
+		Data:PopulateItemCache("medium") --search window open: medium throttle
+	end
 	BSYC.advUnitList = nil
 	BSYC.advAllowList = nil
 
@@ -261,6 +301,62 @@ function Search:OnHide()
 	BSYC.advUnitList = nil
 	BSYC.advAllowList = nil
 	Search:ShowSearchFilters(false)
+	Search:StopCacheOverlay()
+	if Data.ApplyCacheSpeed then
+		Data:ApplyCacheSpeed() --return to user-selected background throttle
+	else
+		Data:SetCacheThrottle("background") --legacy fallback
+	end
+end
+
+function Search:ShowCacheOverlay(remaining)
+	if not Search.cacheOverlay then return end
+	if remaining and Search.cacheOverlay.text then
+		Search.cacheOverlay.text:SetText(L.CachingItemData:format(remaining))
+	end
+	Search.cacheOverlay:Show()
+	if Search.cacheOverlay.spinner and Search.cacheOverlay.spinner.anim then
+		Search.cacheOverlay.spinner.anim:Play()
+	end
+end
+
+function Search:HideCacheOverlay()
+	if not Search.cacheOverlay then return end
+	if Search.cacheOverlay.spinner and Search.cacheOverlay.spinner.anim then
+		Search.cacheOverlay.spinner.anim:Stop()
+	end
+	Search.cacheOverlay:Hide()
+end
+
+function Search:UpdateCacheOverlay()
+	if not Search.cacheBoostActive then return end
+
+	local running, remaining = Data:GetItemCacheStatus()
+	if running and remaining and remaining > 0 then
+		Search:ShowCacheOverlay(remaining)
+		BSYC:StartTimer("SearchCacheOverlay", 0.2, Search, "UpdateCacheOverlay")
+		return
+	end
+
+	Search:StopCacheOverlay()
+end
+
+function Search:StartCacheOverlay()
+	Search.cacheBoostActive = true
+	Search:UpdateCacheOverlay()
+end
+
+function Search:StopCacheOverlay()
+	Search.cacheBoostActive = nil
+	BSYC:StopTimer("SearchCacheOverlay")
+	Search:HideCacheOverlay()
+	if Search.frame and Search.frame:IsShown() then
+		if Data.IsCacheDisabled and Data:IsCacheDisabled() then
+			Data:SetCacheThrottle("full")
+		else
+			Data:SetCacheThrottle("medium")
+		end
+	end
 end
 
 function Search:ShowSearchFilters(visible)
@@ -364,6 +460,10 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isSearchFilters, 
 		if not searchStr then searchStr = Search.frame.SearchBox:GetText() end
 		if string.len(searchStr) <= 0 then return end
 	end
+
+	-- active search: full throttle cache and show overlay
+	Data:PopulateItemCache("full")
+	Search:StartCacheOverlay()
 
 	Search.items = {}
 	local checkList = {}

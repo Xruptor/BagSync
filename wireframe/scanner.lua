@@ -154,7 +154,7 @@ function Scanner:StartupScans()
 	self:CleanupProfessions()
 
 	--populate the cache
-	Data:PopulateItemCache()
+	Data:PopulateItemCache("background")
 
 	BSYC.startupScanChk = true
 end

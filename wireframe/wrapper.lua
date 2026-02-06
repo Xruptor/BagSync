@@ -600,6 +600,7 @@ local function applyDirty(dirty)
 		if minimap and minimap.UpdateVisibility then pcall(minimap.UpdateVisibility, minimap) end
 	end
 
+
 	if flags.bindings and _G.SaveBindings and _G.GetCurrentBindingSet then
 		pcall(_G.SaveBindings, _G.GetCurrentBindingSet())
 	end
@@ -801,7 +802,15 @@ local function renderItems(parent, items, widgets, y)
 
 			elseif itemType == "text" then
 				local text = resolveText(item.text or item.name) or ""
-				_, y = createDescription(parent, text, y, item.font)
+				local fs
+				fs, y = createDescription(parent, text, y, item.font)
+				if type(item.text) == "function" or type(item.name) == "function" then
+					table.insert(widgets, {
+						refresh = function()
+							fs:SetText(resolveText(item.text or item.name) or "")
+						end
+					})
+				end
 
 			elseif itemType == "toggle" then
 				local label = resolveText(item.label or item.name) or ""
