@@ -795,8 +795,12 @@ local function IsRelatedTooltipFrame(frame, owner)
 	return false
 end
 
+local function IsSafeNumber(v)
+	return (BSYC and BSYC.IsSafeNumber and BSYC:IsSafeNumber(v)) or type(v) == "number"
+end
+
 local function QuantizeCoord(v)
-	if not v then return 0 end
+	if not IsSafeNumber(v) then return 0 end
 	return math.floor(v * 10 + 0.5) -- tenth-pixel-ish granularity, avoids jitter
 end
 
@@ -812,7 +816,10 @@ local function IsOffscreen(frame)
 	if not frame or not frame.GetLeft then return false end
 	local left, right = frame:GetLeft(), frame:GetRight()
 	local top, bottom = frame:GetTop(), frame:GetBottom()
-	if not left or not right or not top or not bottom then return false end
+	if not IsSafeNumber(left) or not IsSafeNumber(right)
+		or not IsSafeNumber(top) or not IsSafeNumber(bottom) then
+		return false
+	end
 	local width = UIParent and UIParent.GetWidth and UIParent:GetWidth() or 0
 	local height = UIParent and UIParent.GetHeight and UIParent:GetHeight() or 0
 	if width <= 0 or height <= 0 then return false end
@@ -1875,15 +1882,16 @@ function Tooltip:HookTooltip(objTooltip)
 
 	end
 
-	if C_TooltipInfo then
+		if C_TooltipInfo then
 
-		--Note: tooltip data type corresponds to the Enum.TooltipDataType types
-		--i.e Enum.TooltipDataType.Unit it type 2
+			--Note: tooltip data type corresponds to the Enum.TooltipDataType types
+			--i.e Enum.TooltipDataType.Unit it type 2
 		--see https://github.com/tomrus88/BlizzardInterfaceCode/blob/de20049d4dc15eb268fb959148220acf0a23694c/Interface/AddOns/Blizzard_APIDocumentationGenerated/TooltipInfoSharedDocumentation.lua
 
-		local function OnTooltipSetItem(tooltip, data)
-			if (tooltip == GameTooltip or tooltip == EmbeddedItemTooltip or tooltip == ItemRefTooltip) then
-				if tooltip.__tooltipUpdated then return end
+			local function OnTooltipSetItem(tooltip, data)
+				if not (BSYC.IsSafeTable and BSYC:IsSafeTable(data)) then return end
+				if (tooltip == GameTooltip or tooltip == EmbeddedItemTooltip or tooltip == ItemRefTooltip) then
+					if tooltip.__tooltipUpdated then return end
 
 				local link
 
@@ -1911,24 +1919,28 @@ function Tooltip:HookTooltip(objTooltip)
 					Tooltip:TallyUnits(tooltip, link, "OnTooltipSetItem")
 				end
 			end
-		end
-		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, OnTooltipSetItem)
+			end
+			TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, OnTooltipSetItem)
 
-		local function OnTooltipSetCurrency(tooltip, data)
-			if (tooltip == GameTooltip or tooltip == EmbeddedItemTooltip or tooltip == ItemRefTooltip) then
-				if tooltip.__tooltipUpdated then return end
+			local function OnTooltipSetCurrency(tooltip, data)
+				if not (BSYC.IsSafeTable and BSYC:IsSafeTable(data)) then return end
+				if (tooltip == GameTooltip or tooltip == EmbeddedItemTooltip or tooltip == ItemRefTooltip) then
+					if tooltip.__tooltipUpdated then return end
 
 				local link = data.id or data.hyperlink
 				local currencyID = BSYC:GetShortCurrencyID(link)
 
-				if currencyID then
-					--WOTLK still uses the old API functions, check for it
-					local getCurrencyInfo = BSYC.API and BSYC.API.GetCurrencyInfo
-					local currencyData = getCurrencyInfo and getCurrencyInfo(currencyID)
-					if currencyData then
-						Tooltip:CurrencyTooltip(tooltip, currencyData.name, currencyData.iconFileID, currencyID, "OnTooltipSetCurrency")
+					if currencyID then
+						--WOTLK still uses the old API functions, check for it
+						local getCurrencyInfo = BSYC.API and BSYC.API.GetCurrencyInfo
+						local currencyData = getCurrencyInfo and getCurrencyInfo(currencyID)
+						if currencyData and BSYC.IsSafeTable and not BSYC:IsSafeTable(currencyData) then
+							currencyData = nil
+						end
+						if currencyData then
+							Tooltip:CurrencyTooltip(tooltip, currencyData.name, currencyData.iconFileID, currencyID, "OnTooltipSetCurrency")
+						end
 					end
-				end
 			end
 		end
 		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Currency, OnTooltipSetCurrency)

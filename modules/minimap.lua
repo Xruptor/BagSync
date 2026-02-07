@@ -283,17 +283,21 @@ end
 --------------------------------------------------------
 
 function MinimapModule:Create()
-  if self.button then return end
-  if self.usingLibDBIcon then return end
-  if not MinimapFrame then
-    Debug(1, "Minimap frame missing; minimap icon not created.")
-    return
-  end
+	if self.button then return end
+	if self.usingLibDBIcon then return end
+	if not MinimapFrame then
+		Debug(1, "Minimap frame missing; minimap icon not created.")
+		return
+	end
 
-  --migrate the older format to a more flatter approach, to use enableMinimap and minimapPos
-  if BSYC.options and BSYC.options.minimap then
-    if BSYC.options.minimapPos == nil and BSYC.options.minimap.minimapPos ~= nil then
-      BSYC.options.minimapPos = BSYC.options.minimap.minimapPos
+	local function IsSafeNumber(v)
+		return (BSYC and BSYC.IsSafeNumber and BSYC:IsSafeNumber(v)) or type(v) == "number"
+	end
+
+	--migrate the older format to a more flatter approach, to use enableMinimap and minimapPos
+	if BSYC.options and BSYC.options.minimap then
+		if BSYC.options.minimapPos == nil and BSYC.options.minimap.minimapPos ~= nil then
+			BSYC.options.minimapPos = BSYC.options.minimap.minimapPos
     end
     if BSYC.options.enableMinimap == nil and BSYC.options.minimap.hide ~= nil then
       BSYC.options.enableMinimap = not BSYC.options.minimap.hide
@@ -360,22 +364,24 @@ function MinimapModule:Create()
     end
   end)
 
-  f:SetScript("OnEnter", function()
-    GameTooltip:SetOwner(f, "ANCHOR_LEFT")
-    GameTooltip:AddLine("BagSync")
-    GameTooltip:AddLine(L.LeftClickSearch)
+	  f:SetScript("OnEnter", function()
+	    GameTooltip:SetOwner(f, "ANCHOR_LEFT")
+	    GameTooltip:AddLine("BagSync")
+	    GameTooltip:AddLine(L.LeftClickSearch)
     GameTooltip:AddLine(L.RightClickBagSyncMenu)
     GameTooltip:Show()
   end)
   f:SetScript("OnLeave", GameTooltip_Hide)
-  -- Dragging (shape-aware)
-  f:SetScript("OnDragStart", function(self)
-    self:SetScript("OnUpdate", function()
-      local mx, my = MinimapFrame:GetCenter()
-      if not mx or not my then return end
-      local px, py = GetCursorPosition()
-      local scale = (MinimapFrame.GetEffectiveScale and MinimapFrame:GetEffectiveScale()) or UIParent:GetScale()
-      px, py = px / scale, py / scale
+	  -- Dragging (shape-aware)
+		  f:SetScript("OnDragStart", function(self)
+		    self:SetScript("OnUpdate", function()
+		      local mx, my = MinimapFrame:GetCenter()
+		      if not (IsSafeNumber(mx) and IsSafeNumber(my)) then return end
+		      local px, py = GetCursorPosition()
+		      if not (IsSafeNumber(px) and IsSafeNumber(py)) then return end
+		      local scale = (MinimapFrame.GetEffectiveScale and MinimapFrame:GetEffectiveScale()) or UIParent:GetScale()
+		      if not IsSafeNumber(scale) or scale <= 0 then return end
+		      px, py = px / scale, py / scale
 
       local angle = math.deg(math.atan2(py - my, px - mx)) % 360
       MinimapModule:SaveAngle(angle)
@@ -424,15 +430,49 @@ function MinimapModule:UpdateVisibility()
   end
 end
 
+local function CanRegisterAddonCompartment()
+	return _G.AddonCompartmentFrame and _G.AddonCompartmentFrame.RegisterAddon
+end
+
+function MinimapModule:TryRegisterAddonCompartment()
+	if self.addonCompartmentRegistered then return end
+	if BSYC.options and BSYC.options.enableAddonCompartment == false then return end
+	if not CanRegisterAddonCompartment() then return end
+	local entry = {
+		text = "BagSync",
+		icon = "Interface/AddOns/BagSync/media/icon",
+		notCheckable = true,
+		func = function()
+			_G.BagSync_AddonCompartmentFunc()
+		end,
+	}
+
+	local ok = pcall(_G.AddonCompartmentFrame.RegisterAddon, _G.AddonCompartmentFrame, entry)
+	if ok then
+		self.addonCompartmentRegistered = true
+	end
+end
+
 function MinimapModule:OnEnable()
   InitMenuFrame()
   self:TryEnableLibDBIcon()
   self:Create()
   self:UpdateVisibility()
+  self:TryRegisterAddonCompartment()
   self:SetupLibDBIconWatcher()
+
+  if not self.addonCompartmentRegistered and not self.addonCompartmentWaitFrame then
+    local waitFrame = CreateFrame("Frame")
+    waitFrame:RegisterEvent("PLAYER_LOGIN")
+    waitFrame:SetScript("OnEvent", function()
+      MinimapModule:TryRegisterAddonCompartment()
+    end)
+    self.addonCompartmentWaitFrame = waitFrame
+  end
 end
 
 function MinimapModule:AddonCompartmentFunc()
+  if BSYC.options and BSYC.options.enableAddonCompartment == false then return end
   if InCombatLockdown and InCombatLockdown() then return end
   InitMenuFrame()
   local anchor = _G.AddonCompartmentFrame or UIParent
@@ -440,6 +480,7 @@ function MinimapModule:AddonCompartmentFunc()
 end
 
 _G.BagSync_AddonCompartmentFunc = function()
+  if BSYC and BSYC.options and BSYC.options.enableAddonCompartment == false then return end
   local minimap = BSYC.GetModule and BSYC:GetModule("Minimap", true)
   if minimap and minimap.AddonCompartmentFunc then
     minimap:AddonCompartmentFunc()

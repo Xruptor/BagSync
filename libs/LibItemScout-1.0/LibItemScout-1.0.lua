@@ -756,6 +756,26 @@ Lib:RegisterTypedSearch{
 
 local tooltipCache = setmetatable({}, {__index = function(t, k) local v = {} t[k] = v return v end})
 
+local function isSafeTable(v)
+	if type(v) ~= "table" then return false end
+	local isSecretTable = _G.issecrettable
+	if type(isSecretTable) == "function" then
+		local ok, res = pcall(isSecretTable, v)
+		if ok and res then return false end
+	end
+	local hasAnySecret = _G.hasanysecretvalue
+	if type(hasAnySecret) == "function" then
+		local ok, res = pcall(hasAnySecret, v)
+		if ok and res then return false end
+	end
+	local canAccessAll = _G.canaccessallvalues
+	if type(canAccessAll) == "function" then
+		local ok, res = pcall(canAccessAll, v)
+		if ok and not res then return false end
+	end
+	return true
+end
+
 if not C_TooltipInfo then
 	local tip = _G['LibItemScoutTooltipScanner'] or CreateFrame('GameTooltip', 'LibItemScoutTooltipScanner', UIParent, 'GameTooltipTemplate')
 	tip:SetOwner(UIParent, 'ANCHOR_NONE')
@@ -806,7 +826,7 @@ link_FindSearchInTooltip = function(itemLink, search)
 
 	local result = false
 	local data = Lib.Tooltip.GetHyperlink(itemLink)
-	if data then
+	if data and isSafeTable(data) and data.lines and isSafeTable(data.lines) then
 		for i, line in ipairs(data.lines) do
 			local text = getLineText(line)
 			if text then

@@ -211,6 +211,21 @@ StaticPopupDialogs["BAGSYNC_RESETDB_INFO"] = {
 	hideOnEscape = 1,
 }
 
+StaticPopupDialogs["BAGSYNC_RELOADUI"] = {
+	text = L.AddonCompartmentReloadMsg,
+	button1 = OKAY,
+	button2 = nil,
+	timeout = 0,
+	whileDead = 1,
+	hideOnEscape = 1,
+}
+
+function BSYC:ShowReloadUIPopup()
+	if StaticPopup_Show then
+		StaticPopup_Show("BAGSYNC_RELOADUI")
+	end
+end
+
 function BSYC.DEBUG(level, sName, ...)
 	if not BSYC.options or not BSYC.options.debug or not BSYC.options.debug.enable then return end
 
@@ -260,6 +275,70 @@ function BSYC:IsMouseOver(frame)
 	return self.GMF and (self.GMF() == frame) or false
 end
 
+-----------------------------------------------------------------
+-- Secret value helpers (Retail 12.0+). These APIs may not exist on older clients.
+------------------------------------------------------------------
+function BSYC:IsSecretValue(v)
+	local fn = _G.issecretvalue
+	if type(fn) == "function" then
+		local ok, res = pcall(fn, v)
+		if ok then return not not res end
+	end
+	return false
+end
+
+function BSYC:CanAccessValue(v)
+	local fn = _G.canaccessvalue
+	if type(fn) == "function" then
+		local ok, res = pcall(fn, v)
+		if ok then return not not res end
+	end
+	return true
+end
+
+function BSYC:IsSecretTable(v)
+	local fn = _G.issecrettable
+	if type(fn) == "function" then
+		local ok, res = pcall(fn, v)
+		if ok then return not not res end
+	end
+	return false
+end
+
+function BSYC:HasAnySecretValue(v)
+	local fn = _G.hasanysecretvalue
+	if type(fn) == "function" then
+		local ok, res = pcall(fn, v)
+		if ok then return not not res end
+	end
+	return false
+end
+
+function BSYC:CanAccessAllValues(v)
+	local fn = _G.canaccessallvalues
+	if type(fn) == "function" then
+		local ok, res = pcall(fn, v)
+		if ok then return not not res end
+	end
+	return true
+end
+
+function BSYC:IsSafeNumber(v)
+	if type(v) ~= "number" then return false end
+	if self:IsSecretValue(v) then return false end
+	if not self:CanAccessValue(v) then return false end
+	return true
+end
+
+function BSYC:IsSafeTable(v)
+	if type(v) ~= "table" then return false end
+	if self:IsSecretTable(v) then return false end
+	if self:HasAnySecretValue(v) then return false end
+	if not self:CanAccessAllValues(v) then return false end
+	return true
+end
+-----------------------------------------------------------------
+---
 --this is only for hash tables that aren't indexed with 1,2,3,4 etc.. but use custom index keys
 --if you are using table.insert() or tables that are indexed with numbers then use # instead for table length.  #table as example
 function BSYC:GetHashTableLen(tbl)

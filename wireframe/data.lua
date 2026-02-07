@@ -34,6 +34,7 @@ local optionsDefaults = {
 	showTotal = true,
 	enableUnitClass = true,
 	enableMinimap = true,
+	enableAddonCompartment = true,
 	enableFaction = true,
 	tooltipOnlySearch = false,
 	enableTooltips = true,
@@ -170,7 +171,7 @@ local CACHE_SPEED_MODES = {
 	slow = "background",
 	medium = "medium",
 	fast = "full",
-	disabled = "background",
+	disabled = "background",  --this is a fallback, not an actual mapping...
 }
 
 local function GetThrottleConfig(mode)
@@ -221,8 +222,6 @@ function Data:OnEnable()
 
 	--options DB
 	BSYC:SetDefaults(nil, optionsDefaults)
-	--prune removed options
-	BSYC.options.enableAddonCompartment = nil
 
 	--set tracking defaults
 	BSYC:SetDefaults("tracking", trackingDefaults)
@@ -338,6 +337,13 @@ function Data:FixDB()
 	do
 		if BSYC.options.extTT_Anchor == nil then
 			BSYC.options.extTT_Anchor = optionsDefaults.extTT_Anchor
+		end
+	end
+
+	-- ensure addon compartment option is present
+	do
+		if BSYC.options.enableAddonCompartment == nil then
+			BSYC.options.enableAddonCompartment = optionsDefaults.enableAddonCompartment
 		end
 	end
 

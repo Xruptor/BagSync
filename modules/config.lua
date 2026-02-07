@@ -256,6 +256,28 @@ local generalTable = {
 				{ type = "toggle", label = L.FocusSearchEditBox, bind = { "opt", "focusSearchEditBox" } },
 				{ type = "toggle", label = L.AlwaysShowSearchFilters, bind = { "opt", "alwaysShowSearchFilters" } },
 				{ type = "toggle", label = L.DisplayMinimap, bind = { "minimapEnable" }, dirty = "minimap" },
+				{
+					type = "toggle",
+					label = L.EnableAddonCompartment,
+					get = function()
+						return BSYC.options and BSYC.options.enableAddonCompartment ~= false
+					end,
+					set = function(v)
+						BSYC.options = BSYC.options or {}
+						local prev = BSYC.options.enableAddonCompartment
+						BSYC.options.enableAddonCompartment = v and true or false
+						if prev ~= false and not v then
+							if BSYC.ShowReloadUIPopup then
+								BSYC:ShowReloadUIPopup()
+							end
+						elseif v then
+							local minimap = BSYC.GetModule and BSYC:GetModule("Minimap", true)
+							if minimap and minimap.TryRegisterAddonCompartment then
+								minimap:TryRegisterAddonCompartment()
+							end
+						end
+					end,
+				},
 				{ type = "button", label = L.ResetMinimapBtn, onClick = function()
 					local minimap = BSYC.GetModule and BSYC:GetModule("Minimap", true)
 					if minimap and minimap.ResetPosition then
