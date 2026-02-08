@@ -392,7 +392,6 @@ local generalTable = {
 						},
 					},
 				},
-				{ type = "text", text = " " },
 				{
 					type = "group",
 					title = L.ExtTipNoticeTitle,

@@ -593,9 +593,9 @@ function Tooltip:AddItems(unitObj, itemID, target, countList, isCurrentPlayer)
 	return total
 end
 
-function Tooltip:GetCountString(colorType, dispType, srcType, srcCount, addStr)
+function Tooltip:GetCountString(colorType, dispType, srcType, srcCount, addStr, countColor)
 	local desc = self:HexColor(colorType, L[dispType..srcType])
-	local count = self:HexColor(BSYC.colors.second, comma_value(srcCount))
+	local count = self:HexColor(countColor or BSYC.colors.second, comma_value(srcCount))
 	local tmp = string.format("%s: %s", desc, count)..(addStr or "")
 	return tmp
 end
@@ -606,6 +606,7 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 	self.__scratchTallyCount = tallyCount
 	local dispType = ""
 	local colorType = self:GetClassColor(unitObj, 2)
+	local countColor = (BSYC.options.itemTotalsByClassColor and colorType) or BSYC.colors.second
 
 	if BSYC.options.singleCharLocations then
 		dispType = "TooltipSmall_"
@@ -617,7 +618,7 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 
 	if ((countList["bag"] or 0) > 0) then
 		total = total + countList["bag"]
-		tinsert(tallyCount, self:GetCountString(colorType, dispType, "bag", countList["bag"], BSYC.options.showEquipBagSlots and countList["bagslots"]))
+		tinsert(tallyCount, self:GetCountString(colorType, dispType, "bag", countList["bag"], BSYC.options.showEquipBagSlots and countList["bagslots"], countColor))
 	end
 	if ((countList["bank"] or 0) > 0) then
 		total = total + countList["bank"]
@@ -637,27 +638,27 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 			bTabStr = (BSYC.options.showEquipBagSlots and countList["bankslots"]) or nil
 		end
 
-		tinsert(tallyCount, self:GetCountString(colorType, dispType, "bank", countList["bank"], bTabStr))
+		tinsert(tallyCount, self:GetCountString(colorType, dispType, "bank", countList["bank"], bTabStr, countColor))
 	end
 	if ((countList["reagents"] or 0) > 0) then
 		total = total + countList["reagents"]
-		tinsert(tallyCount, self:GetCountString(colorType, dispType, "reagents", countList["reagents"]))
+		tinsert(tallyCount, self:GetCountString(colorType, dispType, "reagents", countList["reagents"], nil, countColor))
 	end
 	if ((countList["equip"] or 0) > 0) then
 		total = total + countList["equip"]
-		tinsert(tallyCount, self:GetCountString(colorType, dispType, "equip", countList["equip"]))
+		tinsert(tallyCount, self:GetCountString(colorType, dispType, "equip", countList["equip"], nil, countColor))
 	end
 	if ((countList["mailbox"] or 0) > 0) then
 		total = total + countList["mailbox"]
-		tinsert(tallyCount, self:GetCountString(colorType, dispType, "mailbox", countList["mailbox"]))
+		tinsert(tallyCount, self:GetCountString(colorType, dispType, "mailbox", countList["mailbox"], nil, countColor))
 	end
 	if ((countList["void"] or 0) > 0) then
 		total = total + countList["void"]
-		tinsert(tallyCount, self:GetCountString(colorType, dispType, "void", countList["void"]))
+		tinsert(tallyCount, self:GetCountString(colorType, dispType, "void", countList["void"], nil, countColor))
 	end
 	if ((countList["auction"] or 0) > 0) then
 		total = total + countList["auction"]
-		tinsert(tallyCount, self:GetCountString(colorType, dispType, "auction", countList["auction"]))
+		tinsert(tallyCount, self:GetCountString(colorType, dispType, "auction", countList["auction"], nil, countColor))
 	end
 	if ((countList["guild"] or 0) > 0) then
 		total = total + countList["guild"]
@@ -674,7 +675,7 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 			end
 		end
 
-		tinsert(tallyCount, self:GetCountString(colorType, dispType, "guild", countList["guild"], gTabStr))
+		tinsert(tallyCount, self:GetCountString(colorType, dispType, "guild", countList["guild"], gTabStr, countColor))
 	end
 
 	if ((countList["warband"] or 0) > 0) then
@@ -692,7 +693,7 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 			end
 		end
 
-		tinsert(tallyCount, self:GetCountString(colorType, dispType, "warband", countList["warband"], wTabStr))
+		tinsert(tallyCount, self:GetCountString(colorType, dispType, "warband", countList["warband"], wTabStr, countColor))
 	end
 
 	if total < 1 then return end
@@ -704,7 +705,7 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 			tallyString = tallyCount[1]
 		else
 			table.sort(tallyCount)
-			tallyString = self:HexColor(BSYC.colors.second, comma_value(total)).." ("..table.concat(tallyCount, L.TooltipDelimiter.." ")..")"
+			tallyString = self:HexColor(countColor, comma_value(total)).." ("..table.concat(tallyCount, L.TooltipDelimiter.." ")..")"
 		end
     end
 	if #tallyCount <= 0 or string.len(tallyString) < 1 then return end
