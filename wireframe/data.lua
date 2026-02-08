@@ -72,6 +72,10 @@ local optionsDefaults = {
 	extTT_FontOutline = "OUTLINE",
 	extTT_FontMonochrome = false,
 	extTT_Anchor = "BOTTOM",
+	extTT_CustomAnchorEnabled = false,
+	extTT_CustomAnchorLocation = "CENTER",
+	extTT_CustomAnchorX = 0,
+	extTT_CustomAnchorY = 0,
 	enable_GSC_Display = false,
 	enableCurrentRealmName = false,
 	enableCurrentRealmShortName = false,
@@ -337,6 +341,24 @@ function Data:FixDB()
 	do
 		if BSYC.options.extTT_Anchor == nil then
 			BSYC.options.extTT_Anchor = optionsDefaults.extTT_Anchor
+		end
+	end
+
+	-- ensure custom ext tooltip anchor options are present
+	do
+		if BSYC.options.extTT_CustomAnchorEnabled == nil then
+			BSYC.options.extTT_CustomAnchorEnabled = optionsDefaults.extTT_CustomAnchorEnabled
+		end
+		local loc = BSYC.options.extTT_CustomAnchorLocation
+		if loc ~= "TOPLEFT" and loc ~= "TOPRIGHT" and loc ~= "BOTTOMLEFT" and loc ~= "BOTTOMRIGHT"
+			and loc ~= "CENTER" and loc ~= "CENTER_TOP" and loc ~= "CENTER_BOTTOM" and loc ~= "ANCHOR" then
+			BSYC.options.extTT_CustomAnchorLocation = optionsDefaults.extTT_CustomAnchorLocation
+		end
+		if type(BSYC.options.extTT_CustomAnchorX) ~= "number" then
+			BSYC.options.extTT_CustomAnchorX = optionsDefaults.extTT_CustomAnchorX
+		end
+		if type(BSYC.options.extTT_CustomAnchorY) ~= "number" then
+			BSYC.options.extTT_CustomAnchorY = optionsDefaults.extTT_CustomAnchorY
 		end
 	end
 

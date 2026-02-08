@@ -11,6 +11,8 @@ local L = BSYC.L
 local config = BSYC.Config
 local configDialog = BSYC.ConfigDialog
 local TITLE_WHITE = { 1, 1, 1 }
+local TITLE_ACCENT = { 0.3216, 0.8275, 0.5255 }
+local TITLE_NOTICE = { 0.85, 0.75, 0.45 }
 local tconcat = table.concat
 
 local function ShowModuleFrame(name)
@@ -184,6 +186,17 @@ local extTooltipAnchorValues = {
 	{ "RIGHT", L.ExtTooltipAnchor_Right },
 }
 
+local extTipCustomLocationValues = {
+	{ "TOPLEFT", L.ExtTipCustomAnchor_TopLeft },
+	{ "TOPRIGHT", L.ExtTipCustomAnchor_TopRight },
+	{ "BOTTOMLEFT", L.ExtTipCustomAnchor_BottomLeft },
+	{ "BOTTOMRIGHT", L.ExtTipCustomAnchor_BottomRight },
+	{ "CENTER", L.ExtTipCustomAnchor_Center },
+	{ "CENTER_TOP", L.ExtTipCustomAnchor_CenterTop },
+	{ "CENTER_BOTTOM", L.ExtTipCustomAnchor_CenterBottom },
+	{ "ANCHOR", L.ExtTipCustomAnchor_UseAnchor },
+}
+
 local tooltipSortModes = {
 	{ "realm_character", L.SortMode_RealmCharacter },
 	{ "character", L.SortMode_Character },
@@ -309,14 +322,7 @@ local generalTable = {
 					default = BSYC.DEFAULT_FONT_NAME,
 					dirty = { "fonts", "tooltips" },
 				},
-				{
-					type = "select",
-					label = L.ConfigExtTooltipAnchor,
-					values = extTooltipAnchorValues,
-					bind = { "opt", "extTT_Anchor" },
-					default = "BOTTOM",
-					dirty = "tooltips",
-				},
+				{ type = "toggle", label = L.ConfigFontMonochrome, bind = { "opt", "extTT_FontMonochrome" }, dirty = { "fonts", "tooltips" } },
 				{
 					type = "select",
 					label = L.ConfigFontOutline,
@@ -336,7 +342,66 @@ local generalTable = {
 					default = 12,
 					dirty = { "fonts", "tooltips" },
 				},
-				{ type = "toggle", label = L.ConfigFontMonochrome, bind = { "opt", "extTT_FontMonochrome" }, dirty = { "fonts", "tooltips" } },
+				{
+					type = "group",
+					title = L.ConfigExtTipPositionSettings,
+					titleColor = TITLE_ACCENT,
+					inline = true,
+					items = {
+						{
+							type = "select",
+							label = L.ConfigExtTooltipAnchor,
+							values = extTooltipAnchorValues,
+							bind = { "opt", "extTT_Anchor" },
+							default = "BOTTOM",
+							disabled = function()
+								return BSYC.options and BSYC.options.extTT_CustomAnchorEnabled
+							end,
+							dirty = "tooltips",
+						},
+						{
+							type = "toggle",
+							label = L.ConfigExtTipCustomAnchorEnable,
+							bind = { "opt", "extTT_CustomAnchorEnabled" },
+							dirty = "tooltips",
+						},
+						{ type = "text", text = " " },
+						{
+							type = "select",
+							label = L.ConfigExtTipCustomAnchorLocation,
+							values = extTipCustomLocationValues,
+							bind = { "opt", "extTT_CustomAnchorLocation" },
+							default = "CENTER",
+							disabled = function()
+								return not (BSYC.options and BSYC.options.extTT_CustomAnchorEnabled)
+							end,
+							dirty = "tooltips",
+						},
+						{
+							type = "button",
+							label = L.ConfigExtTipCustomAnchorShow,
+							disabled = function()
+								return not (BSYC.options and BSYC.options.extTT_CustomAnchorEnabled)
+							end,
+							onClick = function()
+								local extTip = BSYC.GetModule and BSYC:GetModule("ExtTip", true)
+								if extTip and extTip.ShowAnchor then
+									extTip:ShowAnchor()
+								end
+							end,
+						},
+					},
+				},
+				{ type = "text", text = " " },
+				{
+					type = "group",
+					title = L.ExtTipNoticeTitle,
+					titleColor = TITLE_NOTICE,
+					inline = true,
+					items = {
+						{ type = "text", font = "GameFontNormal", text = L.ExtTipNoticeText },
+					},
+				},
 			},
 		},
 	},

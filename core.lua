@@ -805,9 +805,9 @@ function BSYC:CreateFonts()
 	BSYC.__font = fontObject
 
 	if BSYC.GetModule then
-		local tooltip = BSYC:GetModule("Tooltip", true)
-		if tooltip and tooltip.ApplyExtTipFont then
-			pcall(tooltip.ApplyExtTipFont, tooltip)
+		local extTip = BSYC:GetModule("ExtTip", true)
+		if extTip and extTip.ApplyFont then
+			pcall(extTip.ApplyFont, extTip)
 		end
 	end
 end

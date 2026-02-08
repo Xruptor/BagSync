@@ -50,6 +50,7 @@ wireframe\unit.lua
 wireframe\data.lua
 wireframe\scanner.lua
 wireframe\events.lua
+wireframe\ext_tip.lua
 wireframe\tooltip.lua
 
 modules\databroker.lua
