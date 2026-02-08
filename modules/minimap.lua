@@ -8,6 +8,7 @@
 
 local BSYC = select(2, ...) --grab the addon namespace
 local UI = BSYC:GetModule("UI")
+local Utility = BSYC:GetModule("Utility")
 local MinimapModule = BSYC:NewModule("Minimap")
 
 local function Debug(level, ...)
@@ -42,6 +43,7 @@ local minimapShapes = {
 local menuFrame = UI:CreateDropdown(UIParent, {
   globalName = "BagSyncMinimapMenu",
 })
+BSYC.bgsMinimapDD = menuFrame
 local menuInitialized = false
 
 local function ShowModuleFrame(name)
@@ -114,6 +116,7 @@ local function InitMinimapMenu(_, level)
   AddButton(level, L.Profiles, function() ShowModuleFrame("Profiles") end)
   AddButton(level, L.SortOrder, function() ShowModuleFrame("SortOrder") end)
   AddButton(level, L.FixDB, DoFixDB)
+  AddButton(level, L.Debug, function() ShowModuleFrame("Debug") end)
   AddButton(level, L.Config, OpenConfig)
   AddButton(level, "", nil, true)
   AddButton(level, L.Close, function() CloseDropDownMenus() end)
@@ -124,6 +127,11 @@ local function InitMenuFrame()
   menuFrame.displayMode = "MENU"
   UIDropDownMenu_Initialize(menuFrame, InitMinimapMenu, "MENU")
   menuInitialized = true
+end
+
+function MinimapModule:OpenMenu(anchor)
+  InitMenuFrame()
+  ToggleDropDownMenu(1, nil, menuFrame, anchor or UIParent, 0, 0)
 end
 
 -- Shape-aware positioning (LibDBIcon logic)
@@ -291,7 +299,10 @@ function MinimapModule:Create()
 	end
 
 	local function IsSafeNumber(v)
-		return (BSYC and BSYC.IsSafeNumber and BSYC:IsSafeNumber(v)) or type(v) == "number"
+		if Utility and Utility.IsSafeNumber then
+			return Utility:IsSafeNumber(v)
+		end
+		return type(v) == "number"
 	end
 
 	--migrate the older format to a more flatter approach, to use enableMinimap and minimapPos
@@ -360,7 +371,7 @@ function MinimapModule:Create()
         ShowModuleFrame("Search")
       end
     else
-      ToggleDropDownMenu(1, nil, menuFrame, f, 0, 0)
+      MinimapModule:OpenMenu(f)
     end
   end)
 
@@ -474,9 +485,8 @@ end
 function MinimapModule:AddonCompartmentFunc()
   if BSYC.options and BSYC.options.enableAddonCompartment == false then return end
   if InCombatLockdown and InCombatLockdown() then return end
-  InitMenuFrame()
   local anchor = _G.AddonCompartmentFrame or UIParent
-  ToggleDropDownMenu(1, nil, menuFrame, anchor, 0, 0)
+  self:OpenMenu(anchor)
 end
 
 _G.BagSync_AddonCompartmentFunc = function()

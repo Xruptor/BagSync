@@ -10,6 +10,7 @@ local BSYC = select(2, ...) --grab the addon namespace
 local Scanner = BSYC:NewModule("Scanner")
 local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
+local Utility = BSYC:GetModule("Utility")
 local L = BSYC.L
 
 local function Debug(level, ...)
@@ -17,7 +18,10 @@ local function Debug(level, ...)
 end
 
 local function IsSafeTable(v)
-	return (BSYC and BSYC.IsSafeTable and BSYC:IsSafeTable(v)) or type(v) == "table"
+	if Utility and Utility.IsSafeTable then
+		return Utility:IsSafeTable(v)
+	end
+	return type(v) == "table"
 end
 
 --https://github.com/tomrus88/BlizzardInterfaceCode/blob/master/Interface/AddOns/Blizzard_VoidStorageUI/Blizzard_VoidStorageUI.lua

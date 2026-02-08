@@ -734,7 +734,7 @@ local cacheTable = {
 
 local function buildFAQItems()
 	local items = {}
-	for i = 1, 7 do
+	for i = 1, 8 do
 		local qKey = "FAQ_Question_" .. i
 		local aKey = qKey .. "_p1"
 		local q = L[qKey]
@@ -752,7 +752,7 @@ local function buildFAQItems()
 				},
 			}
 		end
-		if i < 7 then
+		if i < 8 then
 			items[#items + 1] = { type = "text", text = " " }
 		end
 	end

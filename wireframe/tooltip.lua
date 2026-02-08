@@ -10,6 +10,7 @@ local BSYC = select(2, ...) --grab the addon namespace
 local Tooltip = BSYC:NewModule("Tooltip")
 local Unit = BSYC:GetModule("Unit")
 local Data = BSYC:GetModule("Data")
+local Utility = BSYC:GetModule("Utility")
 local Scanner = BSYC:GetModule("Scanner")
 local L = BSYC.L
 local tinsert, tconcat, tsort = table.insert, table.concat, table.sort
@@ -753,7 +754,8 @@ function Tooltip:ApplyExtTipFont()
 	end
 end
 
-function Tooltip:ExtTipCheck(source, isBattlePet)
+--MAIN Entry Positioning function for ExtTip.  This is the parent that calls our the other functions.
+function Tooltip:ExtTipCheck(source, isBattlePet, owner)
 	local opts = BSYC.options
 	local shouldShow = (opts.enableExtTooltip or isBattlePet) and true or false
 
@@ -767,6 +769,19 @@ function Tooltip:ExtTipCheck(source, isBattlePet)
 	Tooltip.extTip:ClearAllPoints()
 	Tooltip.extTip:ClearLines()
 	Tooltip.extTip:SetOwner(UIParent, "ANCHOR_NONE")
+
+	if owner then
+		-- If we cannot find a safe anchor (often due to Blizzard comparison tooltips
+		-- returning secret values), fall back to inline tooltip output. Any overlap
+		-- in that case is a Blizzard tooltip issue, not a BagSync one.
+		-- Note: secret value diagnostics are logged via Utility:WarnSecretValue()
+		-- but only when BagSync Debug is enabled.
+		local anchor = self:GetBottomTooltipAnchorCached(owner, opts and opts.extTT_Anchor)
+		if not anchor then
+			Tooltip.extTip:Hide()
+			return false
+		end
+	end
 
 	return true
 end
@@ -795,12 +810,8 @@ local function IsRelatedTooltipFrame(frame, owner)
 	return false
 end
 
-local function IsSafeNumber(v)
-	return (BSYC and BSYC.IsSafeNumber and BSYC:IsSafeNumber(v)) or type(v) == "number"
-end
-
 local function QuantizeCoord(v)
-	if not IsSafeNumber(v) then return 0 end
+	if not Utility:IsSafeNumber(v) then return 0 end
 	return math.floor(v * 10 + 0.5) -- tenth-pixel-ish granularity, avoids jitter
 end
 
@@ -814,10 +825,11 @@ end
 
 local function IsOffscreen(frame)
 	if not frame or not frame.GetLeft then return false end
-	local left, right = frame:GetLeft(), frame:GetRight()
-	local top, bottom = frame:GetTop(), frame:GetBottom()
-	if not IsSafeNumber(left) or not IsSafeNumber(right)
-		or not IsSafeNumber(top) or not IsSafeNumber(bottom) then
+	local left = Utility:GetSafeCoord("Tooltip", frame, "Left", frame, "offscreen", "IsOffscreen")
+	local right = Utility:GetSafeCoord("Tooltip", frame, "Right", frame, "offscreen", "IsOffscreen")
+	local top = Utility:GetSafeCoord("Tooltip", frame, "Top", frame, "offscreen", "IsOffscreen")
+	local bottom = Utility:GetSafeCoord("Tooltip", frame, "Bottom", frame, "offscreen", "IsOffscreen")
+	if not left or not right or not top or not bottom then
 		return false
 	end
 	local width = UIParent and UIParent.GetWidth and UIParent:GetWidth() or 0
@@ -830,10 +842,8 @@ function Tooltip:GetBottomTooltipAnchor(owner, anchorMode)
 	if not owner then return nil end
 	anchorMode = NormalizeAnchorMode(anchorMode)
 
-	local bestFrame = owner
-	local bestPos = (anchorMode == "LEFT" and owner:GetLeft())
-		or (anchorMode == "RIGHT" and owner:GetRight())
-		or owner:GetBottom()
+	local bestFrame, bestPos
+	local coord = (anchorMode == "LEFT" and "Left") or (anchorMode == "RIGHT" and "Right") or "Bottom"
 
 	local candidates = WipeTable(self.__scratchAnchorCandidates or {})
 	self.__scratchAnchorCandidates = candidates
@@ -844,10 +854,9 @@ function Tooltip:GetBottomTooltipAnchor(owner, anchorMode)
 			or (anchorMode == "BOTTOM" and not frame.GetBottom) then
 			return
 		end
+		if Utility:IsSecretFrame("Tooltip", frame, owner, "anchor scan", "GetBottomTooltipAnchor") then return end
 		if not IsRelatedTooltipFrame(frame, owner) then return end
-		local pos = (anchorMode == "LEFT" and frame:GetLeft())
-			or (anchorMode == "RIGHT" and frame:GetRight())
-			or frame:GetBottom()
+		local pos = Utility:GetSafeCoord("Tooltip", frame, coord, owner, "anchor scan", "GetBottomTooltipAnchor")
 		if not pos then return end
 		if anchorMode == "RIGHT" then
 			if not bestPos or pos > bestPos then
@@ -931,6 +940,7 @@ function Tooltip:GetBottomTooltipAnchorCached(owner, anchorMode)
 		sig = (sig * 33 + (n or 0)) % 2147483647
 	end
 
+	local coord = (anchorMode == "LEFT" and "Left") or (anchorMode == "RIGHT" and "Right") or "Bottom"
 	local function consider(frame, weight)
 		if not frame or (anchorMode == "LEFT" and not frame.GetLeft)
 			or (anchorMode == "RIGHT" and not frame.GetRight)
@@ -940,14 +950,20 @@ function Tooltip:GetBottomTooltipAnchorCached(owner, anchorMode)
 		end
 
 		-- Visibility/relationship gates both anchoring and signature.
+		if Utility:IsSecretFrame("Tooltip", frame, owner, "anchor signature", "GetBottomTooltipAnchorCached:signature") then
+			sigAdd(11 + (weight or 0))
+			return nil
+		end
 		if not IsRelatedTooltipFrame(frame, owner) then
 			sigAdd(13 + (weight or 0))
 			return nil
 		end
 
-		local pos = (anchorMode == "LEFT" and frame:GetLeft())
-			or (anchorMode == "RIGHT" and frame:GetRight())
-			or frame:GetBottom()
+		local pos = Utility:GetSafeCoord("Tooltip", frame, coord, owner, "anchor signature", "GetBottomTooltipAnchorCached:signature")
+		if not pos then
+			sigAdd(17 + (weight or 0))
+			return nil
+		end
 		local q = QuantizeCoord(pos)
 		sigAdd((q * 31) + (weight or 0))
 
@@ -955,7 +971,7 @@ function Tooltip:GetBottomTooltipAnchorCached(owner, anchorMode)
 	end
 
 	-- Owner position affects where we anchor (TOP/BOTTOM and LEFT/RIGHT logic).
-	local cx, cy = owner:GetCenter()
+	local cx, cy = Utility:GetSafeCenter("Tooltip", owner, owner, "anchor signature center", "GetBottomTooltipAnchorCached:center")
 	sigAdd(QuantizeCoord(cx))
 	sigAdd(QuantizeCoord(cy))
 	sigAdd(anchorMode == "LEFT" and 11 or anchorMode == "RIGHT" and 17 or 23)
@@ -1010,17 +1026,17 @@ function Tooltip:GetBottomTooltipAnchorCached(owner, anchorMode)
 		end
 	end
 
-	-- Cache hit: ensure the cached anchor still qualifies.
+	-- Cache hit: ensure the cached anchor still qualifies and is safe.
 	if cachedOwner == owner and cachedSig == sig and cachedMode == anchorMode
 		and cachedAnchor and IsRelatedTooltipFrame(cachedAnchor, owner) then
-		return cachedAnchor
+		local cachedPos = Utility:GetSafeCoord("Tooltip", cachedAnchor, coord, owner, "anchor pick cached", "GetBottomTooltipAnchorCached:cached")
+		if cachedPos then
+			return cachedAnchor
+		end
 	end
 
 	-- Cache miss: compute best anchor and store signature.
-	local bestFrame = owner
-	local bestPos = (anchorMode == "LEFT" and owner:GetLeft())
-		or (anchorMode == "RIGHT" and owner:GetRight())
-		or owner:GetBottom()
+	local bestFrame, bestPos
 
 	local function pick(frame)
 		if not frame or (anchorMode == "LEFT" and not frame.GetLeft)
@@ -1028,10 +1044,9 @@ function Tooltip:GetBottomTooltipAnchorCached(owner, anchorMode)
 			or (anchorMode == "BOTTOM" and not frame.GetBottom) then
 			return
 		end
+		if Utility:IsSecretFrame("Tooltip", frame, owner, "anchor pick", "GetBottomTooltipAnchorCached:pick") then return end
 		if not IsRelatedTooltipFrame(frame, owner) then return end
-		local pos = (anchorMode == "LEFT" and frame:GetLeft())
-			or (anchorMode == "RIGHT" and frame:GetRight())
-			or frame:GetBottom()
+		local pos = Utility:GetSafeCoord("Tooltip", frame, coord, owner, "anchor pick", "GetBottomTooltipAnchorCached:pick")
 		if not pos then return end
 		if anchorMode == "RIGHT" then
 			if not bestPos or pos > bestPos then
@@ -1091,6 +1106,14 @@ function Tooltip:GetBottomTooltipAnchorCached(owner, anchorMode)
 		end
 	end
 
+	if not bestFrame then
+		self.__extTipAnchorOwner = nil
+		self.__extTipAnchorSig = nil
+		self.__extTipAnchorFrame = nil
+		self.__extTipAnchorMode = nil
+		return nil
+	end
+
 	self.__extTipAnchorOwner = owner
 	self.__extTipAnchorSig = sig
 	self.__extTipAnchorFrame = bestFrame
@@ -1104,7 +1127,7 @@ function Tooltip:SetExtTipAnchor(owner, anchor, extTip, anchorMode)
 
 	anchor = anchor or owner
 	anchorMode = NormalizeAnchorMode(anchorMode)
-	local x, y = owner:GetCenter()
+	local x, y = Utility:GetSafeCenter("Tooltip", owner, owner, "anchor place center", "SetExtTipAnchor")
 	if not x or not y then
 		if anchorMode == "LEFT" then
 			extTip:SetPoint("TOPRIGHT", anchor, "TOPLEFT")
@@ -1151,13 +1174,18 @@ end
 
 function Tooltip:UpdateExtTipAnchor()
 	local frame, extTip = Tooltip.objTooltip, Tooltip.extTip
-	if not frame or not extTip or not extTip:IsShown() then return end
+	if not frame or not extTip or not extTip:IsShown() then return false end
 
 	extTip:ClearAllPoints()
 	local anchorMode = NormalizeAnchorMode(BSYC.options and BSYC.options.extTT_Anchor)
-	local anchor = self:GetBottomTooltipAnchorCached(frame, anchorMode) or frame
+	local anchor = self:GetBottomTooltipAnchorCached(frame, anchorMode)
+	if not anchor then
+		extTip:Hide()
+		return false
+	end
 	if anchor == extTip then anchor = frame end
 	self:SetExtTipAnchor(frame, anchor, extTip, anchorMode)
+	return true
 end
 
 function Tooltip:ResetCache()
@@ -1200,10 +1228,9 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	--check for modifier option only in windows that isn't BagSync search
 	if not self:CheckModifier() and not objTooltip.isBSYCSearch then return end
 
-	local showExtTip = Tooltip:ExtTipCheck(source, isBattlePet)
-	local skipTally = false
-
 	Tooltip.objTooltip = objTooltip
+	local showExtTip = Tooltip:ExtTipCheck(source, isBattlePet, objTooltip)
+	local skipTally = false
 
 	--only show tooltips in search frame if the option is enabled
 	if BSYC.options.tooltipOnlySearch and not objTooltip.isBSYCSearch then
@@ -1242,13 +1269,22 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 					objTooltip:AddDoubleLine(self.__lastTally[i].colorized, self.__lastTally[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
 				end
 			end
-			objTooltip:Show()
-			if showExtTip then
-				Tooltip:ApplyExtTipFont()
-				Tooltip.extTip:Show()
-				Tooltip:UpdateExtTipAnchor()
+				objTooltip:Show()
+				if showExtTip then
+					Tooltip:ApplyExtTipFont()
+					Tooltip.extTip:Show()
+					if not Tooltip:UpdateExtTipAnchor() then
+						if opts.enableTooltipSeparator and #self.__lastTally > 0 then
+							objTooltip:AddDoubleLine(" ", " ")
+						end
+						for i = 1, #self.__lastTally do
+							local color = self:GetClassColor(self.__lastTally[i].unitObj, 2, false, BSYC.colors.total)
+							objTooltip:AddDoubleLine(self.__lastTally[i].colorized, self.__lastTally[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
+						end
+						objTooltip:Show()
+					end
+				end
 			end
-		end
 		objTooltip.__tooltipUpdated = true
 		return
 	end
@@ -1649,15 +1685,24 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	objTooltip.__tooltipUpdated = true
 	objTooltip:Show()
 
-	if showExtTip then
-		if #unitList > 0 then
-			Tooltip:ApplyExtTipFont()
-			Tooltip.extTip:Show()
-			Tooltip:UpdateExtTipAnchor()
-		else
-			Tooltip.extTip:Hide()
+		if showExtTip then
+			if #unitList > 0 then
+				Tooltip:ApplyExtTipFont()
+				Tooltip.extTip:Show()
+				if not Tooltip:UpdateExtTipAnchor() then
+					if opts.enableTooltipSeparator and #unitList > 0 then
+						objTooltip:AddDoubleLine(" ", " ")
+					end
+					for i = 1, #unitList do
+						local color = self:GetClassColor(unitList[i].unitObj, 2, false, BSYC.colors.total)
+						objTooltip:AddDoubleLine(unitList[i].colorized, unitList[i].tallyString, color.r, color.g, color.b, color.r, color.g, color.b)
+					end
+					objTooltip:Show()
+				end
+			else
+				Tooltip.extTip:Hide()
+			end
 		end
-	end
 
 	local WLChk = (opts.enableWhitelist and "WL-ON") or "WL-OFF"
 	Debug(BSYC_DL.INFO, "|cFF52D386TallyUnits|r", link, shortID, source, isBattlePet, grandTotal, WLChk)
@@ -1672,13 +1717,12 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 
 	currencyID = tonumber(currencyID) --make sure it's a number we are working with and not a string
 	if not currencyID then return end
-
-	local showExtTip = Tooltip:ExtTipCheck(source, false)
+	Tooltip.objTooltip = objTooltip
+	local showExtTip = Tooltip:ExtTipCheck(source, false, objTooltip)
 
 	--if we already did the currency, then display the previous information, use the unparsed link to verify
 	if self.__lastCurrencyID and self.__lastCurrencyID == currencyID then
 		if self.__lastCurrencyTally and #self.__lastCurrencyTally > 0 then
-			Tooltip.objTooltip = objTooltip
 			for i=1, #self.__lastCurrencyTally do
 				if showExtTip then
 					Tooltip.extTip:AddDoubleLine(self.__lastCurrencyTally[i][1], self.__lastCurrencyTally[i][2], 1, 1, 1, 1, 1, 1)
@@ -1690,7 +1734,12 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 			if showExtTip then
 				Tooltip:ApplyExtTipFont()
 				Tooltip.extTip:Show()
-				Tooltip:UpdateExtTipAnchor()
+				if not Tooltip:UpdateExtTipAnchor() then
+					for i = 1, #self.__lastCurrencyTally do
+						objTooltip:AddDoubleLine(self.__lastCurrencyTally[i][1], self.__lastCurrencyTally[i][2], 1, 1, 1, 1, 1, 1)
+					end
+					objTooltip:Show()
+				end
 			end
 		end
 		objTooltip.__tooltipUpdated = true
@@ -1801,13 +1850,18 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 
 	objTooltip.__tooltipUpdated = true
 	objTooltip:Show()
-	if showExtTip then
-		Tooltip:ApplyExtTipFont()
-		Tooltip.extTip:Show()
-		Tooltip.objTooltip = objTooltip
-		Tooltip:UpdateExtTipAnchor()
+		if showExtTip then
+			Tooltip:ApplyExtTipFont()
+			Tooltip.extTip:Show()
+			Tooltip.objTooltip = objTooltip
+			if not Tooltip:UpdateExtTipAnchor() then
+				for i = 1, #displayList do
+					objTooltip:AddDoubleLine(displayList[i][1], displayList[i][2], 1, 1, 1, 1, 1, 1)
+				end
+				objTooltip:Show()
+			end
+		end
 	end
-end
 
 local arkAlreadyHooked = false
 
@@ -1888,10 +1942,10 @@ function Tooltip:HookTooltip(objTooltip)
 			--i.e Enum.TooltipDataType.Unit it type 2
 		--see https://github.com/tomrus88/BlizzardInterfaceCode/blob/de20049d4dc15eb268fb959148220acf0a23694c/Interface/AddOns/Blizzard_APIDocumentationGenerated/TooltipInfoSharedDocumentation.lua
 
-			local function OnTooltipSetItem(tooltip, data)
-				if not (BSYC.IsSafeTable and BSYC:IsSafeTable(data)) then return end
-				if (tooltip == GameTooltip or tooltip == EmbeddedItemTooltip or tooltip == ItemRefTooltip) then
-					if tooltip.__tooltipUpdated then return end
+				local function OnTooltipSetItem(tooltip, data)
+					if not Utility:IsSafeTable(data) then return end
+					if (tooltip == GameTooltip or tooltip == EmbeddedItemTooltip or tooltip == ItemRefTooltip) then
+						if tooltip.__tooltipUpdated then return end
 
 				local link
 
@@ -1922,10 +1976,10 @@ function Tooltip:HookTooltip(objTooltip)
 			end
 			TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, OnTooltipSetItem)
 
-			local function OnTooltipSetCurrency(tooltip, data)
-				if not (BSYC.IsSafeTable and BSYC:IsSafeTable(data)) then return end
-				if (tooltip == GameTooltip or tooltip == EmbeddedItemTooltip or tooltip == ItemRefTooltip) then
-					if tooltip.__tooltipUpdated then return end
+				local function OnTooltipSetCurrency(tooltip, data)
+					if not Utility:IsSafeTable(data) then return end
+					if (tooltip == GameTooltip or tooltip == EmbeddedItemTooltip or tooltip == ItemRefTooltip) then
+						if tooltip.__tooltipUpdated then return end
 
 				local link = data.id or data.hyperlink
 				local currencyID = BSYC:GetShortCurrencyID(link)
@@ -1934,9 +1988,9 @@ function Tooltip:HookTooltip(objTooltip)
 						--WOTLK still uses the old API functions, check for it
 						local getCurrencyInfo = BSYC.API and BSYC.API.GetCurrencyInfo
 						local currencyData = getCurrencyInfo and getCurrencyInfo(currencyID)
-						if currencyData and BSYC.IsSafeTable and not BSYC:IsSafeTable(currencyData) then
-							currencyData = nil
-						end
+							if currencyData and not Utility:IsSafeTable(currencyData) then
+								currencyData = nil
+							end
 						if currencyData then
 							Tooltip:CurrencyTooltip(tooltip, currencyData.name, currencyData.iconFileID, currencyID, "OnTooltipSetCurrency")
 						end
