@@ -230,15 +230,55 @@ end
 
 function MinimapModule:InitLibDBIconDB()
   if self.libDBIconDB then return self.libDBIconDB end
+  BSYC.options = BSYC.options or {}
   local angle = DEFAULT_ANGLE
-  if BSYC.options and BSYC.options.minimapPos then
+  if BSYC.options.minimapPos then
     angle = tonumber(BSYC.options.minimapPos) or DEFAULT_ANGLE
+  end
+  BSYC.options.minimapPos = angle
+  if BSYC.options.enableMinimap == nil then
+    BSYC.options.enableMinimap = true
   end
   self.libDBIconDB = {
     minimapPos = angle,
-    hide = BSYC.options and BSYC.options.enableMinimap == false,
+    hide = BSYC.options.enableMinimap == false,
   }
   return self.libDBIconDB
+end
+
+function MinimapModule:SyncLibDBIconDB()
+  if not self.libDBIconDB then return end
+  BSYC.options = BSYC.options or {}
+  local angle = tonumber(self.libDBIconDB.minimapPos)
+  if angle then
+    BSYC.options.minimapPos = angle % 360
+  end
+  if self.libDBIconDB.hide ~= nil then
+    BSYC.options.enableMinimap = not self.libDBIconDB.hide
+  end
+end
+
+function MinimapModule:EnsureLibDBIconSync()
+  if self.libDBIconSyncFrame then return end
+  local syncFrame = UI:CreateFrame(UIParent, {})
+  syncFrame:RegisterEvent("PLAYER_LOGOUT")
+  syncFrame:SetScript("OnEvent", function()
+    MinimapModule:SyncLibDBIconDB()
+  end)
+  self.libDBIconSyncFrame = syncFrame
+end
+
+function MinimapModule:HookLibDBIconButton()
+  if self.libDBIconHooked then return end
+  local ldbicon = GetLibDBIcon()
+  if not ldbicon or not ldbicon.GetMinimapButton then return end
+  local button = ldbicon:GetMinimapButton("BagSync")
+  if not button or not button.HookScript then return end
+
+  button:HookScript("OnDragStop", function()
+    MinimapModule:SyncLibDBIconDB()
+  end)
+  self.libDBIconHooked = true
 end
 
 function MinimapModule:TryEnableLibDBIcon()
@@ -255,6 +295,8 @@ function MinimapModule:TryEnableLibDBIcon()
   if ldbicon.GetMinimapButton and ldbicon:GetMinimapButton("BagSync") then
     self.usingLibDBIcon = true
     if self.button then self.button:Hide() end
+    self:HookLibDBIconButton()
+    self:EnsureLibDBIconSync()
     return true
   end
 
@@ -268,6 +310,8 @@ function MinimapModule:TryEnableLibDBIcon()
   if ldbicon.Refresh then
     ldbicon:Refresh("BagSync", db)
   end
+  self:HookLibDBIconButton()
+  self:EnsureLibDBIconSync()
   return true
 end
 
