@@ -1316,6 +1316,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		elseif cacheEntry and not doCurrentPlayerOnly then
 			--use cached results from previous DB searches; copy array so we can append current-player data safely
 			unitList = ShallowCopyArray(cacheEntry.unitList)
+			ctx.unitList = unitList
 			grandTotal = cacheEntry.grandTotal or 0
 			Debug(BSYC_DL.INFO, "TallyUnits", "|cFF09DBE0CacheUsed|r", origLink)
 		end

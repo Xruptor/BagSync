@@ -33,7 +33,6 @@ end
 local optionsDefaults = {
 	showTotal = true,
 	enableUnitClass = true,
-	enableMinimap = true,
 	enableAddonCompartment = true,
 	enableFaction = true,
 	tooltipOnlySearch = false,
@@ -367,6 +366,21 @@ function Data:FixDB()
 		if BSYC.options.enableAddonCompartment == nil then
 			BSYC.options.enableAddonCompartment = optionsDefaults.enableAddonCompartment
 		end
+	end
+
+	-- ensure minimap db exists and prune flat options
+	do
+		if type(BSYC.options.minimap) ~= "table" then
+			BSYC.options.minimap = {}
+		end
+		if BSYC.options.minimap.hide == nil then
+			BSYC.options.minimap.hide = false
+		end
+		if BSYC.options.minimap.minimapPos == nil then
+			BSYC.options.minimap.minimapPos = 220
+		end
+		BSYC.options.enableMinimap = nil
+		BSYC.options.minimapPos = nil
 	end
 
 	-- ensure cache throttle setting is present

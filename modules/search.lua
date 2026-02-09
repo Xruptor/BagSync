@@ -213,12 +213,9 @@ function Search:OnEnable()
 		highlightTexture = 136477, --"Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight"
 		point = { "TOPLEFT", searchFrame, "TOPLEFT", 0, 0 },
 		onClick = function()
-			local minimap = BSYC.GetModule and BSYC:GetModule("Minimap", true)
-			if minimap and minimap.OpenMenu then
-				minimap:OpenMenu("cursor")
-				return
-			end
-			if BSYC.bgsMinimapDD then
+			if BSYC.OpenMinimapMenu then
+				BSYC:OpenMinimapMenu("cursor")
+			elseif BSYC.bgsMinimapDD then
 				ToggleDropDownMenu(1, nil, BSYC.bgsMinimapDD, "cursor", 0, 0)
 			end
 		end,

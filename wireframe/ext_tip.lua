@@ -223,10 +223,13 @@ end
 function ExtTip:EnsureAnchor()
 	if self.anchorFrame then return self.anchorFrame end
 
-	local frame = CreateFrame("Frame", "BagSyncExtTipAnchor", UIParent, BackdropTemplateMixin and "BackdropTemplate")
+	local frame = CreateFrame("Button", "BagSyncExtTipAnchor", UIParent, BackdropTemplateMixin and "BackdropTemplate")
 	frame:SetSize(220, 60)
 	frame:SetMovable(true)
 	frame:EnableMouse(true)
+	if frame.RegisterForClicks then
+		frame:RegisterForClicks("AnyUp")
+	end
 	frame:SetClampedToScreen(true)
 	frame:SetFrameStrata("DIALOG")
 

@@ -283,18 +283,15 @@ local generalTable = {
 							if BSYC.ShowReloadUIPopup then
 								BSYC:ShowReloadUIPopup()
 							end
-						elseif v then
-							local minimap = BSYC.GetModule and BSYC:GetModule("Minimap", true)
-							if minimap and minimap.TryRegisterAddonCompartment then
-								minimap:TryRegisterAddonCompartment()
-							end
+						end
+						if BSYC.TryRegisterAddonCompartment then
+							BSYC:TryRegisterAddonCompartment()
 						end
 					end,
 				},
 				{ type = "button", label = L.ResetMinimapBtn, onClick = function()
-					local minimap = BSYC.GetModule and BSYC:GetModule("Minimap", true)
-					if minimap and minimap.ResetPosition then
-						minimap:ResetPosition()
+					if BSYC.ResetMinimapIconPosition then
+						BSYC:ResetMinimapIconPosition()
 					end
 				end },
 				{ type = "toggle", label = L.EnableLoginVersionInfo, bind = { "opt", "enableLoginVersionInfo" } },

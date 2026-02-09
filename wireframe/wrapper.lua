@@ -596,8 +596,12 @@ local function applyDirty(dirty)
 	end
 
 	if flags.minimap and BSYC.GetModule then
-		local minimap = BSYC:GetModule("Minimap", true)
-		if minimap and minimap.UpdateVisibility then pcall(minimap.UpdateVisibility, minimap) end
+		if BSYC.UpdateMinimapIconVisibility then
+			pcall(BSYC.UpdateMinimapIconVisibility, BSYC)
+		else
+			local minimap = BSYC:GetModule("Minimap", true)
+			if minimap and minimap.UpdateVisibility then pcall(minimap.UpdateVisibility, minimap) end
+		end
 	end
 
 
@@ -706,13 +710,16 @@ local function compileBinding(item)
 			get = function()
 				local opts = BSYC.options
 				if not opts then return true end
-				if opts.enableMinimap == false then return false end
+				if opts.minimap and opts.minimap.hide ~= nil then
+					return not opts.minimap.hide
+				end
 				return true
 			end,
 			set = function(enabled)
 				enabled = enabled and true or false
 				BSYC.options = BSYC.options or {}
-				BSYC.options.enableMinimap = enabled
+				BSYC.options.minimap = BSYC.options.minimap or {}
+				BSYC.options.minimap.hide = not enabled
 			end,
 		}
 	end
