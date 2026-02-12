@@ -121,6 +121,7 @@ BSYC.API.GetCurrencyListSize = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyLis
 BSYC.API.GetCurrencyListInfo = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListInfo) or GetCurrencyListInfo
 BSYC.API.GetCurrencyListLink = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListLink) or GetCurrencyListLink
 BSYC.API.ExpandCurrencyList = (C_CurrencyInfo and C_CurrencyInfo.ExpandCurrencyList) or ExpandCurrencyList
+BSYC.API.LoadAddOn = (C_AddOns and C_AddOns.LoadAddOn) or LoadAddOn
 -- normalize container item link + count across Classic/Retail
 BSYC.API.GetContainerItemLinkCount = function(bagID, slotID)
 	if not getContainerItemInfo then return nil, nil end
@@ -637,11 +638,29 @@ end
 --- -------------------
 
 function BSYC:GetLibSharedMedia()
+	local function tryLoadLib()
+		if self.__lsmLoadAttempted then return end
+		self.__lsmLoadAttempted = true
+
+		local loadAddon = BSYC.API and BSYC.API.LoadAddOn
+		if type(loadAddon) == "function" then
+			pcall(loadAddon, "LibSharedMedia-3.0")
+		end
+	end
+
 	local libStub = _G.LibStub
-	if type(libStub) ~= "table" and type(libStub) ~= "function" then return nil end
+	if type(libStub) ~= "table" and type(libStub) ~= "function" then
+		tryLoadLib()
+		libStub = _G.LibStub
+		if type(libStub) ~= "table" and type(libStub) ~= "function" then return nil end
+	end
 
 	local ok, sml = pcall(libStub, "LibSharedMedia-3.0", true)
-	if not ok or not sml then return nil end
+	if not ok or not sml then
+		tryLoadLib()
+		ok, sml = pcall(libStub, "LibSharedMedia-3.0", true)
+		if not ok or not sml then return nil end
+	end
 	if type(sml.List) ~= "function" or type(sml.Fetch) ~= "function" then return nil end
 
 	local mtFont = (sml.MediaType and sml.MediaType.FONT) or "font"

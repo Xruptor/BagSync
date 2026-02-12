@@ -1216,7 +1216,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local advAllowList = not skipTally and objTooltip.isBSYCSearch and BSYC.advAllowList
 	local useFilters = advAllowList ~= nil
 	local allowList = (useFilters and advAllowList) or BSYC.DEFAULT_ALLOW_LIST
-	
+
 	-- inline allow-list checks avoid allocating a per-call closure
 	local allowGuild = not useFilters or allowList.guild
 	local allowWarband = not useFilters or allowList.warband
@@ -1287,7 +1287,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		--Search Filters should always be processed and not stored in the cache
 		local shouldScanOtherUnits = not doCurrentPlayerOnly and (turnOffCache or advUnitList or useFilters or not cacheEntry)
 		if shouldScanOtherUnits then
-			
+
 			local allowKeys
 			if useFilters then
 				allowKeys = BuildAllowKeys(allowList, self.__scratchAllowKeys)
@@ -1306,8 +1306,11 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 				--store it in the cache (shallow copy to avoid deep-copying DB references)
 				local cachedUnitList = (grandTotal > 0 and ShallowCopyArray(unitList)) or {}
 				if Data and Data.SetTooltipCache then
+					--This will add it to our tooltip cache, it will check to see if the tooltip cache is reached, if so it removes the top most entry to insert the new one
+					--this is done at EnforceTooltipCacheCap()
 					Data:SetTooltipCache(origLink, cachedUnitList, grandTotal)
 				else
+					--NOTE:  This is a fallback ONLY if Data module doesn't load and there is a failure to get SetTooltipCache()
 					Data.__cache.tooltip[origLink] = Data.__cache.tooltip[origLink] or {}
 					Data.__cache.tooltip[origLink].unitList = cachedUnitList
 					Data.__cache.tooltip[origLink].grandTotal = grandTotal
