@@ -611,9 +611,9 @@ function Tooltip:HexColor(color, str)
 	return str_format("|cff%s%s|r", tostring(color), tostring(str))
 end
 
-function Tooltip:AddUnitLines(objTooltip, unitList, altColor)
+function Tooltip:AddTooltipUnits(objTooltip, unitList, altColor)
 	-- consolidated rendering; this replaces repeated line loops in multiple paths
-	if not objTooltip or not unitList or #unitList == 0 then return end
+	if not objTooltip or not unitList or #unitList == 0 or type(objTooltip.AddDoubleLine) ~= "function" then return end
 	for i = 1, #unitList do
 		local entry = unitList[i]
 		if entry then
@@ -630,27 +630,27 @@ end
 
 function Tooltip:AddTextLines(objTooltip, lineList)
 	-- consolidated rendering for simple text lists (currency, etc.)
-	if not objTooltip or not lineList or #lineList == 0 then return end
+	if not objTooltip or not lineList or #lineList == 0 or type(objTooltip.AddDoubleLine) ~= "function" then return end
 	for i = 1, #lineList do
 		objTooltip:AddDoubleLine(lineList[i][1], lineList[i][2], 1, 1, 1, 1, 1, 1)
 	end
 end
 
 function Tooltip:ShowExtTipWithUnitInline(objTooltip, extTip, unitList, addSeparator)
-	if not objTooltip or not extTip or not unitList or #unitList == 0 then return end
+	if not objTooltip or not extTip or not unitList or #unitList == 0 or type(objTooltip.AddDoubleLine) ~= "function" then return end
 	ExtTip:ApplyFont()
 	extTip:Show()
 	if not ExtTip:UpdateAnchor(objTooltip) then
 		if addSeparator then
 			objTooltip:AddDoubleLine(" ", " ")
 		end
-		self:AddUnitLines(objTooltip, unitList, BSYC.colors.total)
+		self:AddTooltipUnits(objTooltip, unitList, BSYC.colors.total)
 		objTooltip:Show()
 	end
 end
 
 function Tooltip:ShowExtTipWithTextInline(objTooltip, extTip, lineList)
-	if not objTooltip or not extTip or not lineList or #lineList == 0 then return end
+	if not objTooltip or not extTip or not lineList or #lineList == 0 or type(objTooltip.AddDoubleLine) ~= "function" then return end
 	ExtTip:ApplyFont()
 	extTip:Show()
 	if not ExtTip:UpdateAnchor(objTooltip) then
@@ -1260,9 +1260,9 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if self.__lastLink and self.__lastLink == origLink and self.__lastSig == tooltipSig then
 		if self.__lastTally and #self.__lastTally > 0 then
 			if showExtTip then
-				self:AddUnitLines(extTip, self.__lastTally, BSYC.colors.total)
+				self:AddTooltipUnits(extTip, self.__lastTally, BSYC.colors.total)
 			else
-				self:AddUnitLines(objTooltip, self.__lastTally, BSYC.colors.total)
+				self:AddTooltipUnits(objTooltip, self.__lastTally, BSYC.colors.total)
 			end
 			objTooltip:Show()
 			if showExtTip then
@@ -1446,9 +1446,9 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	--finally display it
 	if showExtTip then
-		self:AddUnitLines(extTip, unitList, BSYC.colors.total)
+		self:AddTooltipUnits(extTip, unitList, BSYC.colors.total)
 	else
-		self:AddUnitLines(objTooltip, unitList, BSYC.colors.total)
+		self:AddTooltipUnits(objTooltip, unitList, BSYC.colors.total)
 	end
 
 	--this is only a local cache for the current tooltip and will be reset on bag updates, it is not the same as Data.__cache.tooltip
