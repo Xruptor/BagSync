@@ -94,6 +94,7 @@ local FIXED_RACE_ATLAS = {
 	["scourge"] = "undead",
 	["zandalaritroll"] = "zandalari",
 	["earthendwarf"] = "earthen",
+	["harronir"] = "haranir",
 }
 
 local FACTION_ICONS = BSYC.IsRetail and {
