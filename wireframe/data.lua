@@ -276,8 +276,15 @@ function Data:OnEnable()
 
 	--player info
 	playerDB.money = player.money
+
+	playerDB.local_class_name = player.local_class_name
 	playerDB.class = player.class
+	playerDB.class_id = player.class_id
+
+	playerDB.local_race_name = player.local_race_name
 	playerDB.race = player.race
+	playerDB.race_id = player.race_id
+
 	playerDB.gender = player.gender
 	playerDB.faction = player.faction
 	playerDB.guid = player.guid

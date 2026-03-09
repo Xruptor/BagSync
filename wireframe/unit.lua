@@ -338,8 +338,8 @@ function Unit:GetPlayerInfo(bypassDebug)
 	unit.realm = realmName
 	unit.name = playerName
 	unit.money = GetPlayerMoney()
-	unit.class = select(2, UnitClass("player"))
-	unit.race = select(2, UnitRace("player"))
+	unit.local_class_name, unit.class, unit.class_id  = UnitClass("player")
+	unit.local_race_name, unit.race, unit.race_id  = UnitRace("player")
 	unit.guid = UnitGUID("player")
 	unit.guild = guildName
 	if unit.guild then

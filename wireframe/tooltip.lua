@@ -27,7 +27,6 @@ local L = BSYC.L
 local _G = _G
 local type, tostring, tonumber, select = type, tostring, tonumber, select
 local pairs = pairs
-local unpack = _G.unpack or (_G.table and _G.table.unpack)
 local str_format, str_len, str_lower, str_sub, str_match = string.format, string.len, string.lower, string.sub, string.match
 local tinsert, tconcat, tsort = table.insert, table.concat, table.sort
 local wipe = _G.wipe
@@ -48,26 +47,6 @@ local function GetCurrentRealm()
 	return CURRENT_REALM or ""
 end
 
---https://github.com/tomrus88/BlizzardInterfaceCode/blob/classic/Interface/GlueXML/CharacterCreate.lua
-local RACE_ICON_TCOORDS = _G.RACE_ICON_TCOORDS or {
-	["HUMAN_MALE"]		= {0, 0.25, 0, 0.25},
-	["DWARF_MALE"]		= {0.25, 0.5, 0, 0.25},
-	["GNOME_MALE"]		= {0.5, 0.75, 0, 0.25},
-	["NIGHTELF_MALE"]	= {0.75, 1.0, 0, 0.25},
-	["TAUREN_MALE"]		= {0, 0.25, 0.25, 0.5},
-	["SCOURGE_MALE"]	= {0.25, 0.5, 0.25, 0.5},
-	["TROLL_MALE"]		= {0.5, 0.75, 0.25, 0.5},
-	["ORC_MALE"]		= {0.75, 1.0, 0.25, 0.5},
-	["HUMAN_FEMALE"]	= {0, 0.25, 0.5, 0.75},
-	["DWARF_FEMALE"]	= {0.25, 0.5, 0.5, 0.75},
-	["GNOME_FEMALE"]	= {0.5, 0.75, 0.5, 0.75},
-	["NIGHTELF_FEMALE"]	= {0.75, 1.0, 0.5, 0.75},
-	["TAUREN_FEMALE"]	= {0, 0.25, 0.75, 1.0},
-	["SCOURGE_FEMALE"]	= {0.25, 0.5, 0.75, 1.0},
-	["TROLL_FEMALE"]	= {0.5, 0.75, 0.75, 1.0},
-	["ORC_FEMALE"]		= {0.75, 1.0, 0.75, 1.0},
-}
-
 local PERM_IGNORE = {
 	[6948] = "Hearthstone",
 	[110560] = "Garrison Hearthstone",
@@ -84,29 +63,20 @@ local SORT_MODES = {
 	custom = true,
 }
 
---https://warcraft.wiki.gg/wiki/AtlasID
---raceicon-highmountain-male
---https://wago.tools/db2/UiTextureAtlasMember
---https://warcraft.wiki.gg/wiki/API_UnitRace
-local FIXED_RACE_ATLAS = {
-	["highmountaintauren"] = "highmountain",
-	["lightforgeddraenei"] = "lightforged",
-	["scourge"] = "undead",
-	["zandalaritroll"] = "zandalari",
-	["earthendwarf"] = "earthen",
-}
-
 local FACTION_ICONS = BSYC.IsRetail and {
-	Alliance = [[|TInterface\FriendsFrame\PlusManz-Alliance:13:13|t]],
-	Horde = [[|TInterface\FriendsFrame\PlusManz-Horde:13:13|t]],
-	Neutral = [[|TInterface\Icons\Achievement_worldevent_brewmaster:13:13|t]],
+	Alliance = [[|TInterface\FriendsFrame\PlusManz-Alliance:16:16|t]],
+	Horde = [[|TInterface\FriendsFrame\PlusManz-Horde:16:16|t]],
+	Neutral = [[|TInterface\Icons\Achievement_worldevent_brewmaster:16:16|t]],
 } or {
-	Alliance = [[|TInterface\FriendsFrame\PlusManz-Alliance:13:13|t]],
-	Horde = [[|TInterface\FriendsFrame\PlusManz-Horde:13:13|t]],
+	Alliance = [[|TInterface\FriendsFrame\PlusManz-Alliance:16:16|t]],
+	Horde = [[|TInterface\FriendsFrame\PlusManz-Horde:16:16|t]],
 	Neutral = [[|TInterface\Icons\ability_seal:18|t]],
 }
 
 local NUMERIC_SCRATCH = {}
+
+local RaceIDLookup = {}
+local ClassIDLookup = {}
 
 local function Debug(level, ...)
 	if BSYC.DEBUG then BSYC.DEBUG(level, "Tooltip", ...) end
@@ -228,6 +198,50 @@ local function SortClassKey(unitObj)
 	local token = unitObj.data.class
 	local localized = _G.LOCALIZED_CLASS_NAMES_MALE and _G.LOCALIZED_CLASS_NAMES_MALE[token]
 	return SortStrKey(localized or token)
+end
+
+local function BuildRaceIDLookup()
+    if next(RaceIDLookup) then return end
+
+    for id = 1, 300 do
+        local info = C_CreatureInfo.GetRaceInfo(id)
+        if info then
+            if info.raceName then
+                local r = info.raceName:upper()
+                RaceIDLookup[r] = id
+                RaceIDLookup[r:gsub("[^A-Z]", "")] = id
+            end
+
+            if info.clientFileString then
+                local r = info.clientFileString:upper()
+                RaceIDLookup[r] = id
+                RaceIDLookup[r:gsub("[^A-Z]", "")] = id
+            end
+        end
+    end
+end
+
+local function BuildClassIDLookup()
+    if next(ClassIDLookup) then return end
+
+    for id = 1, 30 do
+        local info = C_CreatureInfo.GetClassInfo(id)
+        if info then
+            -- localized class name
+            if info.className then
+                local c = info.className:upper()
+                ClassIDLookup[c] = id
+                ClassIDLookup[c:gsub("[^A-Z]", "")] = id
+            end
+
+            -- file token (WARRIOR, DEATHKNIGHT, etc)
+            if info.classFile then
+                local c = info.classFile:upper()
+                ClassIDLookup[c] = id
+                ClassIDLookup[c:gsub("[^A-Z]", "")] = id
+            end
+        end
+    end
 end
 
 local function BuildAllowKeys(allowList, scratch)
@@ -709,32 +723,166 @@ function Tooltip:GetSortIndex(unitObj)
 	return 8
 end
 
-function Tooltip:GetRaceIcon(race, gender, size, xOffset, yOffset, useHiRez)
-	local raceString = ""
-	local origRace = race
-	local formatingString = useHiRez and "raceicon128-%s-%s" or "raceicon-%s-%s"
+function Tooltip:GetIDFromRaceOrClass(unitObj, race, class)
+	local rID, cID
 
-	if not race or not gender then return raceString end
+	--build the tables if we don't have them arleady
+	BuildRaceIDLookup()
+	BuildClassIDLookup()
 
-	if BSYC.IsClassic then
-		race = race:upper()
-		local raceFile = "Interface/Glues/CharacterCreate/UI-CharacterCreate-Races"
-		local coords = RACE_ICON_TCOORDS[race.."_"..(gender == 3 and "FEMALE" or "MALE")]
-		if coords then
-			local left, right, top, bottom = unpack(coords)
-			raceString = CreateTextureMarkup(raceFile, 128, 128, size, size, left, right, top, bottom, xOffset, yOffset)
-		end
-	else
-		race = race:lower()
-		race = FIXED_RACE_ATLAS[race] or race
+    -- Race lookup
+    if race then
+        race = race:upper()
+		local raceStrip = race:gsub("[^A-Z]", "")
+		rID = RaceIDLookup[race] or RaceIDLookup[raceStrip]
+		if rID and not unitObj.data.race_id then unitObj.data.race_id = rID end
+    end
 
-		formatingString = formatingString:format(race, gender == 3 and "female" or "male")
-		raceString = CreateAtlasMarkup(formatingString, size, size, xOffset, yOffset)
+    -- Class lookup
+    if class then
+        class = class:upper()
+		local classStrip = class:gsub("[^A-Z]", "")
+		cID = ClassIDLookup[class] or ClassIDLookup[classStrip]
+		if cID and not unitObj.data.class_id then unitObj.data.class_id = cID end
+    end
+
+    return unitObj, rID, cID
+end
+
+--[[
+    CreateTextureMarkup(filename, width, height, displayWidth, displayHeight, left, right, top, bottom, xOffset, yOffset)
+      For Classic era with explicit texture coordinates
+      Used in old BagSync code but not in current implementation
+
+    CreateAtlasMarkup(atlas, displayWidth, displayHeight, xOffset, yOffset)
+      For Retail atlas system with automatic formatting
+      This is what old BagSync code used successfully
+
+    Why CreateAtlasMarkup works:
+    - MANUAL ATTEMPT FAILED: Tried to construct |T...|t strings from atlas info using C_Texture.GetAtlasInfo
+    - Result: Black boxes displayed in tooltips (texture not rendering)
+    - SUCCESS: CreateAtlasMarkup generates proper tooltip texture markup that renders correctly
+    - The function handles internal conversion between atlas system and tooltip texture format
+
+    Atlas System References:
+    - https://warcraft.wiki.gg/wiki/AtlasID - Atlas system documentation
+    - https://www.townlong-yak.com/framexml/go/CreateAtlasMarkup
+]]
+function Tooltip:GetRaceIcon(raceID, origRace, sex, size, xOffset, yOffset, useHiRez)
+    local raceInfo = C_CreatureInfo.GetRaceInfo(raceID)
+    if not raceInfo then
+        return "|TInterface\\Icons\\INV_Misc_QuestionMark:16|t"
+    end
+
+    local race = raceInfo.clientFileString
+    race = race:gsub("%s+", "")
+    race = race:lower()
+
+    local gender = (sex == 3) and "female" or "male"
+    size = size or 16
+
+    -- Blizzard incorrectly names some raceicon texture files, fix these
+    --https://wago.tools/db2/UiTextureAtlasMember?filter%5BCommittedName%5D=raceicon
+    local FIXED_RACE_ATLAS = {
+        ["highmountaintauren"] = "highmountain",
+        ["lightforgeddraenei"] = "lightforged",
+        ["scourge"] = "undead",
+        ["zandalaritroll"] = "zandalari",
+        ["earthendwarf"] = "earthen",
+        ["lightforged"] = "draenei",          -- Fallback for lightforged
+        ["highmountain"] = "tauren",          -- Fallback for highmountain
+        ["zandalari"] = "zandalari",               -- Fallback for zandalari
+        ["earthen"] = "earthen",                -- Fallback for earthen
+		["harronir"] = "haranir",                -- Fallback for haranir, mispelling?
+    }
+
+    -- Atlas format variations to try for fallback security
+    local atlasFormats = {
+        {prefix = "raceicon128", suffix = ""},      -- High resolution
+        {prefix = "raceicon64", suffix = ""},       -- Medium resolution
+        {prefix = "raceicon", suffix = ""},          -- Low resolution
+    }
+
+    -- -- Get the correct race name (use fixed name if Blizzard named it wrong)
+    local fixedRace = FIXED_RACE_ATLAS[race] or race
+
+    -- Try all atlas format variations with the fixed race name using Blizzard's CreateAtlasMarkup
+    for _, format in ipairs(atlasFormats) do
+        local atlas = format.prefix.."-"..fixedRace.."-"..gender..format.suffix
+        local info = C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(atlas)
+
+        if info then
+            -- Use Blizzard's CreateAtlasMarkup function for proper tooltip texture
+            local raceMarkup = CreateAtlasMarkup(atlas, size, size, xOffset or 0, yOffset or 0)
+            Debug(BSYC_DL.SL3, "GetRaceIcon-success", raceID, origRace, gender, size, xOffset, yOffset, useHiRez, atlas, raceMarkup)
+            return raceMarkup
+        end
+    end
+
+    -- Ultimate fallback for Classic: Achievement_Character icons
+    -- Use CreateTextureMarkup for consistency with atlas approach
+    -- https://www.townlong-yak.com/framexml/latest/Blizzard_SharedXMLBase/TextureUtil.lua#226
+
+    -- Racial fallback icons for races that don't have Achievement_Character icons
+    -- Based on Total RP 3's approach: https://github.com/Total-RP/Total-RP-3/blob/c5d90a4ca40eb4eef300d633ddf522e77cfc84a5/totalRP3/Resources/InterfaceIcons.lua#L86
+    local RACIAL_FALLBACK_ICONS = {
+        -- Allied races and races without Achievement_Character icons use racial abilities
+        ["darkirondwarf"] = (sex == 3) and "ability_racial_foregedinflames"  or "ability_racial_fireblood",
+        ["goblin"] = "ability_racial_rocketjump",
+        ["nightborne"] = (sex == 3) and "ability_racial_masquerade" or "ability_racial_dispelillusions",
+        ["voidelf"] = (sex == 3) and "ability_racial_preturnaturalcalm" or "ability_racial_entropicembrace",
+        ["vulpera"] = "ability_racial_nosefortrouble",
+        ["lightforgeddraenei"] = (sex == 3) and "achievement_alliedrace_lightforgeddraenei" or "ability_racial_finalverdict",
+        ["highmountaintauren"] = (sex == 3) and "achievement_alliedrace_highmountaintauren" or "ability_racial_bullrush",
+        ["magharorc"] = (sex == 3) and "achievement_character_orc_female_brn" or "achievement_character_orc_male_brn",
+        ["mechagnome"] = (sex == 3) and "inv_plate_mechagnome_c_01helm" or "ability_racial_hyperorganiclightoriginator",
+        ["kul_tiran"] = (sex == 3) and "ability_racial_childofthesea" or "achievement_boss_zuldazar_manceroy_mestrah",
+        ["zandalaritroll"] = (sex == 3) and "inv_zandalarifemalehead" or "inv_zandalarimalehead",-- Use head icon fallback
+        ["earthen"] = (sex == 3) and "ability_earthen_wideeyedwonder" or "achievement_dungeon_ulduarraid_irondwarf_01",
+        ["harronir"] = (sex == 3) and "inv12_haranir_character_creation_female" or "inv12_haranir_character_creation_male",
+        ["dracthyr"] = (sex == 3) and "inv_dracthyrhead01" or "inv_dracthyrhead02",
+		["pandaren"] = (sex == 3) and "achievement_character_pandaren_female" or "achievement_guild_classypanda",
+		["worgen"] = (sex == 3) and "ability_racial_viciousness" or "achievement_worganhead",
+    }
+
+    -- Races that DO have Achievement_Character icons (base/vanilla races)
+	local RACES_WITH_ACHIEVEMENT_ICONS = {
+		human = true,
+		dwarf = true,
+		nightElf = true,
+		gnome = true,
+		draenei = true,
+		orc = true,
+		undead = true,
+		tauren = true,
+		troll = true,
+		bloodElf = true,
+		-- Allied races don't have Achievement_Character icons
+	}
+
+    -- Use racial fallback icon if available, otherwise try Achievement_Character if race has it
+    local fallbackIcon = RACIAL_FALLBACK_ICONS[race]
+    local genderCap = (sex == 3) and "Female" or "Male"
+
+    if fallbackIcon then
+        -- Use racial ability icon as fallback
+        local icon = "Interface\\Icons\\" .. fallbackIcon
+        local tFile = CreateTextureMarkup(icon, 64, 64, size, size, 0, 1, 0, 1, xOffset or 0, yOffset or 0)
+
+        Debug(BSYC_DL.SL3, "GetRaceIcon-racial-fallback", raceID, origRace, gender, size, xOffset, yOffset, useHiRez, icon, tFile)
+        return tFile
 	end
 
-	Debug(BSYC_DL.SL3, "GetRaceIcon", origRace, race, gender, size, xOffset, yOffset, useHiRez, raceString, formatingString)
+	local icon = "Interface\\Icons\\INV_Misc_QuestionMark"
 
-	return raceString
+	-- Only try Achievement_Character for races that actually have them
+	if RACES_WITH_ACHIEVEMENT_ICONS[race] then
+		icon = "Interface\\Icons\\Achievement_Character_" ..raceInfo.clientFileString.."_"..genderCap
+	end
+
+	local tFile = CreateTextureMarkup(icon, 64, 64, size, size, 0, 1, 0, 1, xOffset or 0, yOffset or 0)
+	Debug(BSYC_DL.SL3, "GetRaceIcon-achievement-fallback", raceID, origRace, gender, size, xOffset, yOffset, useHiRez, icon, tFile)
+	return tFile
 end
 
 function Tooltip:GetClassColor(unitObj, switch, bypass, altColor)
@@ -783,7 +931,8 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 
 		--add race icons
 		if bypass or opts.showRaceIcons then
-			local raceIcon = self:GetRaceIcon(unitObj.data.race, unitObj.data.gender, 13, 0, 0)
+			local raceID = unitObj.data.race_id or select(2, self:GetIDFromRaceOrClass(unitObj, unitObj.data.race, unitObj.data.class))
+			local raceIcon = self:GetRaceIcon(raceID, unitObj.data.race, unitObj.data.gender, 16, 0, 0)
 			if raceIcon ~= "" then
 				tmpTag = raceIcon.." "..tmpTag
 			end
