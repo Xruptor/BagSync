@@ -789,10 +789,6 @@ function Tooltip:GetRaceIcon(raceID, origRace, sex, size, xOffset, yOffset, useH
         ["scourge"] = "undead",
         ["zandalaritroll"] = "zandalari",
         ["earthendwarf"] = "earthen",
-        ["lightforged"] = "draenei",          -- Fallback for lightforged
-        ["highmountain"] = "tauren",          -- Fallback for highmountain
-        ["zandalari"] = "zandalari",               -- Fallback for zandalari
-        ["earthen"] = "earthen",                -- Fallback for earthen
 		["harronir"] = "haranir",                -- Fallback for haranir, mispelling?
     }
 
