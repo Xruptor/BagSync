@@ -790,6 +790,9 @@ function Tooltip:GetRaceIcon(raceID, origRace, sex, size, xOffset, yOffset, useH
         ["zandalaritroll"] = "zandalari",
         ["earthendwarf"] = "earthen",
 		["harronir"] = "haranir",                -- Fallback for haranir, mispelling?
+		["kul_tiran"] = "kultiran",
+		["visage"] = "dracthyrvisage",
+		["maghar"] = "magharorc",
     }
 
     -- Atlas format variations to try for fallback security
@@ -828,17 +831,19 @@ function Tooltip:GetRaceIcon(raceID, origRace, sex, size, xOffset, yOffset, useH
         ["nightborne"] = (sex == 3) and "ability_racial_masquerade" or "ability_racial_dispelillusions",
         ["voidelf"] = (sex == 3) and "ability_racial_preturnaturalcalm" or "ability_racial_entropicembrace",
         ["vulpera"] = "ability_racial_nosefortrouble",
-        ["lightforgeddraenei"] = (sex == 3) and "achievement_alliedrace_lightforgeddraenei" or "ability_racial_finalverdict",
-        ["highmountaintauren"] = (sex == 3) and "achievement_alliedrace_highmountaintauren" or "ability_racial_bullrush",
+        ["lightforged"] = (sex == 3) and "achievement_alliedrace_lightforgeddraenei" or "ability_racial_finalverdict",
+        ["highmountain"] = (sex == 3) and "achievement_alliedrace_highmountaintauren" or "ability_racial_bullrush",
         ["magharorc"] = (sex == 3) and "achievement_character_orc_female_brn" or "achievement_character_orc_male_brn",
         ["mechagnome"] = (sex == 3) and "inv_plate_mechagnome_c_01helm" or "ability_racial_hyperorganiclightoriginator",
-        ["kul_tiran"] = (sex == 3) and "ability_racial_childofthesea" or "achievement_boss_zuldazar_manceroy_mestrah",
-        ["zandalaritroll"] = (sex == 3) and "inv_zandalarifemalehead" or "inv_zandalarimalehead",-- Use head icon fallback
+		["kultiran"] = (sex == 3) and "ability_racial_childofthesea" or "achievement_boss_zuldazar_manceroy_mestrah",
+        ["zandalari"] = (sex == 3) and "inv_zandalarifemalehead" or "inv_zandalarimalehead",-- Use head icon fallback
         ["earthen"] = (sex == 3) and "ability_earthen_wideeyedwonder" or "achievement_dungeon_ulduarraid_irondwarf_01",
-        ["harronir"] = (sex == 3) and "inv12_haranir_character_creation_female" or "inv12_haranir_character_creation_male",
+        ["haranir"] = (sex == 3) and "inv12_haranir_character_creation_female" or "inv12_haranir_character_creation_male",
         ["dracthyr"] = (sex == 3) and "inv_dracthyrhead01" or "inv_dracthyrhead02",
 		["pandaren"] = (sex == 3) and "achievement_character_pandaren_female" or "achievement_guild_classypanda",
 		["worgen"] = (sex == 3) and "ability_racial_viciousness" or "achievement_worganhead",
+		["dracthyrvisage"] = (sex == 3) and "inv_dracthyrhead01" or "inv_dracthyrhead02",
+		["visage"] = (sex == 3) and "inv_dracthyrhead01" or "inv_dracthyrhead02",
     }
 
     -- Races that DO have Achievement_Character icons (base/vanilla races)
@@ -857,7 +862,7 @@ function Tooltip:GetRaceIcon(raceID, origRace, sex, size, xOffset, yOffset, useH
 	}
 
     -- Use racial fallback icon if available, otherwise try Achievement_Character if race has it
-    local fallbackIcon = RACIAL_FALLBACK_ICONS[race]
+    local fallbackIcon = RACIAL_FALLBACK_ICONS[fixedRace]
     local genderCap = (sex == 3) and "Female" or "Male"
 
     if fallbackIcon then
