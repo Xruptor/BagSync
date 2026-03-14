@@ -98,13 +98,18 @@ end
 
 local function HookCurrencyTransferOnce(self)
 	if self._currencyTransferHooked or not hooksecurefunc then return end
-	local currencyInfo = C_CurrencyInfo
-	local requestFunc = currencyInfo and currencyInfo.RequestCurrencyFromAccountCharacter
+	local requestFunc = C_CurrencyInfo and C_CurrencyInfo.RequestCurrencyFromAccountCharacter
 	if type(requestFunc) ~= "function" then return end
 
 	self._currencyTransferHooked = true
-	hooksecurefunc(currencyInfo, "RequestCurrencyFromAccountCharacter", function(sourceGUID, currencyID, transferAmt)
-		Scanner:ProcessCurrencyTransfer(false, sourceGUID, currencyID, transferAmt)
+	local getCostFunc = C_CurrencyInfo.GetCostToTransferCurrency
+	hooksecurefunc(C_CurrencyInfo, "RequestCurrencyFromAccountCharacter", function(sourceGUID, currencyID, transferAmt)
+		-- Get the transfer cost if the API is available
+		local transferCost = 0
+		if type(getCostFunc) == "function" then
+			transferCost = getCostFunc(C_CurrencyInfo, currencyID, transferAmt) or 0
+		end
+		Scanner:ProcessCurrencyTransfer(false, sourceGUID, currencyID, transferAmt, transferCost)
 	end)
 end
 

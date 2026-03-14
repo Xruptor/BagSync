@@ -920,7 +920,6 @@ function Scanner:SaveAuctionHouse()
 	else
 		--this is for WOW Classic Auction House
 		local numActiveAuctions = GetNumAuctionItems and GetNumAuctionItems("owner") or 0
-		local timestampChk = AUCTION_TIMELEFT_SECONDS
 
 		--scan the auction house
 		if (numActiveAuctions > 0) then
@@ -938,7 +937,7 @@ function Scanner:SaveAuctionHouse()
 
 						--since classic doesn't return the exact time on old auction house, we got to add it manually
 						--it only does short, long and very long
-						local expTime = time() + timestampChk[timeLeft]
+						local expTime = time() + AUCTION_TIMELEFT_SECONDS[timeLeft]
 						local parseLink = BSYC:ParseItemLink(link, count)
 
 						local encodeStr = parseLink and BSYC:EncodeOpts({auction=expTime}, parseLink)
@@ -958,16 +957,17 @@ function Scanner:SaveAuctionHouse()
 	self:ResetTooltips()
 end
 
-function Scanner:ProcessCurrencyTransfer(doCurrentPlayer, sourceGUID, currencyID, transferAmt)
+function Scanner:ProcessCurrencyTransfer(doCurrentPlayer, sourceGUID, currencyID, transferAmt, transferCost)
 	if not BSYC.tracking.currency then return end
 
 	--update the source player
 	if not doCurrentPlayer and sourceGUID and not Scanner.currencyTransferInProgress then
 		Scanner.currencyTransferInProgress = true
 		Scanner.lastCurrencyID = currencyID
+		transferCost = transferCost or 0
 
 		local _, _, _, _, _, name, realm = GetPlayerInfoByGUID(sourceGUID)
-		Debug(BSYC_DL.INFO, "ProcessCurrencyTransfer", doCurrentPlayer, sourceGUID, name, realm, currencyID, transferAmt)
+		Debug(BSYC_DL.INFO, "ProcessCurrencyTransfer", doCurrentPlayer, sourceGUID, name, realm, currencyID, transferAmt, transferCost)
 
 		if name then
 			local player = Unit:GetPlayerInfo(true)
@@ -979,13 +979,14 @@ function Scanner:ProcessCurrencyTransfer(doCurrentPlayer, sourceGUID, currencyID
 				tmpRealm = Unit:GetTrueRealmName(realm)
 			end
 
-			Debug(BSYC_DL.INFO, "CurrencyTransferSourceUpt-1", name, tmpRealm, sourceGUID, currencyID, transferAmt)
+			Debug(BSYC_DL.INFO, "CurrencyTransferSourceUpt-1", name, tmpRealm, sourceGUID, currencyID, transferAmt, transferCost)
 			--lets check to see that the source player even exists
 
 			local currencyObj = Data:GetPlayerCurrencyObj(name, tmpRealm, sourceGUID)
 			if currencyObj and currencyObj[currencyID] and currencyObj[currencyID].count then
-				currencyObj[currencyID].count = currencyObj[currencyID].count - transferAmt
-				Debug(BSYC_DL.FINE, "CurrencyTransferSourceUpt-2", name, tmpRealm, sourceGUID, currencyID, transferAmt, currencyObj[currencyID].count)
+				-- Subtract both the transfer amount AND the transfer cost
+				currencyObj[currencyID].count = currencyObj[currencyID].count - transferAmt - transferCost
+				Debug(BSYC_DL.FINE, "CurrencyTransferSourceUpt-2", name, tmpRealm, sourceGUID, currencyID, transferAmt, transferCost, currencyObj[currencyID].count)
 			else
 				BSYC:Print(L.WarningCurrencyUpt.." "..name.." | "..tmpRealm)
 			end

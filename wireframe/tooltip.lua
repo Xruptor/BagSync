@@ -1685,7 +1685,6 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 					if warbandObj then
 						colorized = Tooltip:ColorizeUnit(warbandObj, true, false, false, false)
 						sortIndex = Tooltip:GetSortIndex(warbandObj)
-						count = L.TooltipIcon_warband.." "..count
 					end
 				end
 
