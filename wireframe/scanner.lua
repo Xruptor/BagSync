@@ -90,7 +90,10 @@ local function IsSafeTable(v)
 	if Utility and Utility.IsSafeTable then
 		return Utility:IsSafeTable(v)
 	end
-	return type(v) == "table"
+	-- Safe type check to avoid crashing on secret values (Retail 12.0+)
+	local ok, result = pcall(_G.type, v)
+	if ok then return result == "table" end
+	return false
 end
 
 local function InvertArray(list)
@@ -118,7 +121,8 @@ end
 
 local function UnpackCurrencyInfo(infoOrName, isHeaderFlag, isHeaderExpandedFlag, count, extraCurrencyType, iconFileID)
 	if type(infoOrName) == "table" then
-		if not IsSafeTable(infoOrName) then return end
+		-- Currency info tables from C_CurrencyInfo.GetCurrencyListInfo are safe to read
+		-- (name, isHeader, quantity, iconFileID are public API properties)
 		return infoOrName.name, infoOrName.isHeader, infoOrName.isHeaderExpanded, infoOrName.quantity or 0, infoOrName.iconFileID or CURRENCY_QUESTION_ICON
 	end
 	return infoOrName, isHeaderFlag, isHeaderExpandedFlag, count or 0, PickCurrencyIcon(extraCurrencyType, iconFileID)
@@ -985,10 +989,28 @@ function Scanner:ProcessCurrencyTransfer(doCurrentPlayer, sourceGUID, currencyID
 			local currencyObj = Data:GetPlayerCurrencyObj(name, tmpRealm, sourceGUID)
 			if currencyObj and currencyObj[currencyID] and currencyObj[currencyID].count then
 				-- Subtract both the transfer amount AND the transfer cost
-				currencyObj[currencyID].count = currencyObj[currencyID].count - transferAmt - transferCost
-				Debug(BSYC_DL.FINE, "CurrencyTransferSourceUpt-2", name, tmpRealm, sourceGUID, currencyID, transferAmt, transferCost, currencyObj[currencyID].count)
+				local originalCount = currencyObj[currencyID].count
+				currencyObj[currencyID].count = originalCount - transferAmt - transferCost
+				Debug(BSYC_DL.FINE, "CurrencyTransferSourceUpt-2", name, tmpRealm, sourceGUID, currencyID, transferAmt, transferCost, originalCount, currencyObj[currencyID].count)
+
+				-- Validate that the currency count is not negative after transfer
+				if currencyObj[currencyID].count < 0 then
+					BSYC:Print("|cFFFF0000Warning:|r Currency transfer resulted in negative count for "..name.." ("..tmpRealm.."). CurrencyID: "..currencyID..", Original: "..originalCount..", Final: "..currencyObj[currencyID].count)
+					-- Reset to 0 to prevent corruption
+					currencyObj[currencyID].count = 0
+				end
 			else
-				BSYC:Print(L.WarningCurrencyUpt.." "..name.." | "..tmpRealm)
+				-- Provide more detailed error information
+				local errorMsg = L.WarningCurrencyUpt.." "..name.." | "..tmpRealm
+				if not currencyObj then
+					errorMsg = errorMsg.." (Currency object not found)"
+				elseif not currencyObj[currencyID] then
+					errorMsg = errorMsg.." (Currency ID "..currencyID.." not found)"
+				elseif not currencyObj[currencyID].count then
+					errorMsg = errorMsg.." (Currency count is nil)"
+				end
+				BSYC:Print(errorMsg)
+				Debug(BSYC_DL.WARN, "CurrencyTransferSourceUpt-Error", name, tmpRealm, sourceGUID, currencyID, transferAmt, transferCost, currencyObj)
 			end
 
 			self:ResetTooltips()
@@ -1000,7 +1022,7 @@ function Scanner:ProcessCurrencyTransfer(doCurrentPlayer, sourceGUID, currencyID
 		--update the current player
 		local getCurrencyInfo = BSYC.API and BSYC.API.GetCurrencyInfo
 		local currencyData = getCurrencyInfo and getCurrencyInfo(Scanner.lastCurrencyID)
-		if currencyData and not IsSafeTable(currencyData) then currencyData = nil end
+		-- Currency info tables from C_CurrencyInfo.GetCurrencyInfo are safe to read
 		local dofullScan = true
 
 		if currencyData and currencyData.quantity then
@@ -1025,7 +1047,9 @@ end
 function Scanner:SaveCurrency(showDebug)
 	if not BSYC:CanDoCurrency() then return end
 	if Unit:InCombatLockdown() then return end
-	if showDebug then Debug(BSYC_DL.INFO, "SaveCurrency", BSYC.tracking.currency) end --this function gets spammed like crazy sometimes, so only show debug when requested
+	--get player information from Unit
+	local player = Unit:GetPlayerInfo(true)
+	if showDebug then Debug(BSYC_DL.INFO, "SaveCurrency", BSYC.tracking.currency, player and player.name) end --this function gets spammed like crazy sometimes, so only show debug when requested
 	if not BSYC.tracking.currency then return end
 
 	local lastHeader
@@ -1037,12 +1061,45 @@ function Scanner:SaveCurrency(showDebug)
 	local getCurrencyListLink = BSYC.API and BSYC.API.GetCurrencyListLink
 	local expandCurrencyList = BSYC.API and BSYC.API.ExpandCurrencyList
 
-	--only do this if we have the functions to work with
+	-- Check if the API is ready - if not, retry with a delay
+	-- This handles the race condition where currency list hasn't loaded from server yet
 	if not (getCurrencyListSize and getCurrencyListInfo) then
-		BSYC.db.player.currency = slotItems
+		if not self._currencyRetryCount then
+			self._currencyRetryCount = 0
+		end
+		if self._currencyRetryCount < 10 then
+			self._currencyRetryCount = self._currencyRetryCount + 1
+			Debug(BSYC_DL.INFO, "SaveCurrency", "Retry", self._currencyRetryCount, "API not ready yet")
+			BSYC:StartTimer("SaveCurrency_Retry", 1, Scanner, "SaveCurrency", false)
+		else
+			Debug(BSYC_DL.WARN, "SaveCurrency", "Max retries reached, API not available")
+			self._currencyRetryCount = nil
+		end
 		self:ResetTooltips()
 		return
 	end
+
+	-- Check if the list has any data - if listSize is 0 or nil, the currency
+	-- data hasn't loaded from server yet. Retry with a delay.
+	local listSize = getCurrencyListSize()
+	if not listSize or listSize == 0 then
+		if not self._currencyRetryCount then
+			self._currencyRetryCount = 0
+		end
+		if self._currencyRetryCount < 10 then
+			self._currencyRetryCount = self._currencyRetryCount + 1
+			Debug(BSYC_DL.INFO, "SaveCurrency", "Retry", self._currencyRetryCount, "listSize not ready yet:", listSize)
+			BSYC:StartTimer("SaveCurrency_Retry", 1, Scanner, "SaveCurrency", false)
+		else
+			Debug(BSYC_DL.WARN, "SaveCurrency", "Max retries reached, giving up")
+			self._currencyRetryCount = nil
+		end
+		self:ResetTooltips()
+		return
+	end
+
+	-- Reset retry count on success
+	self._currencyRetryCount = nil
 
 	--first lets expand everything just in case (supports both retail-table and classic multi-return APIs)
 	if expandCurrencyList then
@@ -1058,10 +1115,9 @@ function Scanner:SaveCurrency(showDebug)
 
 				local isHeader, isExpanded
 				if type(currencyInfoOrName) == "table" then
-					if IsSafeTable(currencyInfoOrName) then
-						isHeader = currencyInfoOrName.isHeader
-						isExpanded = currencyInfoOrName.isHeaderExpanded
-					end
+					-- Currency info tables from C_CurrencyInfo.GetCurrencyListInfo are safe to read
+					isHeader = currencyInfoOrName.isHeader
+					isExpanded = currencyInfoOrName.isHeaderExpanded
 				else
 					isHeader = isHeaderFlag
 					isExpanded = isHeaderExpandedFlag
@@ -1077,8 +1133,11 @@ function Scanner:SaveCurrency(showDebug)
 			end
 		end
 	end
+	
+	local currencyCount = 0
 
-	local listSize = getCurrencyListSize()
+	-- Re-fetch listSize as it may have changed during expansion
+	listSize = getCurrencyListSize()
 	for i = 1, listSize do
 		--Retail (C_CurrencyInfo.GetCurrencyListInfo) returns a table.
 		--Classic (GetCurrencyListInfo) returns multiple values:
@@ -1113,11 +1172,13 @@ function Scanner:SaveCurrency(showDebug)
 						count = currQuantity,
 						icon = currIcon,
 					}
+					currencyCount = currencyCount + 1
 				end
 			end
 		end
 	end
 
+	if showDebug then Debug(BSYC_DL.INFO, "SaveCurrency -> (Index & Saved) CurrencyCount=",currencyCount, player and player.name) end --this function gets spammed like crazy sometimes, so only show debug when requested
 	BSYC.db.player.currency = slotItems
 	self:ResetTooltips()
 end

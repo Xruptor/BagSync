@@ -102,12 +102,11 @@ local function HookCurrencyTransferOnce(self)
 	if type(requestFunc) ~= "function" then return end
 
 	self._currencyTransferHooked = true
-	local getCostFunc = C_CurrencyInfo.GetCostToTransferCurrency
 	hooksecurefunc(C_CurrencyInfo, "RequestCurrencyFromAccountCharacter", function(sourceGUID, currencyID, transferAmt)
 		-- Get the transfer cost if the API is available
 		local transferCost = 0
-		if type(getCostFunc) == "function" then
-			transferCost = getCostFunc(C_CurrencyInfo, currencyID, transferAmt) or 0
+		if type(C_CurrencyInfo.GetCostToTransferCurrency) == "function" then
+			transferCost = C_CurrencyInfo.GetCostToTransferCurrency(currencyID, transferAmt) or 0
 		end
 		Scanner:ProcessCurrencyTransfer(false, sourceGUID, currencyID, transferAmt, transferCost)
 	end)
@@ -138,6 +137,12 @@ function Events:OnEnable()
 	registerEvent(self, "PLAYER_MONEY")
 	registerEvent(self, "GUILD_ROSTER_UPDATE", "UpdateGuildRoster")
 	registerEvent(self, "PLAYER_GUILD_UPDATE", "UpdateGuildRoster")
+
+	-- Track inventory changes for issue #458 - items like Imperial Silk
+	registerEvent(self, "UNIT_INVENTORY_CHANGED", "HandleInventoryChanged")
+	registerEvent(self, "UNIT_SPELLCAST_SUCCEEDED", "HandleSpellcastSucceeded")
+	registerEvent(self, "QUEST_ACCEPTED", "HandleQuestEvent")
+	registerEvent(self, "QUEST_TURNED_IN", "HandleQuestEvent")
 
 	registerEvent(self, "TRADE_SKILL_SHOW")
 	registerEvent(self, "TRADE_SKILL_LIST_UPDATE")
@@ -209,7 +214,7 @@ function Events:OnEnable()
 		GuildRoster() -- Classic
 	end
 
-	Scanner:StartupScans() --do the login player scans
+	StartTimer(BSYC, "StartupScans", 2, Scanner, "StartupScans") --do the login player scans
 
 	--BAG_UPDATE fires A LOT during login and when in between loading screens.  In general it's a very spammy event.
 	--to combat this we are going to use the DELAYED event which fires after all the BAG_UPDATE are done.  Then go through the spam queue.
@@ -320,6 +325,44 @@ end
 
 function Events:PLAYER_EQUIPMENT_CHANGED()
 	Scanner:SaveEquipment()
+end
+
+-- Helper function to queue bag updates for issue #458
+-- This avoids code duplication and follows existing BAG_UPDATE_DELAYED pattern
+local function QueueBagUpdates()
+	Debug(BSYC_DL.DEBUG, "QueueBagUpdates", "Queueing bag updates for rescan")
+	local minCnt, maxCnt = Scanner:GetBagSlots("bag")
+	for i = minCnt, maxCnt do
+		Events:BAG_UPDATE(nil, i)
+	end
+end
+
+-- Track inventory changes for issue #458 - incremental updates only
+function Events:HandleInventoryChanged(_, unit)
+	if unit == "player" then
+		Debug(BSYC_DL.DEBUG, "UNIT_INVENTORY_CHANGED", unit)
+		-- Queue bag update event for processing by BAG_UPDATE_DELAYED
+		-- This follows existing pattern and avoids full scan
+		QueueBagUpdates()
+	end
+end
+
+-- Track crafted items for issue #458 - incremental updates only
+function Events:HandleSpellcastSucceeded(_, unit, spellName, _, spellID, _)
+	if unit == "player" then
+		Debug(BSYC_DL.DEBUG, "UNIT_SPELLCAST_SUCCEEDED", unit, spellName, spellID)
+		-- Queue bag update event for processing by BAG_UPDATE_DELAYED
+		-- This follows existing pattern and avoids full scan
+		QueueBagUpdates()
+	end
+end
+
+-- Track quest-related item changes for issue #458 - incremental updates only
+function Events:HandleQuestEvent(_, questID)
+	Debug(BSYC_DL.DEBUG, "QUEST_EVENT", questID)
+	-- Queue bag update event for processing by BAG_UPDATE_DELAYED
+	-- This follows existing pattern and avoids full scan
+	QueueBagUpdates()
 end
 
 function Events:BAG_UPDATE(_, bagid)

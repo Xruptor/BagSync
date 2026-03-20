@@ -93,8 +93,10 @@ function Currency:CreateList()
 			for k, v in pairs(unitObj.data.currency) do
 				local header = v.header or L.Currency
 
-				--only do the entry once per currencyID
-				if not tempList[k]  then
+				-- Skip currencies with zero or negative counts to prevent display of corrupted data
+				if v.count and v.count > 0 then
+					--only do the entry once per currencyID
+					if not tempList[k]  then
 					local sortHeader = self:DoSortFilters(header)
 
 					table.insert(usrData, {
@@ -105,6 +107,7 @@ function Currency:CreateList()
 						sortIndex = sortHeader and BSYC.options.sortCurrencyByExpansion and expansionList[sortHeader] or -100  --we use -100 as a filler for anything that isn't an expansion to be below lowest possible expansion
 					})
 					tempList[k] = true
+					end
 				end
 			end
 		end

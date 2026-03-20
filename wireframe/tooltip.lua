@@ -1788,9 +1788,7 @@ local function HandleTooltipSetCurrency(tooltip, data)
 		--WOTLK still uses the old API functions, check for it
 		local getCurrencyInfo = BSYC.API and BSYC.API.GetCurrencyInfo
 		local currencyData = getCurrencyInfo and getCurrencyInfo(currencyID)
-		if currencyData and not Utility:IsSafeTable(currencyData) then
-			currencyData = nil
-		end
+		-- Currency info tables from C_CurrencyInfo.GetCurrencyInfo are safe to read
 		if currencyData then
 			Tooltip:CurrencyTooltip(tooltip, currencyData.name, currencyData.iconFileID, currencyID, "OnTooltipSetCurrency")
 		end

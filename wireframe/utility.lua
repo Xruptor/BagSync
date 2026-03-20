@@ -12,6 +12,16 @@ local Utility = BSYC:NewModule("Utility")
 -----------------------------------------------------------------
 -- Secret value helpers (Retail 12.0+). These APIs may not exist on older clients.
 ------------------------------------------------------------------
+
+-- Safe type checker that handles secret values on Retail 12.0+
+-- Calling type() on a secret value will throw an error, so we use pcall
+local function SafeType(v)
+	local ok, result = pcall(_G.type, v)
+	if ok then return result end
+	-- If type() failed, it's likely a secret value
+	return nil
+end
+
 function Utility:IsSecretValue(v)
 	local fn = _G.issecretvalue
 	if type(fn) == "function" then
@@ -58,14 +68,16 @@ function Utility:CanAccessAllValues(v)
 end
 
 function Utility:IsSafeNumber(v)
-	if type(v) ~= "number" then return false end
+	-- Use SafeType to avoid crashing on secret values
+	if SafeType(v) ~= "number" then return false end
 	if self:IsSecretValue(v) then return false end
 	if not self:CanAccessValue(v) then return false end
 	return true
 end
 
 function Utility:IsSafeTable(v)
-	if type(v) ~= "table" then return false end
+	-- Use SafeType to avoid crashing on secret values
+	if SafeType(v) ~= "table" then return false end
 	if self:IsSecretTable(v) then return false end
 	if self:HasAnySecretValue(v) then return false end
 	if not self:CanAccessAllValues(v) then return false end
@@ -73,7 +85,8 @@ function Utility:IsSafeTable(v)
 end
 
 function Utility:IsSecretNumber(v)
-	if type(v) ~= "number" then return false end
+	-- Use SafeType to avoid crashing on secret values
+	if SafeType(v) ~= "number" then return false end
 	if self:IsSecretValue(v) then return true end
 	if not self:CanAccessValue(v) then return true end
 	return false
