@@ -78,6 +78,7 @@ function Recipes:CreateList(data)
 
 	local getSpellInfo = BSYC.API and BSYC.API.GetSpellInfo
 	local getRecipeInfo = BSYC.API and BSYC.API.GetRecipeInfo
+	local isClassicData = data.skillData.isClassic
 	local recipeData = {}
 
 	for k, v in pairs(data.skillData.categories) do
@@ -87,24 +88,56 @@ function Recipes:CreateList(data)
 			if #recipeList > 0 then
 				for idx = 1, #recipeList do
 					if recipeList[idx] and recipeList[idx] ~= "" then
-						local recipeID = tonumber(recipeList[idx]) or recipeList[idx]
-						local recipe_info = getRecipeInfo and getRecipeInfo(recipeID) or nil
-						local recipeName = recipeID
-						local iconTexture = "Interface\\Icons\\INV_Misc_QuestionMark"
+						local recipeID, linkType, recipeName, iconTexture
 
-						local gName, _, gIcon
-						if getSpellInfo then
-							gName, _, gIcon = getSpellInfo(recipeID)
+						if isClassicData then
+							-- Classic Era: Parse "recipeID:linkType" format
+							local numericID, typeStr = string.match(recipeList[idx], "^(%d+):(%w+)$")
+							recipeID = numericID and tonumber(numericID) or tonumber(recipeList[idx])
+							linkType = typeStr
+							iconTexture = "Interface\\Icons\\INV_Misc_QuestionMark"
+
+							if linkType == "enchant" then
+								-- Enchanting uses spell IDs - use GetSpellInfo if available
+								if getSpellInfo then
+									local sName, _, sIcon = getSpellInfo(recipeID)
+									if sName then
+										recipeName = sName
+										iconTexture = sIcon or iconTexture
+									end
+								end
+							else
+								-- Item-based profession (or unknown type) - use GetItemInfo
+								local itemName, _, _, _, _, _, _, _, _, itemIcon = GetItemInfo(recipeID)
+								if itemName then
+									recipeName = itemName
+									iconTexture = itemIcon or iconTexture
+								end
+							end
+						else
+							-- Retail: Just use plain recipeID (no linkType suffix)
+							recipeID = tonumber(recipeList[idx])
+							iconTexture = "Interface\\Icons\\INV_Misc_QuestionMark"
+
+							-- Retail: Use recipe/spell APIs
+							local recipe_info = getRecipeInfo and getRecipeInfo(recipeID) or nil
+							local gName, _, gIcon
+							if getSpellInfo then
+								gName, _, gIcon = getSpellInfo(recipeID)
+							end
+
+							if recipe_info and recipe_info.name then
+								recipeName = recipe_info.name
+								iconTexture = recipe_info.icon
+							elseif gName then
+								recipeName = gName
+								iconTexture = gIcon
+							end
 						end
 
-						if recipe_info and recipe_info.name then
-							recipeName = recipe_info.name
-							iconTexture = recipe_info.icon
-						elseif gName then
-							recipeName = gName
-							iconTexture = gIcon
-						else
-							recipeName = L.RecipesFailedRequest:format(recipeID)
+						-- Fallback if we couldn't get a name
+						if not recipeName then
+							recipeName = "Unknown Item ("..tostring(recipeID)..")"
 						end
 
 						table.insert(recipeData, {
@@ -114,6 +147,7 @@ function Recipes:CreateList(data)
 							recipeName = recipeName,
 							recipeID = recipeID,
 							recipeIcon = iconTexture,
+							linkType = linkType,
 							hasRecipes = true
 						})
 					end
@@ -158,7 +192,9 @@ function Recipes:CreateList(data)
 					tierIndex = recipeData[i].tierIndex,
 					recipeName = recipeData[i].recipeName,
 					recipeID = recipeData[i].recipeID,
-					recipeIcon = recipeData[i].recipeIcon
+					recipeIcon = recipeData[i].recipeIcon,
+					linkType = recipeData[i].linkType,
+					isClassic = isClassicData
 				})
 			end
 		end
@@ -235,7 +271,34 @@ function Recipes:Item_OnEnter(btn)
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		local recipeID = tonumber(btn.data.recipeID)
 		if recipeID then
-			GameTooltip:SetSpellByID(recipeID)
+			if btn.data.isClassic then
+				-- Classic Era: Use stored linkType to determine how to display
+				local linkType = btn.data.linkType
+				if linkType == "enchant" then
+					-- Enchanting uses spell IDs - use enchant link format
+					local enchantLink = format("enchant:%d", recipeID)
+					GameTooltip:SetHyperlink(enchantLink)
+				elseif linkType == "item" then
+					-- Item-based profession (Blacksmithing, etc.) - use item link
+					local _, itemLink = GetItemInfo(recipeID)
+					if itemLink then
+						GameTooltip:SetHyperlink(itemLink)
+					end
+				else
+					-- Legacy format (no link type suffix) - try both
+					local _, itemLink = GetItemInfo(recipeID)
+					if itemLink then
+						GameTooltip:SetHyperlink(itemLink)
+					else
+						-- Assume enchant as fallback
+						local enchantLink = format("enchant:%d", recipeID)
+						GameTooltip:SetHyperlink(enchantLink)
+					end
+				end
+			else
+				-- Retail: recipeID is a spell ID
+				GameTooltip:SetSpellByID(recipeID)
+			end
 		else
 			GameTooltip:AddLine(btn.data.recipeName or "")
 		end
@@ -251,8 +314,31 @@ end
 
 function Recipes:Item_OnClick(btn)
 	if not btn.isHeader and IsModifiedClick("CHATLINK") then
-		local recipeID = tonumber(btn.data.recipeID) or btn.data.recipeID
-		local link = GetSpellLink(recipeID)
+		local recipeID = tonumber(btn.data.recipeID)
+		local link
+		if btn.data.isClassic then
+			-- Classic Era: Use stored linkType to determine how to link
+			local linkType = btn.data.linkType
+			if linkType == "enchant" then
+				-- Enchanting - construct enchant link
+				link = format("enchant:%d", recipeID)
+			elseif linkType == "item" then
+				-- Item-based profession - get item link
+				link = select(2, GetItemInfo(recipeID))
+			else
+				-- Legacy format (no link type suffix) - try item first
+				local _, itemLink = GetItemInfo(recipeID)
+				if itemLink then
+					link = itemLink
+				else
+					-- Assume enchant as fallback
+					link = format("enchant:%d", recipeID)
+				end
+			end
+		else
+			-- Retail: recipeID is a spell ID
+			link = GetSpellLink(recipeID)
+		end
 		if link then
 			ChatEdit_InsertLink(link)
 		end

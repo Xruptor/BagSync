@@ -31,7 +31,7 @@ local GetPlayerTradeMoney = _G.GetPlayerTradeMoney
 local GetNumGuildBankTabs = _G.GetNumGuildBankTabs
 local GetGuildBankTabInfo = _G.GetGuildBankTabInfo
 local QueryGuildBankTab = _G.QueryGuildBankTab
-local GetCurrentGuildBankTab = _G.GetCurrentGuildBankTab
+local GetCurrentGuildBankTab = _G.GetCurrentGuildBankTab or _G.GetCurrentGuildTab
 local next = _G.next
 local pairs = _G.pairs
 
@@ -140,12 +140,21 @@ function Events:OnEnable()
 
 	-- Track inventory changes for issue #458 - items like Imperial Silk
 	registerEvent(self, "UNIT_INVENTORY_CHANGED", "HandleInventoryChanged")
-	registerEvent(self, "UNIT_SPELLCAST_SUCCEEDED", "HandleSpellcastSucceeded")
+
+	-- Retail (Dragonflight+): Use TRADE_SKILL_CRAFT_RESULT for targeted crafting detection
+	if C_TradeSkillUI and C_TradeSkillUI.GetRecipeInfo then
+		registerEvent(self, "TRADE_SKILL_CRAFT_RESULT", "HandleTradeSkillCraftResult")
+	end
+
 	registerEvent(self, "QUEST_ACCEPTED", "HandleQuestEvent")
 	registerEvent(self, "QUEST_TURNED_IN", "HandleQuestEvent")
 
 	registerEvent(self, "TRADE_SKILL_SHOW")
 	registerEvent(self, "TRADE_SKILL_LIST_UPDATE")
+	-- Classic only - fires after TRADE_SKILL_SHOW when recipes are loaded
+	if not C_TradeSkillUI or not C_TradeSkillUI.GetAllRecipeIDs then
+		registerEvent(self, "TRADE_SKILL_UPDATE")
+	end
 	registerEvent(self, "TRADE_SKILL_DATA_SOURCE_CHANGED")
 
 	registerEvent(self, "MAIL_INBOX_UPDATE")
@@ -330,7 +339,7 @@ end
 -- Helper function to queue bag updates for issue #458
 -- This avoids code duplication and follows existing BAG_UPDATE_DELAYED pattern
 local function QueueBagUpdates()
-	Debug(BSYC_DL.DEBUG, "QueueBagUpdates", "Queueing bag updates for rescan")
+	Debug(BSYC_DL.SL3, "QueueBagUpdates", "Queueing bag updates for rescan")
 	local minCnt, maxCnt = Scanner:GetBagSlots("bag")
 	for i = minCnt, maxCnt do
 		Events:BAG_UPDATE(nil, i)
@@ -338,28 +347,24 @@ local function QueueBagUpdates()
 end
 
 -- Track inventory changes for issue #458 - incremental updates only
+-- Debounced to prevent spam during login when UNIT_INVENTORY_CHANGED fires rapidly
 function Events:HandleInventoryChanged(_, unit)
 	if unit == "player" then
-		Debug(BSYC_DL.DEBUG, "UNIT_INVENTORY_CHANGED", unit)
-		-- Queue bag update event for processing by BAG_UPDATE_DELAYED
-		-- This follows existing pattern and avoids full scan
+		Debug(BSYC_DL.SL3, "UNIT_INVENTORY_CHANGED", unit)
 		QueueBagUpdates()
 	end
 end
 
--- Track crafted items for issue #458 - incremental updates only
-function Events:HandleSpellcastSucceeded(_, unit, spellName, _, spellID, _)
-	if unit == "player" then
-		Debug(BSYC_DL.DEBUG, "UNIT_SPELLCAST_SUCCEEDED", unit, spellName, spellID)
-		-- Queue bag update event for processing by BAG_UPDATE_DELAYED
-		-- This follows existing pattern and avoids full scan
-		QueueBagUpdates()
-	end
+-- Internal function called by debounced timer
+function Events:_DoQueuedBagUpdates()
+	-- Queue bag update event for processing by BAG_UPDATE_DELAYED
+	-- This follows existing pattern and avoids full scan
+	QueueBagUpdates()
 end
 
 -- Track quest-related item changes for issue #458 - incremental updates only
 function Events:HandleQuestEvent(_, questID)
-	Debug(BSYC_DL.DEBUG, "QUEST_EVENT", questID)
+	Debug(BSYC_DL.SL3, "QUEST_EVENT", questID)
 	-- Queue bag update event for processing by BAG_UPDATE_DELAYED
 	-- This follows existing pattern and avoids full scan
 	QueueBagUpdates()
@@ -472,43 +477,110 @@ function Events:GuildBank_Changed()
 end
 
 function Events:CURRENCY_DISPLAY_UPDATE()
-	if not BSYC.tracking.currency then return end
+	Debug(BSYC_DL.FINE, "CURRENCY_DISPLAY_UPDATE ENTRY - tracking.currency:", BSYC.tracking.currency)
+
+	if not BSYC.tracking.currency then
+		Debug(BSYC_DL.FINE, "CURRENCY_DISPLAY_UPDATE EXIT - tracking.currency is false")
+		return
+	end
 
 	if UnitInCombatLockdown(Unit) then
+		Debug(BSYC_DL.FINE, "CURRENCY_DISPLAY_UPDATE - In combat, delaying until PLAYER_REGEN_ENABLED")
 		if not self.doCurrencyUpdate then
 			self.doCurrencyUpdate = true
 			self:RegisterEvent("PLAYER_REGEN_ENABLED")
+			Debug(BSYC_DL.FINE, "CURRENCY_DISPLAY_UPDATE - Registered PLAYER_REGEN_ENABLED")
 		end
 		return
 	end
-	StartTimer(BSYC, "CURRENCY_DISPLAY_UPDATE", 1, Scanner, "SaveCurrency")
+
+	-- Reset all per-player retry counters to ensure SaveCurrency tries again when CURRENCY_DISPLAY_UPDATE fires
+	local resetCount = 0
+	for key in pairs(Scanner) do
+		if key:match("^_currencyRetryCount_") then
+			Scanner[key] = nil
+			resetCount = resetCount + 1
+			Debug(BSYC_DL.FINE, "CURRENCY_DISPLAY_UPDATE - Reset retry counter:", key)
+		end
+	end
+	Debug(BSYC_DL.FINE, "CURRENCY_DISPLAY_UPDATE - Reset", resetCount, "retry counters")
+
+	-- Also reset the startup pending retry counter if it exists
+	if Scanner._currencyRetryCount_startup_pending then
+		Debug(BSYC_DL.FINE, "CURRENCY_DISPLAY_UPDATE - Reset startup_pending counter, was:", Scanner._currencyRetryCount_startup_pending)
+		Scanner._currencyRetryCount_startup_pending = nil
+	else
+		Debug(BSYC_DL.FINE, "CURRENCY_DISPLAY_UPDATE - startup_pending counter was already nil")
+	end
+
+	-- Pass skipRetry=true to force save regardless of listSize state
+	Debug(BSYC_DL.FINE, "CURRENCY_DISPLAY_UPDATE - Queueing SaveCurrency with skipRetry=true in 1 second")
+	StartTimer(BSYC, "CURRENCY_DISPLAY_UPDATE", 1, Scanner, "SaveCurrency", false, true)
 end
 
 function Events:PLAYER_REGEN_ENABLED()
+	Debug(BSYC_DL.FINE, "PLAYER_REGEN_ENABLED ENTRY - doCurrencyUpdate:", self.doCurrencyUpdate)
+
 	--only run this if triggered by CURRENCY_DISPLAY_UPDATE
-	if UnitInCombatLockdown(Unit) then return end
+	if UnitInCombatLockdown(Unit) then
+		Debug(BSYC_DL.FINE, "PLAYER_REGEN_ENABLED - Still in combat, exiting")
+		return
+	end
+
 	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
 	self.doCurrencyUpdate = nil
-	StartTimer(BSYC, "CURRENCY_DISPLAY_UPDATE", 1, Scanner, "SaveCurrency")
+	Debug(BSYC_DL.FINE, "PLAYER_REGEN_ENABLED - Unregistered PLAYER_REGEN_ENABLED, cleared doCurrencyUpdate flag")
+
+	-- Pass skipRetry=true to force save regardless of listSize state
+	Debug(BSYC_DL.FINE, "PLAYER_REGEN_ENABLED - Queueing SaveCurrency with skipRetry=true in 1 second")
+	StartTimer(BSYC, "CURRENCY_DISPLAY_UPDATE", 1, Scanner, "SaveCurrency", false, true)
+end
+
+-- Shared function to queue profession scan with debounce prevention
+-- StartTimer already calls StopTimer internally, so this handles rapid events automatically
+function Events:QueueProfessionScan()
+	Debug(BSYC_DL.INFO, "QueueProfessionScan: Queuing scan with 3s delay")
+	-- Scan after a delay to ensure data is loaded
+	-- Classic: TRADE_SKILL_UPDATE fires shortly after TRADE_SKILL_SHOW
+	-- Retail: TRADE_SKILL_LIST_UPDATE fires after TRADE_SKILL_SHOW
+	-- Increased delay to 3s to give Classic more time to load recipe data
+	StartTimer(BSYC, "ProfessionScan", 2, Scanner, "SaveProfessions")
+end
+
+-- Modern Retail (Dragonflight+) crafting event - ONLY fires for actual crafts
+function Events:HandleTradeSkillCraftResult(_, craftingResult)
+	if not craftingResult or not craftingResult.success then return end
+
+	Debug(BSYC_DL.SL1, "TRADE_SKILL_CRAFT_RESULT", craftingResult.recipeID, craftingResult.success, "Crafting complete - queueing bag update")
+	QueueBagUpdates()
 end
 
 function Events:TRADE_SKILL_SHOW()
-	-- Redundant guard removed; repeated true assignment is harmless and avoids extra branching.
+	Debug(BSYC_DL.SL3, "TRADE_SKILL_SHOW: Fired, queueing scan")
 	self._TradeSkillEvent = true
+	self:QueueProfessionScan()
 end
 
 function Events:TRADE_SKILL_LIST_UPDATE()
 	if self._TradeSkillEvent then
 		self._TradeSkillEvent = nil
-		Scanner:SaveProfessions()
+		self:QueueProfessionScan()
 	end
+end
+
+function Events:TRADE_SKILL_UPDATE()
+	-- Classic only event - fires after TRADE_SKILL_SHOW when recipes are loaded
+	Debug(BSYC_DL.SL3, "TRADE_SKILL_UPDATE: Fired, queuing profession scan")
+	-- Queue another scan to ensure we have complete data
+	self:QueueProfessionScan()
 end
 
 function Events:TRADE_SKILL_DATA_SOURCE_CHANGED()
 	--this gets fired when they switch professions while still having the tradeskill window open
 	if not self._TradeSkillEvent then
 		self._TradeSkillEvent = true
-		--this will trigger TRADE_SKILL_LIST_UPDATE and SaveProfessions which will save all the recipesIDs to Scanner.recipeIDs
+		-- Queue scan instead of relying on TRADE_SKILL_LIST_UPDATE
+		self:QueueProfessionScan()
 	end
 end
 

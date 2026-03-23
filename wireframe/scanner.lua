@@ -233,7 +233,12 @@ function Scanner:StartupScans()
 		end
 	end
 
-	self:SaveCurrency(true)
+	--save currency (skip retry logic during startup - if list is empty, save empty and let CURRENCY_DISPLAY_UPDATE fix it)
+	-- Delay by 3 seconds to allow login events (UNIT_INVENTORY_CHANGED, BAG_UPDATE) to settle
+	-- This prevents race conditions where rapid bag updates interrupt currency scanning
+	Debug(BSYC_DL.FINE, "StartupScans - Queueing SaveCurrency with 3-second delay to allow login events to settle")
+	BSYC:StartTimer("StartupCurrency", 3, Scanner, "SaveCurrency", true, true)
+	-- Note: CURRENCY_DISPLAY_UPDATE will handle any additional currency updates if needed
 
 	--cleanup the auction DB
 	Data:CheckExpiredAuctions()
@@ -1044,13 +1049,20 @@ function Scanner:ProcessCurrencyTransfer(doCurrentPlayer, sourceGUID, currencyID
 	self:ResetTooltips()
 end
 
-function Scanner:SaveCurrency(showDebug)
-	if not BSYC:CanDoCurrency() then return end
-	if Unit:InCombatLockdown() then return end
-	--get player information from Unit
+function Scanner:SaveCurrency(showDebug, skipRetry)
+	if not BSYC:CanDoCurrency() then
+		return false
+	end
+	if Unit:InCombatLockdown() then
+		return false
+	end
+
 	local player = Unit:GetPlayerInfo(true)
-	if showDebug then Debug(BSYC_DL.INFO, "SaveCurrency", BSYC.tracking.currency, player and player.name) end --this function gets spammed like crazy sometimes, so only show debug when requested
-	if not BSYC.tracking.currency then return end
+
+	if showDebug then Debug(BSYC_DL.INFO, "SaveCurrency", BSYC.tracking.currency, player and player.name, skipRetry) end --this function gets spammed like crazy sometimes, so only show debug when requested
+	if not BSYC.tracking.currency then
+		return false
+	end
 
 	local lastHeader
 	local slotItems = {}
@@ -1061,45 +1073,78 @@ function Scanner:SaveCurrency(showDebug)
 	local getCurrencyListLink = BSYC.API and BSYC.API.GetCurrencyListLink
 	local expandCurrencyList = BSYC.API and BSYC.API.ExpandCurrencyList
 
-	-- Check if the API is ready - if not, retry with a delay
-	-- This handles the race condition where currency list hasn't loaded from server yet
-	if not (getCurrencyListSize and getCurrencyListInfo) then
-		if not self._currencyRetryCount then
-			self._currencyRetryCount = 0
-		end
-		if self._currencyRetryCount < 10 then
-			self._currencyRetryCount = self._currencyRetryCount + 1
-			Debug(BSYC_DL.INFO, "SaveCurrency", "Retry", self._currencyRetryCount, "API not ready yet")
-			BSYC:StartTimer("SaveCurrency_Retry", 1, Scanner, "SaveCurrency", false)
-		else
-			Debug(BSYC_DL.WARN, "SaveCurrency", "Max retries reached, API not available")
-			self._currencyRetryCount = nil
-		end
-		self:ResetTooltips()
-		return
+	-- Per-player retry counter to prevent cross-character contamination
+	-- Use fallback key if player info is not available yet (happens during early startup)
+	local playerKey = player and (player.name .. "-" .. (player.realm or ""))
+	local retryKey
+	if playerKey then
+		retryKey = "_currencyRetryCount_" .. playerKey:gsub("[^%w_]", "_")
+	else
+		-- Fallback for early startup when player info isn't available yet
+		-- This allows retries to be queued even without full player information
+		retryKey = "_currencyRetryCount_startup_pending"
 	end
 
-	-- Check if the list has any data - if listSize is 0 or nil, the currency
-	-- data hasn't loaded from server yet. Retry with a delay.
-	local listSize = getCurrencyListSize()
-	if not listSize or listSize == 0 then
-		if not self._currencyRetryCount then
-			self._currencyRetryCount = 0
+	-- If skipRetry is true, bypass all retry logic and save whatever we have
+	-- This is used when retry attempts have been exhausted or when CURRENCY_DISPLAY_UPDATE forces a save
+	if skipRetry then
+		-- Skip all retry logic and proceed directly to saving
+		if showDebug then Debug(BSYC_DL.INFO, "SaveCurrency", "skipRetry=true, proceeding to save") end
+	else
+		-- Check if the API is ready - if not, retry with a delay
+		-- This handles the race condition where currency list hasn't loaded from server yet
+		if not (getCurrencyListSize and getCurrencyListInfo) then
+			if retryKey then
+				self[retryKey] = (self[retryKey] or 0) + 1
+				if self[retryKey] <= 5 then
+					Debug(BSYC_DL.INFO, "SaveCurrency", "Retry", self[retryKey], "API not ready yet, player:", playerKey)
+					BSYC:StartTimer("SaveCurrency_Retry", 1, Scanner, "SaveCurrency", false)
+				else
+					Debug(BSYC_DL.WARN, "SaveCurrency", "Max retries reached, API not available, player:", playerKey)
+					self[retryKey] = nil
+				end
+			else
+				-- No player key available - don't save empty table
+				-- CURRENCY_DISPLAY_UPDATE will retry when player data is ready
+				if showDebug then Debug(BSYC_DL.WARN, "SaveCurrency -> (Deferred: API not ready and no Player Key)") end
+			end
+			self:ResetTooltips()
+			return false
 		end
-		if self._currencyRetryCount < 10 then
-			self._currencyRetryCount = self._currencyRetryCount + 1
-			Debug(BSYC_DL.INFO, "SaveCurrency", "Retry", self._currencyRetryCount, "listSize not ready yet:", listSize)
-			BSYC:StartTimer("SaveCurrency_Retry", 1, Scanner, "SaveCurrency", false)
-		else
-			Debug(BSYC_DL.WARN, "SaveCurrency", "Max retries reached, giving up")
-			self._currencyRetryCount = nil
-		end
-		self:ResetTooltips()
-		return
-	end
 
-	-- Reset retry count on success
-	self._currencyRetryCount = nil
+		-- Check if the list has any data - if listSize is 0 or nil, the currency
+		-- data hasn't loaded from server yet. Retry with a delay.
+		local listSize = getCurrencyListSize()
+		if not listSize or listSize == 0 then
+			if retryKey then
+				self[retryKey] = (self[retryKey] or 0) + 1
+				if self[retryKey] <= 5 then
+					Debug(BSYC_DL.INFO, "SaveCurrency", "Retry", self[retryKey], "listSize not ready yet:", listSize, "player:", playerKey)
+					BSYC:StartTimer("SaveCurrency_Retry", 1, Scanner, "SaveCurrency", false)
+					self:ResetTooltips()
+					return
+				else
+					-- Max retries reached - defer to CURRENCY_DISPLAY_UPDATE instead of saving empty table
+					-- Reset retry counter so CURRENCY_DISPLAY_UPDATE can trigger a fresh save
+					Debug(BSYC_DL.WARN, "SaveCurrency", "Max retries reached, deferring to CURRENCY_DISPLAY_UPDATE, player:", playerKey)
+					self[retryKey] = nil
+					self:ResetTooltips()
+					return
+				end
+			else
+				-- No player key available yet - don't save empty table during startup
+				-- CURRENCY_DISPLAY_UPDATE will retry when player data is ready
+				if showDebug then Debug(BSYC_DL.WARN, "SaveCurrency -> (Deferred: No Player Key - waiting for CURRENCY_DISPLAY_UPDATE)") end
+				self:ResetTooltips()
+				return
+			end
+		end
+
+		-- Reset retry count on success
+		if retryKey then
+			self[retryKey] = nil
+		end
+	end
 
 	--first lets expand everything just in case (supports both retail-table and classic multi-return APIs)
 	if expandCurrencyList then
@@ -1107,24 +1152,35 @@ function Scanner:SaveCurrency(showDebug)
 			local expandedAny = false
 			local listSize = getCurrencyListSize()
 
+			-- Safety check: if listSize becomes 0 or nil during expansion, stop
+			if not listSize or listSize == 0 then
+				break
+			end
+
 			for i = 1, listSize do
 				--Retail returns a table; Classic/WotLK can return multiple values.
-				local currencyInfoOrName,
-					isHeaderFlag,
-					isHeaderExpandedFlag = getCurrencyListInfo(i)
+				local currencyInfoOrName, isHeaderFlag, isHeaderExpandedFlag = getCurrencyListInfo(i)
 
-				local isHeader, isExpanded
-				if type(currencyInfoOrName) == "table" then
-					-- Currency info tables from C_CurrencyInfo.GetCurrencyListInfo are safe to read
-					isHeader = currencyInfoOrName.isHeader
-					isExpanded = currencyInfoOrName.isHeaderExpanded
-				else
-					isHeader = isHeaderFlag
-					isExpanded = isHeaderExpandedFlag
-				end
-				if isHeader and not isExpanded then
-					expandCurrencyList(i, true)
-					expandedAny = true
+				-- Handle nil returns from getCurrencyListInfo - can happen due to race conditions
+				if currencyInfoOrName then
+					local isHeader, isExpanded
+					if type(currencyInfoOrName) == "table" then
+						-- Currency info tables from C_CurrencyInfo.GetCurrencyListInfo are safe to read
+						isHeader = currencyInfoOrName.isHeader
+						isExpanded = currencyInfoOrName.isHeaderExpanded
+					else
+						isHeader = isHeaderFlag
+						isExpanded = isHeaderExpandedFlag
+					end
+					if isHeader and not isExpanded then
+						-- Wrap expansion in pcall to catch any errors and continue
+						local ok, err = pcall(expandCurrencyList, i, true)
+						if not ok then
+							Debug(BSYC_DL.WARN, "SaveCurrency", "expandCurrencyList failed at index", i, "error:", tostring(err))
+						else
+							expandedAny = true
+						end
+					end
 				end
 			end
 
@@ -1133,75 +1189,148 @@ function Scanner:SaveCurrency(showDebug)
 			end
 		end
 	end
-	
+
 	local currencyCount = 0
 
 	-- Re-fetch listSize as it may have changed during expansion
-	listSize = getCurrencyListSize()
+	local listSize = getCurrencyListSize()
+
+	-- Safety check: if listSize is 0 or nil, exit early
+	if not listSize or listSize == 0 then
+		-- Ensure BSYC.db.player exists before accessing it
+		if not BSYC.db then BSYC.db = {} end
+		if not BSYC.db.player then BSYC.db.player = {} end
+		BSYC.db.player.currency = {}
+		self:ResetTooltips()
+		return false
+	end
+
 	for i = 1, listSize do
 		--Retail (C_CurrencyInfo.GetCurrencyListInfo) returns a table.
 		--Classic (GetCurrencyListInfo) returns multiple values:
 		--name, isHeader, isHeaderExpanded, isTypeUnused, isShowInBackpack, count, extraCurrencyType, iconFileID
-		local currencyInfoOrName,
-			isHeaderFlag,
-			isHeaderExpandedFlag,
-			_,
-			_,
-			count,
-			extraCurrencyType,
-			iconFileID = getCurrencyListInfo(i)
+		local currencyInfoOrName, isHeaderFlag, isHeaderExpandedFlag, _, _, count, extraCurrencyType, iconFileID = getCurrencyListInfo(i)
 
-		local currName, isHeader, _, currQuantity, currIcon = UnpackCurrencyInfo(currencyInfoOrName, isHeaderFlag, isHeaderExpandedFlag, count, extraCurrencyType, iconFileID)
-		if currName then
-			if isHeader then
-				lastHeader = currName
-			else
-				local currencyID
-				if getCurrencyListLink then
-					local link = getCurrencyListLink(i)
-					currencyID = BSYC:GetShortCurrencyID(link)
-				end
+		-- Handle nil returns from getCurrencyListInfo - can happen due to race conditions
+		if currencyInfoOrName then
+			local currName, isHeader, _, currQuantity, currIcon = UnpackCurrencyInfo(currencyInfoOrName, isHeaderFlag, isHeaderExpandedFlag, count, extraCurrencyType, iconFileID)
 
-				--Some clients can return nil links sporadically; treat those as headers to preserve grouping behavior.
-				if not currencyID then
+			if currName then
+				if isHeader then
 					lastHeader = currName
-				elseif currencyID and not slotItems[currencyID] then --make sure we don't do the same currency twice
-					slotItems[currencyID] = {
-						name = currName,
-						header = lastHeader,
-						count = currQuantity,
-						icon = currIcon,
-					}
-					currencyCount = currencyCount + 1
+				else
+					local currencyID
+					if getCurrencyListLink then
+						local link = getCurrencyListLink(i)
+						currencyID = BSYC:GetShortCurrencyID(link)
+					end
+
+					--Some clients can return nil links sporadically; treat those as headers to preserve grouping behavior.
+					if not currencyID then
+						lastHeader = currName
+					elseif currencyID and not slotItems[currencyID] then --make sure we don't do the same currency twice
+						slotItems[currencyID] = {
+							name = currName,
+							header = lastHeader,
+							count = currQuantity,
+							icon = currIcon,
+						}
+						currencyCount = currencyCount + 1
+					end
 				end
 			end
 		end
 	end
 
-	if showDebug then Debug(BSYC_DL.INFO, "SaveCurrency -> (Index & Saved) CurrencyCount=",currencyCount, player and player.name) end --this function gets spammed like crazy sometimes, so only show debug when requested
+	if showDebug then Debug(BSYC_DL.INFO, "SaveCurrency -> (Index & Saved) CurrencyCount=",currencyCount, player and player.name, "listSize=", listSize) end --this function gets spammed like crazy sometimes, so only show debug when requested
+
+	-- Verify we have a valid player and database before saving
+	if not player then
+		self:ResetTooltips()
+		return listSize and listSize > 0
+	end
+
+	if not BSYC.db or not BSYC.db.player then
+		if not BSYC.db then BSYC.db = {} end
+		if not BSYC.db.player then BSYC.db.player = {} end
+	end
+
 	BSYC.db.player.currency = slotItems
 	self:ResetTooltips()
+
+	-- Log if we saved an empty table for debugging purposes
+	if currencyCount == 0 and showDebug then
+		if listSize and listSize > 0 then
+			Debug(BSYC_DL.INFO, "SaveCurrency -> User has 0 currencies (list was ready, count=0)")
+		else
+			Debug(BSYC_DL.WARN, "SaveCurrency -> Saved empty currency table for", player and player.name or "unknown", "- listSize was 0, currency list not loaded yet")
+		end
+	end
+
+	local returnValue = listSize and listSize > 0
+
+	-- Return true if the currency list was loaded from server (listSize > 0), false if not ready
+	-- This distinguishes between "list not loaded" (need fallback) and "user has 0 currencies" (no fallback needed)
+	return returnValue
 end
 
-function Scanner:SaveProfessions()
+function Scanner:SaveProfessions(bypassCleanup)
 	Debug(BSYC_DL.INFO, "SaveProfessions", BSYC.tracking.professions)
 	if not BSYC:CanDoProfessions() then return end
 	if not BSYC.tracking.professions then return end
-	if not C_TradeSkillUI then return end
 
+	if not BSYC.db.player.professions then BSYC.db.player.professions = {} end
+
+	local player = Unit:GetPlayerInfo(true)
+	Debug(BSYC_DL.INFO, "SaveProfessions: Called for player =", player and player.name)
+
+	-- Retail (Dragonflight+): Uses C_TradeSkillUI
+	-- Classic/TBC/Wrath: Uses GetTradeSkillInfo/GetCraftInfo APIs
+	if C_TradeSkillUI and C_TradeSkillUI.GetAllRecipeIDs then
+		self:SaveProfessionsRetail(player.name)
+	elseif GetNumTradeSkills then
+		self:SaveProfessionsClassic(player.name)
+	end
+
+	--grab archaeology, fishing (shared between Retail and Classic)
+	--first aid was removed in battle for azeroth
+	local _, _, archaeology, fishing = GetProfessions()
+
+	local function StoreSecondaryProfession(profIndex)
+		if not profIndex then return end
+		local name, _, rank, maxRank, _, _, skillLine = GetProfessionInfo(profIndex)
+		if not name or not skillLine then return end
+
+		BSYC.db.player.professions[skillLine] = BSYC.db.player.professions[skillLine] or {}
+		local parentIDSlot = BSYC.db.player.professions[skillLine]
+		parentIDSlot.name = name
+		parentIDSlot.skillLineCurrentLevel = rank
+		parentIDSlot.skillLineMaxLevel = maxRank
+	end
+
+	StoreSecondaryProfession(archaeology)
+	StoreSecondaryProfession(fishing)
+
+	--as a precaution lets do a tradeskill cleanup just in case
+	if not bypassCleanup then
+		self:CleanupProfessions()
+	end
+end
+
+-- Retail (Dragonflight+) profession saving using C_TradeSkillUI
+function Scanner:SaveProfessionsRetail(playerName)
+	Debug(BSYC_DL.INFO, "SaveProfessionsRetail", playerName)
 	--we don't want to do linked tradeskills, guild tradeskills, or a tradeskill from an NPC
 	if C_TradeSkillUI.IsTradeSkillLinked and C_TradeSkillUI.IsTradeSkillLinked() then return end
 	if C_TradeSkillUI.IsTradeSkillGuild and C_TradeSkillUI.IsTradeSkillGuild() then return end
 	if C_TradeSkillUI.IsNPCCrafting and C_TradeSkillUI.IsNPCCrafting() then return end
-
-	if not BSYC.db.player.professions then BSYC.db.player.professions = {} end
 
 	local tmpRecipe = {}
 	local catCheck = {}
 	local orderIndex = 0
 	local recipesByCategory = {}
 
-	Scanner.recipeIDs = C_TradeSkillUI.GetAllRecipeIDs and C_TradeSkillUI.GetAllRecipeIDs() or {}
+	Scanner.recipeIDs = C_TradeSkillUI.GetAllRecipeIDs() or {}
 	Scanner.invertedRecipeIDs = InvertArray(Scanner.recipeIDs)
 
 	--https://wowpedia.fandom.com/wiki/API_C_TradeSkillUI.GetBaseProfessionInfo
@@ -1287,7 +1416,7 @@ function Scanner:SaveProfessions()
 					if subCatData and subCatData.categoryID == categoryData.parentCategoryID then
 
 						if not BSYC.db.player.professions[parentSkillLineID] then
-							BSYC.db.player.professions[parentSkillLineID] = BSYC.db.player.professions[parentSkillLineID] or {}
+							BSYC.db.player.professions[parentSkillLineID] = {}
 							BSYC.db.player.professions[parentSkillLineID].name = parentSkillLineName
 						end
 
@@ -1340,28 +1469,166 @@ function Scanner:SaveProfessions()
 		end
 
 	end
+	Debug(BSYC_DL.INFO, "SaveProfessionsRetail [Complete]", playerName)
+end
 
-	--grab archaeology, fishing
-	--first aid was removed in battle for azeroth
-	local _, _, archaeology, fishing = GetProfessions()
+-- Classic (Vanilla/TBC/Wrath) profession saving using GetTradeSkillInfo
+-- https://warcraft.wiki.gg/wiki/API_GetTradeSkillInfo
+function Scanner:SaveProfessionsClassic(playerName)
+	Debug(BSYC_DL.INFO, "SaveProfessionsClassic: START", playerName)
 
-	local function StoreSecondaryProfession(profIndex)
-		if not profIndex then return end
-		local name, _, rank, maxRank, _, _, skillLine = GetProfessionInfo(profIndex)
-		if not name or not skillLine then return end
+	local numTradeSkills = GetNumTradeSkills()
+	if not numTradeSkills or numTradeSkills == 0 then return end
 
-		BSYC.db.player.professions[skillLine] = BSYC.db.player.professions[skillLine] or {}
-		local parentIDSlot = BSYC.db.player.professions[skillLine]
-		parentIDSlot.name = name
-		parentIDSlot.skillLineCurrentLevel = rank
-		parentIDSlot.skillLineMaxLevel = maxRank
+	-- Get profession name from GetTradeSkillLine() (may return "UNKNOWN" on some servers)
+	local professionName = GetTradeSkillLine()
+	if not professionName then return end
+
+	-- Get skillLine, rank, and maxRank from GetProfessions()
+	local professionSkillLine, professionRank, professionMaxRank
+	local prof1, prof2 = GetProfessions()
+
+	-- Try to find matching profession from GetProfessions()
+	-- GetTradeSkillLine() may return "UNKNOWN" while GetProfessionInfo() returns the real name
+	if prof1 or prof2 then
+		for _, profIndex in ipairs({prof1, prof2}) do
+			if profIndex then
+				local name, _, rank, maxRank, _, _, skillLine = GetProfessionInfo(profIndex)
+				if name then
+					-- Try exact match first
+					if name:lower() == professionName:lower() then
+						professionSkillLine = tostring(skillLine)
+						professionRank = rank
+						professionMaxRank = maxRank
+						professionName = name  -- Use the correct name from GetProfessionInfo
+						break
+					end
+				end
+			end
+		end
+
+		-- If exact match failed, try matching against first recipe name
+		-- GetTradeSkillInfo(1) often returns the profession name as the first entry
+		if not professionSkillLine then
+			for i = 1, numTradeSkills do
+				local skillName, skillType = GetTradeSkillInfo(i)
+				if skillName and skillType ~= "header" and skillType ~= "subheader" then
+					-- Found first actual recipe, try matching against it
+					for _, profIndex in ipairs({prof1, prof2}) do
+						if profIndex then
+							local name, _, rank, maxRank, _, _, skillLine = GetProfessionInfo(profIndex)
+							if name and (skillName:lower():find(name:lower(), 1, true) or name:lower():find(skillName:lower(), 1, true)) then
+								professionSkillLine = tostring(skillLine)
+								professionRank = rank
+								professionMaxRank = maxRank
+								professionName = name
+								break
+							end
+						end
+					end
+					if professionSkillLine then break end
+				end
+			end
+		end
 	end
 
-	StoreSecondaryProfession(archaeology)
-	StoreSecondaryProfession(fishing)
+	-- Fallback for Classic Era: Use a hash of the profession name as skillLine
+	-- This is needed because GetProfessions() doesn't work on some Classic servers
+	if not professionSkillLine then
+		local hash = 0
+		for i = 1, #professionName do
+			hash = (hash * 31 + string.byte(professionName, i)) % 0x100000000
+		end
+		professionSkillLine = tostring(hash)
+	end
 
-	--as a precaution lets do a tradeskill cleanup just in case
-	self:CleanupProfessions()
+	-- Collect recipes
+	local tmpRecipe = {}
+	local recipeList = {}
+	local recipeCount = 0
+	Scanner.recipeIDs = Scanner.recipeIDs or {}
+
+	for i = 1, numTradeSkills do
+		local skillName, skillType = GetTradeSkillInfo(i)
+		-- Skip headers and subheaders, only collect actual recipes
+		if skillName and skillType ~= "header" and skillType ~= "subheader" then
+			local recipeID
+			local linkType  -- Track link type: "enchant", "item", or nil (trade links are skipped)
+
+			-- Try GetTradeSkillRecipeLink first (Wrath/Cata+)
+			-- Note: We skip trade: links as they're not useful for tooltip display
+			local recipeLink = GetTradeSkillRecipeLink and GetTradeSkillRecipeLink(i)
+			if recipeLink then
+				-- Check for enchant: link first (Classic Enchanting)
+				recipeID = tonumber(recipeLink:match("enchant:(%d+)"))
+				if recipeID then
+					linkType = "enchant"
+				end
+				-- trade: links are skipped - not useful for tooltips
+			end
+
+			-- Fallback: Use GetTradeSkillItemLink (works on all Classic servers)
+			if not recipeID then
+				local itemLink = GetTradeSkillItemLink(i)
+				if itemLink then
+					-- Try item: pattern first (most Classic professions)
+					recipeID = tonumber(itemLink:match("item:(%d+)"))
+					if recipeID then
+						linkType = "item"
+					else
+						-- Try enchant: pattern (Classic Enchanting)
+						recipeID = tonumber(itemLink:match("enchant:(%d+)"))
+						if recipeID then
+							linkType = "enchant"
+						end
+					end
+				end
+			end
+
+			if recipeID and not tmpRecipe[recipeID] then
+				tmpRecipe[recipeID] = true
+				Scanner.recipeIDs[recipeID] = true
+				-- Store as table with id and linkType for proper tooltip handling
+				recipeList[#recipeList + 1] = tostring(recipeID) .. (linkType and ":" .. linkType or "")
+				recipeCount = recipeCount + 1
+			end
+		end
+	end
+
+	if recipeCount == 0 then return end
+
+	-- Check for duplicate entries with "UNKNOWN" name and remove them
+	-- This can happen when GetTradeSkillLine() returns "UNKNOWN" but GetProfessionInfo() returns the real name
+	for skillLineKey, profData in pairs(BSYC.db.player.professions) do
+		if profData.isClassic and profData.name == "UNKNOWN" and skillLineKey ~= professionSkillLine then
+			-- Check if this UNKNOWN entry has the same recipe count (likely a duplicate)
+			if profData.recipeCount == recipeCount then
+				BSYC.db.player.professions[skillLineKey] = nil
+				Debug(BSYC_DL.INFO, "SaveProfessionsClassic - Removed duplicate UNKNOWN entry:", skillLineKey)
+			end
+		end
+	end
+
+	-- Save to DB
+	BSYC.db.player.professions[professionSkillLine] = {}
+	BSYC.db.player.professions[professionSkillLine].name = professionName
+	BSYC.db.player.professions[professionSkillLine].skillLineCurrentLevel = professionRank or 0
+	BSYC.db.player.professions[professionSkillLine].skillLineMaxLevel = professionMaxRank or 0
+	BSYC.db.player.professions[professionSkillLine].isClassic = true
+
+	local categoryID = professionSkillLine
+	BSYC.db.player.professions[professionSkillLine].categories = {}
+	BSYC.db.player.professions[professionSkillLine].categories[categoryID] = {
+		name = professionName,
+		skillLineCurrentLevel = professionRank or 0,
+		skillLineMaxLevel = professionMaxRank or 0,
+		orderIndex = 1,
+		recipes = "|" .. tconcat(recipeList, "|")
+	}
+	BSYC.db.player.professions[professionSkillLine].categoryCount = 1
+	BSYC.db.player.professions[professionSkillLine].recipeCount = recipeCount
+
+	Debug(BSYC_DL.INFO, "SaveProfessionsClassic [Complete] -", professionName, recipeCount, "recipes saved")
 end
 
 function Scanner:CleanupProfessions()
@@ -1374,12 +1641,13 @@ function Scanner:CleanupProfessions()
 	local tmpList = {}
 
 	local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions()
+	local hasPrimaryProfessions = prof1 or prof2
 
 	local function TrackProfession(prof)
 		if not prof then return end
 		local name, _, _, _, _, _, skillLine = GetProfessionInfo(prof)
 		if name and skillLine then
-			tmpList[skillLine] = name
+			tmpList[tostring(skillLine)] = name
 		end
 	end
 
@@ -1390,10 +1658,13 @@ function Scanner:CleanupProfessions()
 	TrackProfession(cooking)
 	TrackProfession(firstAid)
 
-	for k, v in pairs(BSYC.db.player.professions) do
-		if not tmpList[k] then
-			--it's an unlearned or unused tradeskill, lets remove it
-			BSYC.db.player.professions[k] = nil
+	-- Only clean up if GetProfessions() actually returns data (not all Classic servers support it)
+	if hasPrimaryProfessions then
+		for k in pairs(BSYC.db.player.professions) do
+			if not tmpList[k] then
+				--it's an unlearned or unused tradeskill, lets remove it
+				BSYC.db.player.professions[k] = nil
+			end
 		end
 	end
 end

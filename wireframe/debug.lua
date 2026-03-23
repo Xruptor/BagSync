@@ -15,6 +15,17 @@ local xListLen = 500
 local debugWidth = 880
 local debugHeight = 465
 
+local levels = {
+	"DEBUG",
+	"INFO",
+	"TRACE",
+	"WARN",
+	"FINE",
+	"SL1",
+	"SL2",
+	"SL3",
+}
+
 local function unescape(str)
     str = gsub(str, "|T.-|t", "") --textures in chat like currency coins and such
 	str = gsub(str, "|H.-|h(.-)|h", "%1") --links, just put the item description and chat color
@@ -91,17 +102,6 @@ function Debug:OnEnable()
 		end,
 	})
 	optionsFrame.disableCacheChk = disableCacheChk
-
-	local levels = {
-		"DEBUG",
-		"INFO",
-		"TRACE",
-		"WARN",
-		"FINE",
-		"SL1",
-		"SL2",
-		"SL3",
-	}
 
 	local lastPoint
 
@@ -517,7 +517,8 @@ function Debug:AddMessage(level, sName, ...)
 
 	local moduleName = string.format("|c"..color.."[%s]|r: ", sName)
 	debugStr = moduleName..debugStr
-	debugStr = "|cff808080["..date("%X").."]:|r "..debugStr
+	--ff00bfaf
+	debugStr = "|cff808080["..date("%X").."]|r|cff91aaff["..levels[level].."]:|r "..debugStr
 
 	--if it exceeds the amount of labels then remove top most one before adding
 	if #Debug.debugItems > xListLen then

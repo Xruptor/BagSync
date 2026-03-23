@@ -844,13 +844,23 @@ function BSYC:CanDoCurrency()
 end
 
 function BSYC:CanDoProfessions()
-	if not C_TradeSkillUI or not C_TradeSkillUI.GetAllRecipeIDs then return false end
-	if not C_TradeSkillUI.IsTradeSkillLinked or not C_TradeSkillUI.IsTradeSkillGuild or not C_TradeSkillUI.IsNPCCrafting then return false end
-	if not C_TradeSkillUI.GetBaseProfessionInfo or not C_TradeSkillUI.GetChildProfessionInfo then return false end
-	if not C_TradeSkillUI.GetCategories or not C_TradeSkillUI.GetCategoryInfo then return false end
-	if not C_TradeSkillUI.GetRecipeInfo then return false end
 	if not GetProfessions or not GetProfessionInfo then return false end
-	return true
+
+	-- Retail (Dragonflight+): Uses C_TradeSkillUI
+	if C_TradeSkillUI and C_TradeSkillUI.GetAllRecipeIDs then
+		if not C_TradeSkillUI.IsTradeSkillLinked or not C_TradeSkillUI.IsTradeSkillGuild or not C_TradeSkillUI.IsNPCCrafting then return false end
+		if not C_TradeSkillUI.GetBaseProfessionInfo or not C_TradeSkillUI.GetChildProfessionInfo then return false end
+		if not C_TradeSkillUI.GetCategories or not C_TradeSkillUI.GetCategoryInfo then return false end
+		if not C_TradeSkillUI.GetRecipeInfo then return false end
+		return true
+	end
+
+	-- Classic (Vanilla/TBC/Wrath): Uses GetTradeSkillInfo/GetCraftInfo
+	if GetNumTradeSkills and GetTradeSkillInfo and GetTradeSkillRecipeLink then
+		return true
+	end
+
+	return false
 end
 
 function BSYC:ResetFramePositions()
