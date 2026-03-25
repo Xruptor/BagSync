@@ -111,9 +111,17 @@ function ExtTip:Check(source, isBattlePet, owner)
 		-- but only when BagSync Debug is enabled.
 		local anchor = self:GetBottomAnchorCached(owner, opts and opts.extTT_Anchor)
 		if not anchor then
-			self.__currentOwner = nil
-			extTip:Hide()
-			return false
+			-- For battle pets, always try to use the owner as anchor since they don't have comparison tooltips
+			if not isBattlePet then
+				self.__currentOwner = nil
+				extTip:Hide()
+				return false
+			end
+			-- For battle pets, set the owner as initial anchor so the extTip is positioned correctly
+			-- UpdateAnchor will be called later to refine the position
+			if owner and CanAccessObject(owner) then
+				extTip:SetPoint("TOPLEFT", owner, "BOTTOMLEFT", 0, -2)
+			end
 		end
 	end
 
@@ -660,9 +668,14 @@ function ExtTip:SetAnchor(owner, anchor, extTip, anchorMode)
 	end
 end
 
-function ExtTip:UpdateAnchor(owner)
+function ExtTip:UpdateAnchor(owner, isBattlePet)
 	local extTip = self.extTip
-	if not extTip or not extTip:IsShown() then return false end
+	if not extTip then
+		return false
+	end
+
+	-- Don't check IsShown() here - it may not be visible yet but we want to position it anyway
+	-- The check was preventing battle pet tooltips from being positioned correctly
 
 	-- Custom positioning bypasses auto-anchoring and any tooltip scans.
 	if self:ApplyCustomPosition(extTip) then
@@ -670,13 +683,26 @@ function ExtTip:UpdateAnchor(owner)
 	end
 
 	local frame = owner or self.__currentOwner
-	if not frame then return false end
+	if not frame then
+		return false
+	end
 
 	self.__currentOwner = frame
 	extTip:ClearAllPoints()
 	local anchorMode = NormalizeAnchorMode(BSYC.options and BSYC.options.extTT_Anchor)
 	local anchor = self:GetBottomAnchorCached(frame, anchorMode)
+
 	if not anchor then
+		-- For battle pets, try to use the frame directly as anchor since they don't have comparison tooltips
+		-- Check if the frame is accessible and has a valid position
+		if isBattlePet and CanAccessObject(frame) then
+			local cx, cy = Utility:GetSafeCenter("Tooltip", frame, frame, "anchor place center", "UpdateAnchor:BattlePetFallback")
+			if cx and cy then
+				-- Use the frame itself as anchor for battle pets
+				self:SetAnchor(frame, frame, extTip, anchorMode)
+				return true
+			end
+		end
 		extTip:Hide()
 		return false
 	end

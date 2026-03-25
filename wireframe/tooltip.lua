@@ -650,16 +650,26 @@ function Tooltip:AddTextLines(objTooltip, lineList)
 	end
 end
 
-function Tooltip:ShowExtTipWithUnitInline(objTooltip, extTip, unitList, addSeparator)
-	if not objTooltip or not extTip or not unitList or #unitList == 0 or type(objTooltip.AddDoubleLine) ~= "function" then return end
+function Tooltip:ShowExtTipWithUnitInline(objTooltip, extTip, unitList, addSeparator, isBattlePet)
+	if not objTooltip or not extTip or not unitList or #unitList == 0 then return end
+
 	ExtTip:ApplyFont()
 	extTip:Show()
-	if not ExtTip:UpdateAnchor(objTooltip) then
-		if addSeparator then
-			objTooltip:AddDoubleLine(" ", " ")
+
+	local anchorResult = ExtTip:UpdateAnchor(objTooltip, isBattlePet)
+
+	if not anchorResult then
+		-- Only check for AddDoubleLine when we actually need inline fallback
+		-- For battle pets, we rely on the external tooltip, so skip inline if AddDoubleLine is not available
+		if type(objTooltip.AddDoubleLine) ~= "function" then
+			-- BattlePetTooltip doesn't support AddDoubleLine, just skip inline fallback
+		else
+			if addSeparator then
+				objTooltip:AddDoubleLine(" ", " ")
+			end
+			self:AddTooltipUnits(objTooltip, unitList, BSYC.colors.total)
+			objTooltip:Show()
 		end
-		self:AddTooltipUnits(objTooltip, unitList, BSYC.colors.total)
-		objTooltip:Show()
 	end
 end
 
@@ -1284,22 +1294,31 @@ end
 
 function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local opts = BSYC.options
-	if opts.enableTooltips == false then return end
-	if not CanAccessObject(objTooltip) then return end
-	if Scanner.isScanningGuild then return end --don't tally while we are scanning the Guildbank
+	if opts.enableTooltips == false then
+		return
+	end
+	if not CanAccessObject(objTooltip) then
+		return
+	end
+	if Scanner.isScanningGuild then
+		return
+	end
 
 	local tracking = BSYC.tracking
 	local GetItemCount = BSYC.API and BSYC.API.GetItemCount
 	local IsReagentBankUnlocked = _G.IsReagentBankUnlocked
 
 	--check for modifier option only in windows that isn't BagSync search
-	if not self:CheckModifier() and not objTooltip.isBSYCSearch then return end
+	if not self:CheckModifier() and not objTooltip.isBSYCSearch then
+		return
+	end
 
 	-- Legacy: keep objTooltip assignment for potential external consumers (internal code no longer uses it).
 	Tooltip.objTooltip = objTooltip
 
 	local showExtTip = ExtTip:Check(source, isBattlePet, objTooltip)
 	local extTip = showExtTip and ExtTip:GetTip() or nil
+
 	local skipTally = false
 
 	--only show tooltips in search frame if the option is enabled
@@ -1324,7 +1343,6 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if not link or not shortID then
 		ExtTip:Hide()
 		objTooltip:Show()
-		Debug(BSYC_DL.WARN, "TallyUnits", "NoLink", origLink, source, isBattlePet)
 		return
 	end
 
@@ -1416,7 +1434,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			end
 			objTooltip:Show()
 			if showExtTip then
-				self:ShowExtTipWithUnitInline(objTooltip, extTip, self.__lastTally, opts.enableTooltipSeparator and #self.__lastTally > 0)
+				self:ShowExtTipWithUnitInline(objTooltip, extTip, self.__lastTally, opts.enableTooltipSeparator and #self.__lastTally > 0, isBattlePet)
 			end
 		end
 		objTooltip.__tooltipUpdated = true
@@ -1611,7 +1629,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	if showExtTip then
 		if #unitList > 0 then
-			self:ShowExtTipWithUnitInline(objTooltip, extTip, unitList, opts.enableTooltipSeparator and #unitList > 0)
+			self:ShowExtTipWithUnitInline(objTooltip, extTip, unitList, opts.enableTooltipSeparator and #unitList > 0, isBattlePet)
 		else
 			ExtTip:Hide()
 		end

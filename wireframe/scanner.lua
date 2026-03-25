@@ -1321,32 +1321,77 @@ end
 function Scanner:SaveProfessionsRetail(playerName)
 	Debug(BSYC_DL.INFO, "SaveProfessionsRetail", playerName)
 	--we don't want to do linked tradeskills, guild tradeskills, or a tradeskill from an NPC
-	if C_TradeSkillUI.IsTradeSkillLinked and C_TradeSkillUI.IsTradeSkillLinked() then return end
-	if C_TradeSkillUI.IsTradeSkillGuild and C_TradeSkillUI.IsTradeSkillGuild() then return end
-	if C_TradeSkillUI.IsNPCCrafting and C_TradeSkillUI.IsNPCCrafting() then return end
+	if C_TradeSkillUI.IsTradeSkillLinked and C_TradeSkillUI.IsTradeSkillLinked() then
+		return
+	end
+	if C_TradeSkillUI.IsTradeSkillGuild and C_TradeSkillUI.IsTradeSkillGuild() then
+		return
+	end
+	if C_TradeSkillUI.IsNPCCrafting and C_TradeSkillUI.IsNPCCrafting() then
+		return
+	end
 
 	local tmpRecipe = {}
 	local catCheck = {}
 	local orderIndex = 0
 	local recipesByCategory = {}
 
-	Scanner.recipeIDs = C_TradeSkillUI.GetAllRecipeIDs() or {}
+	-- Wrap GetAllRecipeIDs in pcall to handle potential errors
+	local okGetAll, recipeIDs = pcall(C_TradeSkillUI.GetAllRecipeIDs)
+	if not okGetAll or not recipeIDs then
+		recipeIDs = {}
+	end
+	Scanner.recipeIDs = recipeIDs
 	Scanner.invertedRecipeIDs = InvertArray(Scanner.recipeIDs)
 
 	--https://wowpedia.fandom.com/wiki/API_C_TradeSkillUI.GetBaseProfessionInfo
 	--https://wowpedia.fandom.com/wiki/API_C_TradeSkillUI.GetTradeSkillLineInfoByID
-	local baseInfo = C_TradeSkillUI.GetBaseProfessionInfo and C_TradeSkillUI.GetBaseProfessionInfo()
-	if baseInfo and not IsSafeTable(baseInfo) then baseInfo = nil end
+	local okBase, baseInfo = pcall(C_TradeSkillUI.GetBaseProfessionInfo)
+	if okBase and baseInfo and not IsSafeTable(baseInfo) then baseInfo = nil end
+	if not okBase then baseInfo = nil end
 
 	local parentSkillLineID, parentSkillLineName
 
 	if not baseInfo or not baseInfo.professionID then
-		local professionInfo = C_TradeSkillUI.GetChildProfessionInfo and C_TradeSkillUI.GetChildProfessionInfo()
-		if professionInfo and not IsSafeTable(professionInfo) then professionInfo = nil end
-		if not professionInfo or not professionInfo.parentProfessionID then return end
+		local okChild, professionInfo = pcall(C_TradeSkillUI.GetChildProfessionInfo)
+		if okChild and professionInfo and not IsSafeTable(professionInfo) then professionInfo = nil end
+		if not okChild then professionInfo = nil end
 
-		parentSkillLineID = professionInfo.parentProfessionID
-		parentSkillLineName = professionInfo.parentProfessionName
+		if not professionInfo or not professionInfo.parentProfessionID then
+			-- Fallback: Try to get profession info from GetProfessions()
+			-- This can happen when viewing profession UIs that don't have standard base/child structure
+			local prof1, prof2, prof3 = GetProfessions()
+			local professions = {prof1, prof2, prof3}
+
+			for _, profIndex in ipairs(professions) do
+				if profIndex then
+					local name, _, _, _, _, _, skillLineID, _, _, _, className = GetProfessionInfo(profIndex)
+					-- Skip secondary professions (fishing, archaeology) as they're handled elsewhere
+					if skillLineID and name and className ~= "Secondary" then
+						-- Check if this profession matches what we have in the trade skill window
+						-- by checking if we have recipes for it
+						local hasRecipes = false
+						if Scanner.recipeIDs and #Scanner.recipeIDs > 0 then
+							-- We have recipes open, so this is likely the active profession
+							hasRecipes = true
+						end
+
+						if hasRecipes then
+							parentSkillLineID = skillLineID
+							parentSkillLineName = name
+							break
+						end
+					end
+				end
+			end
+
+			if not parentSkillLineID or not parentSkillLineName then
+				return
+			end
+		else
+			parentSkillLineID = professionInfo.parentProfessionID
+			parentSkillLineName = professionInfo.parentProfessionName
+		end
 	else
 		parentSkillLineID = baseInfo.professionID
 		parentSkillLineName = baseInfo.professionName
@@ -1355,40 +1400,71 @@ function Scanner:SaveProfessionsRetail(playerName)
 	--https://wowpedia.fandom.com/wiki/API_C_TradeSkillUI.GetTradeSkillLineInfoByID
 	--info = C_TradeSkillUI.GetProfessionInfoBySkillLineID(skillLineID)
 
+	-- Declare categoryCount outside the if block so it's accessible at the end of the function
+	local categoryCount = 0
+
 	if parentSkillLineID and parentSkillLineName then
 		--create the categories, sometimes we have professions with no recipes.  We want to store this anyways
-		local categories = {C_TradeSkillUI.GetCategories()}
-		local categoryCount = 0
+		-- GetCategories returns vararg, so we need to wrap it in a function and use pcall properly
+		local okCats, categories = pcall(function() return {C_TradeSkillUI.GetCategories()} end)
+		if not okCats or not categories or type(categories) ~= "table" then
+			categories = {}
+		end
 
 		--always refresh the DB to prevent old data from remaining
 		BSYC.db.player.professions[parentSkillLineID] = {}
 		BSYC.db.player.professions[parentSkillLineID].name = parentSkillLineName
 		local parentIDSlot = BSYC.db.player.professions[parentSkillLineID]
 
-		for i, categoryID in ipairs(categories) do
-			local categoryData = C_TradeSkillUI.GetCategoryInfo(categoryID)
-			if categoryData and not IsSafeTable(categoryData) then categoryData = nil end
+		for _, categoryID in ipairs(categories) do
+			local okCatData, categoryData = pcall(C_TradeSkillUI.GetCategoryInfo, categoryID)
+			if okCatData and categoryData and not IsSafeTable(categoryData) then categoryData = nil end
+			if not okCatData then categoryData = nil end
 
-			if categoryData and categoryData.categoryID and categoryData.skillLineCurrentLevel and categoryData.skillLineCurrentLevel > 0 then
+			-- For modern WoW (The War Within+), categories might not have skillLineCurrentLevel
+			-- Check if the category has valid data before processing
+			if categoryData and categoryData.categoryID then
+				local shouldProcess = false
 
-				parentIDSlot.categories = parentIDSlot.categories or {}
+				-- Old way: check if skillLineCurrentLevel > 0
+				if categoryData.skillLineCurrentLevel and categoryData.skillLineCurrentLevel > 0 then
+					shouldProcess = true
+				end
 
-				--Legion Engineering, Cateclysm Engineering, etc...
-				parentIDSlot.categories[categoryID] = parentIDSlot.categories[categoryID] or {}
-				local subCatSlot = parentIDSlot.categories[categoryID]
+				-- New way: also process if we have recipes in this category
+				if not shouldProcess then
+					local recipeCountForCat = 0
+					for _, recipeID in ipairs(Scanner.recipeIDs) do
+						local okRecipe, recipeData = pcall(C_TradeSkillUI.GetRecipeInfo, recipeID)
+						if okRecipe and recipeData and recipeData.categoryID == categoryID then
+							recipeCountForCat = recipeCountForCat + 1
+						end
+					end
+					if recipeCountForCat > 0 then
+						shouldProcess = true
+					end
+				end
 
-				--always overwrite because we can have a different level or name then last time
-				subCatSlot.name = categoryData.name
-				subCatSlot.skillLineCurrentLevel = categoryData.skillLineCurrentLevel
-				subCatSlot.skillLineMaxLevel = categoryData.skillLineMaxLevel
+				if shouldProcess then
+					parentIDSlot.categories = parentIDSlot.categories or {}
 
-				if not catCheck[categoryID] then
-					orderIndex = orderIndex + 1
-					subCatSlot.orderIndex = orderIndex
-					catCheck[categoryID] = orderIndex
+					--Legion Engineering, Cateclysm Engineering, etc...
+					parentIDSlot.categories[categoryID] = parentIDSlot.categories[categoryID] or {}
+					local subCatSlot = parentIDSlot.categories[categoryID]
 
-					categoryCount = categoryCount + 1
-					parentIDSlot.categoryCount = categoryCount
+					--always overwrite because we can have a different level or name then last time
+					subCatSlot.name = categoryData.name
+					subCatSlot.skillLineCurrentLevel = categoryData.skillLineCurrentLevel
+					subCatSlot.skillLineMaxLevel = categoryData.skillLineMaxLevel
+
+					if not catCheck[categoryID] then
+						orderIndex = orderIndex + 1
+						subCatSlot.orderIndex = orderIndex
+						catCheck[categoryID] = orderIndex
+
+						categoryCount = categoryCount + 1
+						parentIDSlot.categoryCount = categoryCount
+					end
 				end
 			end
 		end
@@ -1397,77 +1473,65 @@ function Scanner:SaveProfessionsRetail(playerName)
 
 		--store the recipes
 		for i = 1, #Scanner.recipeIDs do
-			local recipeData = C_TradeSkillUI.GetRecipeInfo(Scanner.recipeIDs[i])
-			if recipeData and not IsSafeTable(recipeData) then recipeData = nil end
+			local okRecipe, recipeData = pcall(C_TradeSkillUI.GetRecipeInfo, Scanner.recipeIDs[i])
+			if okRecipe and recipeData and not IsSafeTable(recipeData) then recipeData = nil end
+			if not okRecipe then recipeData = nil end
 
 			if recipeData then
-				local categoryID = recipeData.categoryID
-				local categoryData = C_TradeSkillUI.GetCategoryInfo(categoryID)
-				if categoryData and not IsSafeTable(categoryData) then categoryData = nil end
+				if recipeData.learned then
+					local categoryID = recipeData.categoryID
 
-				--grab the parent name, Engineering, Herbalism, Blacksmithing, etc...
-				if recipeData.learned and categoryData and categoryData.categoryID == categoryID and categoryData.parentCategoryID then
+					-- In modern WoW (The War Within+), GetCategories() may not return all categoryIDs
+					-- So we need to create categories dynamically from recipe data
+					if categoryID then
+						-- Create the category slot if it doesn't exist
+						if not parentIDSlot.categories then
+							parentIDSlot.categories = {}
+						end
+						if not parentIDSlot.categories[categoryID] then
+							-- Get category info for this recipe's category
+							local okCatInfo, catInfo = pcall(C_TradeSkillUI.GetCategoryInfo, categoryID)
+							if okCatInfo and catInfo and not IsSafeTable(catInfo) then catInfo = nil end
+							if not okCatInfo then catInfo = nil end
 
-					--grab categories, Legion Engineering, Cateclysm Engineering, etc...
-					local subCatData = C_TradeSkillUI.GetCategoryInfo(categoryData.parentCategoryID)
-					if subCatData and not IsSafeTable(subCatData) then subCatData = nil end
-
-					--make sure we have something to work with, we don't want to store stuff that doesn't have levels
-					if subCatData and subCatData.categoryID == categoryData.parentCategoryID then
-
-						if not BSYC.db.player.professions[parentSkillLineID] then
-							BSYC.db.player.professions[parentSkillLineID] = {}
-							BSYC.db.player.professions[parentSkillLineID].name = parentSkillLineName
+							parentIDSlot.categories[categoryID] = {
+								name = catInfo and catInfo.name or "Unknown",
+								skillLineCurrentLevel = catInfo and catInfo.skillLineCurrentLevel,
+								skillLineMaxLevel = catInfo and catInfo.skillLineMaxLevel,
+								orderIndex = catCheck[categoryID] or (#parentIDSlot.categories + 1)
+							}
+							categoryCount = categoryCount + 1
+							parentIDSlot.categoryCount = categoryCount
 						end
 
-						parentIDSlot.categories = parentIDSlot.categories or {}
-
-						--store the sub category information, Legion Engineering, Cateclysm Engineering, etc...
-						parentIDSlot.categories[subCatData.categoryID] = parentIDSlot.categories[subCatData.categoryID] or {}
-						local subCatSlot = parentIDSlot.categories[subCatData.categoryID]
-
-						--always overwrite because we can have a different level or name then last time
-						subCatSlot.name = subCatData.name
-						subCatSlot.skillLineCurrentLevel = subCatData.skillLineCurrentLevel
-						subCatSlot.skillLineMaxLevel = subCatData.skillLineMaxLevel
-
-						if not subCatSlot.orderIndex then
-							subCatSlot.orderIndex = catCheck[subCatData.categoryID]
-						end
-
-						--now store the recipe information, but make sure we don't already have the recipe stored
-						--we have to do this as sometimes the recipe is scanned multiple times.  It will get refreshed once the profession is saved again though.
-						--so technically it will always be up to date
 						if recipeData.recipeID and not tmpRecipe[recipeData.recipeID] then
 							tmpRecipe[recipeData.recipeID] = true
 
-							local recipeList = recipesByCategory[subCatData.categoryID]
+							local recipeList = recipesByCategory[categoryID]
 							if not recipeList then
 								recipeList = {}
-								recipesByCategory[subCatData.categoryID] = recipeList
+								recipesByCategory[categoryID] = recipeList
 							end
 							recipeList[#recipeList + 1] = tostring(recipeData.recipeID)
 
 							recipeCount = recipeCount + 1
 							parentIDSlot.recipeCount = recipeCount
 						end
-
 					end
-
 				end
-
 			end
 
 		end
 
 		--finalize recipe strings using the existing DB format: "|<id>|<id>|..."
+		local recipeStringCount = 0
 		for categoryID, recipeList in pairs(recipesByCategory) do
 			local subCatSlot = parentIDSlot.categories and parentIDSlot.categories[categoryID]
 			if subCatSlot and recipeList and #recipeList > 0 then
 				subCatSlot.recipes = "|" .. tconcat(recipeList, "|")
+				recipeStringCount = recipeStringCount + 1
 			end
 		end
-
 	end
 	Debug(BSYC_DL.INFO, "SaveProfessionsRetail [Complete]", playerName)
 end
@@ -1661,7 +1725,8 @@ function Scanner:CleanupProfessions()
 	-- Only clean up if GetProfessions() actually returns data (not all Classic servers support it)
 	if hasPrimaryProfessions then
 		for k in pairs(BSYC.db.player.professions) do
-			if not tmpList[k] then
+			-- Convert k to string for comparison since tmpList uses string keys
+			if not tmpList[tostring(k)] then
 				--it's an unlearned or unused tradeskill, lets remove it
 				BSYC.db.player.professions[k] = nil
 			end

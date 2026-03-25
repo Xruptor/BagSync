@@ -539,12 +539,12 @@ end
 -- Shared function to queue profession scan with debounce prevention
 -- StartTimer already calls StopTimer internally, so this handles rapid events automatically
 function Events:QueueProfessionScan()
-	Debug(BSYC_DL.INFO, "QueueProfessionScan: Queuing scan with 3s delay")
+	Debug(BSYC_DL.INFO, "QueueProfessionScan: Queuing scan with 1s delay")
 	-- Scan after a delay to ensure data is loaded
 	-- Classic: TRADE_SKILL_UPDATE fires shortly after TRADE_SKILL_SHOW
 	-- Retail: TRADE_SKILL_LIST_UPDATE fires after TRADE_SKILL_SHOW
 	-- Increased delay to 3s to give Classic more time to load recipe data
-	StartTimer(BSYC, "ProfessionScan", 2, Scanner, "SaveProfessions")
+	StartTimer(BSYC, "ProfessionScan", 1, Scanner, "SaveProfessions")
 end
 
 -- Modern Retail (Dragonflight+) crafting event - ONLY fires for actual crafts

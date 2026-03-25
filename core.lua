@@ -567,7 +567,7 @@ function BSYC:CreateFakeID(link, count, speciesID, level, breedQuality, maxHealt
 
 		if fakePetID then
 			if not count then count = 1 end
-
+			Debug(BSYC_DL.INFO, "FakeID [Created]", speciesID, link, name, fakePetID)
 			local encodeStr = self:EncodeOpts({petdata=petData})
 			if encodeStr then
 				return fakePetID..";"..count..";"..encodeStr
