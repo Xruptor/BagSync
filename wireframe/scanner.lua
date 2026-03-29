@@ -993,9 +993,9 @@ function Scanner:ProcessCurrencyTransfer(doCurrentPlayer, sourceGUID, currencyID
 
 			local currencyObj = Data:GetPlayerCurrencyObj(name, tmpRealm, sourceGUID)
 			if currencyObj and currencyObj[currencyID] and currencyObj[currencyID].count then
-				-- Subtract both the transfer amount AND the transfer cost
+				-- GetCostToTransferCurrency returns the TOTAL amount deducted (amount + fee), not just the fee
 				local originalCount = currencyObj[currencyID].count
-				currencyObj[currencyID].count = originalCount - transferAmt - transferCost
+				currencyObj[currencyID].count = originalCount - transferCost
 				Debug(BSYC_DL.FINE, "CurrencyTransferSourceUpt-2", name, tmpRealm, sourceGUID, currencyID, transferAmt, transferCost, originalCount, currencyObj[currencyID].count)
 
 				-- Validate that the currency count is not negative after transfer
