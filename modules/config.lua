@@ -4,9 +4,10 @@
 
 		BagSync - All Rights Reserved - (c) 2025
 		License included with addon.
+
 --]]
 
-local BSYC = select(2, ...) --grab the addon namespace
+local BSYC = select(2, ...)
 local L = BSYC.L
 local config = BSYC.Config
 local configDialog = BSYC.ConfigDialog
@@ -48,9 +49,12 @@ local function buildLocationLegend()
 end
 
 local function getRealmNameStyle()
-	if BSYC.options and BSYC.options.enableRealmNames then return "names" end
-	if BSYC.options and BSYC.options.enableRealmAstrickName then return "asterisk" end
-	if BSYC.options and BSYC.options.enableRealmShortName then return "short" end
+	local opt = BSYC.options
+	if opt then
+		if opt.enableRealmNames then return "names" end
+		if opt.enableRealmAstrickName then return "asterisk" end
+		if opt.enableRealmShortName then return "short" end
+	end
 	return "none"
 end
 
@@ -62,8 +66,11 @@ local function setRealmNameStyle(style)
 end
 
 local function getLocationStyle()
-	if BSYC.options and BSYC.options.useIconLocations then return "icons" end
-	if BSYC.options and BSYC.options.singleCharLocations then return "short" end
+	local opt = BSYC.options
+	if opt then
+		if opt.useIconLocations then return "icons" end
+		if opt.singleCharLocations then return "short" end
+	end
 	return "full"
 end
 
@@ -106,61 +113,93 @@ local function setCacheSpeedSetting(speed)
 	end
 end
 
-local function buildCacheSpeedSummary()
+-- Cache speed summary helpers
+local function GetCacheThrottleInfo()
 	local data = BSYC.GetModule and BSYC:GetModule("Data", true)
-	local info = data and data.GetCacheThrottleInfo and data:GetCacheThrottleInfo()
-	if not info then return "" end
+	return data and data.GetCacheThrottleInfo and data:GetCacheThrottleInfo()
+end
 
-	local speed = getCacheSpeedSetting()
+local function BuildRampSpeedLines(info)
 	local lines = {}
-	local function colorizeNumbers(line)
-		return (line or ""):gsub("(%d+%.?%d*)", "|cFFFFFFFF%1|r")
-	end
-	local function addLine(line)
-		lines[#lines + 1] = colorizeNumbers(line)
-	end
-	local function padLines(target)
-		while #lines < target do
-			lines[#lines + 1] = " "
-		end
+
+	if info.rampInterval then
+		lines[#lines + 1] = (string.format(L.CacheSpeedRampIntro, info.rampInterval)):gsub("(%d+%.?%d*)", "|cFFFFFFFF%1|r")
 	end
 
-	if speed == "slow" then
-		if info.rampInterval then
-			addLine(string.format(L.CacheSpeedRampIntro, info.rampInterval))
+	local steps = info.ramp or {}
+	for i = 1, #steps do
+		local step = steps[i]
+		local perSec = 0
+		if step.tick and step.tick > 0 then
+			perSec = math.floor((step.batch / step.tick) + 0.5)
 		end
-		local steps = info.ramp or {}
-		for i = 1, #steps do
-			local step = steps[i]
-			local perSec = 0
-			if step.tick and step.tick > 0 then
-				perSec = math.floor((step.batch / step.tick) + 0.5)
-			end
-			addLine(string.format(L.CacheSpeedRampLine, i, step.batch, step.tick, perSec))
-		end
-		padLines(5)
-	elseif speed == "disabled" then
-		addLine(string.format(L.CacheSpeedSingleLine, 0, 0, 0))
-		padLines(5)
-	else
-		local mode = (speed == "medium") and "medium" or "full"
-		local cfg = info.throttle and info.throttle[mode]
-		if cfg then
-			local perSec = 0
-			if cfg.tick and cfg.tick > 0 then
-				perSec = math.floor((cfg.batch / cfg.tick) + 0.5)
-			end
-			addLine(string.format(L.CacheSpeedSingleLine, cfg.batch, cfg.tick, perSec))
-		end
-		padLines(5)
+		lines[#lines + 1] = (string.format(L.CacheSpeedRampLine, i, step.batch, step.tick, perSec)):gsub("(%d+%.?%d*)", "|cFFFFFFFF%1|r")
+	end
+
+	-- Pad to 5 lines
+	while #lines < 5 do
+		lines[#lines + 1] = " "
 	end
 
 	return tconcat(lines, "\n")
 end
 
+local function BuildConstantSpeedLines(info)
+	local lines = {}
+	local speed = getCacheSpeedSetting()
+	local mode = (speed == "medium") and "medium" or "full"
+	local cfg = info.throttle and info.throttle[mode]
+
+	if cfg then
+		local perSec = 0
+		if cfg.tick and cfg.tick > 0 then
+			perSec = math.floor((cfg.batch / cfg.tick) + 0.5)
+		end
+		lines[#lines + 1] = (string.format(L.CacheSpeedSingleLine, cfg.batch, cfg.tick, perSec)):gsub("(%d+%.?%d*)", "|cFFFFFFFF%1|r")
+	end
+
+	-- Pad to 5 lines
+	while #lines < 5 do
+		lines[#lines + 1] = " "
+	end
+
+	return tconcat(lines, "\n")
+end
+
+local function BuildDisabledSpeedLines()
+	local lines = {
+		(string.format(L.CacheSpeedSingleLine, 0, 0, 0)):gsub("(%d+%.?%d*)", "|cFFFFFFFF%1|r"),
+		" ", " ", " ", " "
+	}
+	return tconcat(lines, "\n")
+end
+
+local function buildCacheSpeedSummary()
+	local info = GetCacheThrottleInfo()
+	if not info then return "" end
+
+	local speed = getCacheSpeedSetting()
+
+	if speed == "slow" then
+		return BuildRampSpeedLines(info)
+	elseif speed == "disabled" then
+		return BuildDisabledSpeedLines()
+	else
+		return BuildConstantSpeedLines(info)
+	end
+end
+
 local function setTooltipSortMode(mode)
 	BSYC.options = BSYC.options or {}
 	BSYC.options.tooltipSortMode = mode
+end
+
+-- Helper to check if account-wide tags are enabled
+local function IsAccountWideTagEnabled()
+	local opt = BSYC.options
+	local enableCR = (opt and opt.enableCR ~= false) or false
+	local enableBNET = (opt and opt.enableBNET == true) or false
+	return enableCR or enableBNET
 end
 
 local ReadyCheck = [[|TInterface\RaidFrame\ReadyCheck-Ready:0|t]]
@@ -225,11 +264,17 @@ local cacheSpeedValues = {
 	{ "disabled", L.CacheSpeedDisabled },
 }
 
+-- Cache font names for reuse (lazy evaluation)
+local cachedFontNames
 local function getFontNames()
-	if type(BSYC.GetAvailableFontNames) == "function" then
-		return BSYC:GetAvailableFontNames()
+	if not cachedFontNames then
+		if type(BSYC.GetAvailableFontNames) == "function" then
+			cachedFontNames = BSYC:GetAvailableFontNames()
+		else
+			cachedFontNames = {}
+		end
 	end
-	return {}
+	return cachedFontNames
 end
 
 local aboutTable = {
@@ -239,9 +284,12 @@ local aboutTable = {
 			type = "text",
 			text = function()
 				local getMeta = BSYC.API and BSYC.API.GetAddOnMetadata
-				local notes = (getMeta and getMeta("BagSync", "Notes")) or ""
-				local version = (getMeta and getMeta("BagSync", "Version")) or ""
-				local author = (getMeta and getMeta("BagSync", "Author")) or ""
+				if not getMeta then return "" end
+
+				local notes = getMeta("BagSync", "Notes") or ""
+				local version = getMeta("BagSync", "Version") or ""
+				local author = getMeta("BagSync", "Author") or ""
+
 				return notes
 					.. "\n\n\n\n"
 					.. "|cFF52D386Version|r: " .. version
@@ -663,11 +711,7 @@ local displayTable = {
 							type = "toggle",
 							label = L.DisplayRealmIDTags,
 							bind = { "opt", "enableRealmIDTags" },
-							disabled = function()
-								local enableCR = (BSYC.options and BSYC.options.enableCR ~= false) or false
-								local enableBNET = (BSYC.options and BSYC.options.enableBNET == true) or false
-								return not enableCR and not enableBNET
-							end,
+							disabled = function() return not IsAccountWideTagEnabled() end,
 							dirty = "tooltips",
 						},
 						{
@@ -676,11 +720,7 @@ local displayTable = {
 							values = realmNameStyleValues,
 							get = getRealmNameStyle,
 							set = setRealmNameStyle,
-							disabled = function()
-								local enableCR = (BSYC.options and BSYC.options.enableCR ~= false) or false
-								local enableBNET = (BSYC.options and BSYC.options.enableBNET == true) or false
-								return not enableCR and not enableBNET
-							end,
+							disabled = function() return not IsAccountWideTagEnabled() end,
 							dirty = "tooltips",
 						},
 					},

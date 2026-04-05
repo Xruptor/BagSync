@@ -5,12 +5,8 @@
 
 		BagSync - All Rights Reserved - (c) 2025
 		License included with addon.
---]]
 
--- Changes made:
--- - Replaced inline event closures with named handlers to ensure proper registration and reduce duplication.
--- - Centralized interaction state updates and auction callbacks for clarity and safer re-entrancy.
--- - Reset realm caches on collection to avoid stale realm key data, plus localized hot globals.
+--]]
 
 local BSYC = select(2, ...) --grab the addon namespace
 local Unit = BSYC:NewModule("Unit")
@@ -65,10 +61,18 @@ local REALM_SPLIT_PATTERN = '^(.-) *%- *(.+)$'
 local REALM_SPACE_PATTERN = '(%l)(%u)'
 local REALM_STRIP_PATTERN = '[%p%c%s]'
 
+-- Realm cache tables. Naming convention:
+--   COR = Corrected Realm (ApplyBrokenSpacing applied — proper spacing/hyphens restored)
+--   RWS = Remove White Space (punctuation, control chars, and whitespace stripped)
+--   LC  = Lowercase (strlower of the RWS form)
+--
+-- Realms_* arrays hold the transformed realm at each stage (indexed, for key generation).
+-- RealmChk_* lookup maps store: transformed_form → corrected_form (COR), used by
+-- CheckConnectedRealm and GetTrueRealmName to resolve normalized/misspelled realm names.
 local Realms
 local Realms_RWS = {}
 local Realms_LC = {}
-local RealmChk_CR = {}
+local RealmChk_COR = {}
 local RealmChk_RWS = {}
 local RealmChk_LC = {}
 
@@ -89,6 +93,16 @@ local function NormalizeRealmForCompare(realm)
 	return realm and strlower(realm) or realm
 end
 
+-- Helper to normalize a realm name and return all three forms (COR, RWS, LC)
+-- Used to avoid redundant transformations in CheckConnectedRealm and GetTrueRealmName
+local function NormalizeRealmSingle(realm)
+	if not realm then return nil, nil, nil end
+	local cor = ApplyBrokenSpacing(realm)
+	local rws = StripRealm(cor)
+	local lc = strlower(rws)
+	return cor, rws, lc
+end
+
 local function GetPlayerMoney()
 	local money = GetMoney and GetMoney() or 0
 	local cursorMoney = GetCursorMoney and GetCursorMoney() or 0
@@ -107,47 +121,25 @@ end
 
 if C_PlayerInteractionManager and Enum and Enum.PlayerInteractionType then
 	local InteractType = Enum.PlayerInteractionType
-	--honestly lets ignore all the other gossip and frames that trigger and focus on the ones we want
-	local showDebug = {
-		[InteractType.MailInfo] = true,
-		[InteractType.Banker] = true,
-		[InteractType.Auctioneer] = true,
-		[InteractType.VoidStorageBanker] = true,
-		[InteractType.GuildBanker] = true,
+
+	-- Lookup table mapping interaction types to their state flags and messages
+	-- Replaces 6 duplicate if-blocks with O(1) lookup
+	local INTERACT_TYPE_MAP = {
+		[InteractType.MailInfo] = { flag = "atMailbox", msg = "BAGSYNC_EVENT_MAILBOX" },
+		[InteractType.Banker] = { flag = "atBank", msg = "BAGSYNC_EVENT_BANK" },
+		[InteractType.Auctioneer] = { flag = "atAuction", msg = "BAGSYNC_EVENT_AUCTION" },
+		[InteractType.VoidStorageBanker] = { flag = "atVoidBank", msg = "BAGSYNC_EVENT_VOIDBANK" },
+		[InteractType.GuildBanker] = { flag = "atGuildBank", msg = "BAGSYNC_EVENT_GUILDBANK" },
 	}
 	if BSYC.isWarbandActive then
-		showDebug[InteractType.AccountBanker] = true
+		INTERACT_TYPE_MAP[InteractType.AccountBanker] = { flag = "atWarbandBank", msg = "BAGSYNC_EVENT_WARBANDBANK" }
 	end
 
 	local function HandleInteraction(eventName, winArg, isShow)
-		if winArg and showDebug[winArg] then
+		local interactInfo = INTERACT_TYPE_MAP[winArg]
+		if interactInfo then
 			DebugLog(BSYC_DL.DEBUG, eventName, winArg)
-		end
-
-		if winArg == InteractType.MailInfo then
-			SetLocationState("atMailbox", "BAGSYNC_EVENT_MAILBOX", isShow)
-			return
-		end
-		if winArg == InteractType.Banker then
-			SetLocationState("atBank", "BAGSYNC_EVENT_BANK", isShow)
-			return
-		end
-		if winArg == InteractType.Auctioneer then
-			SetLocationState("atAuction", "BAGSYNC_EVENT_AUCTION", isShow)
-			return
-		end
-		if winArg == InteractType.VoidStorageBanker then
-			SetLocationState("atVoidBank", "BAGSYNC_EVENT_VOIDBANK", isShow)
-			return
-		end
-		if winArg == InteractType.GuildBanker then
-			SetLocationState("atGuildBank", "BAGSYNC_EVENT_GUILDBANK", isShow)
-			return
-		end
-		if BSYC.isWarbandActive and winArg == InteractType.AccountBanker then
-			--note: this interaction window only works with the Warband Bank Convergence
-			SetLocationState("atWarbandBank", "BAGSYNC_EVENT_WARBANDBANK", isShow)
-			return
+			SetLocationState(interactInfo.flag, interactInfo.msg, isShow)
 		end
 	end
 
@@ -155,7 +147,6 @@ if C_PlayerInteractionManager and Enum and Enum.PlayerInteractionType then
 		HandleInteraction("PLAYER_INTERACTION_MANAGER_FRAME_SHOW", winArg, true)
 	end
 
-	--Introduced in Dragonflight (https://wowpedia.fandom.com/wiki/PLAYER_INTERACTION_MANAGER_FRAME_SHOW)
 	function Unit:PLAYER_INTERACTION_MANAGER_FRAME_HIDE(_, winArg)
 		HandleInteraction("PLAYER_INTERACTION_MANAGER_FRAME_HIDE", winArg, false)
 	end
@@ -213,7 +204,7 @@ else
 	end
 end
 
---these are used to process auction house data when it's ready.  Second variable is true for ready
+-- Auction house data processing handlers
 if C_AuctionHouse then
 	function Unit:AUCTION_HOUSE_THROTTLED_SYSTEM_READY()
 		--if we created an auction, then query the player owned auctions but don't push event yet
@@ -227,7 +218,6 @@ if C_AuctionHouse then
 		self:SendMessage('BAGSYNC_EVENT_AUCTION', self.atAuction, true)
 	end
 
-	--they sold something on auction house, so lets trigger an owned auctions update
 	function Unit:AUCTION_HOUSE_AUCTION_CREATED()
 		self.auctionCreated = true
 	end
@@ -254,35 +244,28 @@ function Unit:DoRealmCollection(source)
 		Realms = { GetRealmName() }
 	end
 
-	-- Clear realm caches to avoid stale entries on refresh.
-	if wipe then
-		wipe(Realms_RWS)
-		wipe(Realms_LC)
-		wipe(RealmChk_CR)
-		wipe(RealmChk_RWS)
-		wipe(RealmChk_LC)
-	else
-		Realms_RWS = {}
-		Realms_LC = {}
-		RealmChk_CR = {}
-		RealmChk_RWS = {}
-		RealmChk_LC = {}
-	end
+	-- Clear realm caches to avoid stale entries on refresh
+	-- Dead code removed: wipe is always available in WoW Lua, no nil check needed
+	wipe(Realms_RWS)
+	wipe(Realms_LC)
+	wipe(RealmChk_COR)
+	wipe(RealmChk_RWS)
+	wipe(RealmChk_LC)
 
 	for i, realm in ipairs(Realms) do
-		realm = ApplyBrokenSpacing(realm)
-		local origRealm = realm
+		-- Cache all transformations to avoid redundant ApplyBrokenSpacing/StripRealm calls
+		local cor = ApplyBrokenSpacing(realm)
+		local rws = StripRealm(cor)
+		local lc = strlower(rws)
 
-		Realms[i] = realm
-		RealmChk_CR[realm] = true
+		Realms[i] = cor
+		RealmChk_COR[cor] = true
 
-		realm = StripRealm(realm)
-		Realms_RWS[i] = realm
-		RealmChk_RWS[realm] = origRealm
+		Realms_RWS[i] = rws
+		RealmChk_RWS[rws] = cor
 
-		realm = strlower(realm)
-		Realms_LC[i] = realm
-		RealmChk_LC[realm] = origRealm
+		Realms_LC[i] = lc
+		RealmChk_LC[lc] = cor
 	end
 
 	--this is used to identify cross servers as a unique key.
@@ -315,11 +298,10 @@ function Unit:GetUnitAddress(unit)
 	local value = name or unit
 	local guildName
 
-	if type(value) == "string" then
-		local pos = value:find(GUILD_MARK, 1, true)
-		if pos and pos > 1 then
-			guildName = value:sub(1, pos - 1)
-		end
+	-- Removed redundant type check - string.find works on strings, and value is always a string here
+	local pos = value:find(GUILD_MARK, 1, true)
+	if pos and pos > 1 then
+		guildName = value:sub(1, pos - 1)
 	end
 
 	return realm or realmName, guildName or unit, guildName and true
@@ -338,8 +320,8 @@ function Unit:GetPlayerInfo(bypassDebug)
 	unit.realm = realmName
 	unit.name = playerName
 	unit.money = GetPlayerMoney()
-	unit.local_class_name, unit.class, unit.class_id  = UnitClass("player")
-	unit.local_race_name, unit.race, unit.race_id  = UnitRace("player")
+	unit.local_class_name, unit.class, unit.class_id = UnitClass("player")
+	unit.local_race_name, unit.race, unit.race_id = UnitRace("player")
 	unit.guid = UnitGUID("player")
 	unit.guild = guildName
 	if unit.guild then
@@ -363,14 +345,12 @@ function Unit:CheckConnectedRealm(realm)
 	if not realm then return false end
 	if not Unit.realmKey then Unit:DoRealmCollection("CheckConnectedRealm") end
 
-	realm = ApplyBrokenSpacing(realm)
-	if RealmChk_CR[realm] then return true end
+	-- Use NormalizeRealmSingle to get all forms at once, then check in order of specificity
+	local cor, rws, lc = NormalizeRealmSingle(realm)
 
-	realm = StripRealm(realm)
-	if RealmChk_RWS[realm] then return true end
-
-	realm = strlower(realm)
-	if RealmChk_LC[realm] then return true end
+	if RealmChk_COR[cor] then return true end
+	if RealmChk_RWS[rws] then return true end
+	if RealmChk_LC[lc] then return true end
 
 	return false
 end
@@ -383,41 +363,38 @@ function Unit:GetTrueRealmName(realm)
 	--in these situations the guild realms don't match because they may have a space or hyphen or something
 	--we need to do checks for this to ensure we get the appropriate realm name
 
-	if RealmChk_CR[realm] then
-		return realm
+	local cor, rws, lc = NormalizeRealmSingle(realm)
+
+	-- Check in order: corrected realname, stripped, lowercase
+	-- Early returns avoid unnecessary checks
+	if RealmChk_COR[cor] then
+		return cor
 	end
 
-	local origRealm = realm
-
-	--1) lets check for broken realms and incorrect spacing
-	realm = ApplyBrokenSpacing(realm)
-	if RealmChk_CR[realm] then
-		return realm
+	if RealmChk_RWS[rws] then
+		return RealmChk_RWS[rws]
 	end
 
-	--2) lets do a quick RWS check
-	realm = StripRealm(realm)
-	if RealmChk_RWS[realm] then
-		return RealmChk_RWS[realm] --return original realm name
+	if RealmChk_LC[lc] then
+		return RealmChk_LC[lc]
 	end
 
-	--3) lets check for lowercase
-	realm = strlower(realm)
-	if RealmChk_LC[realm] then
-		return RealmChk_LC[realm] --return original realm name
-	end
-
-	--4) they must have a guild on another server.  So return the unaltered origRealm
-	return origRealm
+	-- they must have a guild on another server. So return the unaltered realm
+	return realm
 end
 
 function Unit:CompareRealms(sourceRealm, targetRealm)
 	if not sourceRealm or not targetRealm then return false end
 	if sourceRealm == targetRealm then return true end
 
-	--before we do anything lets make everything lowercase
-	if strlower(sourceRealm) == strlower(targetRealm) then return true end
+	-- Cache lowercase results to avoid redundant strlower calls
+	local sourceLC = strlower(sourceRealm)
+	local targetLC = strlower(targetRealm)
 
+	if sourceLC == targetLC then return true end
+
+	-- NormalizeRealmForCompare will call strlower again, but we've already cached the result above
+	-- This is fine - the function does more than just lowercase
 	return NormalizeRealmForCompare(sourceRealm) == NormalizeRealmForCompare(targetRealm)
 end
 

@@ -4,6 +4,7 @@
 
 		BagSync - All Rights Reserved - (c) 2025
 		License included with addon.
+
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
@@ -12,18 +13,25 @@ local Currency = BSYC:NewModule("Currency")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
 
-local function Debug(level, ...)
-    if BSYC.DEBUG then BSYC.DEBUG(level, "Currency", ...) end
-end
-
 local L = BSYC.L
+
+-- Cache global references
+local HybridScrollFrame_GetButtons = HybridScrollFrame_GetButtons
+local HybridScrollFrame_GetOffset = HybridScrollFrame_GetOffset
+local HybridScrollFrame_SetOffset = HybridScrollFrame_SetOffset
+local HybridScrollFrame_Update = HybridScrollFrame_Update
+local STANDARD_TEXT_FONT = STANDARD_TEXT_FONT
+local GameTooltip = GameTooltip
+local GetNumExpansions = GetNumExpansions
+local table_insert = table.insert
+local strlower = string.lower
 
 function Currency:OnEnable()
 	local currencyFrame = UI:CreateModuleFrame(Currency, {
 		template = "BagSyncFrameTemplate",
 		globalName = "BagSyncCurrencyFrame",
 		title = "BagSync - "..L.Currency,
-		height = 506, --irregular height to allow the scroll frame to fit the bottom most button
+		height = 506,
 		width = 380,
 		point = { "CENTER", UIParent, "CENTER", 0, 0 },
 		onShow = function() Currency:OnShow() end,
@@ -33,12 +41,10 @@ function Currency:OnEnable()
 	Currency.scrollFrame = UI:CreateHybridScrollFrame(currencyFrame, {
 		width = 337,
 		pointTopLeft = { "TOPLEFT", currencyFrame, "TOPLEFT", 13, -30 },
-		-- set ScrollFrame height by altering the distance from the bottom of the frame
 		pointBottomLeft = { "BOTTOMLEFT", currencyFrame, "BOTTOMLEFT", -25, 15 },
 		buttonTemplate = "BagSyncListItemTemplate",
-		update = function() Currency:RefreshList(); end,
+		update = function() Currency:RefreshList() end,
 	})
-	--the items we will work with
 	Currency.currencies = {}
 
 	currencyFrame:Hide()
@@ -48,9 +54,8 @@ function Currency:OnShow()
 	BSYC:SetBSYC_FrameLevel(Currency)
 
 	Currency:CreateList()
-    Currency:RefreshList()
+	Currency:RefreshList()
 
-	--scroll to top when shown
 	HybridScrollFrame_SetOffset(Currency.scrollFrame, 0)
 	Currency.scrollFrame.scrollBar:SetValue(0)
 end
@@ -59,12 +64,12 @@ function Currency:DoSortFilters(expName)
 	if not expName then return end
 
 	expName = expName:gsub('(%l)(%u)', '%1 %2')
-	expName = expName:gsub('[%p%c%s]', '') -- remove all punctuation characters, all control characters, and all whitespace characters 
-	expName = string.lower(expName)
+	expName = expName:gsub('[%p%c%s]', '')
+	expName = strlower(expName)
 
-	--now do our localized filters
-	if L.CurrencySortFilters and type(L.CurrencySortFilters) == "table" then
-		for e=1, #L.CurrencySortFilters do
+	-- Use localized filters - no type check needed as we only run this loop if L.CurrencySortFilters exists
+	if L.CurrencySortFilters then
+		for e = 1, #L.CurrencySortFilters do
 			expName = expName:gsub("^"..L.CurrencySortFilters[e], "")
 		end
 	end
@@ -72,14 +77,11 @@ function Currency:DoSortFilters(expName)
 	return expName
 end
 
-function Currency:CreateList()
-	Currency.currencies = {}
-	local usrData = {}
-	local tempList = {}
+-- Build an index of expansion names to their numeric IDs for sorting
+function Currency:BuildExpansionIndex()
 	local expansionList = {}
 
-	--lets get an expansion list so we can sort the top part by expansion release
-	for i=0, GetNumExpansions() do
+	for i = 0, GetNumExpansions() do
 		local eTmp = _G['EXPANSION_NAME'..i]
 		eTmp = self:DoSortFilters(eTmp)
 
@@ -88,122 +90,147 @@ function Currency:CreateList()
 		end
 	end
 
+	return expansionList
+end
+
+-- Create a currency entry table for sorting
+function Currency:CreateCurrencyEntry(k, v, expansionList, sortByExpansion)
+	local header = v.header or L.Currency
+	local sortHeader = self:DoSortFilters(header)
+	local sortIndex = sortHeader and sortByExpansion and expansionList[sortHeader] or -100
+
+	return {
+		header = header,
+		name = v.name,
+		icon = v.icon,
+		currencyID = k,
+		sortIndex = sortIndex
+	}
+end
+
+-- Build the sorted list of currencies with headers
+function Currency:BuildSortedCurrencyList(usrData)
+	if #usrData == 0 then return end
+
+	table.sort(usrData, function(a, b)
+		if a.sortIndex == b.sortIndex then
+			if a.header == b.header then
+				return a.name < b.name
+			end
+			return a.header < b.header
+		end
+		return a.sortIndex > b.sortIndex
+	end)
+
+	local lastHeader = ""
+	for i = 1, #usrData do
+		if lastHeader ~= usrData[i].header then
+			table_insert(Currency.currencies, {
+				header = usrData[i].header,
+				isHeader = true
+			})
+			lastHeader = usrData[i].header
+		end
+		table_insert(Currency.currencies, {
+			header = usrData[i].header,
+			name = usrData[i].name,
+			icon = usrData[i].icon,
+			currencyID = usrData[i].currencyID
+		})
+	end
+end
+
+function Currency:CreateList()
+	Currency.currencies = {}
+	local usrData = {}
+	local tempList = {}
+	local expansionList = self:BuildExpansionIndex()
+	local sortByExpansion = BSYC.options.sortCurrencyByExpansion
+
 	for unitObj in Data:IterateUnits() do
 		if not unitObj.isGuild and unitObj.data.currency then
 			for k, v in pairs(unitObj.data.currency) do
-				local header = v.header or L.Currency
-
-				-- Skip currencies with zero or negative counts to prevent display of corrupted data
+				-- Skip currencies with zero or negative counts
 				if v.count and v.count > 0 then
-					--only do the entry once per currencyID
-					if not tempList[k]  then
-					local sortHeader = self:DoSortFilters(header)
-
-					table.insert(usrData, {
-						header = header,
-						name = v.name,
-						icon = v.icon,
-						currencyID = k,
-						sortIndex = sortHeader and BSYC.options.sortCurrencyByExpansion and expansionList[sortHeader] or -100  --we use -100 as a filler for anything that isn't an expansion to be below lowest possible expansion
-					})
-					tempList[k] = true
+					if not tempList[k] then
+						table_insert(usrData, self:CreateCurrencyEntry(k, v, expansionList, sortByExpansion))
+						tempList[k] = true
 					end
 				end
 			end
 		end
 	end
 
-	if #usrData > 0 then
+	self:BuildSortedCurrencyList(usrData)
+end
 
-		table.sort(usrData, function(a, b)
-			if a.sortIndex == b.sortIndex then
-				if a.header == b.header then
-					return a.name < b.name;
-				end
-				return a.header < b.header;
-			end
-			return a.sortIndex > b.sortIndex;
-		end)
+-- Setup button for header items
+function Currency:SetupButtonForHeader(button, item)
+	button.Icon:SetTexture(nil)
+	button.Icon:Hide()
+	button.Text:SetJustifyH("CENTER")
+	button.Text:SetTextColor(1, 1, 1)
+	button.Text:SetText(item.header or "")
+	button.HeaderHighlight:SetAlpha(0.75)
+	button.isHeader = true
+end
 
-		local lastHeader = ""
-		for i=1, #usrData do
-			if lastHeader ~= usrData[i].header then
-				--add header
-				table.insert(Currency.currencies, {
-					header = usrData[i].header,
-					isHeader = true
-				})
-				lastHeader = usrData[i].header
-			end
-			--add currency
-			table.insert(Currency.currencies, {
-				header = usrData[i].header,
-				name = usrData[i].name,
-				icon = usrData[i].icon,
-				currencyID = usrData[i].currencyID
-			})
-		end
-	end
+-- Setup button for currency items
+function Currency:SetupButtonForCurrency(button, item)
+	button.Icon:SetTexture(item.icon)
+	button.Icon:Show()
+	button.Text:SetJustifyH("LEFT")
+	button.Text:SetTextColor(0.25, 0.88, 0.82)
+	button.Text:SetText(item.name or "")
+	button.HeaderHighlight:SetAlpha(0)
+	button.isHeader = nil
 end
 
 function Currency:RefreshList()
-    local items = Currency.currencies
-    local buttons = HybridScrollFrame_GetButtons(Currency.scrollFrame)
-    local offset = HybridScrollFrame_GetOffset(Currency.scrollFrame)
+	local items = Currency.currencies
+	local buttons = HybridScrollFrame_GetButtons(Currency.scrollFrame)
+	local offset = HybridScrollFrame_GetOffset(Currency.scrollFrame)
+
 	if not buttons then return end
 
-    for buttonIndex = 1, #buttons do
-        local button = buttons[buttonIndex]
+	for buttonIndex = 1, #buttons do
+		local button = buttons[buttonIndex]
 		UI:AttachListItemHandlers(button, Currency)
 
-        local itemIndex = buttonIndex + offset
+		local itemIndex = buttonIndex + offset
 
-        if itemIndex <= #items then
-            local item = items[itemIndex]
+		if itemIndex <= #items then
+			local item = items[itemIndex]
 
-            button:SetID(itemIndex)
+			button:SetID(itemIndex)
 			button.data = item
 			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "")
-            button:SetWidth(Currency.scrollFrame.scrollChild:GetWidth())
+			button:SetWidth(Currency.scrollFrame.scrollChild:GetWidth())
 			button.DetailsButton:Hide()
 
 			if item.isHeader then
-				button.Icon:SetTexture(nil)
-				button.Icon:Hide()
-				button.Text:SetJustifyH("CENTER")
-				button.Text:SetTextColor(1, 1, 1)
-				button.Text:SetText(item.header or "")
-				--button.HeaderHighlight:SetVertexColor(0.8, 0.7, 0, 1)
-				button.HeaderHighlight:SetAlpha(0.75)
-				button.isHeader = true
+				self:SetupButtonForHeader(button, item)
 			else
-				button.Icon:SetTexture(item.icon or nil)
-				button.Icon:Show()
-				button.Text:SetJustifyH("LEFT")
-				button.Text:SetTextColor(0.25, 0.88, 0.82)
-				button.Text:SetText(item.name or "")
-				button.HeaderHighlight:SetAlpha(0)
-				button.isHeader = nil
+				self:SetupButtonForCurrency(button, item)
 			end
 
-			--while we are updating the scrollframe, is the mouse currently over a button?
-			--if so we need to force the OnEnter as the items will scroll up in data but the button remains the same position on our cursor
+			-- Force tooltip refresh if mouse is over button during scroll
 			if BSYC:IsMouseOver(button) then
-				Currency:Item_OnLeave() --hide first
+				Currency:Item_OnLeave()
 				Currency:Item_OnEnter(button)
 			end
 
-            button:Show()
-        else
-            button:Hide()
-        end
-    end
+			button:Show()
+		else
+			button:Hide()
+		end
+	end
 
-    local buttonHeight = Currency.scrollFrame.buttonHeight
-    local totalHeight = #items * buttonHeight
-    local shownHeight = #buttons * buttonHeight
+	local buttonHeight = Currency.scrollFrame.buttonHeight
+	local totalHeight = #items * buttonHeight
+	local shownHeight = #buttons * buttonHeight
 
-    HybridScrollFrame_Update(Currency.scrollFrame, totalHeight, shownHeight)
+	HybridScrollFrame_Update(Currency.scrollFrame, totalHeight, shownHeight)
 end
 
 function Currency:Item_OnEnter(btn)
@@ -212,7 +239,7 @@ function Currency:Item_OnEnter(btn)
 	elseif not btn.isHeader and not btn.Highlight:IsVisible() then
 		btn.Highlight:Show()
 	end
-    if not btn.isHeader then
+	if not btn.isHeader then
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		Tooltip:CurrencyTooltip(GameTooltip, btn.data.name, btn.data.icon, btn.data.currencyID, "bagsync_currency")
 		return

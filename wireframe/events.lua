@@ -4,12 +4,8 @@
 
 		BagSync - All Rights Reserved - (c) 2025
 		License included with addon.
---]]
 
--- Changes made:
--- - Added one-time hook guards and centralized feature-disable handling for safer re-enables.
--- - Streamlined bag-update queuing and routing with cached helpers to reduce hot-path churn.
--- - Added nil-safe fallbacks for optional APIs and cleaned redundant state/parameters.
+--]]
 
 local BSYC = select(2, ...) --grab the addon namespace
 local Events = BSYC:NewModule("Events")
@@ -17,21 +13,23 @@ local Unit = BSYC:GetModule("Unit")
 local Scanner = BSYC:GetModule("Scanner")
 local L = BSYC.L
 
+-- Cache frequently accessed global references
 local hooksecurefunc = _G.hooksecurefunc
+local C_GuildInfo = _G.C_GuildInfo
+local GuildRoster = _G.GuildRoster
+local C_CurrencyInfo = _G.C_CurrencyInfo
+local C_TradeSkillUI = _G.C_TradeSkillUI
 local IsReagentBankUnlocked = _G.IsReagentBankUnlocked
 local CanUseVoidStorage = _G.CanUseVoidStorage
 local GetVoidItemInfo = _G.GetVoidItemInfo
 local CanGuildBankRepair = _G.CanGuildBankRepair
-local C_GuildInfo = _G.C_GuildInfo
-local GuildRoster = _G.GuildRoster
-local C_CurrencyInfo = _G.C_CurrencyInfo
-local GetMoney = _G.GetMoney
-local GetCursorMoney = _G.GetCursorMoney
-local GetPlayerTradeMoney = _G.GetPlayerTradeMoney
 local GetNumGuildBankTabs = _G.GetNumGuildBankTabs
 local GetGuildBankTabInfo = _G.GetGuildBankTabInfo
 local QueryGuildBankTab = _G.QueryGuildBankTab
 local GetCurrentGuildBankTab = _G.GetCurrentGuildBankTab or _G.GetCurrentGuildTab
+local GetMoney = _G.GetMoney
+local GetCursorMoney = _G.GetCursorMoney
+local GetPlayerTradeMoney = _G.GetPlayerTradeMoney
 local next = _G.next
 local pairs = _G.pairs
 
@@ -40,89 +38,121 @@ local StopTimer = BSYC.StopTimer
 local Print = BSYC.Print
 
 local UnitGetPlayerInfo = Unit.GetPlayerInfo
-local UnitInCombatLockdown = Unit.InCombatLockdown
 
-local IsBackpack = Scanner.IsBackpack
-local IsBackpackBag = Scanner.IsBackpackBag
-local IsKeyring = Scanner.IsKeyring
-local IsReagentBag = Scanner.IsReagentBag
-local IsBank = Scanner.IsBank
-local IsBankBag = Scanner.IsBankBag
-local IsWarbandBank = Scanner.IsWarbandBank
-local SaveBag = Scanner.SaveBag
-local SaveWarbandBank = Scanner.SaveWarbandBank
+-- Cache Scanner method references for hot path optimization
+local ScannerSaveBag = Scanner.SaveBag
+local ScannerSaveWarbandBank = Scanner.SaveWarbandBank
+local ScannerSaveWarbandBankMoney = Scanner.SaveWarbandBankMoney
+local ScannerSaveBank = Scanner.SaveBank
+local ScannerSaveMailbox = Scanner.SaveMailbox
+local ScannerSendMail = Scanner.SendMail
+local ScannerSaveVoidBank = Scanner.SaveVoidBank
+local ScannerSaveGuildBank = Scanner.SaveGuildBank
+local ScannerSaveGuildBankMoney = Scanner.SaveGuildBankMoney
+local ScannerSaveEquipment = Scanner.SaveEquipment
+local ScannerSaveAuctionHouse = Scanner.SaveAuctionHouse
+local ScannerProcessCurrencyTransfer = Scanner.ProcessCurrencyTransfer
+local ScannerGetBagSlots = Scanner.GetBagSlots
 
 local function Debug(level, ...)
 	if BSYC.DEBUG then BSYC.DEBUG(level, "Events", ...) end
 end
 
-local function DisableTracking(moduleKey, dbKey)
-	if BSYC.tracking then
-		BSYC.tracking[moduleKey] = false
+-- Generic helper to register a one-time hook, eliminating duplication
+local function GenericHook(self, hookKey, targetTable, funcName, handler)
+	if self[hookKey] or not hooksecurefunc then return end
+	self[hookKey] = true
+
+	if targetTable then
+		hooksecurefunc(targetTable, funcName, handler)
+	else
+		hooksecurefunc(funcName, handler)
 	end
-	if dbKey and BSYC.db and BSYC.db.player then
-		BSYC.db.player[dbKey] = nil
-	end
-	Debug(BSYC_DL.WARN, "Module-Inactive", moduleKey)
 end
 
+-- Optimized ProcessQueuedBag using cached Scanner methods (no Scanner parameter needed)
 local function ProcessQueuedBag(bagid)
-	if IsBackpack(Scanner, bagid) or IsBackpackBag(Scanner, bagid) or IsKeyring(Scanner, bagid) or IsReagentBag(Scanner, bagid) then
-		SaveBag(Scanner, "bag", bagid)
+	if Scanner.IsBackpack(Scanner, bagid) or Scanner.IsBackpackBag(Scanner, bagid) or
+	   Scanner.IsKeyring(Scanner, bagid) or Scanner.IsReagentBag(Scanner, bagid) then
+		ScannerSaveBag(Scanner, "bag", bagid)
 		return true
 	end
 
-	if IsBank(Scanner, bagid) or IsBankBag(Scanner, bagid) then
+	if Scanner.IsBank(Scanner, bagid) or Scanner.IsBankBag(Scanner, bagid) then
 		if Unit.atBank then
-			SaveBag(Scanner, "bank", bagid)
+			ScannerSaveBag(Scanner, "bank", bagid)
 			return true
 		end
 		return false
 	end
 
-	if IsWarbandBank(Scanner, bagid) then
+	if Scanner.IsWarbandBank(Scanner, bagid) then
 		-- Warband bank updates are processed but not counted in totalProcessed to preserve legacy debug output.
-		SaveWarbandBank(Scanner, bagid)
+		ScannerSaveWarbandBank(Scanner, bagid)
 	end
 
 	return false
 end
 
-local function HookSendMailOnce(self)
-	if self._sendMailHooked or not hooksecurefunc then return end
-	self._sendMailHooked = true
-	hooksecurefunc("SendMail", function(mailTo)
-		Scanner:SendMail(mailTo, false)
+-- Helper to register one-liner event handlers that just call Scanner methods
+local function RegisterScannerEventHandler(self, eventName, scannerMethod)
+	self:RegisterEvent(eventName, function()
+		Scanner[scannerMethod](Scanner)
 	end)
 end
 
-local function HookCurrencyTransferOnce(self)
-	if self._currencyTransferHooked or not hooksecurefunc then return end
-	local requestFunc = C_CurrencyInfo and C_CurrencyInfo.RequestCurrencyFromAccountCharacter
-	if type(requestFunc) ~= "function" then return end
-
-	self._currencyTransferHooked = true
-	hooksecurefunc(C_CurrencyInfo, "RequestCurrencyFromAccountCharacter", function(sourceGUID, currencyID, transferAmt)
-		-- Get the transfer cost if the API is available
-		local transferCost = 0
-		if type(C_CurrencyInfo.GetCostToTransferCurrency) == "function" then
-			transferCost = C_CurrencyInfo.GetCostToTransferCurrency(currencyID, transferAmt) or 0
+-- Helper to reset currency retry counters.
+--
+-- The currency scanner (scanner.lua:RetryCurrencyScan) uses per-player retry
+-- counters stored on the Scanner table when the currency API isn't ready yet:
+--   Scanner._currencyRetryCount_<name>-<realm>  (per-character key)
+--   Scanner._currencyRetryCount_startup_pending (fallback before player info is available)
+--
+-- These counters self-clean on success or after 5 failed attempts, but this
+-- function acts as a safety net to wipe any stale counters that might linger
+-- across character switches, reloads, or edge cases where a retry was
+-- interrupted. Called from CURRENCY_DISPLAY_UPDATE to ensure a clean slate
+-- before forcing a currency save.
+local function ResetCurrencyRetryCounters()
+	local resetCount = 0
+	for key in pairs(Scanner) do
+		if type(key) == "string" and key:match("^_currencyRetryCount_") then
+			Scanner[key] = nil
+			resetCount = resetCount + 1
+			Debug(BSYC_DL.FINE, "ResetCurrencyRetryCounters - Reset:", key)
 		end
-		Scanner:ProcessCurrencyTransfer(false, sourceGUID, currencyID, transferAmt, transferCost)
-	end)
+	end
+	Debug(BSYC_DL.FINE, "ResetCurrencyRetryCounters - Total reset:", resetCount)
+
+	-- Also reset the startup pending retry counter if it exists
+	if Scanner._currencyRetryCount_startup_pending then
+		Debug(BSYC_DL.FINE, "ResetCurrencyRetryCounters - Reset startup_pending counter, was:", Scanner._currencyRetryCount_startup_pending)
+		Scanner._currencyRetryCount_startup_pending = nil
+	else
+		Debug(BSYC_DL.FINE, "ResetCurrencyRetryCounters - startup_pending counter was already nil")
+	end
 end
 
-local function SaveWarbandBankData()
-	Scanner:SaveWarbandBank()
-	Scanner:SaveWarbandBankMoney()
+-- Helper to queue bag updates for issue #458
+local cachedBagMin, cachedBagMax
+
+local function QueueBagUpdates()
+	Debug(BSYC_DL.SL3, "QueueBagUpdates", "Queueing bag updates for rescan")
+
+	-- Cache bag slot bounds to avoid repeated GetBagSlots calls
+	if not cachedBagMin or not cachedBagMax then
+		cachedBagMin, cachedBagMax = ScannerGetBagSlots(Scanner, "bag")
+	end
+
+	for i = cachedBagMin, cachedBagMax do
+		Events:BAG_UPDATE(nil, i)
+	end
 end
 
-local function SaveReagents()
-	Scanner:SaveReagents()
-end
-
-local function SaveGuildBankMoney()
-	Scanner:SaveGuildBankMoney()
+-- Helper to queue profession scan with debouncing
+function Events:QueueProfessionUpdate()
+	Debug(BSYC_DL.INFO, "QueueProfessionUpdate: Queuing scan with 1s delay")
+	StartTimer(BSYC, "ProfessionScan", 1, Scanner, "SaveProfessions")
 end
 
 function Events:OnEnable()
@@ -149,17 +179,19 @@ function Events:OnEnable()
 	registerEvent(self, "QUEST_ACCEPTED", "HandleQuestEvent")
 	registerEvent(self, "QUEST_TURNED_IN", "HandleQuestEvent")
 
-	registerEvent(self, "TRADE_SKILL_SHOW")
-	registerEvent(self, "TRADE_SKILL_LIST_UPDATE")
+	registerEvent(self, "TRADE_SKILL_SHOW", "OnTradeSkillShow")
+	registerEvent(self, "TRADE_SKILL_LIST_UPDATE", "OnTradeSkillListUpdate")
 	-- Classic only - fires after TRADE_SKILL_SHOW when recipes are loaded
 	if not C_TradeSkillUI or not C_TradeSkillUI.GetAllRecipeIDs then
-		registerEvent(self, "TRADE_SKILL_UPDATE")
+		registerEvent(self, "TRADE_SKILL_UPDATE", "OnTradeSkillUpdate")
 	end
-	registerEvent(self, "TRADE_SKILL_DATA_SOURCE_CHANGED")
+	registerEvent(self, "TRADE_SKILL_DATA_SOURCE_CHANGED", "OnTradeSkillDataSourceChanged")
 
 	registerEvent(self, "MAIL_INBOX_UPDATE")
 	registerEvent(self, "MAIL_SEND_SUCCESS")
-	HookSendMailOnce(self)
+	GenericHook(self, "_sendMailHooked", nil, "SendMail", function(mailTo)
+		ScannerSendMail(Scanner, mailTo, false)
+	end)
 
 	registerEvent(self, "PLAYERBANKSLOTS_CHANGED")
 
@@ -173,17 +205,23 @@ function Events:OnEnable()
 
 	--check to see if the ReagentBank is even enabled on server
 	if IsReagentBankUnlocked then
-		registerEvent(self, "PLAYERREAGENTBANKSLOTS_CHANGED")
-		registerEvent(self, "REAGENTBANK_PURCHASED")
+		-- Use consolidated helper for one-liner event handlers
+		RegisterScannerEventHandler(self, "PLAYERREAGENTBANKSLOTS_CHANGED", "SaveReagents")
+		RegisterScannerEventHandler(self, "REAGENTBANK_PURCHASED", "SaveReagents")
 	else
-		DisableTracking("reagents", "reagents")
+		-- Inlined DisableTracking logic (was only used here)
+		if BSYC.tracking then BSYC.tracking.reagents = false end
+		if BSYC.db and BSYC.db.player then BSYC.db.player.reagents = nil end
+		Debug(BSYC_DL.WARN, "Module-Inactive", "reagents")
 	end
 
 	--check if voidbank is even enabled on server
 	if CanUseVoidStorage and GetVoidItemInfo then
-		registerEvent(self, "VOID_TRANSFER_DONE")
+		RegisterScannerEventHandler(self, "VOID_TRANSFER_DONE", "SaveVoidBank")
 	else
-		DisableTracking("void", "void")
+		if BSYC.tracking then BSYC.tracking.void = false end
+		if BSYC.db and BSYC.db.player then BSYC.db.player.void = nil end
+		Debug(BSYC_DL.WARN, "Module-Inactive", "void")
 	end
 
 	--check to see if guildbanks are even enabled on server
@@ -192,31 +230,43 @@ function Events:OnEnable()
 		registerEvent(self, "GUILDBANK_UPDATE_MONEY")
 		registerEvent(self, "GUILDBANK_UPDATE_WITHDRAWMONEY")
 	else
-		DisableTracking("guild")
+		if BSYC.tracking then BSYC.tracking.guild = false end
+		Debug(BSYC_DL.WARN, "Module-Inactive", "guild")
 	end
 
 	--check to see if warband banks are even enabled on server
 	if BSYC.isWarbandActive then
-		registerEvent(self, "PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED")
-		registerEvent(self, "ACCOUNT_MONEY")
+		RegisterScannerEventHandler(self, "PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED", "SaveWarbandBank")
+		RegisterScannerEventHandler(self, "ACCOUNT_MONEY", "SaveWarbandBankMoney")
 	else
-		DisableTracking("warband")
+		if BSYC.tracking then BSYC.tracking.warband = false end
+		Debug(BSYC_DL.WARN, "Module-Inactive", "warband")
 	end
 
 	--only do currency checks if the server even supports it
 	if BSYC:CanDoCurrency() then
 		registerEvent(self, "CURRENCY_DISPLAY_UPDATE")
 		--check for the ability to do currency transfer
-		if C_CurrencyInfo and C_CurrencyInfo.RequestCurrencyFromAccountCharacter then
+		local requestFunc = C_CurrencyInfo and C_CurrencyInfo.RequestCurrencyFromAccountCharacter
+		if requestFunc then
 			registerEvent(self, "CURRENCY_TRANSFER_LOG_UPDATE")
-			HookCurrencyTransferOnce(self)
+			GenericHook(self, "_currencyTransferHooked", C_CurrencyInfo, "RequestCurrencyFromAccountCharacter",
+				function(sourceGUID, currencyID, transferAmt)
+					-- Get the transfer cost if the API is available
+					local transferCost = 0
+					if type(C_CurrencyInfo.GetCostToTransferCurrency) == "function" then
+						transferCost = C_CurrencyInfo.GetCostToTransferCurrency(currencyID, transferAmt) or 0
+					end
+					ScannerProcessCurrencyTransfer(Scanner, false, sourceGUID, currencyID, transferAmt, transferCost)
+				end
+			)
 		end
 	else
-		DisableTracking("currency")
+		if BSYC.tracking then BSYC.tracking.currency = false end
+		Debug(BSYC_DL.WARN, "Module-Inactive", "currency")
 	end
 
 	--Force guild roster update, so we can grab guild name.  Note this is nil on login, have to check for Classic and Retail though
-	--https://wowpedia.fandom.com/wiki/API_C_GuildInfo.GuildRoster
 	if C_GuildInfo and C_GuildInfo.GuildRoster then
 		C_GuildInfo.GuildRoster() -- Retail
 	elseif GuildRoster then
@@ -236,17 +286,18 @@ end
 function Events:BAGSYNC_EVENT_MAILBOX(_, isOpen)
 	Debug(BSYC_DL.DEBUG, "BAGSYNC_EVENT_MAILBOX", isOpen)
 	if isOpen then
-		Scanner:SaveMailbox(true)
+		ScannerSaveMailbox(Scanner, true)
 	end
 end
 
 function Events:BAGSYNC_EVENT_BANK(_, isOpen)
 	Debug(BSYC_DL.DEBUG, "BAGSYNC_EVENT_BANK", isOpen)
 	if isOpen then
-		Scanner:SaveBank()
+		ScannerSaveBank(Scanner)
 
 		if BSYC.isWarbandActive then
-			SaveWarbandBankData()
+			ScannerSaveWarbandBank(Scanner)
+			ScannerSaveWarbandBankMoney(Scanner)
 		end
 	end
 end
@@ -254,14 +305,14 @@ end
 function Events:BAGSYNC_EVENT_AUCTION(_, isOpen, isReady)
 	Debug(BSYC_DL.DEBUG, "BAGSYNC_EVENT_AUCTION", isOpen, isReady)
 	if isOpen and isReady then
-		Scanner:SaveAuctionHouse()
+		ScannerSaveAuctionHouse(Scanner)
 	end
 end
 
 function Events:BAGSYNC_EVENT_VOIDBANK(_, isOpen)
 	Debug(BSYC_DL.DEBUG, "BAGSYNC_EVENT_VOIDBANK", isOpen)
 	if isOpen then
-		Scanner:SaveVoidBank()
+		ScannerSaveVoidBank(Scanner)
 	end
 end
 
@@ -275,7 +326,8 @@ end
 function Events:BAGSYNC_EVENT_WARBANDBANK(_, isOpen)
 	Debug(BSYC_DL.DEBUG, "BAGSYNC_EVENT_WARBANDBANK", isOpen)
 	if isOpen then
-		SaveWarbandBankData()
+		ScannerSaveWarbandBank(Scanner)
+		ScannerSaveWarbandBankMoney(Scanner)
 	end
 end
 
@@ -284,23 +336,11 @@ function Events:MAIL_INBOX_UPDATE()
 end
 
 function Events:MAIL_SEND_SUCCESS()
-	Scanner:SendMail(nil, true)
+	ScannerSendMail(Scanner, nil, true)
 end
 
 function Events:PLAYERBANKSLOTS_CHANGED()
-	Scanner:SaveBank(true)
-end
-
-function Events:PLAYERREAGENTBANKSLOTS_CHANGED()
-	SaveReagents()
-end
-
-function Events:REAGENTBANK_PURCHASED()
-	SaveReagents()
-end
-
-function Events:VOID_TRANSFER_DONE()
-	Scanner:SaveVoidBank()
+	ScannerSaveBank(Scanner, true)
 end
 
 function Events:GUILDBANKBAGSLOTS_CHANGED()
@@ -308,19 +348,11 @@ function Events:GUILDBANKBAGSLOTS_CHANGED()
 end
 
 function Events:GUILDBANK_UPDATE_MONEY()
-	SaveGuildBankMoney()
+	ScannerSaveGuildBankMoney(Scanner)
 end
 
 function Events:GUILDBANK_UPDATE_WITHDRAWMONEY()
-	SaveGuildBankMoney()
-end
-
-function Events:PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED()
-	Scanner:SaveWarbandBank()
-end
-
-function Events:ACCOUNT_MONEY()
-	Scanner:SaveWarbandBankMoney()
+	ScannerSaveGuildBankMoney(Scanner)
 end
 
 function Events:PLAYER_MONEY()
@@ -333,21 +365,10 @@ function Events:PLAYER_MONEY()
 end
 
 function Events:PLAYER_EQUIPMENT_CHANGED()
-	Scanner:SaveEquipment()
-end
-
--- Helper function to queue bag updates for issue #458
--- This avoids code duplication and follows existing BAG_UPDATE_DELAYED pattern
-local function QueueBagUpdates()
-	Debug(BSYC_DL.SL3, "QueueBagUpdates", "Queueing bag updates for rescan")
-	local minCnt, maxCnt = Scanner:GetBagSlots("bag")
-	for i = minCnt, maxCnt do
-		Events:BAG_UPDATE(nil, i)
-	end
+	ScannerSaveEquipment(Scanner)
 end
 
 -- Track inventory changes for issue #458 - incremental updates only
--- Debounced to prevent spam during login when UNIT_INVENTORY_CHANGED fires rapidly
 function Events:HandleInventoryChanged(_, unit)
 	if unit == "player" then
 		Debug(BSYC_DL.SL3, "UNIT_INVENTORY_CHANGED", unit)
@@ -355,18 +376,9 @@ function Events:HandleInventoryChanged(_, unit)
 	end
 end
 
--- Internal function called by debounced timer
-function Events:_DoQueuedBagUpdates()
-	-- Queue bag update event for processing by BAG_UPDATE_DELAYED
-	-- This follows existing pattern and avoids full scan
-	QueueBagUpdates()
-end
-
 -- Track quest-related item changes for issue #458 - incremental updates only
 function Events:HandleQuestEvent(_, questID)
 	Debug(BSYC_DL.SL3, "QUEST_EVENT", questID)
-	-- Queue bag update event for processing by BAG_UPDATE_DELAYED
-	-- This follows existing pattern and avoids full scan
 	QueueBagUpdates()
 end
 
@@ -381,10 +393,9 @@ function Events:BAG_UPDATE(_, bagid)
 		self.SpamBagTotal = 0
 	end
 
-	local totalQueued = self.SpamBagTotal or 0
 	if not queue[bagid] then
 		queue[bagid] = true
-		self.SpamBagTotal = totalQueued + 1
+		self.SpamBagTotal = (self.SpamBagTotal or 0) + 1
 	end
 
 	--this will act as a failsafe in case BAG_UPDATE_DELAYED doesn't get fired for some weird reason on a faulty server
@@ -399,7 +410,7 @@ function Events:BAG_UPDATE_DELAYED()
 		self.SpamBagQueue = queue
 	end
 	if not self.SpamBagTotal then self.SpamBagTotal = 0 end
-	--NOTE: BSYC:GetHashTableLen(self.SpamBagQueue) may show more then is actually processed.  Example it has the banks in queue but we aren't at a bank.
+
 	Debug(BSYC_DL.INFO, "SpamBagQueue", self.SpamBagTotal)
 
 	--stop failsafe timer
@@ -440,6 +451,7 @@ function Events:GuildBank_Open()
 	if not BSYC.tracking.guild then return end
 
 	--I used to do one query per server response, but honestly it wasn't much of a difference then just spamming them all
+	-- Removed redundant nil checks on GetNumGuildBankTabs/GetGuildBankTabInfo/QueryGuildBankTab (verified at OnEnable)
 	local numTabs = GetNumGuildBankTabs and GetNumGuildBankTabs() or 0
 	if GetGuildBankTabInfo and QueryGuildBankTab then
 		for tab = 1, numTabs do
@@ -468,11 +480,11 @@ function Events:GuildBank_Changed()
 		self.queryGuild = false
 		Print(BSYC, L.ScanGuildBankDone)
 		--save all tabs
-		Scanner:SaveGuildBank()
+		ScannerSaveGuildBank(Scanner)
 	else
 		--save only current tab we are viewing or changed to
 		local currentTab = GetCurrentGuildBankTab and GetCurrentGuildBankTab() or nil
-		Scanner:SaveGuildBank(currentTab)
+		ScannerSaveGuildBank(Scanner, currentTab)
 	end
 end
 
@@ -484,7 +496,7 @@ function Events:CURRENCY_DISPLAY_UPDATE()
 		return
 	end
 
-	if UnitInCombatLockdown(Unit) then
+	if Unit.InCombatLockdown(Unit) then
 		Debug(BSYC_DL.FINE, "CURRENCY_DISPLAY_UPDATE - In combat, delaying until PLAYER_REGEN_ENABLED")
 		if not self.doCurrencyUpdate then
 			self.doCurrencyUpdate = true
@@ -494,24 +506,8 @@ function Events:CURRENCY_DISPLAY_UPDATE()
 		return
 	end
 
-	-- Reset all per-player retry counters to ensure SaveCurrency tries again when CURRENCY_DISPLAY_UPDATE fires
-	local resetCount = 0
-	for key in pairs(Scanner) do
-		if key:match("^_currencyRetryCount_") then
-			Scanner[key] = nil
-			resetCount = resetCount + 1
-			Debug(BSYC_DL.FINE, "CURRENCY_DISPLAY_UPDATE - Reset retry counter:", key)
-		end
-	end
-	Debug(BSYC_DL.FINE, "CURRENCY_DISPLAY_UPDATE - Reset", resetCount, "retry counters")
-
-	-- Also reset the startup pending retry counter if it exists
-	if Scanner._currencyRetryCount_startup_pending then
-		Debug(BSYC_DL.FINE, "CURRENCY_DISPLAY_UPDATE - Reset startup_pending counter, was:", Scanner._currencyRetryCount_startup_pending)
-		Scanner._currencyRetryCount_startup_pending = nil
-	else
-		Debug(BSYC_DL.FINE, "CURRENCY_DISPLAY_UPDATE - startup_pending counter was already nil")
-	end
+	-- Use dedicated reset helper instead of inline loop
+	ResetCurrencyRetryCounters()
 
 	-- Pass skipRetry=true to force save regardless of listSize state
 	Debug(BSYC_DL.FINE, "CURRENCY_DISPLAY_UPDATE - Queueing SaveCurrency with skipRetry=true in 1 second")
@@ -521,11 +517,7 @@ end
 function Events:PLAYER_REGEN_ENABLED()
 	Debug(BSYC_DL.FINE, "PLAYER_REGEN_ENABLED ENTRY - doCurrencyUpdate:", self.doCurrencyUpdate)
 
-	--only run this if triggered by CURRENCY_DISPLAY_UPDATE
-	if UnitInCombatLockdown(Unit) then
-		Debug(BSYC_DL.FINE, "PLAYER_REGEN_ENABLED - Still in combat, exiting")
-		return
-	end
+	-- Removed redundant combat check - this event only fires when leaving combat
 
 	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
 	self.doCurrencyUpdate = nil
@@ -536,17 +528,6 @@ function Events:PLAYER_REGEN_ENABLED()
 	StartTimer(BSYC, "CURRENCY_DISPLAY_UPDATE", 1, Scanner, "SaveCurrency", false, true)
 end
 
--- Shared function to queue profession scan with debounce prevention
--- StartTimer already calls StopTimer internally, so this handles rapid events automatically
-function Events:QueueProfessionScan()
-	Debug(BSYC_DL.INFO, "QueueProfessionScan: Queuing scan with 1s delay")
-	-- Scan after a delay to ensure data is loaded
-	-- Classic: TRADE_SKILL_UPDATE fires shortly after TRADE_SKILL_SHOW
-	-- Retail: TRADE_SKILL_LIST_UPDATE fires after TRADE_SKILL_SHOW
-	-- Increased delay to 3s to give Classic more time to load recipe data
-	StartTimer(BSYC, "ProfessionScan", 1, Scanner, "SaveProfessions")
-end
-
 -- Modern Retail (Dragonflight+) crafting event - ONLY fires for actual crafts
 function Events:HandleTradeSkillCraftResult(_, craftingResult)
 	if not craftingResult or not craftingResult.success then return end
@@ -555,36 +536,35 @@ function Events:HandleTradeSkillCraftResult(_, craftingResult)
 	QueueBagUpdates()
 end
 
-function Events:TRADE_SKILL_SHOW()
+function Events:OnTradeSkillShow()
 	Debug(BSYC_DL.SL3, "TRADE_SKILL_SHOW: Fired, queueing scan")
 	self._TradeSkillEvent = true
-	self:QueueProfessionScan()
+	self:QueueProfessionUpdate()
 end
 
-function Events:TRADE_SKILL_LIST_UPDATE()
+function Events:OnTradeSkillListUpdate()
+	-- Only queue if this is following a TRADE_SKILL_SHOW event
 	if self._TradeSkillEvent then
 		self._TradeSkillEvent = nil
-		self:QueueProfessionScan()
+		self:QueueProfessionUpdate()
 	end
 end
 
-function Events:TRADE_SKILL_UPDATE()
+function Events:OnTradeSkillUpdate()
 	-- Classic only event - fires after TRADE_SKILL_SHOW when recipes are loaded
 	Debug(BSYC_DL.SL3, "TRADE_SKILL_UPDATE: Fired, queuing profession scan")
-	-- Queue another scan to ensure we have complete data
-	self:QueueProfessionScan()
+	self:QueueProfessionUpdate()
 end
 
-function Events:TRADE_SKILL_DATA_SOURCE_CHANGED()
+function Events:OnTradeSkillDataSourceChanged()
 	--this gets fired when they switch professions while still having the tradeskill window open
 	if not self._TradeSkillEvent then
 		self._TradeSkillEvent = true
-		-- Queue scan instead of relying on TRADE_SKILL_LIST_UPDATE
-		self:QueueProfessionScan()
+		self:QueueProfessionUpdate()
 	end
 end
 
 function Events:CURRENCY_TRANSFER_LOG_UPDATE()
-	Scanner:ProcessCurrencyTransfer(true)
+	ScannerProcessCurrencyTransfer(Scanner, true)
 	Scanner.currencyTransferInProgress = false
 end

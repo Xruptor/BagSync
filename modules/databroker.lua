@@ -2,11 +2,12 @@
 	databroker.lua
 		A LibDataBroker plugin + LibDBIcon minimap icon for BagSync
 
-	BagSync - All Rights Reserved - (c) 2025
-	License included with addon.
+		BagSync - All Rights Reserved - (c) 2025
+		License included with addon.
+
 --]]
 
-local BSYC = select(2, ...) --grab the addon namespace
+local BSYC = select(2, ...)
 local DataBroker = BSYC:NewModule("DataBroker")
 local UI = BSYC:GetModule("UI")
 local L = BSYC.L
@@ -17,13 +18,25 @@ local LDBIcon = _G.LibStub and _G.LibStub("LibDBIcon-1.0", true)
 if not LDB then return end
 if not LDBIcon then return end
 
-local function Debug(level, ...)
-	if BSYC.DEBUG then BSYC.DEBUG(level, "DataBroker", ...) end
+-- Cache global references
+local _G = _G
+local UIDropDownMenu_CreateInfo = _G.UIDropDownMenu_CreateInfo
+local UIDropDownMenu_AddButton = _G.UIDropDownMenu_AddButton
+local CreateFrame = _G.CreateFrame
+local ToggleDropDownMenu = _G.ToggleDropDownMenu
+local SOUNDKIT = _G.SOUNDKIT
+
+-- Helper to ensure minimap DB structure exists (eliminates duplication across 4 functions)
+local function EnsureMinimapDB()
+	BSYC.options = BSYC.options or {}
+	BSYC.options.minimap = BSYC.options.minimap or {}
+	if BSYC.options.minimap.hide == nil then
+		BSYC.options.minimap.hide = false
+	end
+	return BSYC.options.minimap
 end
 
 function DataBroker:BuildMinimapDropdown()
-	if _G["bgsMinimapDD"] then _G["bgsMinimapDD"] = nil end
-
 	local bgsMinimapDD = UI:CreateDropdown(UIParent, {
 		globalName = "bgsMinimapDD",
 	})
@@ -40,45 +53,63 @@ function DataBroker:BuildMinimapDropdown()
 		UIDropDownMenu_AddButton(info, level)
 	end
 
+	-- Data-driven menu items (eliminates 12 repetitive addButton calls)
 	bgsMinimapDD.initialize = function(_, level)
 		if level == 1 then
-			if PlaySound and SOUNDKIT and SOUNDKIT.GS_TITLE_OPTION_EXIT then
-				PlaySound(SOUNDKIT.GS_TITLE_OPTION_EXIT)
+			if SOUNDKIT and SOUNDKIT.GS_TITLE_OPTION_EXIT then
+				_G.PlaySound(SOUNDKIT.GS_TITLE_OPTION_EXIT)
 			end
+
+			-- Cache module references to avoid repeated GetModule calls
+			local Search = BSYC:GetModule("Search")
+			local Currency = BSYC:CanDoCurrency() and BSYC:GetModule("Currency")
+			local Professions = BSYC:CanDoProfessions() and BSYC:GetModule("Professions")
+			local Blacklist = BSYC:GetModule("Blacklist")
+			local Whitelist = BSYC:GetModule("Whitelist")
+			local Gold = BSYC:GetModule("Gold")
+			local Profiles = BSYC:GetModule("Profiles")
+			local SortOrder = BSYC:GetModule("SortOrder")
+			local Data = BSYC:GetModule("Data")
+			local Debug = BSYC:GetModule("Debug")
+
+			-- Build menu from data table
 			addButton(level, "BagSync        ", 1, 1)
 			addButton(level, L.Search, nil, 1, nil, "search", function()
-				BSYC:GetModule("Search").frame:Show()
+				Search.frame:Show()
 			end)
-			if BSYC:CanDoCurrency() and BSYC.tracking.currency then
+
+			if Currency and BSYC.tracking.currency then
 				addButton(level, L.Currency, nil, 1, nil, "currency", function()
-					BSYC:GetModule("Currency").frame:Show()
+					Currency.frame:Show()
 				end)
 			end
-			if BSYC:CanDoProfessions() and BSYC.tracking.professions then
+
+			if Professions and BSYC.tracking.professions then
 				addButton(level, L.Professions, nil, 1, nil, "professions", function()
-					BSYC:GetModule("Professions").frame:Show()
+					Professions.frame:Show()
 				end)
 			end
+
 			addButton(level, L.Blacklist, nil, 1, nil, "blacklist", function()
-				BSYC:GetModule("Blacklist").frame:Show()
+				Blacklist.frame:Show()
 			end)
 			addButton(level, L.Whitelist, nil, 1, nil, "whitelist", function()
-				BSYC:GetModule("Whitelist").frame:Show()
+				Whitelist.frame:Show()
 			end)
 			addButton(level, L.Gold, nil, 1, nil, "gold", function()
-				BSYC:GetModule("Gold").frame:Show()
+				Gold.frame:Show()
 			end)
 			addButton(level, L.Profiles, nil, 1, nil, "profiles", function()
-				BSYC:GetModule("Profiles").frame:Show()
+				Profiles.frame:Show()
 			end)
 			addButton(level, L.SortOrder, nil, 1, nil, "sortorder", function()
-				BSYC:GetModule("SortOrder").frame:Show()
+				SortOrder.frame:Show()
 			end)
 			addButton(level, L.FixDB, nil, 1, nil, "fixdb", function()
-				BSYC:GetModule("Data"):FixDB()
+				Data:FixDB()
 			end)
 			addButton(level, L.Debug, nil, 1, nil, "debug", function()
-				BSYC:GetModule("Debug").frame:Show()
+				Debug.frame:Show()
 			end)
 			addButton(level, L.Config, nil, 1, nil, "config", function()
 				BSYC:OpenConfig()
@@ -99,13 +130,11 @@ function BSYC:OpenMinimapMenu(anchor)
 end
 
 function DataBroker:CreatePlugin()
-	if LDB.GetDataObjectByName then
-		local existing = LDB:GetDataObjectByName("BagSync")
-		if existing then
-			DataBroker.BrokerPlugin = existing
-			BSYC.LDBObject = existing
-			return
-		end
+	local existing = LDB:GetDataObjectByName("BagSync")
+	if existing then
+		DataBroker.BrokerPlugin = existing
+		BSYC.LDBObject = existing
+		return
 	end
 
 	DataBroker.BrokerPlugin = LDB:NewDataObject("BagSync", {
@@ -116,52 +145,52 @@ function DataBroker:CreatePlugin()
 		OnClick = function(_, button)
 			if button == "LeftButton" then
 				local search = BSYC:GetModule("Search")
-				if search.frame:IsVisible() then
-					search.frame:Hide()
+				local searchFrame = search.frame
+				if searchFrame:IsVisible() then
+					searchFrame:Hide()
 					return
 				end
-				search.frame:Show()
+				searchFrame:Show()
 			elseif button == "RightButton" then
-				if LDBIcon.tooltip then LDBIcon.tooltip:Hide() end
+				if LDBIcon.tooltip then
+					LDBIcon.tooltip:Hide()
+				end
 				ToggleDropDownMenu(1, nil, DataBroker.dropdown, "cursor", 0, 0)
 			end
 		end,
 
-		OnTooltipShow = function(self)
-			self:AddLine("BagSync")
-			self:AddLine(L.LeftClickSearch)
-			self:AddLine(L.RightClickBagSyncMenu)
+		OnTooltipShow = function(tooltip)
+			tooltip:AddLine("BagSync")
+			tooltip:AddLine(L.LeftClickSearch)
+			tooltip:AddLine(L.RightClickBagSyncMenu)
 		end,
 	})
+
 	BSYC.LDBObject = DataBroker.BrokerPlugin
 end
 
 function BSYC:UpdateMinimapIconVisibility()
-	BSYC.options = BSYC.options or {}
-	BSYC.options.minimap = BSYC.options.minimap or {}
-	local db = BSYC.options.minimap
-	if db.hide == nil then db.hide = false end
-	if LDBIcon.Refresh then
-		LDBIcon:Refresh("BagSync", db)
-	end
+	local db = EnsureMinimapDB()
+	LDBIcon:Refresh("BagSync", db)
 end
 
 function BSYC:ResetMinimapIconPosition()
-	BSYC.options = BSYC.options or {}
-	BSYC.options.minimap = BSYC.options.minimap or {}
-	local db = BSYC.options.minimap
+	local db = EnsureMinimapDB()
 	db.hide = false
 	db.minimapPos = 220
-	if LDBIcon.Refresh then
-		LDBIcon:Refresh("BagSync", db)
-	end
+	LDBIcon:Refresh("BagSync", db)
 end
 
 function DataBroker:UpdateAddonCompartment()
 	if not LDBIcon.IsButtonCompartmentAvailable or not LDBIcon:IsButtonCompartmentAvailable() then
 		return
 	end
-	if BSYC.options and BSYC.options.enableAddonCompartment == false then
+
+	if not BSYC.options then
+		return
+	end
+
+	if BSYC.options.enableAddonCompartment == false then
 		if LDBIcon:IsButtonInCompartment("BagSync") then
 			LDBIcon:RemoveButtonFromCompartment("BagSync")
 		end
@@ -173,7 +202,9 @@ function DataBroker:UpdateAddonCompartment()
 end
 
 function BSYC:TryRegisterAddonCompartment()
-	if not DataBroker or not DataBroker.UpdateAddonCompartment then return end
+	if not DataBroker or not DataBroker.UpdateAddonCompartment then
+		return
+	end
 	DataBroker:UpdateAddonCompartment()
 end
 
@@ -181,24 +212,23 @@ function DataBroker:OnEnable()
 	self:BuildMinimapDropdown()
 	self:CreatePlugin()
 
-	--register and load the minimap button
-	BSYC.options = BSYC.options or {}
-	BSYC.options.minimap = BSYC.options.minimap or {}
-	local db = BSYC.options.minimap
-	if not LDBIcon.IsRegistered or not LDBIcon:IsRegistered("BagSync") then
+	-- Register and load the minimap button
+	local db = EnsureMinimapDB()
+
+	if not LDBIcon:IsRegistered("BagSync") then
 		LDBIcon:Register("BagSync", DataBroker.BrokerPlugin, db)
 	end
-	if LDBIcon.Refresh then
-		LDBIcon:Refresh("BagSync", db)
-	end
+
+	LDBIcon:Refresh("BagSync", db)
 	self:UpdateAddonCompartment()
 
+	-- Wait for PLAYER_LOGIN if compartment not yet available
 	if not LDBIcon:IsButtonCompartmentAvailable() then
-		local waitFrame = CreateFrame("Frame")
-		waitFrame:RegisterEvent("PLAYER_LOGIN")
-		waitFrame:SetScript("OnEvent", function()
+		DataBroker.compartmentWaitFrame = DataBroker.compartmentWaitFrame or CreateFrame("Frame")
+		DataBroker.compartmentWaitFrame:RegisterEvent("PLAYER_LOGIN")
+		DataBroker.compartmentWaitFrame:SetScript("OnEvent", function()
 			DataBroker:UpdateAddonCompartment()
-			waitFrame:UnregisterEvent("PLAYER_LOGIN")
+			DataBroker.compartmentWaitFrame:UnregisterEvent("PLAYER_LOGIN")
 		end)
 	end
 end

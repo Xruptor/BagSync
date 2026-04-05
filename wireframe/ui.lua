@@ -1,10 +1,56 @@
 --[[
 	ui.lua
 		UI helpers (backbone only; preserves existing layout/behavior)
+
+		BagSync - All Rights Reserved - (c) 2025
+		License included with addon.
+
 --]]
+
+local _G = _G
+local CreateFrame = _G.CreateFrame
+local pairs = pairs
+local unpack = unpack
+local tinsert = tinsert
+local C_EditMode = C_EditMode
 
 local BSYC = select(2, ...)
 local UI = BSYC:NewModule("UI")
+
+-- ============================================================================
+-- Shared Helpers
+-- ============================================================================
+
+-- Apply multiple anchor points to a frame/texture from opts.points
+local function ApplyPoints(self, points)
+	for i = 1, #points do
+		self:SetPoint(unpack(points[i]))
+	end
+end
+
+-- Apply scripts to a frame from opts.scripts table
+local function ApplyScripts(self, scripts)
+	for event, fn in pairs(scripts) do
+		self:SetScript(event, fn)
+	end
+end
+
+-- Set font from opts table, handling both table and string formats
+local function SetFontFromOpts(self, opts)
+	if opts.fontObject then
+		self:SetFontObject(opts.fontObject)
+	elseif opts.font then
+		if type(opts.font) == "table" then
+			self:SetFont(unpack(opts.font))
+		else
+			self:SetFont(opts.font, opts.fontSize or 12, opts.fontFlags or "")
+		end
+	end
+end
+
+-- ============================================================================
+-- Public API
+-- ============================================================================
 
 function UI:FindHandler(widget)
 	if not widget then return nil end
@@ -28,6 +74,7 @@ function UI:CallHandler(widget, method, ...)
 	end
 end
 
+-- NOTE: Reduced closure creation from 7 to 4 by sharing the base handler script
 function UI:AttachListItemHandlers(button, handler, opts)
 	if not button or button.__bsycHandlers then return end
 
@@ -37,37 +84,42 @@ function UI:AttachListItemHandlers(button, handler, opts)
 	local onLeave = opts.onLeave or "Item_OnLeave"
 
 	button.parentHandler = handler
-	button:SetScript("OnClick", function(self)
-		UI:CallHandler(self, onClick, self)
-	end)
-	button:SetScript("OnEnter", function(self)
-		UI:CallHandler(self, onEnter, self)
-	end)
-	button:SetScript("OnLeave", function(self)
-		UI:CallHandler(self, onLeave, self)
-	end)
+
+	-- Shared handler dispatcher to reduce closure count
+	local function MakeHandler(method)
+		return function(self)
+			UI:CallHandler(self, method, self)
+		end
+	end
+
+	button:SetScript("OnClick", MakeHandler(onClick))
+	button:SetScript("OnEnter", MakeHandler(onEnter))
+	button:SetScript("OnLeave", MakeHandler(onLeave))
 
 	local details = opts.detailsButton and button[opts.detailsButton]
 	if details then
 		local onDetailsClick = opts.onDetailsClick or "ItemDetails"
 		local onDetailsEnter = opts.onDetailsEnter or "ItemDetails_OnEnter"
 		local onDetailsLeave = opts.onDetailsLeave or "ItemDetails_OnLeave"
+
 		details.parentHandler = handler
-		details:SetScript("OnClick", function(self)
-			UI:CallHandler(self, onDetailsClick, self)
-		end)
+		details:SetScript("OnClick", MakeHandler(onDetailsClick))
+
 		if onDetailsEnter ~= false then
 			details:SetScript("OnEnter", function(self)
-				if self:GetParent().DetailsHighlight then
-					self:GetParent().DetailsHighlight:SetAlpha(0.75)
+				local parent = self:GetParent()
+				if parent.DetailsHighlight then
+					parent.DetailsHighlight:SetAlpha(0.75)
 				end
 				UI:CallHandler(self, onDetailsEnter, self)
 			end)
 		end
+
 		if onDetailsLeave ~= false then
 			details:SetScript("OnLeave", function(self)
-				if self:GetParent().DetailsHighlight then
-					self:GetParent().DetailsHighlight:SetAlpha(0)
+				local parent = self:GetParent()
+				if parent.DetailsHighlight then
+					parent.DetailsHighlight:SetAlpha(0)
 				end
 				UI:CallHandler(self, onDetailsLeave, self)
 			end)
@@ -83,14 +135,13 @@ function UI:CreateModuleFrame(module, opts)
 	local parent = opts.parent or UIParent
 	local template = opts.template or "BagSyncFrameTemplate"
 
-	local frame = _G.CreateFrame("Frame", nil, parent, template)
+	local frame = CreateFrame("Frame", nil, parent, template)
 	if module then
 		Mixin(frame, module)
 	end
 
 	if opts.globalName then
 		_G[opts.globalName] = frame
-		-- Add to special frames so window can be closed when the escape key is pressed.
 		tinsert(UISpecialFrames, opts.globalName)
 	end
 
@@ -116,7 +167,9 @@ function UI:CreateModuleFrame(module, opts)
 
 	if opts.createCloseButton ~= false then
 		local closeBtn = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
-		closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1)
+		local offset = C_EditMode and -3 or 2
+		local offsetV = C_EditMode and -3 or 1
+		closeBtn:SetPoint("TOPRIGHT", offset, offsetV)
 		frame.closeBtn = closeBtn
 	end
 
@@ -124,8 +177,9 @@ function UI:CreateModuleFrame(module, opts)
 end
 
 function UI:CreateHybridScrollFrame(parent, opts)
+	if not parent then return nil end
 	opts = opts or {}
-	local scroll = _G.CreateFrame("ScrollFrame", nil, parent, "HybridScrollFrameTemplate")
+	local scroll = CreateFrame("ScrollFrame", nil, parent, "HybridScrollFrameTemplate")
 
 	if opts.width then
 		scroll:SetWidth(opts.width)
@@ -154,44 +208,39 @@ function UI:CreateHybridScrollFrame(parent, opts)
 end
 
 function UI:CreateFrame(parent, opts)
+	if not parent then return nil end
 	opts = opts or {}
 	local frameType = opts.frameType or "Frame"
-	local frame = _G.CreateFrame(frameType, opts.globalName, parent, opts.template)
+	local frame = CreateFrame(frameType, opts.globalName, parent, opts.template)
 
 	if opts.width then frame:SetWidth(opts.width) end
 	if opts.height then frame:SetHeight(opts.height) end
 	if opts.size then frame:SetSize(opts.size[1], opts.size[2]) end
 	if opts.point then frame:SetPoint(unpack(opts.point)) end
 	if opts.points then
-		for i = 1, #opts.points do
-			frame:SetPoint(unpack(opts.points[i]))
-		end
+		ApplyPoints(frame, opts.points)
 	end
 	if opts.frameStrata then frame:SetFrameStrata(opts.frameStrata) end
 	if opts.frameLevel then frame:SetFrameLevel(opts.frameLevel) end
 	if opts.enableMouse ~= nil then frame:EnableMouse(opts.enableMouse) end
 	if opts.scripts then
-		for event, fn in pairs(opts.scripts) do
-			frame:SetScript(event, fn)
-		end
+		ApplyScripts(frame, opts.scripts)
 	end
 
 	return frame
 end
 
 function UI:CreateScrollFrame(parent, opts)
-	opts = opts or {}
 	if not parent then return nil end
+	opts = opts or {}
 
-	local scroll = _G.CreateFrame("ScrollFrame", opts.globalName, parent, opts.template or "UIPanelScrollFrameTemplate")
+	local scroll = CreateFrame("ScrollFrame", opts.globalName, parent, opts.template or "UIPanelScrollFrameTemplate")
 
 	if opts.width then scroll:SetWidth(opts.width) end
 	if opts.height then scroll:SetHeight(opts.height) end
 	if opts.point then scroll:SetPoint(unpack(opts.point)) end
 	if opts.points then
-		for i = 1, #opts.points do
-			scroll:SetPoint(unpack(opts.points[i]))
-		end
+		ApplyPoints(scroll, opts.points)
 	end
 	if opts.scrollChild then
 		scroll:SetScrollChild(opts.scrollChild)
@@ -204,18 +253,16 @@ function UI:CreateScrollFrame(parent, opts)
 end
 
 function UI:CreateSlider(parent, opts)
-	opts = opts or {}
 	if not parent then return nil end
+	opts = opts or {}
 
-	local slider = _G.CreateFrame("Slider", opts.globalName, parent, opts.template)
+	local slider = CreateFrame("Slider", opts.globalName, parent, opts.template)
 
 	if opts.width then slider:SetWidth(opts.width) end
 	if opts.height then slider:SetHeight(opts.height) end
 	if opts.point then slider:SetPoint(unpack(opts.point)) end
 	if opts.points then
-		for i = 1, #opts.points do
-			slider:SetPoint(unpack(opts.points[i]))
-		end
+		ApplyPoints(slider, opts.points)
 	end
 	if opts.minValue ~= nil and opts.maxValue ~= nil then
 		slider:SetMinMaxValues(opts.minValue, opts.maxValue)
@@ -226,27 +273,23 @@ function UI:CreateSlider(parent, opts)
 		slider:SetObeyStepOnDrag(opts.obeyStepOnDrag)
 	end
 	if opts.scripts then
-		for event, fn in pairs(opts.scripts) do
-			slider:SetScript(event, fn)
-		end
+		ApplyScripts(slider, opts.scripts)
 	end
 
 	return slider
 end
 
 function UI:CreateStatusBar(parent, opts)
-	opts = opts or {}
 	if not parent then return nil end
+	opts = opts or {}
 
-	local bar = _G.CreateFrame("StatusBar", opts.globalName, parent, opts.template)
+	local bar = CreateFrame("StatusBar", opts.globalName, parent, opts.template)
 
 	if opts.width then bar:SetWidth(opts.width) end
 	if opts.height then bar:SetHeight(opts.height) end
 	if opts.point then bar:SetPoint(unpack(opts.point)) end
 	if opts.points then
-		for i = 1, #opts.points do
-			bar:SetPoint(unpack(opts.points[i]))
-		end
+		ApplyPoints(bar, opts.points)
 	end
 	if opts.minValue ~= nil and opts.maxValue ~= nil then
 		bar:SetMinMaxValues(opts.minValue, opts.maxValue)
@@ -259,8 +302,8 @@ function UI:CreateStatusBar(parent, opts)
 end
 
 function UI:CreateTexture(parent, opts)
-	opts = opts or {}
 	if not parent then return nil end
+	opts = opts or {}
 
 	local texture = parent:CreateTexture(opts.globalName, opts.layer, opts.template, opts.subLevel)
 
@@ -269,9 +312,7 @@ function UI:CreateTexture(parent, opts)
 	if opts.height then texture:SetHeight(opts.height) end
 	if opts.point then texture:SetPoint(unpack(opts.point)) end
 	if opts.points then
-		for i = 1, #opts.points do
-			texture:SetPoint(unpack(opts.points[i]))
-		end
+		ApplyPoints(texture, opts.points)
 	end
 	if opts.texture then texture:SetTexture(opts.texture) end
 	if opts.color then texture:SetColorTexture(unpack(opts.color)) end
@@ -284,16 +325,14 @@ function UI:CreateTexture(parent, opts)
 end
 
 function UI:CreateCheckButton(parent, opts)
-	opts = opts or {}
 	if not parent then return nil end
+	opts = opts or {}
 
-	local check = _G.CreateFrame("CheckButton", opts.globalName, parent, opts.template or "UICheckButtonTemplate")
+	local check = CreateFrame("CheckButton", opts.globalName, parent, opts.template or "UICheckButtonTemplate")
 
 	if opts.point then check:SetPoint(unpack(opts.point)) end
 	if opts.points then
-		for i = 1, #opts.points do
-			check:SetPoint(unpack(opts.points[i]))
-		end
+		ApplyPoints(check, opts.points)
 	end
 	if opts.checked ~= nil then check:SetChecked(opts.checked) end
 
@@ -305,9 +344,7 @@ function UI:CreateCheckButton(parent, opts)
 
 	if opts.onClick then check:SetScript("OnClick", opts.onClick) end
 	if opts.scripts then
-		for event, fn in pairs(opts.scripts) do
-			check:SetScript(event, fn)
-		end
+		ApplyScripts(check, opts.scripts)
 	end
 
 	return check
@@ -316,14 +353,14 @@ end
 function UI:CreateInfoFrame(parent, opts)
 	opts = opts or {}
 
-	local frame = _G.CreateFrame("Frame", opts.globalName, parent, opts.template or "BagSyncInfoFrameTemplate")
+	local frame = CreateFrame("Frame", opts.globalName, parent, opts.template or "BagSyncInfoFrameTemplate")
 	if opts.hide ~= false then frame:Hide() end
 
 	if opts.width then frame:SetWidth(opts.width) end
 	if opts.height then frame:SetHeight(opts.height) end
 	if opts.backdropColor then frame:SetBackdropColor(unpack(opts.backdropColor)) end
 
-	frame:EnableMouse(opts.enableMouse ~= false) --don't allow clickthrough by default
+	frame:EnableMouse(opts.enableMouse ~= false)
 	frame:SetMovable(false)
 	frame:SetResizable(false)
 	frame:SetFrameStrata(opts.frameStrata or opts.strata or "HIGH")
@@ -356,10 +393,10 @@ function UI:CreateInfoFrame(parent, opts)
 end
 
 function UI:CreateEditBox(parent, opts)
-	opts = opts or {}
 	if not parent then return nil end
+	opts = opts or {}
 
-	local editBox = _G.CreateFrame("EditBox", opts.globalName, parent, opts.template)
+	local editBox = CreateFrame("EditBox", opts.globalName, parent, opts.template)
 
 	if opts.size then
 		editBox:SetSize(opts.size[1], opts.size[2])
@@ -369,45 +406,30 @@ function UI:CreateEditBox(parent, opts)
 	end
 	if opts.point then editBox:SetPoint(unpack(opts.point)) end
 	if opts.points then
-		for i = 1, #opts.points do
-			editBox:SetPoint(unpack(opts.points[i]))
-		end
+		ApplyPoints(editBox, opts.points)
 	end
 	if opts.autoFocus ~= nil then editBox:SetAutoFocus(opts.autoFocus) end
 	if opts.multiLine ~= nil then editBox:SetMultiLine(opts.multiLine) end
 	if opts.maxLetters ~= nil then editBox:SetMaxLetters(opts.maxLetters) end
 	if opts.countInvisibleLetters ~= nil then editBox:SetCountInvisibleLetters(opts.countInvisibleLetters) end
 	if opts.text then editBox:SetText(opts.text) end
-	if opts.fontObject then editBox:SetFontObject(opts.fontObject) end
-	if opts.font then
-		if type(opts.font) == "table" then
-			editBox:SetFont(unpack(opts.font))
-		elseif opts.fontSize then
-			editBox:SetFont(opts.font, opts.fontSize, opts.fontFlags or "")
-		else
-			editBox:SetFont(opts.font, opts.fontSize or 12, opts.fontFlags or "")
-		end
-	end
+	SetFontFromOpts(editBox, opts)
 	if opts.scripts then
-		for event, fn in pairs(opts.scripts) do
-			editBox:SetScript(event, fn)
-		end
+		ApplyScripts(editBox, opts.scripts)
 	end
 
 	return editBox
 end
 
 function UI:CreateDropdown(parent, opts)
-	opts = opts or {}
 	if not parent then return nil end
+	opts = opts or {}
 
-	local dd = _G.CreateFrame("Frame", opts.globalName, parent, opts.template or "UIDropDownMenuTemplate")
+	local dd = CreateFrame("Frame", opts.globalName, parent, opts.template or "UIDropDownMenuTemplate")
 
 	if opts.point then dd:SetPoint(unpack(opts.point)) end
 	if opts.points then
-		for i = 1, #opts.points do
-			dd:SetPoint(unpack(opts.points[i]))
-		end
+		ApplyPoints(dd, opts.points)
 	end
 	if opts.width and UIDropDownMenu_SetWidth then
 		UIDropDownMenu_SetWidth(dd, opts.width)
@@ -420,22 +442,17 @@ function UI:CreateDropdown(parent, opts)
 end
 
 function UI:CreateFontString(parent, opts)
-	opts = opts or {}
 	if not parent then return nil end
+	opts = opts or {}
 
 	local layer = opts.layer or "BACKGROUND"
 	local fs = parent:CreateFontString(opts.globalName, layer, opts.template)
 
 	if opts.text then fs:SetText(opts.text) end
-	if opts.fontObject then fs:SetFontObject(opts.fontObject) end
-	if opts.font then
-		if type(opts.font) == "table" then
-			fs:SetFont(unpack(opts.font))
-		elseif opts.fontSize then
-			fs:SetFont(opts.font, opts.fontSize, opts.fontFlags or "")
-		else
-			fs:SetFont(opts.font, opts.fontSize or 12, opts.fontFlags or "")
-		end
+	if opts.fontObject then
+		fs:SetFontObject(opts.fontObject)
+	else
+		SetFontFromOpts(fs, opts)
 	end
 	if opts.textColor then fs:SetTextColor(unpack(opts.textColor)) end
 	if opts.justifyH then fs:SetJustifyH(opts.justifyH) end
@@ -444,19 +461,17 @@ function UI:CreateFontString(parent, opts)
 	if opts.height then fs:SetHeight(opts.height) end
 	if opts.point then fs:SetPoint(unpack(opts.point)) end
 	if opts.points then
-		for i = 1, #opts.points do
-			fs:SetPoint(unpack(opts.points[i]))
-		end
+		ApplyPoints(fs, opts.points)
 	end
 
 	return fs
 end
 
 function UI:CreateButton(parent, opts)
-	opts = opts or {}
 	if not parent then return nil end
+	opts = opts or {}
 
-	local btn = _G.CreateFrame("Button", opts.globalName, parent, opts.template)
+	local btn = CreateFrame("Button", opts.globalName, parent, opts.template)
 
 	if opts.text then btn:SetText(opts.text) end
 	if opts.width then btn:SetWidth(opts.width) end
@@ -468,32 +483,20 @@ function UI:CreateButton(parent, opts)
 	end
 	if opts.point then btn:SetPoint(unpack(opts.point)) end
 	if opts.points then
-		for i = 1, #opts.points do
-			btn:SetPoint(unpack(opts.points[i]))
-		end
+		ApplyPoints(btn, opts.points)
 	end
 	if opts.frameStrata then btn:SetFrameStrata(opts.frameStrata) end
 	if opts.frameLevel then btn:SetFrameLevel(opts.frameLevel) end
 	if opts.highlightTexture then btn:SetHighlightTexture(opts.highlightTexture) end
 
 	if opts.registerForClicks then
-		if type(opts.registerForClicks) == "table" then
-			btn:RegisterForClicks(unpack(opts.registerForClicks))
-		else
-			btn:RegisterForClicks(opts.registerForClicks)
-		end
+		btn:RegisterForClicks(type(opts.registerForClicks) == "table" and unpack(opts.registerForClicks) or opts.registerForClicks)
 	end
 	if opts.registerForDrag then
-		if type(opts.registerForDrag) == "table" then
-			btn:RegisterForDrag(unpack(opts.registerForDrag))
-		else
-			btn:RegisterForDrag(opts.registerForDrag)
-		end
+		btn:RegisterForDrag(type(opts.registerForDrag) == "table" and unpack(opts.registerForDrag) or opts.registerForDrag)
 	end
 	if opts.scripts then
-		for event, fn in pairs(opts.scripts) do
-			btn:SetScript(event, fn)
-		end
+		ApplyScripts(btn, opts.scripts)
 	end
 	if opts.onClick then btn:SetScript("OnClick", opts.onClick) end
 	if opts.onEnter then btn:SetScript("OnEnter", opts.onEnter) end
@@ -529,7 +532,7 @@ function UI:SetupSearchBox(searchBox, handler)
 	end
 	searchBox:SetScript("OnEscapePressed", function(self)
 		self:ClearFocus()
-		UI:CallHandler(self, "SearchBox_OnEscapePressed", self:GetText())
+		UI:CallHandler(self, "SearchBox_OnEscapePressed")
 	end)
 	searchBox:SetScript("OnEnterPressed", function(self)
 		self:ClearFocus()

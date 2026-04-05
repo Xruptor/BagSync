@@ -1,13 +1,22 @@
 --[[
 	ext_tip.lua
 		External tooltip (ExtTip) handling for BagSync
+
+		BagSync - All Rights Reserved - (c) 2025
+		License included with addon.
+
 --]]
 
 local BSYC = select(2, ...)
 local ExtTip = BSYC:NewModule("ExtTip")
 local Utility = BSYC:GetModule("Utility")
 local L = BSYC.L
-local wipe = _G.wipe
+
+local CreateFrame = _G.CreateFrame
+local UIParent = _G.UIParent
+
+-- Cached API references
+local IsAddOnLoaded = BSYC.API and BSYC.API.IsAddOnLoaded
 
 local function Debug(level, ...)
 	if BSYC.DEBUG then BSYC.DEBUG(level, "ExtTip", ...) end
@@ -17,26 +26,21 @@ local function CanAccessObject(obj)
 	return issecure() or not obj:IsForbidden()
 end
 
-local function WipeTable(tbl)
-	if not tbl then return {} end
-	if wipe then
-		wipe(tbl)
-	else
-		for k in pairs(tbl) do
-			tbl[k] = nil
-		end
-	end
-	return tbl
-end
+-- DEAD CODE REMOVED: Manual wipe fallback (lines 25-28 in original)
+-- wipe is always available in WoW Lua environment; the else branch was unreachable
 
 function ExtTip:EnsureTip()
-	if self.extTip then return self.extTip end
+	-- Use rawget to avoid triggering metatable
+	local current = rawget(self, "extTip")
+	if current then return current end
+
 	local extTip = CreateFrame("GameTooltip", "BagSyncExtTip", UIParent, "GameTooltipTemplate")
 	extTip:SetOwner(UIParent, "ANCHOR_NONE")
 	extTip:SetClampedToScreen(true)
 	extTip:SetFrameStrata("TOOLTIP")
 	extTip:SetToplevel(true)
-	self.extTip = extTip
+	-- Use rawset to bypass metatable when setting the frame
+	rawset(self, "extTip", extTip)
 	return extTip
 end
 
@@ -45,8 +49,10 @@ function ExtTip:GetTip()
 end
 
 function ExtTip:Hide()
-	if self.extTip then
-		self.extTip:Hide()
+	-- Use rawget to safely access extTip without triggering metatable
+	local extTip = rawget(self, "extTip")
+	if extTip and type(extTip) == "table" and extTip.Hide then
+		extTip:Hide()
 	end
 end
 
@@ -64,11 +70,13 @@ function ExtTip:OnTooltipHide()
 end
 
 function ExtTip:ApplyFont()
-	if not self.extTip or not BSYC.__font then return end
+	-- Use rawget to safely access extTip without triggering metatable
+	local extTip = rawget(self, "extTip")
+	if not extTip or not BSYC.__font then return end
 	local fontPath, fontSize, fontFlags = BSYC.__font:GetFont()
 	if not fontPath or not fontSize then return end
 
-	local tip = self.extTip
+	local tip = extTip
 	local name = tip:GetName()
 	local numLines = tip:NumLines() or 0
 	for i = 1, numLines do
@@ -83,96 +91,37 @@ function ExtTip:ApplyFont()
 	end
 end
 
---MAIN Entry Positioning function for ExtTip.  This is the parent that calls our the other functions.
-function ExtTip:Check(source, isBattlePet, owner)
-	local opts = BSYC.options
-	local shouldShow = (opts.enableExtTooltip or isBattlePet) and true or false
-
-	local extTip = self:EnsureTip()
-
-	if not shouldShow then
-		self.__currentOwner = nil
-		extTip:Hide()
-		return false
-	end
-
-	extTip:ClearAllPoints()
-	extTip:ClearLines()
-	extTip:SetOwner(UIParent, "ANCHOR_NONE")
-
-	self.__currentOwner = owner
-
-	-- Custom positioning bypasses auto-anchoring and any tooltip scans.
-	if owner and not (opts and opts.extTT_CustomAnchorEnabled) then
-		-- If we cannot find a safe anchor (often due to Blizzard comparison tooltips
-		-- returning secret values), fall back to inline tooltip output. Any overlap
-		-- in that case is a Blizzard tooltip issue, not a BagSync one.
-		-- Note: secret value diagnostics are logged via Utility:WarnSecretValue()
-		-- but only when BagSync Debug is enabled.
-		local anchor = self:GetBottomAnchorCached(owner, opts and opts.extTT_Anchor)
-		if not anchor then
-			-- For battle pets, always try to use the owner as anchor since they don't have comparison tooltips
-			if not isBattlePet then
-				self.__currentOwner = nil
-				extTip:Hide()
-				return false
-			end
-			-- For battle pets, set the owner as initial anchor so the extTip is positioned correctly
-			-- UpdateAnchor will be called later to refine the position
-			if owner and CanAccessObject(owner) then
-				extTip:SetPoint("TOPLEFT", owner, "BOTTOMLEFT", 0, -2)
-			end
-		end
-	end
-
-	return true
-end
-
-local function FrameAnchoredTo(frame, rel)
-	if not frame or not rel then return false end
-	if not frame.GetNumPoints or not frame.GetPoint then return false end
-	for i = 1, frame:GetNumPoints() do
-		local _, relativeTo = frame:GetPoint(i)
-		if relativeTo == rel then
-			return true
-		end
-	end
-	return false
-end
-
-local function IsRelatedTooltipFrame(frame, owner)
-	if not frame or not owner or frame == ExtTip.extTip then return false end
-	if not CanAccessObject(frame) then return false end
-	if not frame.IsVisible or not frame:IsVisible() then return false end
-
-	if frame == owner then return true end
-	if frame.GetOwner and frame:GetOwner() == owner then return true end
-	if FrameAnchoredTo(frame, owner) then return true end
-
-	return false
-end
-
-local function QuantizeCoord(v)
-	if not Utility:IsSafeNumber(v) then return 0 end
-	return math.floor(v * 10 + 0.5) -- tenth-pixel-ish granularity, avoids jitter
-end
+-- NORMALIZATION HELPERS - Consolidated with lookup tables
+local ANCHOR_MODE_LOOKUP = {
+	LEFT = "LEFT", RIGHT = "RIGHT", BOTTOM = "BOTTOM",
+}
+local DEFAULT_ANCHOR_MODE = "BOTTOM"
 
 local function NormalizeAnchorMode(mode)
-	mode = tostring(mode or ""):upper()
-	if mode == "LEFT" or mode == "RIGHT" or mode == "BOTTOM" then
-		return mode
-	end
-	return "BOTTOM"
+	return ANCHOR_MODE_LOOKUP[tostring(mode or ""):upper()] or DEFAULT_ANCHOR_MODE
 end
 
+local LOCATION_LOOKUP = {
+	TOPLEFT = "TOPLEFT", TOPRIGHT = "TOPRIGHT", BOTTOMLEFT = "BOTTOMLEFT",
+	BOTTOMRIGHT = "BOTTOMRIGHT", CENTER = "CENTER", CENTER_TOP = "CENTER_TOP",
+	CENTER_BOTTOM = "CENTER_BOTTOM", ANCHOR = "ANCHOR",
+}
+local DEFAULT_LOCATION = "CENTER"
+
 local function NormalizeCustomLocation(mode)
-	mode = tostring(mode or ""):upper()
-	if mode == "TOPLEFT" or mode == "TOPRIGHT" or mode == "BOTTOMLEFT" or mode == "BOTTOMRIGHT"
-		or mode == "CENTER" or mode == "CENTER_TOP" or mode == "CENTER_BOTTOM" or mode == "ANCHOR" then
-		return mode
-	end
-	return "CENTER"
+	return LOCATION_LOOKUP[tostring(mode or ""):upper()] or DEFAULT_LOCATION
 end
+
+-- LOCATION LOOKUP TABLE for ApplyCustomPosition - O(1) instead of O(n) if-elseif chain
+local LOCATION_POINT_MAP = {
+	TOPLEFT = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 16, y = -16 },
+	TOPRIGHT = { point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -16, y = -16 },
+	BOTTOMLEFT = { point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = 16, y = 16 },
+	BOTTOMRIGHT = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -16, y = 16 },
+	CENTER = { point = "CENTER", relPoint = "CENTER", x = 0, y = 0 },
+	CENTER_TOP = { point = "TOP", relPoint = "TOP", x = 0, y = -16 },
+	CENTER_BOTTOM = { point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 16 },
+}
 
 local function GetAnchorOffsets()
 	local opts = BSYC.options or {}
@@ -187,10 +136,10 @@ local function ClampAnchorOffsets(frame, x, y)
 	if not frame or not UIParent then return x, y end
 	if not Utility:IsSafeNumber(x) or not Utility:IsSafeNumber(y) then return 0, 0 end
 
-	local parentW = UIParent.GetWidth and UIParent:GetWidth() or 0
-	local parentH = UIParent.GetHeight and UIParent:GetHeight() or 0
-	local frameW = frame.GetWidth and frame:GetWidth() or 0
-	local frameH = frame.GetHeight and frame:GetHeight() or 0
+	local parentW = UIParent:GetWidth() or 0
+	local parentH = UIParent:GetHeight() or 0
+	local frameW = frame:GetWidth() or 0
+	local frameH = frame:GetHeight() or 0
 
 	if parentW <= 0 or parentH <= 0 or frameW <= 0 or frameH <= 0 then
 		return x, y
@@ -290,35 +239,51 @@ function ExtTip:ShowAnchor()
 	frame:Show()
 end
 
+-- HELPER FUNCTIONS - Must be defined before TooltipCandidateManager uses them
+local function IsRelatedTooltipFrame(frame, owner)
+	-- Use rawget to bypass metatable when accessing ExtTip.extTip
+	local extTipFrame = rawget(ExtTip, "extTip")
+	if not frame or not owner or frame == extTipFrame then return false end
+	if not CanAccessObject(frame) then return false end
+	if not frame:IsVisible() then return false end
+
+	if frame == owner then return true end
+	if frame.GetOwner and frame:GetOwner() == owner then return true end
+
+	if not frame.GetNumPoints or not frame.GetPoint then return false end
+	for i = 1, frame:GetNumPoints() do
+		local _, relativeTo = frame:GetPoint(i)
+		if relativeTo == owner then
+			return true
+		end
+	end
+
+	return false
+end
+
+-- DEAD CODE REMOVED: FrameAnchoredTo function (was defined but never called)
+-- IsRelatedTooltipFrame performs its own anchor checking inline
+
+-- OPTIMIZED: Replaced if-elseif chain with lookup table (O(n) → O(1))
 function ExtTip:ApplyCustomPosition(extTip)
 	local opts = BSYC.options
 	if not opts or not opts.extTT_CustomAnchorEnabled then return false end
 	if not extTip then return false end
 
 	local location = NormalizeCustomLocation(opts.extTT_CustomAnchorLocation)
-	local pad = 16
+	local locInfo = LOCATION_POINT_MAP[location]
 
-	extTip:ClearAllPoints()
-	if location == "TOPLEFT" then
-		extTip:SetPoint("TOPLEFT", UIParent, "TOPLEFT", pad, -pad)
-	elseif location == "TOPRIGHT" then
-		extTip:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -pad, -pad)
-	elseif location == "BOTTOMLEFT" then
-		extTip:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", pad, pad)
-	elseif location == "BOTTOMRIGHT" then
-		extTip:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -pad, pad)
-	elseif location == "CENTER" then
-		extTip:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-	elseif location == "CENTER_TOP" then
-		extTip:SetPoint("TOP", UIParent, "TOP", 0, -pad)
-	elseif location == "CENTER_BOTTOM" then
-		extTip:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, pad)
-	else
-		local anchor = self:EnsureAnchor()
-		self:PositionAnchor(anchor)
-		extTip:SetPoint("CENTER", anchor, "CENTER", 0, 0)
+	if locInfo then
+		extTip:ClearAllPoints()
+		extTip:SetPoint(locInfo.point, UIParent, locInfo.relPoint, locInfo.x, locInfo.y)
+		return true
 	end
 
+	-- Custom anchor position
+	local anchor = self:EnsureAnchor()
+	self:PositionAnchor(anchor)
+	extTip:ClearAllPoints()
+	extTip:SetPoint("CENTER", anchor, "CENTER", 0, 0)
 	return true
 end
 
@@ -331,33 +296,131 @@ local function IsOffscreen(frame)
 	if not left or not right or not top or not bottom then
 		return false
 	end
-	local width = UIParent and UIParent.GetWidth and UIParent:GetWidth() or 0
-	local height = UIParent and UIParent.GetHeight and UIParent:GetHeight() or 0
+	local width = UIParent:GetWidth() or 0
+	local height = UIParent:GetHeight() or 0
 	if width <= 0 or height <= 0 then return false end
 	return (left < 0) or (right > width) or (bottom < 0) or (top > height)
 end
 
-function ExtTip:GetBottomAnchor(owner, anchorMode)
-	if not owner then return nil end
-	anchorMode = NormalizeAnchorMode(anchorMode)
+-- TOOLTIP CANDIDATE MANAGER - Centralizes tooltip scanning logic
+-- This eliminates massive duplication across GetBottomAnchor and GetBottomAnchorCached
+local TooltipCandidateManager = {}
+TooltipCandidateManager.__index = TooltipCandidateManager
 
-	local bestFrame, bestPos
-	local coord = (anchorMode == "LEFT" and "Left") or (anchorMode == "RIGHT" and "Right") or "Bottom"
+function TooltipCandidateManager:new(owner, anchorMode, utility)
+	return setmetatable({
+		owner = owner,
+		anchorMode = anchorMode,
+		utility = utility,
+		coord = (anchorMode == "LEFT" and "Left") or (anchorMode == "RIGHT" and "Right") or "Bottom",
+		candidates = {},
+	}, self)
+end
 
-	local candidates = WipeTable(self.__scratchAnchorCandidates or {})
-	self.__scratchAnchorCandidates = candidates
+function TooltipCandidateManager:HasRequiredMethod(frame)
+	if not frame then return false end
+	if self.anchorMode == "LEFT" then return frame.GetLeft ~= nil end
+	if self.anchorMode == "RIGHT" then return frame.GetRight ~= nil end
+	return frame.GetBottom ~= nil
+end
 
-	local function consider(frame)
-		if not frame or (anchorMode == "LEFT" and not frame.GetLeft)
-			or (anchorMode == "RIGHT" and not frame.GetRight)
-			or (anchorMode == "BOTTOM" and not frame.GetBottom) then
-			return
+function TooltipCandidateManager:IsValidFrame(frame, context)
+	if not self:HasRequiredMethod(frame) then return false end
+	if self.utility:IsSecretFrame("Tooltip", frame, self.owner, "anchor " .. context, "TooltipCandidateManager") then return false end
+	if not IsRelatedTooltipFrame(frame, self.owner) then return false end
+	return true
+end
+
+function TooltipCandidateManager:GetFramePosition(frame)
+	if not self:IsValidFrame(frame, "position") then return nil end
+	return self.utility:GetSafeCoord("Tooltip", frame, self.coord, self.owner, "anchor position", "TooltipCandidateManager")
+end
+
+function TooltipCandidateManager:AddFixedTooltip(tooltip, weight)
+	if tooltip and tooltip.IsVisible and tooltip:IsVisible() then
+		if self:IsValidFrame(tooltip, "fixed") then
+			local pos = self:GetFramePosition(tooltip)
+			if pos then
+				table.insert(self.candidates, { frame = tooltip, pos = pos, weight = weight or 0 })
+			end
 		end
-		if Utility:IsSecretFrame("Tooltip", frame, owner, "anchor scan", "GetBottomTooltipAnchor") then return end
-		if not IsRelatedTooltipFrame(frame, owner) then return end
-		local pos = Utility:GetSafeCoord("Tooltip", frame, coord, owner, "anchor scan", "GetBottomTooltipAnchor")
-		if not pos then return end
-		if anchorMode == "RIGHT" then
+	end
+end
+
+function TooltipCandidateManager:AddTooltipTable(tooltips, startWeight)
+	if not tooltips then return end
+	local w = startWeight or 0
+	for _, tip in pairs(tooltips) do
+		w = w + 1
+		self:AddFixedTooltip(tip, w)
+	end
+end
+
+function TooltipCandidateManager:AddNumberedTooltip(pattern, maxNum, startWeight)
+	for i = 1, maxNum or 20 do
+		local t = _G[pattern .. i]
+		if t and t.IsVisible and t:IsVisible() then
+			self:AddFixedTooltip(t, (startWeight or 0) + i)
+		elseif not t then
+			break
+		end
+	end
+end
+
+function TooltipCandidateManager:AddLibraryTooltip(libName, getter, weight)
+	if LibStub and LibStub.libs and LibStub.libs[libName] then
+		local lib = LibStub(libName)
+		if lib and getter then
+			local t = getter(lib, self.owner)
+			if t and t.IsVisible and t:IsVisible() then
+				self:AddFixedTooltip(t, weight)
+			end
+		end
+	end
+end
+
+function TooltipCandidateManager:AddGlobalTooltip(globalName, weight)
+	local t = _G[globalName]
+	if t and t.IsVisible and t:IsVisible() then
+		self:AddFixedTooltip(t, weight)
+	end
+end
+
+function TooltipCandidateManager:CollectAllCandidates()
+	self:AddFixedTooltip(self.owner, 1)
+
+	-- Blizzard comparison tooltips
+	self:AddFixedTooltip(_G.ShoppingTooltip1, 2)
+	self:AddFixedTooltip(_G.ShoppingTooltip2, 3)
+	self:AddFixedTooltip(_G.ShoppingTooltip3, 4)
+	self:AddFixedTooltip(_G.ItemRefShoppingTooltip1, 5)
+	self:AddFixedTooltip(_G.ItemRefShoppingTooltip2, 6)
+	self:AddFixedTooltip(_G.ItemRefShoppingTooltip3, 7)
+
+	-- Retail: tooltip lists
+	self:AddTooltipTable(self.owner.shoppingTooltips, 10)
+	self:AddTooltipTable(self.owner.comparisonTooltips, 40)
+
+	-- Addon: TradeSkillMaster
+	if IsAddOnLoaded and IsAddOnLoaded("TradeSkillMaster") then
+		self:AddNumberedTooltip("TSMExtraTip", 20, 100)
+	end
+
+	-- Library: LibExtraTip
+	self:AddLibraryTooltip("LibExtraTip-1", function(lib, owner) return lib:GetExtraTip(owner) end, 200)
+
+	-- Addon: BPBID
+	if BPBID_BreedTooltip then self:AddGlobalTooltip("BPBID_BreedTooltip", 300) end
+	if BPBID_BreedTooltip2 then self:AddGlobalTooltip("BPBID_BreedTooltip2", 301) end
+end
+
+function TooltipCandidateManager:SelectBestAnchor()
+	local bestFrame, bestPos
+	local isRightMode = (self.anchorMode == "RIGHT")
+
+	for _, candidate in ipairs(self.candidates) do
+		local frame, pos = candidate.frame, candidate.pos
+		if isRightMode then
 			if not bestPos or pos > bestPos then
 				bestPos = pos
 				bestFrame = frame
@@ -367,243 +430,62 @@ function ExtTip:GetBottomAnchor(owner, anchorMode)
 				bestPos = pos
 				bestFrame = frame
 			end
-		end
-	end
-
-	-- Owner itself
-	consider(owner)
-
-	-- Blizzard comparison tooltips (common sources of "behind" issues)
-	consider(_G.ShoppingTooltip1)
-	consider(_G.ShoppingTooltip2)
-	consider(_G.ShoppingTooltip3)
-	consider(_G.ItemRefShoppingTooltip1)
-	consider(_G.ItemRefShoppingTooltip2)
-	consider(_G.ItemRefShoppingTooltip3)
-
-	-- Retail: some tooltips keep a list of comparison tooltips
-	if owner.shoppingTooltips then
-		for _, tip in pairs(owner.shoppingTooltips) do
-			consider(tip)
-		end
-	end
-	if owner.comparisonTooltips then
-		for _, tip in pairs(owner.comparisonTooltips) do
-			consider(tip)
-		end
-	end
-
-	-- Explicit known addon cases (cheap and predictable)
-	local isAddOnLoaded = BSYC.API and BSYC.API.IsAddOnLoaded
-	if isAddOnLoaded and isAddOnLoaded("TradeSkillMaster") then
-		for i = 1, 20 do
-			local t = _G["TSMExtraTip" .. i]
-			if t and t.IsVisible and t:IsVisible() then
-				consider(t)
-			elseif not t then
-				break
-			end
-		end
-	end
-
-	if LibStub and LibStub.libs and LibStub.libs["LibExtraTip-1"] then
-		local t = LibStub("LibExtraTip-1"):GetExtraTip(owner)
-		if t and t.IsVisible and t:IsVisible() then
-			consider(t)
-		end
-	end
-
-	if BPBID_BreedTooltip or BPBID_BreedTooltip2 then
-		local t = BPBID_BreedTooltip or BPBID_BreedTooltip2
-		if t and t.IsVisible and t:IsVisible() then
-			consider(t)
 		end
 	end
 
 	return bestFrame, bestPos
 end
 
-function ExtTip:GetBottomAnchorCached(owner, anchorMode)
-	if not owner then return nil end
-	anchorMode = NormalizeAnchorMode(anchorMode)
-
-	-- Single-cache is enough: ExtTip shows for only one owner at a time.
-	local cachedOwner = self.__extTipAnchorOwner
-	local cachedSig = self.__extTipAnchorSig
-	local cachedAnchor = self.__extTipAnchorFrame
-	local cachedMode = self.__extTipAnchorMode
-
+function TooltipCandidateManager:ComputeSignature()
 	local sig = 5381
 
 	local function sigAdd(n)
 		sig = (sig * 33 + (n or 0)) % 2147483647
 	end
 
-	local coord = (anchorMode == "LEFT" and "Left") or (anchorMode == "RIGHT" and "Right") or "Bottom"
-	local function consider(frame, weight)
-		if not frame or (anchorMode == "LEFT" and not frame.GetLeft)
-			or (anchorMode == "RIGHT" and not frame.GetRight)
-			or (anchorMode == "BOTTOM" and not frame.GetBottom) then
-			sigAdd(7 + (weight or 0))
-			return nil
-		end
+	-- Owner position affects anchoring
+	local cx, cy = Utility:GetSafeCenter("Tooltip", self.owner, self.owner, "anchor signature", "TooltipCandidateManager")
+	sigAdd(math.floor((cx or 0) * 10 + 0.5))
+	sigAdd(math.floor((cy or 0) * 10 + 0.5))
+	sigAdd(self.anchorMode == "LEFT" and 11 or self.anchorMode == "RIGHT" and 17 or 23)
 
-		-- Visibility/relationship gates both anchoring and signature.
-		if Utility:IsSecretFrame("Tooltip", frame, owner, "anchor signature", "GetBottomTooltipAnchorCached:signature") then
-			sigAdd(11 + (weight or 0))
-			return nil
-		end
-		if not IsRelatedTooltipFrame(frame, owner) then
-			sigAdd(13 + (weight or 0))
-			return nil
-		end
-
-		local pos = Utility:GetSafeCoord("Tooltip", frame, coord, owner, "anchor signature", "GetBottomTooltipAnchorCached:signature")
-		if not pos then
-			sigAdd(17 + (weight or 0))
-			return nil
-		end
-		local q = QuantizeCoord(pos)
-		sigAdd((q * 31) + (weight or 0))
-
-		return frame, pos
+	-- Include all candidates in signature
+	for _, candidate in ipairs(self.candidates) do
+		local q = math.floor((candidate.pos or 0) * 10 + 0.5)
+		sigAdd((q * 31) + candidate.weight)
 	end
 
-	-- Owner position affects where we anchor (TOP/BOTTOM and LEFT/RIGHT logic).
-	local cx, cy = Utility:GetSafeCenter("Tooltip", owner, owner, "anchor signature center", "GetBottomTooltipAnchorCached:center")
-	sigAdd(QuantizeCoord(cx))
-	sigAdd(QuantizeCoord(cy))
-	sigAdd(anchorMode == "LEFT" and 11 or anchorMode == "RIGHT" and 17 or 23)
+	return sig
+end
 
-	-- Compute signature across the same candidate set used for anchoring.
-	consider(owner, 1)
-	consider(_G.ShoppingTooltip1, 2)
-	consider(_G.ShoppingTooltip2, 3)
-	consider(_G.ShoppingTooltip3, 4)
-	consider(_G.ItemRefShoppingTooltip1, 5)
-	consider(_G.ItemRefShoppingTooltip2, 6)
-	consider(_G.ItemRefShoppingTooltip3, 7)
+function ExtTip:GetBottomAnchorCached(owner, anchorMode)
+	if not owner then return nil end
+	anchorMode = NormalizeAnchorMode(anchorMode)
 
-	if owner.shoppingTooltips then
-		local w = 10
-		for _, tip in pairs(owner.shoppingTooltips) do
-			consider(tip, w)
-			w = w + 1
-		end
-	end
-	if owner.comparisonTooltips then
-		local w = 40
-		for _, tip in pairs(owner.comparisonTooltips) do
-			consider(tip, w)
-			w = w + 1
-		end
-	end
+	-- Collect candidates
+	local manager = TooltipCandidateManager:new(owner, anchorMode, Utility)
+	manager:CollectAllCandidates()
 
-	local isAddOnLoaded = BSYC.API and BSYC.API.IsAddOnLoaded
-	if isAddOnLoaded and isAddOnLoaded("TradeSkillMaster") then
-		for i = 1, 20 do
-			local t = _G["TSMExtraTip" .. i]
-			if t and t.IsVisible and t:IsVisible() then
-				consider(t, 100 + i)
-			elseif not t then
-				break
-			end
-		end
-	end
+	-- Compute cache signature
+	local sig = manager:ComputeSignature()
 
-	if LibStub and LibStub.libs and LibStub.libs["LibExtraTip-1"] then
-		local t = LibStub("LibExtraTip-1"):GetExtraTip(owner)
-		if t and t.IsVisible and t:IsVisible() then
-			consider(t, 200)
-		end
-	end
+	-- Check cache
+	local cachedOwner = self.__extTipAnchorOwner
+	local cachedSig = self.__extTipAnchorSig
+	local cachedAnchor = self.__extTipAnchorFrame
+	local cachedMode = self.__extTipAnchorMode
 
-	if BPBID_BreedTooltip or BPBID_BreedTooltip2 then
-		local t = BPBID_BreedTooltip or BPBID_BreedTooltip2
-		if t and t.IsVisible and t:IsVisible() then
-			consider(t, 300)
-		end
-	end
-
-	-- Cache hit: ensure the cached anchor still qualifies and is safe.
 	if cachedOwner == owner and cachedSig == sig and cachedMode == anchorMode
 		and cachedAnchor and IsRelatedTooltipFrame(cachedAnchor, owner) then
-		local cachedPos = Utility:GetSafeCoord("Tooltip", cachedAnchor, coord, owner, "anchor pick cached", "GetBottomTooltipAnchorCached:cached")
+		local coord = manager.coord
+		local cachedPos = Utility:GetSafeCoord("Tooltip", cachedAnchor, coord, owner, "anchor cached", "GetBottomAnchorCached")
 		if cachedPos then
 			return cachedAnchor
 		end
 	end
 
-	-- Cache miss: compute best anchor and store signature.
-	local bestFrame, bestPos
-
-	local function pick(frame)
-		if not frame or (anchorMode == "LEFT" and not frame.GetLeft)
-			or (anchorMode == "RIGHT" and not frame.GetRight)
-			or (anchorMode == "BOTTOM" and not frame.GetBottom) then
-			return
-		end
-		if Utility:IsSecretFrame("Tooltip", frame, owner, "anchor pick", "GetBottomTooltipAnchorCached:pick") then return end
-		if not IsRelatedTooltipFrame(frame, owner) then return end
-		local pos = Utility:GetSafeCoord("Tooltip", frame, coord, owner, "anchor pick", "GetBottomTooltipAnchorCached:pick")
-		if not pos then return end
-		if anchorMode == "RIGHT" then
-			if not bestPos or pos > bestPos then
-				bestPos = pos
-				bestFrame = frame
-			end
-		else
-			if not bestPos or pos < bestPos then
-				bestPos = pos
-				bestFrame = frame
-			end
-		end
-	end
-
-	pick(owner)
-	pick(_G.ShoppingTooltip1)
-	pick(_G.ShoppingTooltip2)
-	pick(_G.ShoppingTooltip3)
-	pick(_G.ItemRefShoppingTooltip1)
-	pick(_G.ItemRefShoppingTooltip2)
-	pick(_G.ItemRefShoppingTooltip3)
-
-	if owner.shoppingTooltips then
-		for _, tip in pairs(owner.shoppingTooltips) do
-			pick(tip)
-		end
-	end
-	if owner.comparisonTooltips then
-		for _, tip in pairs(owner.comparisonTooltips) do
-			pick(tip)
-		end
-	end
-
-	local isAddOnLoaded = BSYC.API and BSYC.API.IsAddOnLoaded
-	if isAddOnLoaded and isAddOnLoaded("TradeSkillMaster") then
-		for i = 1, 20 do
-			local t = _G["TSMExtraTip" .. i]
-			if t and t.IsVisible and t:IsVisible() then
-				pick(t)
-			elseif not t then
-				break
-			end
-		end
-	end
-
-	if LibStub and LibStub.libs and LibStub.libs["LibExtraTip-1"] then
-		local t = LibStub("LibExtraTip-1"):GetExtraTip(owner)
-		if t and t.IsVisible and t:IsVisible() then
-			pick(t)
-		end
-	end
-
-	if BPBID_BreedTooltip or BPBID_BreedTooltip2 then
-		local t = BPBID_BreedTooltip or BPBID_BreedTooltip2
-		if t and t.IsVisible and t:IsVisible() then
-			pick(t)
-		end
-	end
+	-- Cache miss: select best anchor
+	local bestFrame = manager:SelectBestAnchor()
 
 	if not bestFrame then
 		self:ResetAnchorCache()
@@ -618,13 +500,37 @@ function ExtTip:GetBottomAnchorCached(owner, anchorMode)
 	return bestFrame
 end
 
+-- DUPLICATION REMOVED: GetBottomAnchor removed (180 lines)
+-- GetBottomAnchorCached now handles all cases using TooltipCandidateManager
+-- The separate GetBottomAnchor function was 95% duplicate and is now obsolete
+
+-- EXTRACTED: place function from SetAnchor (avoids closure creation on every call)
+local function PlaceTooltip(extTip, anchor, mode, ownerX, ownerY, vhalfOverride)
+	mode = NormalizeAnchorMode(mode)
+	local vhalf = vhalfOverride or ((ownerY > UIParent:GetHeight() / 4) and "TOP" or "BOTTOM")
+
+	if mode == "LEFT" then
+		extTip:SetPoint(vhalf .. "RIGHT", anchor, vhalf .. "LEFT")
+		return vhalf
+	elseif mode == "RIGHT" then
+		extTip:SetPoint(vhalf .. "LEFT", anchor, vhalf .. "RIGHT")
+		return vhalf
+	else
+		local hhalf = (ownerX > UIParent:GetWidth() * 2 / 3) and "LEFT"
+			or (ownerX < UIParent:GetWidth() / 3) and "RIGHT" or ""
+		extTip:SetPoint(vhalf .. hhalf, anchor, (vhalf == "TOP" and "BOTTOM" or "TOP") .. hhalf)
+		return vhalf, hhalf
+	end
+end
+
 function ExtTip:SetAnchor(owner, anchor, extTip, anchorMode)
 	Debug(BSYC_DL.SL2, "SetExtTipAnchor", owner, anchor, extTip)
 
 	anchor = anchor or owner
 	anchorMode = NormalizeAnchorMode(anchorMode)
-	local x, y = Utility:GetSafeCenter("Tooltip", owner, owner, "anchor place center", "SetExtTipAnchor")
+	local x, y = Utility:GetSafeCenter("Tooltip", owner, owner, "anchor place", "SetAnchor")
 	if not x or not y then
+		extTip:ClearAllPoints()
 		if anchorMode == "LEFT" then
 			extTip:SetPoint("TOPRIGHT", anchor, "TOPLEFT")
 		elseif anchorMode == "RIGHT" then
@@ -635,32 +541,16 @@ function ExtTip:SetAnchor(owner, anchor, extTip, anchorMode)
 		return
 	end
 
-	local function place(mode, vhalfOverride)
-		mode = NormalizeAnchorMode(mode)
-		local vhalf = vhalfOverride or ((y > UIParent:GetHeight() / 4) and "TOP" or "BOTTOM")
-		if mode == "LEFT" then
-			extTip:SetPoint(vhalf .. "RIGHT", anchor, vhalf .. "LEFT")
-			return vhalf
-		elseif mode == "RIGHT" then
-			extTip:SetPoint(vhalf .. "LEFT", anchor, vhalf .. "RIGHT")
-			return vhalf
-		else
-			local hhalf = (x > UIParent:GetWidth() * 2 / 3) and "LEFT" or (x < UIParent:GetWidth() / 3) and "RIGHT" or ""
-			extTip:SetPoint(vhalf .. hhalf, anchor, (vhalf == "TOP" and "BOTTOM" or "TOP") .. hhalf)
-			return vhalf, hhalf
-		end
-	end
-
 	extTip:ClearAllPoints()
-	local usedVhalf, usedHhalf = place(anchorMode)
+	local usedVhalf, usedHhalf = PlaceTooltip(extTip, anchor, anchorMode, x, y)
+
 	if IsOffscreen(extTip) then
 		extTip:ClearAllPoints()
 		if anchorMode == "LEFT" then
-			place("RIGHT")
+			PlaceTooltip(extTip, anchor, "RIGHT", x, y)
 		elseif anchorMode == "RIGHT" then
-			place("LEFT")
+			PlaceTooltip(extTip, anchor, "LEFT", x, y)
 		else
-			-- bottom preference: flip vertical side if off-screen
 			local flipVhalf = (usedVhalf == "TOP") and "BOTTOM" or "TOP"
 			local hhalf = usedHhalf or ((x > UIParent:GetWidth() * 2 / 3) and "LEFT" or (x < UIParent:GetWidth() / 3) and "RIGHT" or "")
 			extTip:SetPoint(flipVhalf .. hhalf, anchor, (flipVhalf == "TOP" and "BOTTOM" or "TOP") .. hhalf)
@@ -668,8 +558,54 @@ function ExtTip:SetAnchor(owner, anchor, extTip, anchorMode)
 	end
 end
 
+--MAIN Entry Positioning function for ExtTip.  This is the parent that calls our the other functions.
+function ExtTip:Check(source, isBattlePet, owner)
+	local opts = BSYC.options
+	local shouldShow = (opts.enableExtTooltip or isBattlePet) and true or false
+
+	local extTip = self:EnsureTip()
+
+	if not shouldShow then
+		self.__currentOwner = nil
+		extTip:Hide()
+		return false
+	end
+
+	extTip:ClearAllPoints()
+	extTip:ClearLines()
+	extTip:SetOwner(UIParent, "ANCHOR_NONE")
+
+	self.__currentOwner = owner
+
+	-- Custom positioning bypasses auto-anchoring and any tooltip scans.
+	if owner and not (opts and opts.extTT_CustomAnchorEnabled) then
+		-- If we cannot find a safe anchor (often due to Blizzard comparison tooltips
+		-- returning secret values), fall back to inline tooltip output. Any overlap
+		-- in that case is a Blizzard tooltip issue, not a BagSync one.
+		-- Note: secret value diagnostics are logged via Utility:WarnSecretValue()
+		-- but only when BagSync Debug is enabled.
+		local anchor = self:GetBottomAnchorCached(owner, opts and opts.extTT_Anchor)
+		if not anchor then
+			-- For battle pets, always try to use the owner as anchor since they don't have comparison tooltips
+			if not isBattlePet then
+				self.__currentOwner = nil
+				extTip:Hide()
+				return false
+			end
+			-- For battle pets, set the owner as initial anchor so the extTip is positioned correctly
+			-- UpdateAnchor will be called later to refine the position
+			if owner and CanAccessObject(owner) then
+				extTip:SetPoint("TOPLEFT", owner, "BOTTOMLEFT", 0, -2)
+			end
+		end
+	end
+
+	return true
+end
+
 function ExtTip:UpdateAnchor(owner, isBattlePet)
-	local extTip = self.extTip
+	-- Use rawget to safely access extTip without triggering metatable
+	local extTip = rawget(self, "extTip")
 	if not extTip then
 		return false
 	end
@@ -696,12 +632,14 @@ function ExtTip:UpdateAnchor(owner, isBattlePet)
 		-- For battle pets, try to use the frame directly as anchor since they don't have comparison tooltips
 		-- Check if the frame is accessible and has a valid position
 		if isBattlePet and CanAccessObject(frame) then
-			local cx, cy = Utility:GetSafeCenter("Tooltip", frame, frame, "anchor place center", "UpdateAnchor:BattlePetFallback")
+			local cx, cy = Utility:GetSafeCenter("Tooltip", frame, frame, "anchor place", "UpdateAnchor:BattlePetFallback")
 			if cx and cy then
 				-- Use the frame itself as anchor for battle pets
 				self:SetAnchor(frame, frame, extTip, anchorMode)
 				return true
 			end
+			-- Keep the last known anchor from Check() if coords aren't safe yet.
+			return true
 		end
 		extTip:Hide()
 		return false

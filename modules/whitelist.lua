@@ -4,6 +4,7 @@
 
 		BagSync - All Rights Reserved - (c) 2025
 		License included with addon.
+
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
@@ -11,11 +12,85 @@ local UI = BSYC:GetModule("UI")
 local Whitelist = BSYC:NewModule("Whitelist")
 local Tooltip = BSYC:GetModule("Tooltip")
 
-local function Debug(level, ...)
-    if BSYC.DEBUG then BSYC.DEBUG(level, "Whitelist", ...) end
-end
+-- Cache global references
+local GameTooltip = _G.GameTooltip
+local BattlePetTooltip = _G.BattlePetTooltip
+local HybridScrollFrame_GetButtons = _G.HybridScrollFrame_GetButtons
+local HybridScrollFrame_GetOffset = _G.HybridScrollFrame_GetOffset
+local HybridScrollFrame_SetOffset = _G.HybridScrollFrame_SetOffset
+local HybridScrollFrame_Update = _G.HybridScrollFrame_Update
+local C_PetJournal = _G.C_PetJournal
+local StaticPopup_Show = _G.StaticPopup_Show
+local BattlePetToolTip_Show = _G.BattlePetToolTip_Show
 
 local L = BSYC.L
+
+-------------------- Helper Functions --------------------
+
+-- Clear editbox text and reset it (eliminates 6 duplicate blocks)
+local function ClearAndResetEditBox(editBox)
+	editBox:ClearFocus()
+	editBox:SetText("")
+end
+
+-- Validate pet item and get species info
+local function ValidatePetItem(itemid)
+	local speciesID = BSYC:FakeIDToSpeciesID(itemid)
+	if not speciesID then
+		return nil
+	end
+
+	local speciesName = C_PetJournal and C_PetJournal.GetPetInfoBySpeciesID(speciesID)
+	if not speciesName then
+		return nil
+	end
+
+	return speciesID, speciesName
+end
+
+-- Get display name for pet item
+local function GetPetItemName(itemid)
+	local _, speciesName = ValidatePetItem(itemid)
+	if not speciesName then
+		return nil
+	end
+	return "|cFFCF9FFF"..speciesName.."|r"
+end
+
+-- Validate standard item
+local function ValidateStandardItem(itemid)
+	local getItemInfo = BSYC.API.GetItemInfo
+	if not (getItemInfo and getItemInfo(itemid)) then
+		return nil
+	end
+	return true
+end
+
+-- Get display name for standard item
+local function GetStandardItemName(itemid)
+	local getItemInfo = BSYC.API.GetItemInfo
+	if not (getItemInfo and getItemInfo(itemid)) then
+		return nil
+	end
+
+	local _, itemLink = getItemInfo(itemid)
+	return itemLink
+end
+
+-- Show pet tooltip
+local function ShowPetTooltip(itemid)
+	local speciesID = BSYC:FakeIDToSpeciesID(itemid)
+	if speciesID then
+		BattlePetToolTip_Show(speciesID, 0, 0, 0, 0, 0, nil)
+	end
+end
+
+-- Show standard item tooltip
+local function ShowStandardItemTooltip(itemid)
+	GameTooltip:SetHyperlink("item:"..itemid)
+end
+
+-------------------- Module Functions --------------------
 
 function Whitelist:OnEnable()
 	local whitelistFrame = UI:CreateModuleFrame(Whitelist, {
@@ -129,7 +204,7 @@ end
 function Whitelist:UpdateList()
 	Whitelist.frame.itemIDBox:ClearFocus()
 	Whitelist:CreateList()
-    Whitelist:RefreshList()
+	Whitelist:RefreshList()
 
 	--scroll to top when shown
 	HybridScrollFrame_SetOffset(Whitelist.scrollFrame, 0)
@@ -155,24 +230,24 @@ function Whitelist:CreateList()
 end
 
 function Whitelist:RefreshList()
-    local items = Whitelist.listItems
-    local buttons = HybridScrollFrame_GetButtons(Whitelist.scrollFrame)
-    local offset = HybridScrollFrame_GetOffset(Whitelist.scrollFrame)
+	local items = Whitelist.listItems
+	local buttons = HybridScrollFrame_GetButtons(Whitelist.scrollFrame)
+	local offset = HybridScrollFrame_GetOffset(Whitelist.scrollFrame)
 	if not buttons then return end
 
-    for buttonIndex = 1, #buttons do
-        local button = buttons[buttonIndex]
+	for buttonIndex = 1, #buttons do
+		local button = buttons[buttonIndex]
 		UI:AttachListItemHandlers(button, Whitelist)
 
-        local itemIndex = buttonIndex + offset
+		local itemIndex = buttonIndex + offset
 
-        if itemIndex <= #items then
-            local item = items[itemIndex]
+		if itemIndex <= #items then
+			local item = items[itemIndex]
 
-            button:SetID(itemIndex)
+			button:SetID(itemIndex)
 			button.data = item
 			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "")
-            button:SetWidth(Whitelist.scrollFrame.scrollChild:GetWidth())
+			button:SetWidth(Whitelist.scrollFrame.scrollChild:GetWidth())
 
 			button.Text:SetJustifyH("LEFT")
 			button.Text:SetTextColor(1, 1, 1)
@@ -184,68 +259,70 @@ function Whitelist:RefreshList()
 				Whitelist:Item_OnEnter(button)
 			end
 
-            button:Show()
-        else
-            button:Hide()
-        end
-    end
+			button:Show()
+		else
+			button:Hide()
+		end
+	end
 
-    local buttonHeight = Whitelist.scrollFrame.buttonHeight
-    local totalHeight = #items * buttonHeight
-    local shownHeight = #buttons * buttonHeight
+	local buttonHeight = Whitelist.scrollFrame.buttonHeight
+	local totalHeight = #items * buttonHeight
+	local shownHeight = #buttons * buttonHeight
 
-    HybridScrollFrame_Update(Whitelist.scrollFrame, totalHeight, shownHeight)
+	HybridScrollFrame_Update(Whitelist.scrollFrame, totalHeight, shownHeight)
 end
 
 function Whitelist:AddItemID()
 	local editBox = Whitelist.frame.itemIDBox
-
 	editBox:ClearFocus()
 	local itemid = editBox:GetText()
 
-	if not itemid or string.len(editBox:GetText()) < 1 or not tonumber(itemid) then
+	-- Validate input
+	if not itemid or #itemid < 1 then
 		BSYC:Print(L.EnterItemID)
-		editBox:SetText("")
+		ClearAndResetEditBox(editBox)
 		return
 	end
 
 	itemid = tonumber(itemid)
-
-	if BSYC.db.whitelist[itemid] then
-		BSYC:Print(L.ItemIDExistWhitelist:format(itemid))
-		editBox:SetText("")
+	if not itemid then
+		BSYC:Print(L.EnterItemID)
+		ClearAndResetEditBox(editBox)
 		return
 	end
+
+	-- Check if already exists
+	if BSYC.db.whitelist[itemid] then
+		BSYC:Print(L.ItemIDExistWhitelist:format(itemid))
+		ClearAndResetEditBox(editBox)
+		return
+	end
+
+	-- Handle pet items (FakePetCode and above)
 	if itemid >= BSYC.FakePetCode then
-		local speciesID = BSYC:FakeIDToSpeciesID(itemid)
-		if not speciesID then
-			BSYC:Print(L.ItemIDNotValid:format(itemid))
-			editBox:SetText("")
-			return
-		end
-		local speciesName = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
+		local _, speciesName = ValidatePetItem(itemid)
 		if not speciesName then
 			BSYC:Print(L.ItemIDNotValid:format(itemid))
-			editBox:SetText("")
+			ClearAndResetEditBox(editBox)
 			return
 		end
-		BSYC.db.whitelist[itemid] = "|cFFCF9FFF"..speciesName.."|r"
+
+		BSYC.db.whitelist[itemid] = GetPetItemName(itemid)
 		BSYC:Print(L.ItemIDAdded:format(itemid), speciesName)
 	else
-		local getItemInfo = BSYC.API.GetItemInfo
-		if not (getItemInfo and getItemInfo(itemid)) then
+		-- Handle standard items
+		if not ValidateStandardItem(itemid) then
 			BSYC:Print(L.ItemIDNotValid:format(itemid))
-			editBox:SetText("")
+			ClearAndResetEditBox(editBox)
 			return
 		end
 
-		local dName, dItemLink = getItemInfo(itemid)
-
-		BSYC.db.whitelist[itemid] = dItemLink
-		BSYC:Print(L.ItemIDAdded:format(itemid), dItemLink)
+		local itemName = GetStandardItemName(itemid)
+		BSYC.db.whitelist[itemid] = itemName
+		BSYC:Print(L.ItemIDAdded:format(itemid), itemName)
 	end
-	editBox:SetText("")
 
+	ClearAndResetEditBox(editBox)
 	Whitelist:UpdateList()
 end
 
@@ -263,14 +340,12 @@ end
 
 function Whitelist:Item_OnEnter(btn)
 	GameTooltip:SetOwner(btn, "ANCHOR_BOTTOMRIGHT")
+
 	if type(btn.data.key) == "number" then
 		if tonumber(btn.data.key) >= BSYC.FakePetCode then
-			local speciesID = BSYC:FakeIDToSpeciesID(btn.data.key)
-			if speciesID then
-				BattlePetToolTip_Show(speciesID, 0, 0, 0, 0, 0, nil)
-			end
+			ShowPetTooltip(btn.data.key)
 		else
-			GameTooltip:SetHyperlink("item:"..btn.data.key)
+			ShowStandardItemTooltip(btn.data.key)
 		end
 	else
 		GameTooltip:AddLine(btn.data.value)

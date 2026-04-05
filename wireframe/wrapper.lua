@@ -2,17 +2,27 @@
 	wrapper.lua
 		Internal lightweight framework that replaces Ace3 usage while keeping BagSync's
 		module/event/message/console/locale/config behavior stable across Classic → Retail.
+
+		BagSync - All Rights Reserved - (c) 2025
+		License included with addon.
+
 --]]
 
 local ADDON_NAME, BSYC = ...
 BSYC = BSYC or {}
 _G[ADDON_NAME] = BSYC
 
+-- Cache frequently accessed globals
+local DEFAULT_CHAT_FRAME = _G.DEFAULT_CHAT_FRAME
+local GameTooltip = _G.GameTooltip
+local ColorPickerFrame = _G.ColorPickerFrame
+local NOT_BOUND = _G.NOT_BOUND
+
 -- ---------------------------------------------------------------------------
 -- Locale (AceLocale replacement)
 -- ---------------------------------------------------------------------------
 
-local currentLocale = (type(_G.GetLocale) == "function" and _G.GetLocale()) or "enUS"
+local currentLocale = GetLocale()
 if currentLocale == "enGB" then
 	currentLocale = "enUS"
 end
@@ -49,9 +59,10 @@ function BSYC:GetLocale()
 	return L
 end
 
+-- Cache locale lookup to avoid repeated GetLocale calls
 BSYC.L = BSYC.L or setmetatable({}, {
 	__index = function(_, key)
-		return (BSYC:GetLocale() or {})[key]
+		return BSYC:GetLocale()[key]
 	end,
 })
 
@@ -62,13 +73,10 @@ BSYC.L = BSYC.L or setmetatable({}, {
 BSYC._chatCommands = BSYC._chatCommands or {}
 
 function BSYC:Print(...)
-	local prefix = ""
-	if ADDON_NAME then
-		prefix = "|cFF99CC33" .. ADDON_NAME .. "|r: "
-	end
+	local prefix = "|cFF99CC33" .. ADDON_NAME .. "|r: "
 	local msg = prefix .. string.join(" ", tostringall(...))
-	if _G.DEFAULT_CHAT_FRAME and _G.DEFAULT_CHAT_FRAME.AddMessage then
-		_G.DEFAULT_CHAT_FRAME:AddMessage(msg)
+	if DEFAULT_CHAT_FRAME then
+		DEFAULT_CHAT_FRAME:AddMessage(msg)
 	else
 		print(msg)
 	end
@@ -79,8 +87,7 @@ function BSYC:Printf(fmt, ...)
 end
 
 local function normalizeCommand(command)
-	command = tostring(command or ""):lower():gsub("^/", "")
-	return command
+	return tostring(command or ""):lower():gsub("^/", "")
 end
 
 function BSYC:RegisterChatCommand(command, func)
@@ -91,7 +98,7 @@ function BSYC:RegisterChatCommand(command, func)
 	if type(func) == "string" then
 		handler = function(msg) return BSYC[func](BSYC, msg) end
 	elseif type(func) == "function" then
-		handler = function(msg) return func(msg) end
+		handler = func
 	else
 		return
 	end
@@ -118,7 +125,29 @@ end
 BSYC._modulesByName = BSYC._modulesByName or {}
 BSYC._modulesByOrder = BSYC._modulesByOrder or {}
 
-function BSYC:NewModule(name, ...)
+-- Use metatable instead of individual closure assignments
+local moduleMeta = {}
+local MODULE_METHODS = {
+	RegisterEvent = true,
+	UnregisterEvent = true,
+	UnregisterAllEvents = true,
+	RegisterMessage = true,
+	UnregisterMessage = true,
+	UnregisterAllMessages = true,
+	SendMessage = true,
+}
+
+function moduleMeta:__index(method)
+	if not MODULE_METHODS[method] then return nil end
+	return function(self, ...)
+		local func = BSYC[method]
+		if type(func) == "function" then
+			return func(self, ...)
+		end
+	end
+end
+
+function BSYC:NewModule(name)
 	if type(name) ~= "string" or name == "" then return nil end
 	if BSYC._modulesByName[name] then
 		return BSYC._modulesByName[name]
@@ -127,14 +156,7 @@ function BSYC:NewModule(name, ...)
 	local module = { name = name }
 	BSYC._modulesByName[name] = module
 	table.insert(BSYC._modulesByOrder, module)
-
-	module.RegisterEvent = function(self, ...) return BSYC.RegisterEvent(self, ...) end
-	module.UnregisterEvent = function(self, ...) return BSYC.UnregisterEvent(self, ...) end
-	module.UnregisterAllEvents = function(self) return BSYC.UnregisterAllEvents(self) end
-	module.RegisterMessage = function(self, ...) return BSYC.RegisterMessage(self, ...) end
-	module.UnregisterMessage = function(self, ...) return BSYC.UnregisterMessage(self, ...) end
-	module.UnregisterAllMessages = function(self) return BSYC.UnregisterAllMessages(self) end
-	module.SendMessage = function(self, ...) return BSYC.SendMessage(self, ...) end
+	setmetatable(module, moduleMeta)
 
 	return module
 end
@@ -154,18 +176,19 @@ end
 -- Events + messages (AceEvent replacement)
 -- ---------------------------------------------------------------------------
 
-local eventFrame = _G.CreateFrame("Frame")
+local eventFrame = CreateFrame("Frame")
 BSYC._eventFrame = eventFrame
 
-BSYC._eventHandlers = BSYC._eventHandlers or {}     -- event -> { [obj]=fn }
-BSYC._messageHandlers = BSYC._messageHandlers or {} -- msg -> { [obj]=fn }
+-- Initialize fresh to prevent stale state
+BSYC._eventHandlers = {}
+BSYC._messageHandlers = {}
 
 local function makeHandler(obj, method, arg)
 	if type(method) == "function" then
 		if arg ~= nil then
 			return function(eventName, ...) return method(arg, eventName, ...) end
 		end
-		return function(eventName, ...) return method(eventName, ...) end
+		return method
 	end
 
 	method = method or ""
@@ -283,7 +306,7 @@ BSYC.ConfigDialog = BSYC.ConfigDialog or { _settingsCategories = {} }
 local uiNameCounter = 0
 local function uiName(kind)
 	uiNameCounter = uiNameCounter + 1
-	return ("%s_%s_%d"):format(ADDON_NAME or "BagSync", tostring(kind or "UI"), uiNameCounter)
+	return ("%s_%s_%d"):format(ADDON_NAME, tostring(kind or "UI"), uiNameCounter)
 end
 
 local function resolveText(v, ctx)
@@ -308,21 +331,20 @@ local function attachTooltip(frame, title, body)
 	title = title or ""
 	body = body or ""
 	if not frame or (title == "" and body == "") then return end
-	if type(frame.HookScript) ~= "function" then return end
 
 	frame:HookScript("OnEnter", function(self)
-		if not _G.GameTooltip then return end
-		_G.GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+		if not GameTooltip then return end
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 		if title ~= "" then
-			_G.GameTooltip:AddLine(title, 1, 1, 1)
+			GameTooltip:AddLine(title, 1, 1, 1)
 		end
 		if body ~= "" then
-			_G.GameTooltip:AddLine(body, 0.9, 0.9, 0.9, true)
+			GameTooltip:AddLine(body, 0.9, 0.9, 0.9, true)
 		end
-		_G.GameTooltip:Show()
+		GameTooltip:Show()
 	end)
 	frame:HookScript("OnLeave", function()
-		if _G.GameTooltip then _G.GameTooltip:Hide() end
+		if GameTooltip then GameTooltip:Hide() end
 	end)
 end
 
@@ -349,17 +371,17 @@ local function createTitle(parent, text, y, color)
 end
 
 local function getContentWidth(parent)
-	if not parent or type(parent.GetWidth) ~= "function" then
+	if not parent then
 		return 560
 	end
 	local w = parent:GetWidth() or 0
-	if not w or w <= 1 then
+	if w <= 1 then
 		local p = parent:GetParent()
-		if p and type(p.GetWidth) == "function" then
+		if p then
 			w = p:GetWidth() or 0
 		end
 	end
-	if w and w > 1 then
+	if w > 1 then
 		return math.max(100, w - 32)
 	end
 	return 560
@@ -371,7 +393,7 @@ local function createDescription(parent, text, y, fontTemplate)
 	fs:SetJustifyH("LEFT")
 	fs:SetJustifyV("TOP")
 	local width = getContentWidth(parent)
-	if width and width > 0 then
+	if width > 0 then
 		fs:SetWidth(width)
 	else
 		fs:SetPoint("RIGHT", parent, "RIGHT", -16, 0)
@@ -511,15 +533,15 @@ local function applyDropdownSizing(dd, entries, parent, force)
 	end
 
 	if not dd._bsycDefaultWidth then
-		local curWidth = dd.GetWidth and dd:GetWidth() or 0
-		if curWidth and curWidth > 0 then
+		local curWidth = dd:GetWidth() or 0
+		if curWidth > 0 then
 			dd._bsycDefaultWidth = curWidth
 		end
 	end
 
 	local text = getDropdownText(dd)
 	local measure = getMeasureFontString(dd, text)
-	if not measure or not measure.SetText then return end
+	if not measure then return end
 
 	local maxWidth = 0
 	for i = 1, #entries do
@@ -536,7 +558,7 @@ local function applyDropdownSizing(dd, entries, parent, force)
 	local minWidth = dd._bsycDefaultWidth or DROPDOWN_MIN_WIDTH
 	if width < minWidth then width = minWidth end
 	local maxAllowed = getContentWidth(parent)
-	if maxAllowed and maxAllowed > 0 then
+	if maxAllowed > 0 then
 		maxAllowed = maxAllowed + 16
 		if width > maxAllowed then width = maxAllowed end
 	end
@@ -567,9 +589,16 @@ end
 local function applyFontPreview(dropdownFrame, fontPath)
 	if not dropdownFrame or type(fontPath) ~= "string" or fontPath == "" then return end
 	local text = _G[dropdownFrame:GetName() .. "Text"] or dropdownFrame.Text
-	if text and text.SetFont then
+	if text then
 		local size = select(2, text:GetFont()) or 12
 		text:SetFont(fontPath, size, "")
+	end
+end
+
+-- Helper to refresh all widgets (eliminates 12+ duplicate loops)
+local function refreshAllWidgets(widgets)
+	for _, w in ipairs(widgets) do
+		w.refresh()
 	end
 end
 
@@ -585,28 +614,29 @@ local function applyDirty(dirty)
 		end
 	end
 
-	if flags.fonts and type(BSYC.CreateFonts) == "function" then
-		pcall(BSYC.CreateFonts, BSYC)
+	if flags.fonts and BSYC.CreateFonts then
+		BSYC:CreateFonts()
 	end
 
-	if flags.tooltips and BSYC.GetModule then
+	if flags.tooltips then
 		local tooltip = BSYC:GetModule("Tooltip", true)
-		if tooltip and tooltip.ResetCache then pcall(tooltip.ResetCache, tooltip) end
-		if tooltip and tooltip.ResetLastLink then pcall(tooltip.ResetLastLink, tooltip) end
-	end
-
-	if flags.minimap and BSYC.GetModule then
-		if BSYC.UpdateMinimapIconVisibility then
-			pcall(BSYC.UpdateMinimapIconVisibility, BSYC)
-		else
-			local minimap = BSYC:GetModule("Minimap", true)
-			if minimap and minimap.UpdateVisibility then pcall(minimap.UpdateVisibility, minimap) end
+		if tooltip then
+			if tooltip.ResetCache then tooltip:ResetCache() end
+			if tooltip.ResetLastLink then tooltip:ResetLastLink() end
 		end
 	end
 
+	if flags.minimap then
+		if BSYC.UpdateMinimapIconVisibility then
+			BSYC:UpdateMinimapIconVisibility()
+		else
+			local minimap = BSYC:GetModule("Minimap", true)
+			if minimap and minimap.UpdateVisibility then minimap:UpdateVisibility() end
+		end
+	end
 
-	if flags.bindings and _G.SaveBindings and _G.GetCurrentBindingSet then
-		pcall(_G.SaveBindings, _G.GetCurrentBindingSet())
+	if flags.bindings then
+		SaveBindings(GetCurrentBindingSet())
 	end
 end
 
@@ -691,17 +721,15 @@ local function compileBinding(item)
 		local command = bind[2]
 		return {
 			get = function()
-				if not _G.GetBindingKey then return "" end
-				local k1 = _G.GetBindingKey(command)
-				return k1 or ""
+				if not GetBindingKey then return "" end
+				return GetBindingKey(command) or ""
 			end,
 			set = function(key)
-				if not (_G.GetBindingKey and _G.SetBinding) then return end
-				local b1, b2 = _G.GetBindingKey(command)
-				if b1 then _G.SetBinding(b1) end
-				if b2 then _G.SetBinding(b2) end
+				if not (GetBindingKey and SetBinding) then return end
+				local b1 = GetBindingKey(command)
+				if b1 then SetBinding(b1) end
 				if key and key ~= "" then
-					_G.SetBinding(key, command)
+					SetBinding(key, command)
 				end
 			end,
 		}
@@ -735,7 +763,6 @@ local function getSelectEntries(values)
 	local labels = {}
 
 	if values[1] ~= nil then
-		-- Array values: { "a", "b" } OR { {value,label}, ... }
 		for i = 1, #values do
 			local v = values[i]
 			if type(v) == "table" then
@@ -766,6 +793,324 @@ local function getSelectEntries(values)
 	end
 
 	return entries, labels
+end
+
+-- Type-specific render helpers (extracted from renderItems)
+local function renderToggle(parent, item, widgets, y)
+	local label = resolveText(item.label or item.name) or ""
+	local cb, cbY = createCheckbox(parent, label, y)
+	attachTooltip(cb, label, resolveText(item.desc) or "")
+
+	local binding = compileBinding(item)
+	cb:SetScript("OnClick", function(self)
+		if binding and binding.set then
+			binding.set(self:GetChecked() and true or false)
+		end
+		applyDirty(item.dirty)
+		refreshAllWidgets(widgets)
+	end)
+
+	table.insert(widgets, {
+		refresh = function()
+			local v = binding and binding.get and binding.get()
+			cb:SetChecked(not not v)
+			cb:SetEnabled(not evalBool(item.disabled))
+		end
+	})
+
+	return cbY
+end
+
+local function renderSelect(parent, item, widgets, y)
+	local label = resolveText(item.label or item.name) or ""
+	local dd, _, ddY = createDropdown(parent, label, y)
+	local ddButton = dd and _G[dd:GetName() .. "Button"]
+	attachTooltip(ddButton or dd, label, resolveText(item.desc) or "")
+
+	local binding = compileBinding(item)
+	local entries, labelByValue = getSelectEntries(item.values)
+
+	UIDropDownMenu_Initialize(dd, function(_, level)
+		local selected = binding and binding.get and binding.get()
+		for j = 1, #entries do
+			local entry = entries[j]
+			local b = UIDropDownMenu_CreateInfo()
+			b.text = tostring(entry.label)
+			b.value = entry.value
+			b.func = function()
+				if binding and binding.set then
+					binding.set(entry.value)
+				end
+				UIDropDownMenu_SetSelectedValue(dd, entry.value)
+				applyDirty(item.dirty)
+				refreshAllWidgets(widgets)
+			end
+			b.checked = (selected == entry.value)
+			UIDropDownMenu_AddButton(b, level)
+		end
+	end)
+	applyDropdownSizing(dd, entries, parent, false)
+
+	table.insert(widgets, {
+		refresh = function()
+			local selected = binding and binding.get and binding.get()
+			UIDropDownMenu_SetSelectedValue(dd, selected)
+			local t = labelByValue[selected]
+			if t == nil and selected ~= nil then
+				t = tostring(selected)
+			end
+			t = t or ""
+			UIDropDownMenu_SetText(dd, t)
+			UIDropDownMenu_DisableDropDown(dd)
+			if not evalBool(item.disabled) then
+				UIDropDownMenu_EnableDropDown(dd)
+			end
+			if item.control == "font" and BSYC.GetFontPath then
+				applyFontPreview(dd, BSYC:GetFontPath(t ~= "" and t or tostring(selected or "")))
+			end
+			applyDropdownSizing(dd, entries, parent, item.control == "font")
+		end
+	})
+
+	return ddY
+end
+
+local function renderRange(parent, item, widgets, y)
+	local label = resolveText(item.label or item.name) or ""
+	local slider, sliderY = createSlider(parent, label, y)
+	attachTooltip(slider, label, resolveText(item.desc) or "")
+
+	local binding = compileBinding(item)
+	local minVal = tonumber(item.min) or 0
+	local maxVal = tonumber(item.max) or 100
+	local step = tonumber(item.step) or 1
+
+	slider:SetMinMaxValues(minVal, maxVal)
+	slider:SetValueStep(step)
+	if slider.SetObeyStepOnDrag then
+		slider:SetObeyStepOnDrag(true)
+	end
+	updateSliderText(slider, label, minVal, minVal, maxVal, item.showValue)
+
+	slider._bsycUpdating = false
+	slider._bsycDragging = false
+	slider:HookScript("OnMouseDown", function(self) self._bsycDragging = true end)
+	slider:HookScript("OnMouseUp", function(self)
+		self._bsycDragging = false
+		applyDirty(item.dirty)
+		refreshAllWidgets(widgets)
+	end)
+
+	slider:SetScript("OnValueChanged", function(self, value)
+		if self._bsycUpdating then return end
+		value = tonumber(value) or minVal
+		if step and step > 0 then
+			value = math.floor((value / step) + 0.5) * step
+		end
+		if value < minVal then value = minVal end
+		if value > maxVal then value = maxVal end
+		updateSliderText(self, label, value, minVal, maxVal, item.showValue)
+		if binding and binding.set then binding.set(value) end
+		if not self._bsycDragging then
+			applyDirty(item.dirty)
+			refreshAllWidgets(widgets)
+		end
+	end)
+
+	table.insert(widgets, {
+		refresh = function()
+			local v = binding and binding.get and tonumber(binding.get()) or item.default
+			v = tonumber(v) or minVal
+			local orig = v
+			if v < minVal then v = minVal end
+			if v > maxVal then v = maxVal end
+			if binding and binding.set and v ~= orig then
+				binding.set(v)
+			end
+			slider._bsycUpdating = true
+			slider:SetValue(v)
+			slider._bsycUpdating = false
+			updateSliderText(slider, label, v, minVal, maxVal, item.showValue)
+			slider:SetEnabled(not evalBool(item.disabled))
+		end
+	})
+
+	return sliderY
+end
+
+local function renderButton(parent, item, widgets, y)
+	local label = resolveText(item.label or item.name) or ""
+	local btn, btnY = createButton(parent, label, y)
+	attachTooltip(btn, label, resolveText(item.desc) or "")
+
+	btn:SetScript("OnClick", function()
+		if type(item.onClick) == "function" then
+			pcall(item.onClick)
+		end
+		applyDirty(item.dirty)
+		refreshAllWidgets(widgets)
+	end)
+	table.insert(widgets, { refresh = function() btn:SetEnabled(not evalBool(item.disabled)) end })
+
+	return btnY
+end
+
+local function renderColor(parent, item, widgets, y)
+	local label = resolveText(item.label or item.name) or ""
+	local row, swatch, text, colorY = createColorRow(parent, label, y)
+	attachTooltip(row, label, resolveText(item.desc) or "")
+
+	local binding = compileBinding(item)
+	row:SetScript("OnClick", function()
+		local r, g, b = 1, 1, 1
+		if binding and binding.get then
+			r, g, b = binding.get()
+		end
+		r, g, b = tonumber(r) or 1, tonumber(g) or 1, tonumber(b) or 1
+
+		local picker = ColorPickerFrame
+		if picker.SetupColorPickerAndShow then
+			picker:SetupColorPickerAndShow({
+				r = r, g = g, b = b,
+				hasOpacity = false,
+				opacity = 1,
+				swatchFunc = function()
+					local cr, cg, cb = picker:GetColorRGB()
+					if binding and binding.set then
+						binding.set(cr, cg, cb)
+					end
+					applyDirty(item.dirty)
+					refreshAllWidgets(widgets)
+				end,
+				cancelFunc = function(previous)
+					local pr, pg, pb = r, g, b
+					if type(previous) == "table" then
+						pr = previous.r or previous[1] or pr
+						pg = previous.g or previous[2] or pg
+						pb = previous.b or previous[3] or pb
+					end
+					if binding and binding.set then
+						binding.set(pr, pg, pb)
+					end
+					applyDirty(item.dirty)
+					refreshAllWidgets(widgets)
+				end,
+			})
+		else
+			picker.hasOpacity = false
+			picker.previousValues = { r, g, b }
+			picker.func = function()
+				local cr, cg, cb = picker:GetColorRGB()
+				if binding and binding.set then
+					binding.set(cr, cg, cb)
+				end
+				applyDirty(item.dirty)
+				refreshAllWidgets(widgets)
+			end
+			picker.cancelFunc = function()
+				local prev = picker.previousValues
+				if prev and binding and binding.set then
+					binding.set(prev[1], prev[2], prev[3])
+				end
+				applyDirty(item.dirty)
+				refreshAllWidgets(widgets)
+			end
+			if picker.SetColorRGB then
+				picker:SetColorRGB(r, g, b)
+			elseif picker.Content and picker.Content.ColorPicker and picker.Content.ColorPicker.SetColorRGB then
+				picker.Content.ColorPicker:SetColorRGB(r, g, b)
+			end
+			picker:Show()
+		end
+	end)
+	table.insert(widgets, {
+		refresh = function()
+			local disabled = evalBool(item.disabled)
+			row:SetEnabled(not disabled)
+			if text then
+				if disabled then
+					text:SetTextColor(0.5, 0.5, 0.5)
+				else
+					text:SetTextColor(1, 0.82, 0)
+				end
+			end
+			if swatch and binding and binding.get then
+				local r, g, b = binding.get()
+				r, g, b = tonumber(r) or 1, tonumber(g) or 1, tonumber(b) or 1
+				swatch:SetColorTexture(r, g, b, 1)
+				if swatch.SetDesaturated then
+					swatch:SetDesaturated(disabled)
+				end
+			end
+		end
+	})
+
+	return colorY
+end
+
+local function renderKeybind(parent, item, widgets, y)
+	local label = resolveText(item.label or item.name) or ""
+	local btn, _, keyY = createKeybind(parent, label, y)
+	attachTooltip(btn, label, resolveText(item.desc) or "")
+
+	local binding = compileBinding(item)
+	local listening = false
+
+	local function stopListening()
+		listening = false
+		btn:SetScript("OnKeyDown", nil)
+	end
+
+	local function currentBinding()
+		local v = binding and binding.get and binding.get()
+		if v == nil or v == "" then return "" end
+		return tostring(v)
+	end
+
+	btn:EnableKeyboard(true)
+	btn:SetScript("OnClick", function()
+		if evalBool(item.disabled) then return end
+		listening = not listening
+		if not listening then
+			stopListening()
+			refreshAllWidgets(widgets)
+			return
+		end
+		btn:SetScript("OnKeyDown", function(_, key)
+			if key == "ESCAPE" then
+				if binding and binding.set then binding.set("") end
+				stopListening()
+				applyDirty(item.dirty)
+				refreshAllWidgets(widgets)
+				return
+			end
+			if key == "LSHIFT" or key == "RSHIFT" or key == "LCTRL" or key == "RCTRL" or key == "LALT" or key == "RALT" then
+				return
+			end
+			local combo = key
+			if IsShiftKeyDown() then combo = "SHIFT-" .. combo end
+			if IsControlKeyDown() then combo = "CTRL-" .. combo end
+			if IsAltKeyDown() then combo = "ALT-" .. combo end
+			if binding and binding.set then binding.set(combo) end
+			stopListening()
+			applyDirty(item.dirty)
+			refreshAllWidgets(widgets)
+		end)
+	end)
+
+	table.insert(widgets, {
+		refresh = function()
+			btn:SetEnabled(not evalBool(item.disabled))
+			local v = currentBinding()
+			if v ~= "" then
+				btn:SetText(v)
+			else
+				btn:SetText(NOT_BOUND or BSYC.L.None or "None")
+			end
+		end
+	})
+
+	return keyY
 end
 
 local function renderItems(parent, items, widgets, y)
@@ -820,307 +1165,17 @@ local function renderItems(parent, items, widgets, y)
 				end
 
 			elseif itemType == "toggle" then
-				local label = resolveText(item.label or item.name) or ""
-				local cb
-				cb, y = createCheckbox(parent, label, y)
-				attachTooltip(cb, label, resolveText(item.desc) or "")
-
-				local binding = compileBinding(item)
-				cb:SetScript("OnClick", function(self)
-					if binding and binding.set then
-						binding.set(self:GetChecked() and true or false)
-					end
-					applyDirty(item.dirty)
-					for _, w in ipairs(widgets) do w.refresh() end
-				end)
-
-				table.insert(widgets, {
-					refresh = function()
-						local v = binding and binding.get and binding.get()
-						cb:SetChecked(not not v)
-						cb:SetEnabled(not evalBool(item.disabled))
-					end
-				})
-
+				y = renderToggle(parent, item, widgets, y)
 			elseif itemType == "select" then
-				local label = resolveText(item.label or item.name) or ""
-				local dd, _, ny = createDropdown(parent, label, y)
-				y = ny
-				local ddButton = dd and _G[dd:GetName() .. "Button"]
-				attachTooltip(ddButton or dd, label, resolveText(item.desc) or "")
-
-				local binding = compileBinding(item)
-				local entries, labelByValue = getSelectEntries(item.values)
-
-				UIDropDownMenu_Initialize(dd, function(_, level)
-					local selected = binding and binding.get and binding.get()
-					for j = 1, #entries do
-						local entry = entries[j]
-						local b = UIDropDownMenu_CreateInfo()
-						b.text = tostring(entry.label)
-						b.value = entry.value
-						b.func = function()
-							if binding and binding.set then
-								binding.set(entry.value)
-							end
-							UIDropDownMenu_SetSelectedValue(dd, entry.value)
-							applyDirty(item.dirty)
-							for _, w in ipairs(widgets) do w.refresh() end
-						end
-						b.checked = (selected == entry.value)
-						UIDropDownMenu_AddButton(b, level)
-					end
-				end)
-				applyDropdownSizing(dd, entries, parent, false)
-
-				table.insert(widgets, {
-					refresh = function()
-						local selected = binding and binding.get and binding.get()
-						UIDropDownMenu_SetSelectedValue(dd, selected)
-						local t = labelByValue[selected]
-						if t == nil and selected ~= nil then
-							t = tostring(selected)
-						end
-						t = t or ""
-						UIDropDownMenu_SetText(dd, t)
-						UIDropDownMenu_DisableDropDown(dd)
-						if not evalBool(item.disabled) then
-							UIDropDownMenu_EnableDropDown(dd)
-						end
-						if item.control == "font" and type(BSYC.GetFontPath) == "function" then
-							applyFontPreview(dd, BSYC:GetFontPath(t ~= "" and t or tostring(selected or "")))
-						end
-						applyDropdownSizing(dd, entries, parent, item.control == "font")
-					end
-				})
-
+				y = renderSelect(parent, item, widgets, y)
 			elseif itemType == "range" then
-				local label = resolveText(item.label or item.name) or ""
-				local slider
-				slider, y = createSlider(parent, label, y)
-				attachTooltip(slider, label, resolveText(item.desc) or "")
-
-				local binding = compileBinding(item)
-				local minVal = tonumber(item.min) or 0
-				local maxVal = tonumber(item.max) or 100
-				local step = tonumber(item.step) or 1
-
-				slider:SetMinMaxValues(minVal, maxVal)
-				slider:SetValueStep(step)
-				if slider.SetObeyStepOnDrag then
-					slider:SetObeyStepOnDrag(true)
-				end
-				updateSliderText(slider, label, minVal, minVal, maxVal, item.showValue)
-
-				slider._bsycUpdating = false
-				slider._bsycDragging = false
-				slider:HookScript("OnMouseDown", function(self) self._bsycDragging = true end)
-				slider:HookScript("OnMouseUp", function(self)
-					self._bsycDragging = false
-					applyDirty(item.dirty)
-					for _, w in ipairs(widgets) do w.refresh() end
-				end)
-
-				slider:SetScript("OnValueChanged", function(self, value)
-					if self._bsycUpdating then return end
-					value = tonumber(value) or minVal
-					if step and step > 0 then
-						value = math.floor((value / step) + 0.5) * step
-					end
-					if value < minVal then value = minVal end
-					if value > maxVal then value = maxVal end
-					updateSliderText(self, label, value, minVal, maxVal, item.showValue)
-					if binding and binding.set then binding.set(value) end
-					if not self._bsycDragging then
-						applyDirty(item.dirty)
-						for _, w in ipairs(widgets) do w.refresh() end
-					end
-				end)
-
-				table.insert(widgets, {
-					refresh = function()
-						local v = binding and binding.get and tonumber(binding.get()) or item.default
-						v = tonumber(v) or minVal
-						local orig = v
-						if v < minVal then v = minVal end
-						if v > maxVal then v = maxVal end
-						if binding and binding.set and v ~= orig then
-							binding.set(v)
-						end
-						slider._bsycUpdating = true
-						slider:SetValue(v)
-						slider._bsycUpdating = false
-						updateSliderText(slider, label, v, minVal, maxVal, item.showValue)
-						slider:SetEnabled(not evalBool(item.disabled))
-					end
-				})
-
+				y = renderRange(parent, item, widgets, y)
 			elseif itemType == "button" then
-				local label = resolveText(item.label or item.name) or ""
-				local btn
-				btn, y = createButton(parent, label, y)
-				attachTooltip(btn, label, resolveText(item.desc) or "")
-
-				btn:SetScript("OnClick", function()
-					if type(item.onClick) == "function" then
-						pcall(item.onClick)
-					end
-					applyDirty(item.dirty)
-					for _, w in ipairs(widgets) do w.refresh() end
-				end)
-				table.insert(widgets, { refresh = function() btn:SetEnabled(not evalBool(item.disabled)) end })
-
+				y = renderButton(parent, item, widgets, y)
 			elseif itemType == "color" then
-				local label = resolveText(item.label or item.name) or ""
-				local row, swatch, text
-				row, swatch, text, y = createColorRow(parent, label, y)
-				attachTooltip(row, label, resolveText(item.desc) or "")
-
-				local binding = compileBinding(item)
-				row:SetScript("OnClick", function()
-					local r, g, b = 1, 1, 1
-					if binding and binding.get then
-						r, g, b = binding.get()
-					end
-					r, g, b = tonumber(r) or 1, tonumber(g) or 1, tonumber(b) or 1
-
-					local function applyColor()
-						local cr, cg, cb = _G.ColorPickerFrame:GetColorRGB()
-						if binding and binding.set then
-							binding.set(cr, cg, cb)
-						end
-						applyDirty(item.dirty)
-						for _, w in ipairs(widgets) do w.refresh() end
-					end
-
-					local picker = _G.ColorPickerFrame
-					if picker.SetupColorPickerAndShow then
-						local function cancelFunc(previous)
-							local pr, pg, pb = r, g, b
-							if type(previous) == "table" then
-								pr = previous.r or previous[1] or pr
-								pg = previous.g or previous[2] or pg
-								pb = previous.b or previous[3] or pb
-							end
-							if binding and binding.set then
-								binding.set(pr, pg, pb)
-							end
-							applyDirty(item.dirty)
-							for _, w in ipairs(widgets) do w.refresh() end
-						end
-
-						picker:SetupColorPickerAndShow({
-							r = r, g = g, b = b,
-							hasOpacity = false,
-							opacity = 1,
-							swatchFunc = applyColor,
-							cancelFunc = cancelFunc,
-						})
-					else
-						--fall back to classic
-						picker.hasOpacity = false
-						picker.previousValues = { r, g, b }
-						picker.func = applyColor
-						picker.cancelFunc = function()
-							local prev = picker.previousValues
-							if prev and binding and binding.set then
-								binding.set(prev[1], prev[2], prev[3])
-							end
-							applyDirty(item.dirty)
-							for _, w in ipairs(widgets) do w.refresh() end
-						end
-						if picker.SetColorRGB then
-							picker:SetColorRGB(r, g, b)
-						elseif picker.Content and picker.Content.ColorPicker and picker.Content.ColorPicker.SetColorRGB then
-							picker.Content.ColorPicker:SetColorRGB(r, g, b)
-						end
-						picker:Show()
-					end
-				end)
-				table.insert(widgets, {
-					refresh = function()
-						local disabled = evalBool(item.disabled)
-						row:SetEnabled(not disabled)
-						if text then
-							if disabled then
-								text:SetTextColor(0.5, 0.5, 0.5)
-							else
-								text:SetTextColor(1, 0.82, 0)
-							end
-						end
-						if swatch and binding and binding.get then
-							local r, g, b = binding.get()
-							r, g, b = tonumber(r) or 1, tonumber(g) or 1, tonumber(b) or 1
-							swatch:SetColorTexture(r, g, b, 1)
-							if swatch.SetDesaturated then
-								swatch:SetDesaturated(disabled)
-							end
-						end
-					end
-				})
-
+				y = renderColor(parent, item, widgets, y)
 			elseif itemType == "keybind" then
-				local label = resolveText(item.label or item.name) or ""
-				local btn
-				btn, _, y = createKeybind(parent, label, y)
-				attachTooltip(btn, label, resolveText(item.desc) or "")
-
-				local binding = compileBinding(item)
-				local listening = false
-
-				local function stopListening()
-					listening = false
-					btn:SetScript("OnKeyDown", nil)
-				end
-
-				local function currentBinding()
-					local v = binding and binding.get and binding.get()
-					if v == nil or v == "" then return "" end
-					return tostring(v)
-				end
-
-				btn:EnableKeyboard(true)
-				btn:SetScript("OnClick", function()
-					if evalBool(item.disabled) then return end
-					listening = not listening
-					if not listening then
-						stopListening()
-						for _, w in ipairs(widgets) do w.refresh() end
-						return
-					end
-					btn:SetScript("OnKeyDown", function(_, key)
-						if key == "ESCAPE" then
-							if binding and binding.set then binding.set("") end
-							stopListening()
-							applyDirty(item.dirty)
-							for _, w in ipairs(widgets) do w.refresh() end
-							return
-						end
-						if key == "LSHIFT" or key == "RSHIFT" or key == "LCTRL" or key == "RCTRL" or key == "LALT" or key == "RALT" then
-							return
-						end
-						local combo = key
-						if IsShiftKeyDown() then combo = "SHIFT-" .. combo end
-						if IsControlKeyDown() then combo = "CTRL-" .. combo end
-						if IsAltKeyDown() then combo = "ALT-" .. combo end
-						if binding and binding.set then binding.set(combo) end
-						stopListening()
-						applyDirty(item.dirty)
-						for _, w in ipairs(widgets) do w.refresh() end
-					end)
-				end)
-
-				table.insert(widgets, {
-					refresh = function()
-						btn:SetEnabled(not evalBool(item.disabled))
-						local v = currentBinding()
-						if v ~= "" then
-							btn:SetText(v)
-						else
-							btn:SetText(_G.NOT_BOUND or BSYC.L.None or "None")
-						end
-					end
-				})
+				y = renderKeybind(parent, item, widgets, y)
 			end
 		end
 	end
@@ -1162,32 +1217,30 @@ function BSYC.ConfigDialog:AddToBlizOptions(appName, name, parentName)
 	scroll:SetPoint("TOPLEFT", 0, 0)
 	scroll:SetPoint("BOTTOMRIGHT", -28, 0)
 
-	local content = CreateFrame("Frame", nil, scroll)
-	content:SetPoint("TOPLEFT", 0, 0)
-	content:SetPoint("RIGHT", 0, 0)
-	scroll:SetScrollChild(content)
+	local scrollChild = CreateFrame("Frame", nil, scroll)
+	scrollChild:SetPoint("TOPLEFT", 0, 0)
+	scrollChild:SetPoint("RIGHT", 0, 0)
+	scroll:SetScrollChild(scrollChild)
 
 	panel._widgets = {}
 	panel._built = false
 
 	local function syncContentWidth()
-		local w = scroll.GetWidth and scroll:GetWidth() or 0
-		if not w or w <= 1 then
-			w = panel.GetWidth and (panel:GetWidth() - 32) or 0
+		local w = scroll:GetWidth() or 0
+		if w <= 1 then
+			w = (panel:GetWidth() - 32) or 0
 		end
-		if w and w > 1 then
-			content:SetWidth(w)
+		if w > 1 then
+			scrollChild:SetWidth(w)
 		end
 	end
 
-	scroll:HookScript("OnSizeChanged", function()
-		syncContentWidth()
-	end)
+	scroll:HookScript("OnSizeChanged", syncContentWidth)
 
 	panel:SetScript("OnShow", function()
 		syncContentWidth()
 		if panel._built then
-			for _, w in ipairs(panel._widgets) do w.refresh() end
+			refreshAllWidgets(panel._widgets)
 			return
 		end
 		panel._built = true
@@ -1195,15 +1248,15 @@ function BSYC.ConfigDialog:AddToBlizOptions(appName, name, parentName)
 		local y = -12
 		local title = resolveText(optionsTable.title or optionsTable.name) or ""
 		if title ~= "" then
-			_, y = createTitle(content, title, y, optionsTable.titleColor)
+			_, y = createTitle(scrollChild, title, y, optionsTable.titleColor)
 		end
 		local desc = resolveText(optionsTable.description or optionsTable.desc) or ""
 		if desc ~= "" then
-			_, y = createDescription(content, desc, y)
+			_, y = createDescription(scrollChild, desc, y)
 		end
-		y = renderItems(content, optionsTable.items, panel._widgets, y)
-		content:SetHeight(math.max(1, -y + 20))
-		for _, w in ipairs(panel._widgets) do w.refresh() end
+		y = renderItems(scrollChild, optionsTable.items, panel._widgets, y)
+		scrollChild:SetHeight(math.max(1, -y + 20))
+		refreshAllWidgets(panel._widgets)
 	end)
 
 	registerPanel(panel, name, parentName)
@@ -1224,7 +1277,7 @@ eventFrame:HookScript("OnEvent", function(_, eventName, arg1)
 	if eventName == "ADDON_LOADED" then
 		if arg1 ~= ADDON_NAME or coreEnabled then return end
 		coreEnabled = true
-		if type(BSYC.OnEnable) == "function" then
+		if BSYC.OnEnable then
 			pcall(BSYC.OnEnable, BSYC)
 		end
 		return
@@ -1234,13 +1287,13 @@ eventFrame:HookScript("OnEvent", function(_, eventName, arg1)
 		if modulesEnabled then return end
 		modulesEnabled = true
 
-		if not coreEnabled and type(BSYC.OnEnable) == "function" then
+		if not coreEnabled and BSYC.OnEnable then
 			coreEnabled = true
 			pcall(BSYC.OnEnable, BSYC)
 		end
 
 		for _, module in BSYC:IterateModules() do
-			if type(module.OnEnable) == "function" then
+			if module.OnEnable then
 				pcall(module.OnEnable, module)
 			end
 		end

@@ -115,6 +115,7 @@ BSYC.API.IsAddOnLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded) or IsAddOnLoaded
 BSYC.API.GetItemInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
 BSYC.API.GetItemCount = (C_Item and C_Item.GetItemCount) or GetItemCount
 BSYC.API.GetSpellInfo = (C_Spell and C_Spell.GetSpellInfo) or GetSpellInfo
+BSYC.API.GetSpellLink = (C_Spell and C_Spell.GetSpellLink) or GetSpellLink
 BSYC.API.GetRecipeInfo = (C_TradeSkillUI and C_TradeSkillUI.GetRecipeInfo) or nil
 BSYC.API.GetCurrencyInfo = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo) or GetCurrencyInfo
 BSYC.API.GetCurrencyListSize = (C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListSize) or GetCurrencyListSize

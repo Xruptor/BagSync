@@ -4,6 +4,7 @@
 
 		BagSync - All Rights Reserved - (c) 2025
 		License included with addon.
+
 --]]
 
 local ADDON_NAME, BSYC = ... --grab the addon namespace
@@ -26,7 +27,6 @@ local UnitFactionGroup = UnitFactionGroup
 local math_min = math.min
 local math_max = math.max
 local table_insert = table.insert
-local string_len = string.len
 local string_sub = string.sub
 
 local function Debug(level, ...)
@@ -39,7 +39,7 @@ local unitDBVersion = {
 }
 
 local function HexToRGBPerc(hex)
-	if string_len(hex) >= 8 then
+	if #hex >= 8 then
 		hex = string_sub(hex, 3) --start from 3rd character
 	end
 	local rhex, ghex, bhex = string_sub(hex, 1, 2), string_sub(hex, 3, 4), string_sub(hex, 5, 6)
@@ -217,10 +217,10 @@ local function GetCacheRemaining(run)
 end
 
 local function GetOption(key, defaultValue)
-	if not BSYC.options then return defaultValue end
-	local value = BSYC.options[key]
-	if value == nil then return defaultValue end
-	return value
+	local options = BSYC.options
+	if not options then return defaultValue end
+	local value = options[key]
+	return value == nil and defaultValue or value
 end
 
 ----------------------
@@ -229,9 +229,10 @@ end
 
 function Data:OnEnable()
 	Debug(BSYC_DL.INFO, "OnEnable")
-	local getMeta = BSYC.API and BSYC.API.GetAddOnMetadata
-	local addonVersion = (type(getMeta) == "function" and getMeta(ADDON_NAME, "Version")) or "0"
-	addonVersion = tostring(addonVersion or "0")
+
+	local API = BSYC.API
+	local getMeta = API and API.GetAddOnMetadata
+	local addonVersion = tostring((type(getMeta) == "function" and getMeta(ADDON_NAME, "Version")) or "0")
 
 	--get player information from Unit
 	local player = Unit:GetPlayerInfo(true)
@@ -244,15 +245,18 @@ function Data:OnEnable()
 	Debug(BSYC_DL.DEBUG, "RealmKey_LC", player.lowerKey)
 
 	--realm DB
-	BagSyncDB[player.realm] = BagSyncDB[player.realm] or {}
-	BSYC.db.realm = BagSyncDB[player.realm]
+	local realm = player.realm
+	BagSyncDB[realm] = BagSyncDB[realm] or {}
+	BSYC.db.realm = BagSyncDB[realm]
 
 	--player DB
-	BSYC.db.realm[player.name] = BSYC.db.realm[player.name] or {}
-	BSYC.db.player = BSYC.db.realm[player.name]
-	BSYC.db.player.currency = BSYC.db.player.currency or {}
-	BSYC.db.player.professions = BSYC.db.player.professions or {}
-	local playerDB = BSYC.db.player
+	local name = player.name
+	BSYC.db.realm[name] = BSYC.db.realm[name] or {}
+
+	local playerDB = BSYC.db.realm[name]
+	BSYC.db.player = playerDB
+	playerDB.currency = playerDB.currency or {}
+	playerDB.professions = playerDB.professions or {}
 
 	--options DB
 	BSYC:SetDefaults(nil, optionsDefaults)
@@ -268,23 +272,20 @@ function Data:OnEnable()
 	--create any bagsync fonts
 	BSYC:CreateFonts()
 
-	--do DB cleanup check by version number
-	if not BSYC.options.addonversion or BSYC.options.addonversion ~= addonVersion then
+	local options = BSYC.options
+	if options.addonversion ~= addonVersion then
 		self:FixDB()
-		BSYC.options.addonversion = addonVersion
+		options.addonversion = addonVersion
 	end
 
 	--player info
 	playerDB.money = player.money
-
 	playerDB.local_class_name = player.local_class_name
 	playerDB.class = player.class
 	playerDB.class_id = player.class_id
-
 	playerDB.local_race_name = player.local_race_name
 	playerDB.race = player.race
 	playerDB.race_id = player.race_id
-
 	playerDB.gender = player.gender
 	playerDB.faction = player.faction
 	playerDB.guid = player.guid
@@ -306,25 +307,25 @@ function Data:OnEnable()
 	--show the info window if enabled
 	self:ShowInfoWindow()
 
-	if BSYC.options.enableLoginVersionInfo then
+	if options.enableLoginVersionInfo then
 		BSYC:Print(string.format("[v|cFF20ff20%s|r] loaded:   /bgs, /bagsync", addonVersion))
 	end
-	if BSYC.options.debug.enable then
+	if options.debug.enable then
 		BSYC:Print(L.DebugWarning)
-		if C_Timer and C_Timer.After then
-			C_Timer.After(6, function() BSYC:Print(L.DebugWarning) end)
-		end
+		C_Timer.After(6, function() BSYC:Print(L.DebugWarning) end)
 	end
 end
 
 function Data:ShowInfoWindow()
-	if BSYC.options.showBNETCRInfoWindow == false then return end
-	if self.__infoWindow then
-		self.__infoWindow:Show()
+	if not BSYC.options.showBNETCRInfoWindow then return end
+
+	local infoWindow = self.__infoWindow
+	if infoWindow then
+		infoWindow:Show()
 		return
 	end
 
-	local bgsInfoWindow = UI:CreateInfoFrame(UIParent, {
+	infoWindow = UI:CreateInfoFrame(UIParent, {
 		title = "BagSync",
 		width = 500,
 		height = 500,
@@ -332,37 +333,40 @@ function Data:ShowInfoWindow()
 		backdropColor = { 0, 0, 0, 0.75 },
 		frameStrata = "FULLSCREEN_DIALOG",
 	})
-	bgsInfoWindow.infoText1 = UI:CreateFontString(bgsInfoWindow, {
+
+	infoWindow.infoText1 = UI:CreateFontString(infoWindow, {
 		template = "GameFontHighlightSmall",
 		text = L.BagSyncInfoWindow.."\n"..L.DisplayBNET,
 		font = { STANDARD_TEXT_FONT, 14, "" },
 		textColor = { 1, 1, 1 },
 		justifyH = "CENTER",
-		width = bgsInfoWindow:GetWidth() - 30,
-		point = { "CENTER", bgsInfoWindow, "CENTER", 0, 0 },
+		width = infoWindow:GetWidth() - 30,
+		point = { "CENTER", infoWindow, "CENTER", 0, 0 },
 	})
-	bgsInfoWindow.okBTN = UI:CreateButton(bgsInfoWindow, {
+
+	infoWindow.okBTN = UI:CreateButton(infoWindow, {
 		template = "UIPanelButtonTemplate",
 		text = OKAY,
 		width = 100,
 		height = 30,
-		point = { "RIGHT", bgsInfoWindow, "BOTTOMRIGHT", -10, 23 },
+		point = { "RIGHT", infoWindow, "BOTTOMRIGHT", -10, 23 },
 		onClick = function()
 			BSYC.options.showBNETCRInfoWindow = false
-			bgsInfoWindow:Hide()
+			infoWindow:Hide()
 		end,
 	})
 
-	bgsInfoWindow.CloseButton:Hide()
-	bgsInfoWindow:Show()
-	self.__infoWindow = bgsInfoWindow
+	infoWindow.CloseButton:Hide()
+	infoWindow:Show()
+	self.__infoWindow = infoWindow
 end
 
 function Data:ResetColors()
 	Debug(BSYC_DL.INFO, "ResetColors")
-	BSYC.colors = nil
+	local options = BSYC.options
+	options.colors = nil
 	BSYC:SetDefaults("colors", colorsDefaults)
-	BSYC.colors = BSYC.options.colors
+	BSYC.colors = options.colors
 end
 
 function Data:FixDB()
@@ -391,9 +395,11 @@ function Data:FixDB()
 		if options.extTT_CustomAnchorEnabled == nil then
 			options.extTT_CustomAnchorEnabled = optionsDefaults.extTT_CustomAnchorEnabled
 		end
-		local loc = options.extTT_CustomAnchorLocation
-		if loc ~= "TOPLEFT" and loc ~= "TOPRIGHT" and loc ~= "BOTTOMLEFT" and loc ~= "BOTTOMRIGHT"
-			and loc ~= "CENTER" and loc ~= "CENTER_TOP" and loc ~= "CENTER_BOTTOM" and loc ~= "ANCHOR" then
+		local validLocations = {
+			TOPLEFT = true, TOPRIGHT = true, BOTTOMLEFT = true, BOTTOMRIGHT = true,
+			CENTER = true, CENTER_TOP = true, CENTER_BOTTOM = true, ANCHOR = true
+		}
+		if not validLocations[options.extTT_CustomAnchorLocation] then
 			options.extTT_CustomAnchorLocation = optionsDefaults.extTT_CustomAnchorLocation
 		end
 		if type(options.extTT_CustomAnchorX) ~= "number" then
@@ -413,14 +419,16 @@ function Data:FixDB()
 
 	-- ensure minimap db exists and prune flat options
 	do
-		if type(options.minimap) ~= "table" then
-			options.minimap = {}
+		local minimap = options.minimap
+		if type(minimap) ~= "table" then
+			minimap = {}
+			options.minimap = minimap
 		end
-		if options.minimap.hide == nil then
-			options.minimap.hide = false
+		if minimap.hide == nil then
+			minimap.hide = false
 		end
-		if options.minimap.minimapPos == nil then
-			options.minimap.minimapPos = 220
+		if minimap.minimapPos == nil then
+			minimap.minimapPos = 220
 		end
 		options.enableMinimap = nil
 		options.minimapPos = nil
@@ -428,8 +436,8 @@ function Data:FixDB()
 
 	-- ensure cache throttle setting is present
 	do
-		local speed = options.cacheThrottle
-		if speed ~= "slow" and speed ~= "medium" and speed ~= "fast" and speed ~= "disabled" then
+		local validSpeeds = { slow = true, medium = true, fast = true, disabled = true }
+		if not validSpeeds[options.cacheThrottle] then
 			options.cacheThrottle = optionsDefaults.cacheThrottle
 		end
 	end
@@ -536,7 +544,7 @@ function Data:LoadSlashCommand()
 	BINDING_NAME_BAGSYNCSEARCH = L.KeybindSearch
 
 	local function ParseChatCommand(input)
-		local raw = tostring(input or "")
+		local raw = input or ""
 		local cmd, args = raw:match("^%s*(%S*)%s*(.-)%s*$")
 		return strlower(cmd or ""), args or "", raw
 	end
@@ -637,31 +645,34 @@ end
 
 function Data:RemoveTooltipCacheLink(link)
 	if not link then return end
-	if Data.__cache and Data.__cache.tooltip and Data.__cache.tooltip[link] then
-		Data.__cache.tooltip[link] = nil
+	local cache = Data.__cache.tooltip
+	if cache and cache[link] then
+		cache[link] = nil
 		Data.__cache.tooltipCount = math_max(0, (Data.__cache.tooltipCount or 0) - 1)
 	end
 end
 
 function Data:ResetTooltipCache()
-	if not Data.__cache then return end
-	Data.__cache.tooltip = {}
-	Data.__cache.tooltipOrder = {}
-	Data.__cache.tooltipOrderHead = 1
-	Data.__cache.tooltipOrderTail = 0
-	Data.__cache.tooltipCount = 0
+	local cache = Data.__cache
+	cache.tooltip = {}
+	cache.tooltipOrder = {}
+	cache.tooltipOrderHead = 1
+	cache.tooltipOrderTail = 0
+	cache.tooltipCount = 0
 end
 
 function Data:EnforceTooltipCacheCap()
 	local maxEntries = tonumber(BSYC and BSYC.TOOLTIP_CACHE_MAX) or 1000
 	if maxEntries <= 0 then return end
-	if not Data.__cache or not Data.__cache.tooltip then return end
 
-	local cache = Data.__cache.tooltip
-	local order = Data.__cache.tooltipOrder or {}
-	local head = Data.__cache.tooltipOrderHead or 1
-	local tail = Data.__cache.tooltipOrderTail or 0
-	local count = Data.__cache.tooltipCount or 0
+	local cache = Data.__cache
+	local tooltip = cache.tooltip
+	if not tooltip then return end
+
+	local order = cache.tooltipOrder or {}
+	local head = cache.tooltipOrderHead or 1
+	local tail = cache.tooltipOrderTail or 0
+	local count = cache.tooltipCount or 0
 
 	if count <= maxEntries then return end
 
@@ -670,14 +681,14 @@ function Data:EnforceTooltipCacheCap()
 		order[head] = nil
 		head = head + 1
 
-		if key and cache[key] then
-			cache[key] = nil
+		if key and tooltip[key] then
+			tooltip[key] = nil
 			count = count - 1
 		end
 	end
 
-	Data.__cache.tooltipOrderHead = head
-	Data.__cache.tooltipCount = count
+	cache.tooltipOrderHead = head
+	cache.tooltipCount = count
 
 	-- compact queue if head has advanced far enough (avoid ever-growing arrays)
 	if head > 256 and head > (tail / 2) then
@@ -690,42 +701,42 @@ function Data:EnforceTooltipCacheCap()
 				new[newTail] = key
 			end
 		end
-		Data.__cache.tooltipOrder = new
-		Data.__cache.tooltipOrderHead = 1
-		Data.__cache.tooltipOrderTail = newTail
+		cache.tooltipOrder = new
+		cache.tooltipOrderHead = 1
+		cache.tooltipOrderTail = newTail
 	end
 end
 
 function Data:SetTooltipCache(link, unitList, grandTotal)
 	if not link then return end
-	if not Data.__cache then return end
 
-	local cache = Data.__cache.tooltip
-	if not cache then
-		cache = {}
-		Data.__cache.tooltip = cache
+	local cache = Data.__cache
+	local tooltip = cache.tooltip
+	if not tooltip then
+		tooltip = {}
+		cache.tooltip = tooltip
 	end
 
-	local entry = cache[link]
+	local entry = tooltip[link]
 	local isNew = entry == nil
 	if not entry then
 		entry = {}
-		cache[link] = entry
+		tooltip[link] = entry
 	end
 
 	entry.unitList = unitList or {}
 	entry.grandTotal = grandTotal or 0
 
 	if isNew then
-		Data.__cache.tooltipCount = (Data.__cache.tooltipCount or 0) + 1
-		local order = Data.__cache.tooltipOrder
+		cache.tooltipCount = (cache.tooltipCount or 0) + 1
+		local order = cache.tooltipOrder
 		if not order then
 			order = {}
-			Data.__cache.tooltipOrder = order
+			cache.tooltipOrder = order
 		end
-		local tail = (Data.__cache.tooltipOrderTail or 0) + 1
+		local tail = (cache.tooltipOrderTail or 0) + 1
 		order[tail] = link
-		Data.__cache.tooltipOrderTail = tail
+		cache.tooltipOrderTail = tail
 		self:EnforceTooltipCacheCap()
 	end
 end
@@ -745,6 +756,7 @@ function Data:CacheLink(parseLink)
 
 	local speciesID = BSYC:FakeIDToSpeciesID(shortID)
 	if speciesID then
+		local C_PetJournal = C_PetJournal
 		local petInfo = C_PetJournal and C_PetJournal.GetPetInfoBySpeciesID
 		if not petInfo then return nil end
 
@@ -872,10 +884,8 @@ end
 
 function Data:GetCacheSpeedSetting()
 	local speed = BSYC.options and BSYC.options.cacheThrottle
-	if speed == "slow" or speed == "medium" or speed == "fast" or speed == "disabled" then
-		return speed
-	end
-	return "slow"
+	local validSpeeds = { slow = true, medium = true, fast = true, disabled = true }
+	return validSpeeds[speed] and speed or "slow"
 end
 
 function Data:IsCacheDisabled()
@@ -1270,7 +1280,8 @@ end
 -- -------------------------------------------------------
 
 local function GetUnitFilterOptions()
-	local tracking = BSYC.tracking or (BSYC.options and BSYC.options.tracking) or {}
+	local options = BSYC.options
+	local tracking = BSYC.tracking or (options and options.tracking) or {}
 	return {
 		enableBNET = GetOption("enableBNET", optionsDefaults.enableBNET),
 		enableCR = GetOption("enableCR", optionsDefaults.enableCR),

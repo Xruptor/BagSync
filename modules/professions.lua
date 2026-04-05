@@ -4,6 +4,7 @@
 
 		BagSync - All Rights Reserved - (c) 2025
 		License included with addon.
+
 --]]
 
 local BSYC = select(2, ...) --grab the addon namespace
@@ -12,11 +13,128 @@ local Professions = BSYC:NewModule("Professions")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
 
-local function Debug(level, ...)
-    if BSYC.DEBUG then BSYC.DEBUG(level, "Professions", ...) end
+-- Cached global references
+local HybridScrollFrame_GetButtons = _G.HybridScrollFrame_GetButtons
+local HybridScrollFrame_GetOffset = _G.HybridScrollFrame_GetOffset
+local HybridScrollFrame_SetOffset = _G.HybridScrollFrame_SetOffset
+local HybridScrollFrame_Update = _G.HybridScrollFrame_Update
+local GameTooltip = _G.GameTooltip
+local PLAYER = _G.PLAYER
+local STANDARD_TEXT_FONT = _G.STANDARD_TEXT_FONT
+
+-- Cached module reference (Recipes is optional)
+local Recipes
+
+-- Cached localization
+local L = BSYC.L
+
+-- Constants
+local BUTTON_HEIGHT = 20
+
+--------------
+-- Helpers --
+--------------
+
+-- Create sort key to flatten nested comparison
+local function CreateSortKey(entry)
+	return string.format("%s_%09d_%s_%s",
+		entry.skillData.name,
+		entry.sortIndex,
+		entry.unitObj.realm,
+		entry.unitObj.name
+	)
 end
 
-local L = BSYC.L
+-- Build a profession entry with all needed data
+local function BuildProfessionEntry(unitObj, skillID, skillData)
+	local recipeCount = tonumber(skillData.recipeCount) or 0
+	local categoryCount = tonumber(skillData.categoryCount) or 0
+	local hasRecipes = (recipeCount > 0) or (categoryCount > 0)
+	local colorized = Tooltip:ColorizeUnit(unitObj, true, false, true, true)
+
+	return {
+		skillID = skillID,
+		skillData = skillData,
+		unitObj = unitObj,
+		colorized = colorized,
+		sortIndex = Tooltip:GetSortIndex(unitObj),
+		hasRecipes = hasRecipes
+	}
+end
+
+-- Build sorted profession list with headers
+local function BuildSortedList(usrData)
+	local result = {}
+	local lastHeader = ""
+
+	for i = 1, #usrData do
+		local entry = usrData[i]
+		local professionName = entry.skillData.name
+
+		-- Add header when profession changes
+		if lastHeader ~= professionName then
+			table.insert(result, {
+				header = professionName,
+				isHeader = true
+			})
+			lastHeader = professionName
+		end
+
+		-- Add unit entry
+		table.insert(result, entry)
+	end
+
+	return result
+end
+
+-- Build profession level text for display
+local function BuildProfessionLevelText(colorized, skillData)
+	if not skillData.skillLineCurrentLevel or not skillData.skillLineMaxLevel then
+		return colorized .. "   " .. L.PleaseRescan
+	end
+	return colorized .. format("   |cFFFFFFFF%s/%s|r", skillData.skillLineCurrentLevel, skillData.skillLineMaxLevel)
+end
+
+-- Setup header button appearance
+local function SetupHeaderButton(button, item)
+	button.Text:SetJustifyH("CENTER")
+	button.Text:SetTextColor(1, 1, 1)
+	button.Text:SetText(item.header or "")
+	button.HeaderHighlight:SetAlpha(0.75)
+	button.isHeader = true
+end
+
+-- Setup item button appearance
+local function SetupItemButton(button, item)
+	button.Text:SetJustifyH("LEFT")
+	button.Text:SetTextColor(0.25, 0.88, 0.82)
+	button.HeaderHighlight:SetAlpha(0)
+	button.isHeader = nil
+
+	--https://warcraft.wiki.gg/wiki/TradeSkillLineID
+	--allow certain ones like fishing, skinning, etc.. to have levels shown
+
+	local allowSkill = {
+		[333] = true, --enchanting
+		[356] = true, --fishing
+		[182] = true, --herbalism
+		[186] = true, --mining
+		[393] = true, --skinning
+		[794] = true, --archaeology
+		[129] = true, --first aid
+	}
+
+	-- Display profession level info if no recipes
+	if not item.hasRecipes or allowSkill[item.skillID] then
+		button.Text:SetText(BuildProfessionLevelText(item.colorized, item.skillData))
+	else
+		button.Text:SetText(item.colorized)
+	end
+end
+
+--------------------
+-- Main Functions --
+--------------------
 
 function Professions:OnEnable()
 	local professionsFrame = UI:CreateModuleFrame(Professions, {
@@ -58,7 +176,7 @@ function Professions:OnShow()
 	BSYC:SetBSYC_FrameLevel(Professions)
 
 	Professions:CreateList()
-    Professions:RefreshList()
+	Professions:RefreshList()
 
 	--scroll to top when shown
 	HybridScrollFrame_SetOffset(Professions.scrollFrame, 0)
@@ -66,110 +184,67 @@ function Professions:OnShow()
 end
 
 function Professions:CreateList()
-	Professions.professionList = {}
 	local usrData = {}
 
+	-- Collect profession data from all units
 	for unitObj in Data:IterateUnits() do
 		if not unitObj.isGuild and unitObj.data.professions then
-			local colorized = Tooltip:ColorizeUnit(unitObj, true, false, true, true)
-
 			for skillID, skillData in pairs(unitObj.data.professions) do
 				if skillData.name then
-					local recipeCount = tonumber(skillData.recipeCount) or 0
-					local categoryCount = tonumber(skillData.categoryCount) or 0
-					local hasRecipes = (recipeCount > 0) or (categoryCount > 0)
-					table.insert(usrData, {
-						skillID = skillID,
-						skillData = skillData,
-						unitObj = unitObj,
-						colorized = colorized,
-						sortIndex = Tooltip:GetSortIndex(unitObj),
-						hasRecipes = hasRecipes
-					})
+					table.insert(usrData, BuildProfessionEntry(unitObj, skillID, skillData))
 				end
 			end
 		end
 	end
 
+	-- Sort by profession name, then sort index, then realm, then name
 	if #usrData > 0 then
 		table.sort(usrData, function(a, b)
-			if a.skillData.name == b.skillData.name then
-				if a.sortIndex  == b.sortIndex then
-					if a.unitObj.realm == b.unitObj.realm then
-						return a.unitObj.name < b.unitObj.name;
-					end
-					return a.unitObj.realm < b.unitObj.realm;
-				end
-				return a.sortIndex < b.sortIndex;
-			end
-			return a.skillData.name < b.skillData.name;
+			return CreateSortKey(a) < CreateSortKey(b)
 		end)
 
-		local lastHeader = ""
-		for i=1, #usrData do
-			if lastHeader ~= usrData[i].skillData.name then
-				--add header
-				table.insert(Professions.professionList, {
-					header = usrData[i].skillData.name,
-					isHeader = true
-				})
-				lastHeader = usrData[i].skillData.name
-			end
-			--add unit
-			table.insert(Professions.professionList, {
-				skillID = usrData[i].skillID,
-				skillData = usrData[i].skillData,
-				unitObj = usrData[i].unitObj,
-				colorized = usrData[i].colorized,
-				sortIndex = usrData[i].sortIndex,
-				hasRecipes = usrData[i].hasRecipes
-			})
-		end
+		-- Build sorted list with headers
+		Professions.professionList = BuildSortedList(usrData)
+	else
+		Professions.professionList = {}
 	end
 end
 
 function Professions:RefreshList()
-    local items = Professions.professionList
-    local buttons = HybridScrollFrame_GetButtons(Professions.scrollFrame)
-    local offset = HybridScrollFrame_GetOffset(Professions.scrollFrame)
+	local items = Professions.professionList
+	local scrollFrame = Professions.scrollFrame
+	local buttons = HybridScrollFrame_GetButtons(scrollFrame)
+	local offset = HybridScrollFrame_GetOffset(scrollFrame)
+
 	if not buttons then return end
 
-    for buttonIndex = 1, #buttons do
-        local button = buttons[buttonIndex]
+	local fontCached = false
+
+	for buttonIndex = 1, #buttons do
+		local button = buttons[buttonIndex]
 		UI:AttachListItemHandlers(button, Professions)
 
-        local itemIndex = buttonIndex + offset
+		local itemIndex = buttonIndex + offset
 
-        if itemIndex <= #items then
-            local item = items[itemIndex]
+		if itemIndex <= #items then
+			local item = items[itemIndex]
 
-            button:SetID(itemIndex)
+			button:SetID(itemIndex)
 			button.data = item
-			button.Text:SetFont(STANDARD_TEXT_FONT, 14, "")
-            button:SetWidth(Professions.scrollFrame.scrollChild:GetWidth())
 
+			-- Only set font once (it's the same for all buttons)
+			if not fontCached then
+				button.Text:SetFont(STANDARD_TEXT_FONT, 14, "")
+				fontCached = true
+			end
+
+			button:SetWidth(scrollFrame.scrollChild:GetWidth())
+
+			-- Setup button based on type
 			if item.isHeader then
-				button.Text:SetJustifyH("CENTER")
-				button.Text:SetTextColor(1, 1, 1)
-				button.Text:SetText(item.header or "")
-				--button.HeaderHighlight:SetVertexColor(0.8, 0.7, 0, 1)
-				button.HeaderHighlight:SetAlpha(0.75)
-				button.isHeader = true
+				SetupHeaderButton(button, item)
 			else
-				button.Text:SetJustifyH("LEFT")
-				button.Text:SetTextColor(0.25, 0.88, 0.82)
-				button.Text:SetText(item.colorized or "")
-				button.HeaderHighlight:SetAlpha(0)
-				button.isHeader = nil
-
-				--check for possible rescans and display baseline profession levels
-				if not item.hasRecipes then
-					if not item.skillData.skillLineCurrentLevel or not item.skillData.skillLineMaxLevel then
-						button.Text:SetText(item.colorized.."   "..L.PleaseRescan)
-					else
-						button.Text:SetText(item.colorized..format("   |cFFFFFFFF%s/%s|r", item.skillData.skillLineCurrentLevel or 0, item.skillData.skillLineMaxLevel or 0))
-					end
-				end
+				SetupItemButton(button, item)
 			end
 
 			--while we are updating the scrollframe, is the mouse currently over a button?
@@ -179,17 +254,16 @@ function Professions:RefreshList()
 				Professions:Item_OnEnter(button)
 			end
 
-            button:Show()
-        else
-            button:Hide()
-        end
-    end
+			button:Show()
+		else
+			button:Hide()
+		end
+	end
 
-    local buttonHeight = Professions.scrollFrame.buttonHeight
-    local totalHeight = #items * buttonHeight
-    local shownHeight = #buttons * buttonHeight
+	local totalHeight = #items * BUTTON_HEIGHT
+	local shownHeight = #buttons * BUTTON_HEIGHT
 
-    HybridScrollFrame_Update(Professions.scrollFrame, totalHeight, shownHeight)
+	HybridScrollFrame_Update(scrollFrame, totalHeight, shownHeight)
 end
 
 function Professions:Item_OnEnter(btn)
@@ -198,7 +272,8 @@ function Professions:Item_OnEnter(btn)
 	elseif not btn.isHeader and not btn.Highlight:IsVisible() then
 		btn.Highlight:Show()
 	end
-    if not btn.isHeader then
+
+	if not btn.isHeader then
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		GameTooltip:AddLine("|cFFFFFFFF"..PLAYER..":|r  "..btn.data.colorized)
 		GameTooltip:AddLine("|cFFFFFFFF"..L.Realm.."|r  "..btn.data.unitObj.realm)
@@ -222,9 +297,9 @@ end
 
 function Professions:Item_OnClick(btn)
 	if not btn.isHeader and btn.data.hasRecipes then
-		local recipes = BSYC:GetModule("Recipes", true)
-		if recipes and recipes.ViewRecipes then
-			recipes:ViewRecipes(btn.data)
+		Recipes = Recipes or BSYC:GetModule("Recipes", true)
+		if Recipes and Recipes.ViewRecipes then
+			Recipes:ViewRecipes(btn.data)
 		end
 	end
 end

@@ -4,9 +4,10 @@
 
 		BagSync - All Rights Reserved - (c) 2025
 		License included with addon.
+
 --]]
 
-local BSYC = select(2, ...) --grab the addon namespace
+local BSYC = select(2, ...)
 local UI = BSYC:GetModule("UI")
 local L = BSYC.L
 local Debug = BSYC:NewModule("Debug")
@@ -26,12 +27,76 @@ local levels = {
 	"SL3",
 }
 
-local function unescape(str)
-    str = gsub(str, "|T.-|t", "") --textures in chat like currency coins and such
-	str = gsub(str, "|H.-|h(.-)|h", "%1") --links, just put the item description and chat color
-	str = gsub(str, "{.-}", "") --remove raid icons from chat
+-- Color lookup table for debug levels (eliminates 40+ line if-elseif chain)
+local levelColors = {
+	[BSYC_DL.DEBUG] = "FF4DD827", -- fel green
+	[BSYC_DL.INFO] = "FFffff00", -- yellow
+	[BSYC_DL.TRACE] = "FF09DBE0", -- teal blue
+	[BSYC_DL.WARN] = "FFFF3C38", -- rose red
+	[BSYC_DL.FINE] = "FFe454fd", -- dark lavender
+	[BSYC_DL.SL1] = "FFCF9FFF", -- light lavender
+	[BSYC_DL.SL2] = "FFFFD580", -- light orange
+	[BSYC_DL.SL3] = "FFd1d1d1", -- light gray
+}
 
-    return str
+-- Cache C_AddOns API at module load (Retail 10.0+ vs Classic/Legacy compatibility)
+local GetNumAddOns = (C_AddOns and C_AddOns.GetNumAddOns) or _G.GetNumAddOns
+local GetAddOnInfo = (C_AddOns and C_AddOns.GetAddOnInfo) or _G.GetAddOnInfo
+local IsAddOnLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded) or _G.IsAddOnLoaded
+local IsAddOnEnabled = (C_AddOns and C_AddOns.IsAddOnEnabled) or _G.IsAddOnEnabled
+
+local function unescape(str)
+	-- Removed redundant local reassignment - operate directly on str parameter
+	str = string.gsub(str, "|T.-|t", "") -- textures
+	str = string.gsub(str, "|H.-|h(.-)|h", "%1") -- links
+	str = string.gsub(str, "{.-}", "") -- raid icons
+	return str
+end
+
+-- Helper: Get level name from levels table
+local function GetLevelName(level)
+	return levels[level] or "UNKNOWN"
+end
+
+-- Helper: Get color hex code for level
+local function GetLevelColor(level)
+	return levelColors[level] or "778899" -- slate gray default
+end
+
+-- Helper: Check if a debug level is enabled in options
+local function IsLevelEnabled(level)
+	local levelName = levels[level]
+	return levelName and BSYC.options.debug[levelName]
+end
+
+-- Helper: Count items in a category (bag, bank, reagents, etc.)
+-- Dead code removed: Previously inline with duplicated #v or 0 patterns
+local function CountItemsForCategory(k, v)
+	if k == "bag" or k == "bank" or k == "reagents" then
+		local total = 0
+		for _, bagData in pairs(v or {}) do
+			total = total + (#bagData or 0)
+		end
+		return total
+	elseif k == "auction" then
+		return (v.bag and #v.bag) or 0
+	elseif k == "equipbags" then
+		return ((v.bag and #v.bag) or 0) + ((v.bank and #v.bank) or 0)
+	else
+		return #v or 0
+	end
+end
+
+-- Helper: Process a unit for dump totals
+-- Dead code removed: Previously nested deeply in dumpTotals function
+local function ProcessUnit(unitObj, totalItems, allowList)
+	local count = 0
+	for k, v in pairs(unitObj.data) do
+		if allowList[k] and type(v) == "table" and k ~= "guild" then
+			count = count + CountItemsForCategory(k, v)
+		end
+	end
+	return totalItems + count
 end
 
 function Debug:OnEnable()
@@ -47,18 +112,16 @@ function Debug:OnEnable()
 	})
 	DebugFrame:Hide()
 	DebugFrame.closeBtn:SetPoint("TOPRIGHT", C_EditMode and -3 or 2, C_EditMode and -3 or 1)
-    Debug.frame = DebugFrame
+	Debug.frame = DebugFrame
 
 	Debug.scrollFrame = UI:CreateHybridScrollFrame(DebugFrame, {
 		width = debugWidth-44,
 		pointTopLeft = { "TOPLEFT", DebugFrame, "TOPLEFT", 13, -30 },
-		--set ScrollFrame height by altering the distance from the bottom of the frame
 		pointBottomLeft = { "BOTTOMLEFT", DebugFrame, "BOTTOMLEFT", -25, 15 },
 		buttonTemplate = "BagSyncListSimpleItemTemplate",
-		update = function() Debug:RefreshList(); end,
+		update = function() Debug:RefreshList() end,
 		doNotHideScrollBar = true,
 	})
-	--the items we will work with
 	Debug.debugItems = {}
 
 	--Options Frame
@@ -79,15 +142,15 @@ function Debug:OnEnable()
 	optionsFrame:SetWidth(debugWidth-3)
 	optionsFrame:SetBackdrop(backdrop)
 	optionsFrame:SetBackdropColor(0, 0, 0, 0.6)
-	optionsFrame:SetPoint("TOPLEFT", DebugFrame, "BOTTOMLEFT",2, 5)
+	optionsFrame:SetPoint("TOPLEFT", DebugFrame, "BOTTOMLEFT", 2, 5)
 
 	local enableDebugChk = UI:CreateCheckButton(optionsFrame, {
 		text = L.DebugEnable,
 		textColor = { 1, 1, 1 },
 		point = { "TOPLEFT", optionsFrame, "TOPLEFT", 10, -5 },
 		checked = BSYC.options.debug.enable,
-		onClick = function(self)
-			BSYC.options.debug.enable = self:GetChecked()
+		onClick = function(btn)
+			BSYC.options.debug.enable = btn:GetChecked()
 		end,
 	})
 	optionsFrame.enableDebugChk = enableDebugChk
@@ -97,17 +160,16 @@ function Debug:OnEnable()
 		textColor = { 1, 1, 1 },
 		point = { "LEFT", (enableDebugChk.Text or enableDebugChk.text), "RIGHT", 15, 0 },
 		checked = BSYC.options.debug.cache,
-		onClick = function(self)
-			BSYC.options.debug.cache = self:GetChecked()
+		onClick = function(btn)
+			BSYC.options.debug.cache = btn:GetChecked()
 		end,
 	})
 	optionsFrame.disableCacheChk = disableCacheChk
 
 	local lastPoint
-
 	optionsFrame.debugLevels = {}
 
-	for k=1, #levels do
+	for k = 1, #levels do
 		local tmpLevel = UI:CreateCheckButton(optionsFrame, {
 			text = levels[k],
 			textColor = { 1, 1, 1 },
@@ -119,14 +181,13 @@ function Debug:OnEnable()
 				(not lastPoint and 3) or 0,
 			},
 			checked = BSYC.options.debug[levels[k]],
-			onClick = function(self)
-				BSYC.options.debug[self.level] = self:GetChecked()
+			onClick = function(btn)
+				BSYC.options.debug[btn.level] = btn:GetChecked()
 			end,
 		})
 		tmpLevel.level = levels[k]
-		local tmpText = tmpLevel.Text or tmpLevel.text --due to classic servers still using the old format
+		local tmpText = tmpLevel.Text or tmpLevel.text
 		lastPoint = tmpText
-
 		table.insert(optionsFrame.debugLevels, tmpLevel)
 	end
 
@@ -146,10 +207,9 @@ function Debug:OnEnable()
 					for x, y in pairs(v) do
 						if type(y) ~= "table" then
 							Debug:AddMessage(1, "DumpOptions", k, tostring(x), tostring(y))
-						else
-							if k == "colors" then
-								Debug:AddMessage(1, "DumpOptions", k, tostring(x), y.r * 255, y.g * 255, y.b * 255)
-							end
+						elseif k == "colors" then
+							-- Early return for nested table case (colors)
+							Debug:AddMessage(1, "DumpOptions", k, tostring(x), y.r * 255, y.g * 255, y.b * 255)
 						end
 					end
 				end
@@ -189,7 +249,6 @@ function Debug:OnEnable()
 						unitObj.data.realmKey, " | ",
 						unitObj.data.rwsKey
 					)
-					Debug:AddMessage(1, " ") --extra space
 				else
 					Debug:AddMessage(1, "IterateUnits", "|cFFFFD580guild|r",
 						unitObj.name,
@@ -202,8 +261,8 @@ function Debug:OnEnable()
 						unitObj.data.realmKey, " | ",
 						unitObj.data.rwsKey
 					)
-					Debug:AddMessage(1, " ") --extra space
 				end
+				Debug:AddMessage(1, " ") --extra space
 			end
 		end,
 	})
@@ -222,7 +281,7 @@ function Debug:OnEnable()
 			local totalRealms = 0
 			local biggestRealmName
 			local biggestRealmCount = 0
-			local toatlItems = 0
+			local totalItems = 0 -- Fixed typo: was 'toatlItems'
 
 			local realmCount = 0
 			local lastRealm
@@ -250,7 +309,6 @@ function Debug:OnEnable()
 				if unitObj.realm == lastRealm then
 					realmCount = realmCount + 1
 				else
-					--check to see if the realm count is larger then the one stored
 					if realmCount > biggestRealmCount then
 						biggestRealmName = lastRealm
 						biggestRealmCount = realmCount
@@ -262,32 +320,11 @@ function Debug:OnEnable()
 
 				if not unitObj.isGuild then
 					totalUnits = totalUnits + 1
-					local count = 0
-
-					for k, v in pairs(unitObj.data) do
-						if allowList[k] and type(v) == "table" and k ~= "guild" then
-							--bags, bank, reagents are stored in individual bags
-							if k == "bag" or k == "bank" or k == "reagents" then
-								for bagID, bagData in pairs(v or {}) do
-									toatlItems = toatlItems + (#bagData or 0)
-								end
-							else
-								if k == "auction" then
-									count = (v.bag and #v.bag) or 0
-									toatlItems = toatlItems + count
-								elseif k == "equipbags" then
-									count = ((v.bag and #v.bag) or 0) + ((v.bank and #v.bank) or 0)
-									toatlItems = toatlItems + count
-								else
-									toatlItems = toatlItems + (#v or 0)
-								end
-							end
-						end
-					end
+					totalItems = ProcessUnit(unitObj, totalItems, allowList)
 				else
 					totalGuilds = totalGuilds + 1
-					for tabID, tabData in pairs(unitObj.data.tabs or {}) do
-						toatlItems = toatlItems + (#tabData or 0)
+					for _, tabData in pairs(unitObj.data.tabs or {}) do
+						totalItems = totalItems + (#tabData or 0)
 					end
 				end
 			end
@@ -297,7 +334,7 @@ function Debug:OnEnable()
 			Debug:AddMessage(1, "DBTotals", "totalRealms", totalRealms)
 			Debug:AddMessage(1, "DBTotals", "biggestRealmName", biggestRealmName)
 			Debug:AddMessage(1, "DBTotals", "biggestRealmCount", biggestRealmCount)
-			Debug:AddMessage(1, "DBTotals", "toatlItems", toatlItems)
+			Debug:AddMessage(1, "DBTotals", "totalItems", totalItems) -- Fixed typo
 		end,
 	})
 	optionsFrame.dumpTotals = dumpTotals
@@ -310,25 +347,19 @@ function Debug:OnEnable()
 		autoWidth = true,
 		point = { "LEFT", dumpTotals, "RIGHT", 10, 0 },
 		onClick = function()
-			local getNum = (C_AddOns and C_AddOns.GetNumAddOns) or _G.GetNumAddOns
-			local getInfo = (C_AddOns and C_AddOns.GetAddOnInfo) or _G.GetAddOnInfo
-			local isLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded) or _G.IsAddOnLoaded
-			local isEnabled = (C_AddOns and C_AddOns.IsAddOnEnabled) or _G.IsAddOnEnabled
-
-			if type(getNum) ~= "function" or type(getInfo) ~= "function" then
+			if type(GetNumAddOns) ~= "function" or type(GetAddOnInfo) ~= "function" then
 				Debug:AddMessage(1, "AddonList", "GetAddOnInfo/GetNumAddOns unavailable")
 				return
 			end
 
-			Debug:AddMessage(1, "AddonList", string.format("total=%s", tostring(getNum())))
+			Debug:AddMessage(1, "AddonList", string.format("total=%s", tostring(GetNumAddOns())))
 
-			for i = 1, getNum() do
-				local name, title, notes, enabled, loadable, reason, security = getInfo(i)
-				if name and isEnabled then
-					enabled = isEnabled(name)
-				end
-				local loaded = name and isLoaded and isLoaded(name)
+			for i = 1, GetNumAddOns() do
+				local name, title, _, loadable, reason, security = GetAddOnInfo(i)
+				local enabled = name and IsAddOnEnabled and IsAddOnEnabled(name)
+				local loaded = name and IsAddOnLoaded and IsAddOnLoaded(name)
 				local displayTitle = title or name
+
 				local line = string.format(
 					"%d: %s | %s | enabled=%s | loaded=%s | loadable=%s | reason=%s | security=%s",
 					i,
@@ -358,11 +389,11 @@ function Debug:OnEnable()
 	exportFrame:SetMovable(true)
 	exportFrame:SetClampedToScreen(true)
 	exportFrame:RegisterForDrag("LeftButton")
-	exportFrame:SetScript("OnDragStart", function(self)
-		self:StartMoving()
+	exportFrame:SetScript("OnDragStart", function(frame)
+		frame:StartMoving()
 	end)
-	exportFrame:SetScript("OnDragStop", function(self)
-		self:StopMovingOrSizing()
+	exportFrame:SetScript("OnDragStop", function(frame)
+		frame:StopMovingOrSizing()
 	end)
 	exportFrame.ScrollFrame = UI:CreateScrollFrame(exportFrame, {
 		points = {
@@ -378,15 +409,14 @@ function Debug:OnEnable()
 		countInvisibleLetters = false,
 	})
 	exportFrame.EditBox:SetAllPoints()
-	--exportFrame.EditBox:SetText(L.SearchHelp)
-	exportFrame.EditBox:SetWidth(815) --set the boundaries for word wrapping on the scrollbar, if smaller than the frame it will wrap it
+	exportFrame.EditBox:SetWidth(815)
 	exportFrame.ScrollFrame:SetScrollChild(exportFrame.EditBox)
-	--lets set it to disabled to prevent editing
 	exportFrame.EditBox:ClearFocus()
 	exportFrame.EditBox:EnableMouse(true)
-	exportFrame.EditBox:SetTextColor(1, 1, 1) --set default to white
+	exportFrame.EditBox:SetTextColor(1, 1, 1)
 	exportFrame.ScrollFrame:EnableMouse(false)
 	DebugFrame.exportFrame = exportFrame
+
 	--export button
 	local exportBtn = UI:CreateButton(optionsFrame, {
 		template = "UIPanelButtonTemplate",
@@ -395,15 +425,12 @@ function Debug:OnEnable()
 		autoWidth = true,
 		point = { "TOPRIGHT", optionsFrame, "TOPRIGHT", -5, -5 },
 		onClick = function()
-			local lineText = ""
-			for i=1, #Debug.debugItems do
-				if (i == 1) then
-					lineText = unescape(Debug.debugItems[i]).."|r"
-				else
-					lineText = lineText.."\n"..unescape(Debug.debugItems[i]).."|r"
-				end
+			-- Replaced inefficient string concatenation with table.concat
+			local lines = {}
+			for i = 1, #Debug.debugItems do
+				lines[i] = unescape(Debug.debugItems[i]).."|r"
 			end
-			exportFrame.EditBox:SetText(lineText)
+			exportFrame.EditBox:SetText(table.concat(lines, "\n"))
 			exportFrame:Show()
 		end,
 	})
@@ -423,104 +450,149 @@ function Debug:OnEnable()
 	})
 	optionsFrame.clearBtn = clearBtn
 
-	--only annoy the user if the option is enabled, making sure to remind them that debugging is on.
-	--can you tell that I really don't want them to leave this on? LOL
 	if BSYC.options.debug.enable then
 		DebugFrame:Show()
 	end
 end
 
 function Debug:OnShow()
-    Debug:RefreshList()
+	Debug:RefreshList()
 end
 
 function Debug:OnHide()
-	if  BSYC.options.debug.enable then
+	if BSYC.options.debug.enable then
 		BSYC:Print(L.DebugWarning)
 	end
 end
 
 function Debug:RefreshList()
-    local items =  Debug.debugItems
-    local buttons = HybridScrollFrame_GetButtons(Debug.scrollFrame)
-    local offset = HybridScrollFrame_GetOffset(Debug.scrollFrame)
-
+	local buttons = HybridScrollFrame_GetButtons(Debug.scrollFrame)
 	if not buttons then return end
 
-    for buttonIndex = 1, #buttons do
-        local button = buttons[buttonIndex]
+	local offset = HybridScrollFrame_GetOffset(Debug.scrollFrame)
+
+	-- Removed unnecessary local 'items' variable - use Debug.debugItems directly
+	for buttonIndex = 1, #buttons do
+		local button = buttons[buttonIndex]
 		UI:AttachListItemHandlers(button, Debug)
 
-        local itemIndex = buttonIndex + offset
+		local itemIndex = buttonIndex + offset
 
-        if itemIndex <= #items then
-            local item = items[itemIndex]
+		if itemIndex <= #Debug.debugItems then
+			local item = Debug.debugItems[itemIndex]
 
-            button:SetID(itemIndex)
+			button:SetID(itemIndex)
 			button.Text:SetFont("Fonts\\ARIALN.TTF", 14, "")
-            button.Text:SetText(item or "")
-			button.Text:SetTextColor(1, 1, 1) --set white
-            button:SetWidth(Debug.scrollFrame.scrollChild:GetWidth())
-            button:Show()
-        else
-            button:Hide()
-        end
-    end
+			button.Text:SetText(item or "")
+			button.Text:SetTextColor(1, 1, 1)
+			button:SetWidth(Debug.scrollFrame.scrollChild:GetWidth())
+			button:Show()
+		else
+			button:Hide()
+		end
+	end
 
-    local buttonHeight = Debug.scrollFrame.buttonHeight
-    local totalHeight = #items * buttonHeight
-    local shownHeight = #buttons * buttonHeight
+	local buttonHeight = Debug.scrollFrame.buttonHeight
+	local totalHeight = #Debug.debugItems * buttonHeight
+	local shownHeight = #buttons * buttonHeight
 
-    HybridScrollFrame_Update(Debug.scrollFrame, totalHeight, shownHeight)
+	HybridScrollFrame_Update(Debug.scrollFrame, totalHeight, shownHeight)
+end
+
+local function BuildDebugLine(level, sName, message)
+	local color = GetLevelColor(level)
+	local moduleName = string.format("|c"..color.."[%s]|r: ", sName)
+	local core = moduleName..message
+	local line = "|cff808080["..date("%X").."]|r|cff91aaff["..GetLevelName(level).."]:|r "..core
+	return line, core
+end
+
+local function BuildSpamLine(level, sName, message)
+	local color = "FFFFD580" -- light orange
+	local moduleName = string.format("|c"..color.."[%s]|r: ", "Debug")
+	local core = moduleName.."|cFFA86F00[SPAM Protect]|r"
+	if sName or message then
+		local info = ""
+		if sName then
+			info = tostring(sName)
+		end
+		if message and message ~= "" then
+			if info ~= "" then
+				info = info .. ": " .. message
+			else
+				info = tostring(message)
+			end
+		end
+		if info ~= "" then
+			core = core .. " -> " .. info
+		end
+	end
+	local line = "|cff808080["..date("%X").."]|r|cff91aaff["..GetLevelName(level).."]:|r "..core
+	return line
 end
 
 function Debug:AddMessage(level, sName, ...)
-	if not BSYC.options or not BSYC.options.debug or not BSYC.options.debug.enable then return end
-
-	if level == BSYC_DL.DEBUG and not BSYC.options.debug.DEBUG then return end
-	if level == BSYC_DL.INFO and not BSYC.options.debug.INFO then return end
-	if level == BSYC_DL.TRACE and not BSYC.options.debug.TRACE then return end
-	if level == BSYC_DL.WARN and not BSYC.options.debug.WARN then return end
-	if level == BSYC_DL.FINE and not BSYC.options.debug.FINE then return end
-	if level == BSYC_DL.SL1 and not BSYC.options.debug.SL1 then return end
-	if level == BSYC_DL.SL2 and not BSYC.options.debug.SL2 then return end
-	if level == BSYC_DL.SL3 and not BSYC.options.debug.SL3 then return end
-
-	local debugStr = string.join(", ", tostringall(...))
-	local color = "778899" -- slate gray
-
-	if level == BSYC_DL.DEBUG then
-		--debug
-		color = "FF4DD827" --fel green
-	elseif level == BSYC_DL.INFO then
-		--info
-		color = "FFffff00" --yellow
-	elseif level == BSYC_DL.TRACE then
-		--trace
-		color = "FF09DBE0" --teal blue
-	elseif level == BSYC_DL.WARN then
-		--warn
-		color = "FFFF3C38" --rose red
-	elseif level == BSYC_DL.FINE then
-		--fine
-		color = "FFe454fd" --dark lavender
-	elseif level == BSYC_DL.SL1 then
-		--SL1 (SUBLEVEL1)
-		color = "FFCF9FFF" --light lavender
-	elseif level == BSYC_DL.SL2 then
-		--SL2 (SUBLEVEL2)
-		color = "FFFFD580" --light orange
-	elseif level == BSYC_DL.SL3 then
-		--SL3 (SUBLEVEL3)
-		color = "FFd1d1d1" --light gray
+	if not BSYC.options or not BSYC.options.debug or not BSYC.options.debug.enable then
+		return
 	end
 
-	local moduleName = string.format("|c"..color.."[%s]|r: ", sName)
-	debugStr = moduleName..debugStr
-	--ff00bfaf
-	debugStr = "|cff808080["..date("%X").."]|r|cff91aaff["..levels[level].."]:|r "..debugStr
+	-- Replaced 8 if statements with single lookup table check
+	if not IsLevelEnabled(level) then
+		return
+	end
 
-	--if it exceeds the amount of labels then remove top most one before adding
+	-- Replaced deprecated string.join with table.concat (modern API)
+	local message = table.concat({tostringall(...)}, ", ")
+	local spamPreview
+	if message ~= "" then
+		local a, b = strsplit(",", message, 3)
+		if a and b then
+			spamPreview = a .. "," .. b
+		else
+			spamPreview = message
+		end
+	end
+	local debugStr, core = BuildDebugLine(level, sName, message)
+
+	local function IsSpamCore(c)
+		return c and c:find("%[SPAM Protect%]")
+	end
+
+	-- Cache-based spam protection: suppress lines that appear in the last N messages.
+	local spamCache = Debug.__spamCache or { list = {}, set = {} }
+	Debug.__spamCache = spamCache
+
+	if not IsSpamCore(core) then
+		if spamCache.set[core] then
+			if not Debug.__spamProtectActive then
+				local spamLine = BuildSpamLine(level)
+				if sName or spamPreview then
+					spamLine = BuildSpamLine(level, sName, spamPreview)
+				end
+				if #Debug.debugItems > xListLen then
+					table.remove(Debug.debugItems, 1)
+				end
+				table.insert(Debug.debugItems, spamLine)
+				Debug:RefreshList()
+				HybridScrollFrame_SetOffset(Debug.scrollFrame, Debug.scrollFrame.range)
+				Debug.scrollFrame.scrollBar:SetValue(Debug.scrollFrame.range)
+				Debug.__spamProtectActive = true
+			end
+			return
+		end
+
+		-- accept new line and update cache
+		Debug.__spamProtectActive = nil
+		local list = spamCache.list
+		list[#list + 1] = core
+		spamCache.set[core] = true
+		if #list > 5 then
+			local old = table.remove(list, 1)
+			if old then spamCache.set[old] = nil end
+		end
+	end
+
+	-- Remove oldest item if list exceeds limit
 	if #Debug.debugItems > xListLen then
 		table.remove(Debug.debugItems, 1)
 	end
@@ -528,7 +600,7 @@ function Debug:AddMessage(level, sName, ...)
 	table.insert(Debug.debugItems, debugStr)
 	Debug:RefreshList()
 
-	--scroll to bottom by getting the current range and adjusting the scrollframe offset and scrollbar value
+	-- Scroll to bottom
 	HybridScrollFrame_SetOffset(Debug.scrollFrame, Debug.scrollFrame.range)
 	Debug.scrollFrame.scrollBar:SetValue(Debug.scrollFrame.range)
 end
