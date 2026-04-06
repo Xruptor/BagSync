@@ -41,7 +41,9 @@ function Utility:IsSecretValue(v)
 end
 
 function Utility:CanAccessValue(v)
-	return CallSecretAPI("canaccessvalue", v) or true -- Default to true for older clients
+	local result = CallSecretAPI("canaccessvalue", v)
+	if result == nil then return true end -- Default to true when API is absent
+	return result
 end
 
 function Utility:IsSecretTable(v)
@@ -53,7 +55,9 @@ function Utility:HasAnySecretValue(v)
 end
 
 function Utility:CanAccessAllValues(v)
-	return CallSecretAPI("canaccessallvalues", v) or true -- Default to true for older clients
+	local result = CallSecretAPI("canaccessallvalues", v)
+	if result == nil then return true end -- Default to true when API is absent
+	return result
 end
 
 -- Safe type checker that handles secret values on Retail 12.0+

@@ -608,7 +608,7 @@ function BSYC:GetShortItemID(link)
 
   return link:match("item:(%d+):")
       or link:match("^(%d+):")
-      or (select(1, strsplit(";", link)))
+      or (strsplit(";", link))
       or link
 end
 
@@ -864,23 +864,24 @@ function BSYC:CanDoProfessions()
 	return false
 end
 
+local BSYC_FRAME_MODULE_LIST = {
+	"Blacklist",
+	"Whitelist",
+	"Currency",
+	"Professions",
+	"Recipes",
+	"Gold",
+	"Profiles",
+	"Search",
+	"SearchFilters",
+	"SortOrder",
+	"Debug",
+	"Details",
+}
+
 function BSYC:ResetFramePositions()
-	local moduleList = {
-		"Blacklist",
-		"Whitelist",
-		"Currency",
-		"Professions",
-		"Recipes",
-		"Gold",
-		"Profiles",
-		"Search",
-		"SearchFilters",
-		"SortOrder",
-		"Debug",
-		"Details",
-	}
-	for i=1, #moduleList do
-		local mName = moduleList[i]
+	for i=1, #BSYC_FRAME_MODULE_LIST do
+		local mName = BSYC_FRAME_MODULE_LIST[i]
 		if BSYC:GetModule(mName, true) and BSYC:GetModule(mName).frame then
 			BSYC:GetModule(mName).frame:ClearAllPoints()
 			BSYC:GetModule(mName).frame:SetPoint("CENTER",UIParent,"CENTER", 0, 0)
@@ -890,20 +891,7 @@ end
 
 function BSYC:GetBSYC_FrameLevel()
 	local count = 0
-	local moduleList = {
-		"Blacklist",
-		"Whitelist",
-		"Currency",
-		"Professions",
-		"Recipes",
-		"Gold",
-		"Profiles",
-		"Search",
-		"SearchFilters",
-		"SortOrder",
-		"Debug",
-		"Details",
-	}
+	local moduleList = BSYC_FRAME_MODULE_LIST
 	for i=1, #moduleList do
 		local mName = moduleList[i]
 		if BSYC:GetModule(mName, true) and BSYC:GetModule(mName).frame and BSYC:GetModule(mName).frame:IsVisible() then

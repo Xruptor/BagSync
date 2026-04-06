@@ -28,6 +28,8 @@ local math_min = math.min
 local math_max = math.max
 local table_insert = table.insert
 local string_sub = string.sub
+local string_match = string.match
+local string_gmatch = string.gmatch
 
 local function Debug(level, ...)
     if BSYC.DEBUG then BSYC.DEBUG(level, "Data", ...) end
@@ -146,9 +148,7 @@ Data.__cache.tooltipOrderTail = 0
 Data.__cache.tooltipCount = 0
 Data.__cache.ignore = {}
 Data.__cache.pending = Data.__cache.pending or {}
-Data.__cache.itemCacheRun = Data.__cache.itemCacheRun or nil
 Data.__cache.throttleMode = Data.__cache.throttleMode or "background"
-Data.__cache.backgroundThrottle = Data.__cache.backgroundThrottle or nil
 Data.__cache.rampIndex = Data.__cache.rampIndex or 1
 
 local ITEMCACHE_ALLOW_LIST = {
@@ -866,7 +866,7 @@ function Data:AdvanceBackgroundRamp()
 		idx = idx + 1
 		Data.__cache.rampIndex = idx
 		Data.__cache.backgroundThrottle = ITEMCACHE_RAMP_STEPS[idx]
-		Debug(BSYC_DL.SL2, "CacheThrottle-Ramp", "background", idx, "batch", Data.__cache.backgroundThrottle.batch, "tick", Data.__cache.backgroundThrottle.tick, "pass", Data.__cache.backgroundThrottle.pass)
+		Debug(BSYC_DL.SL3, "CacheThrottle-Ramp", "background", idx, "batch", Data.__cache.backgroundThrottle.batch, "tick", Data.__cache.backgroundThrottle.tick, "pass", Data.__cache.backgroundThrottle.pass)
 		Debug(BSYC_DL.SL3, "CacheThrottle-Remaining", GetCacheRemaining(Data.__cache.itemCacheRun))
 		Data:SetCacheThrottle("background")
 		BSYC:StartTimer("DataCacheRamp", ITEMCACHE_RAMP_INTERVAL, Data, "AdvanceBackgroundRamp")
@@ -876,7 +876,7 @@ end
 function Data:StartBackgroundRamp()
 	Data.__cache.rampIndex = 1
 	Data.__cache.backgroundThrottle = ITEMCACHE_RAMP_STEPS[1]
-	Debug(BSYC_DL.SL2, "CacheThrottle-Ramp", "background", Data.__cache.rampIndex, "batch", Data.__cache.backgroundThrottle.batch, "tick", Data.__cache.backgroundThrottle.tick, "pass", Data.__cache.backgroundThrottle.pass)
+	Debug(BSYC_DL.SL3, "CacheThrottle-Ramp", "background", Data.__cache.rampIndex, "batch", Data.__cache.backgroundThrottle.batch, "tick", Data.__cache.backgroundThrottle.tick, "pass", Data.__cache.backgroundThrottle.pass)
 	Debug(BSYC_DL.SL3, "CacheThrottle-Remaining", GetCacheRemaining(Data.__cache.itemCacheRun))
 	Data:SetCacheThrottle("background")
 	BSYC:StartTimer("DataCacheRamp", ITEMCACHE_RAMP_INTERVAL, Data, "AdvanceBackgroundRamp")
@@ -935,7 +935,7 @@ function Data:SetCacheThrottle(mode)
 	Data.__cache.throttleMode = throttleMode
 
 	if prevMode ~= throttleMode then
-		Debug(BSYC_DL.SL2, "CacheThrottle-Mode", prevMode, "->", throttleMode, "batch", cfg.batch, "tick", cfg.tick, "pass", cfg.pass)
+		Debug(BSYC_DL.SL3, "CacheThrottle-Mode", prevMode, "->", throttleMode, "batch", cfg.batch, "tick", cfg.tick, "pass", cfg.pass)
 		Debug(BSYC_DL.SL3, "CacheThrottle-Remaining", GetCacheRemaining(run))
 	end
 
@@ -1029,11 +1029,63 @@ function Data:PopulateItemCache(mode)
 		end
 	end
 
+	-- Collect profession recipe item IDs for caching
+	local function CacheProfessionRecipes(unitObj)
+		local professions = unitObj.data and unitObj.data.professions
+		if not professions then return end
+
+		local getRecipeInfo = BSYC.API and BSYC.API.GetRecipeInfo
+		local getRecipeItemLink = C_TradeSkillUI and C_TradeSkillUI.GetRecipeItemLink
+
+		for _, profData in pairs(professions) do
+			if profData and profData.categories then
+				for _, catData in pairs(profData.categories) do
+					local recipes = catData and catData.recipes
+					if recipes and type(recipes) == "string" then
+						-- Parse recipe string: "|id1|id2|..." or "|id1:type|id2:type|..."
+						for recipeStr in string_gmatch(recipes, "|([^|]+)") do
+							if recipeStr and recipeStr ~= "" then
+								-- Check for Classic-style type suffix (e.g., "2304:item", "7276:enchant")
+								local numericID, typeStr = string_match(recipeStr, "^(%d+):(%w+)$")
+								local recipeID = numericID and tonumber(numericID) or tonumber(recipeStr)
+
+								if recipeID then
+									if profData.isClassic then
+										-- Classic: :item suffix means direct item ID, :enchant means spell ID (skip)
+										if typeStr == "item" then
+											pushLink(tostring(recipeID))
+										end
+										-- :enchant suffixes are spell IDs, not cacheable as items
+									else
+										-- Retail: recipeID is a spell/recipe ID, resolve to crafted item
+										if getRecipeInfo then
+											local recipeInfo = getRecipeInfo(recipeID)
+											if recipeInfo and recipeInfo.craftedItemID then
+												pushLink(tostring(recipeInfo.craftedItemID))
+											end
+										elseif getRecipeItemLink then
+											local itemLink = getRecipeItemLink(recipeID)
+											if itemLink then
+												pushLink(itemLink)
+											end
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
 	for unitObj in Data:IterateUnits(true) do
 		if not unitObj.isGuild then
 			for i = 1, #ITEMCACHE_ALLOW_KEYS do
 				CacheCheck(unitObj, ITEMCACHE_ALLOW_KEYS[i])
 			end
+			-- Cache profession recipes for this unit
+			CacheProfessionRecipes(unitObj)
 		else
 			CacheCheck(unitObj, "guild")
 		end

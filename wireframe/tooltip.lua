@@ -627,8 +627,7 @@ function Tooltip:ShowExtTipWithUnitInline(objTooltip, extTip, unitList, addSepar
 	local anchorResult = ExtTip:UpdateAnchor(objTooltip, isBattlePet)
 
 	if not anchorResult then
-		if type(objTooltip.AddDoubleLine) ~= "function" then
-		else
+		if type(objTooltip.AddDoubleLine) == "function" then
 			if addSeparator then
 				objTooltip:AddDoubleLine(" ", " ")
 			end
@@ -685,10 +684,10 @@ function Tooltip:GetSortIndex(unitObj)
 			return 4
 		elseif unitObj.isGuild and unitObj.isConnectedRealm then
 			return 5
-		elseif not unitObj.isGuild then
-			return 6
 		elseif unitObj.isWarbandBank then
 			return 7
+		elseif not unitObj.isGuild then
+			return 6
 		end
 	end
 	return 8
@@ -855,7 +854,7 @@ function Tooltip:GetClassColor(unitObj, switch, bypass, altColor)
 end
 
 -- Build realm tag for display
-local function BuildRealmTag(realm, opts, currentRealm, isXRGuild, isConnectedRealm)
+local function BuildRealmTag(realm, opts, currentRealm, isXRGuild, isConnectedRealm, unitRealm)
 	local realmTag = ""
 	local delimiter = (realm ~= "" and " ") or ""
 
@@ -865,7 +864,8 @@ local function BuildRealmTag(realm, opts, currentRealm, isXRGuild, isConnectedRe
 			return realmTag, realm, BSYC.colors.bnet
 		end
 
-		if (opts.enableCR) and isConnectedRealm and realm ~= currentRealm then
+		-- use unitRealm (raw name) not realm (display value) to avoid same-realm chars being tagged [CR] when realm display is disabled
+		if (opts.enableCR) and isConnectedRealm and unitRealm ~= currentRealm then
 			realmTag = (opts.enableRealmIDTags and L.TooltipCR_Tag..delimiter) or ""
 			return realmTag, realm, BSYC.colors.cr
 		end
@@ -943,7 +943,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 		end
 		addStr = self:HexColor(colors.currentrealm, "["..realm.."]")
 	else
-		local realmTag, realmValue, realmColor = BuildRealmTag(realm, opts, currentRealm, unitObj.isXRGuild, unitObj.isConnectedRealm)
+		local realmTag, realmValue, realmColor = BuildRealmTag(realm, opts, currentRealm, unitObj.isXRGuild, unitObj.isConnectedRealm, unitObj.realm)
 		if realmTag ~= "" or realmValue ~= "" then
 			addStr = self:HexColor(realmColor or colors.cr, "["..realmTag..realmValue.."]")
 		end
