@@ -29,7 +29,7 @@ local Recipes
 local L = BSYC.L
 
 -- Constants
-local BUTTON_HEIGHT = 20
+local BUTTON_HEIGHT = 22 -- fallback, must match BagSyncListSimpleItemTemplate y="22"
 
 --------------
 -- Helpers --
@@ -260,8 +260,9 @@ function Professions:RefreshList()
 		end
 	end
 
-	local totalHeight = #items * BUTTON_HEIGHT
-	local shownHeight = #buttons * BUTTON_HEIGHT
+	local buttonHeight = scrollFrame.buttonHeight or BUTTON_HEIGHT
+	local totalHeight = #items * buttonHeight
+	local shownHeight = #buttons * buttonHeight
 
 	HybridScrollFrame_Update(scrollFrame, totalHeight, shownHeight)
 end
