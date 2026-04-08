@@ -152,6 +152,14 @@ end
 --For battlepets/petcages make sure to include speciesID=<speciesID> as part of the cache object
 --Note: C_Item.GetItemInfo does not like BattlePet id's, so do not pass that as a link.  Just use the battlepet name instead of a link.)
 function Lib:Find(itemLink, search, cacheObj)
+	-- allow callers to pass a precompiled search object
+	-- must check this BEFORE useful(), which uses #table (always 0 for non-array tables)
+	if type(search) == "table" and search.__libItemScoutCompiled then
+		if not itemLink then return false end
+		cache = cacheObj or EMPTY_CACHE
+		return self:_EvalCompiledSearch(itemLink, search)
+	end
+
 	if not useful(search) then
 		return true
 	end
@@ -161,11 +169,6 @@ function Lib:Find(itemLink, search, cacheObj)
 	end
 
 	cache = cacheObj or EMPTY_CACHE
-
-	-- allow callers to pass a precompiled search object
-	if type(search) == "table" and search.__libItemScoutCompiled then
-		return self:_EvalCompiledSearch(itemLink, search)
-	end
 
 	if type(search) ~= "string" then
 		return true

@@ -665,6 +665,10 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isSearchFilters, 
 		return
 	end
 
+	table.sort(Search.items, function(a, b)
+		return (a.name or "") < (b.name or "")
+	end)
+
 	Search:RefreshList()
 end
 

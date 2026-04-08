@@ -259,9 +259,22 @@ function SearchFilters:DoSearch(searchStr)
 
 	local advUnitList = {}
 	local advAllowList = {}
-	local unitCount = ProcessSelectedItems(SearchFilters.playerList, advUnitList, function(item)
-		return item.unitObj.realm
-	end, 0)
+	local unitCount = 0
+
+	-- Build nested unit filter: { [realmKey] = { [unitKey] = true } }
+	-- This ensures only the selected characters are matched, not all chars on the same realm.
+	for i = 1, #SearchFilters.playerList do
+		local item = SearchFilters.playerList[i]
+		if not item.isHeader and item.isSelected then
+			local realmKey = item.unitObj.realm
+			local unitKey = item.unitObj.name
+			if not advUnitList[realmKey] then
+				advUnitList[realmKey] = {}
+			end
+			advUnitList[realmKey][unitKey] = true
+			unitCount = unitCount + 1
+		end
+	end
 
 	local locCount = ProcessSelectedItems(SearchFilters.locationList, advAllowList, function(item)
 		return item.source
