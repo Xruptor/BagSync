@@ -1322,9 +1322,15 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	if opts.enableTooltips == false then
 		return
 	end
+
+	-- LAYER 1 SAFETY CHECK: Verify the owner tooltip itself is accessible before touching it.
+	-- CanAccessObject() returns false if the tooltip frame is forbidden (secured) or if
+	-- issecure() would be violated. If this fails we cannot write inline OR show extTip,
+	-- so we bail out entirely — there is nothing safe to attach to.
 	if not CanAccessObject(objTooltip) then
 		return
 	end
+
 	if Scanner.isScanningGuild then
 		return
 	end
@@ -1339,6 +1345,14 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	Tooltip.objTooltip = objTooltip
 
+	-- LAYER 2 SAFETY CHECK: Ask ExtTip whether it can safely show and position itself.
+	-- ExtTip:Check() scans for a valid anchor frame using Utility:IsSecretFrame() on each
+	-- candidate. If every candidate returns a secret value (Blizzard-protected), no safe
+	-- anchor exists and Check() returns false. That result is captured here:
+	--   showExtTip = true  → extTip is ready; BagSync data will be written to it.
+	--   showExtTip = false → extTip cannot be positioned safely; BagSync data falls back
+	--                        to inline output on objTooltip (the owner tooltip).
+	-- extTip is nil when showExtTip is false so all downstream branches are safe.
 	local showExtTip = ExtTip:Check(source, isBattlePet, objTooltip)
 	local extTip = showExtTip and ExtTip:GetTip() or nil
 
@@ -1421,8 +1435,12 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 	local allowSig = useFilters and BuildAllowSignature(allowList, self.__scratchAllowSig) or "default"
 	local tooltipSig = BuildTooltipSignature(self, opts, allowSig, advUnitList, showExtTip, doCurrentPlayerOnly, skipTally)
 
+	-- Fast-path: same link + same signature means nothing changed; replay the cached result.
+	-- The showExtTip flag is baked into tooltipSig, so a change from inline→extTip or vice
+	-- versa correctly invalidates the cache and falls through to a full retally.
 	if self.__lastLink and self.__lastLink == origLink and self.__lastSig == tooltipSig then
 		if self.__lastTally and #self.__lastTally > 0 then
+			-- Honour the same inline-vs-extTip decision that was made on the original pass.
 			if showExtTip then
 				self:AddTooltipUnits(extTip, self.__lastTally, BSYC.colors.total)
 			else
@@ -1430,6 +1448,8 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 			end
 			objTooltip:Show()
 			if showExtTip then
+				-- ShowExtTipWithUnitInline positions extTip; if UpdateAnchor fails inside it
+				-- the data is written inline to objTooltip as a final fallback (Layer 3).
 				self:ShowExtTipWithUnitInline(objTooltip, extTip, self.__lastTally, opts.enableTooltipSeparator and #self.__lastTally > 0, isBattlePet)
 			end
 		end
@@ -1503,10 +1523,15 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	addSeparator = AddItemInfoLines(unitList, opts, shortID, isBattlePet, addSeparator)
 
+	-- Separator is only prepended for inline output; extTip manages its own spacing.
 	if not showExtTip and opts.enableTooltipSeparator and #unitList > 0 then
 		tinsert(unitList, 1, { colorized=" ", tallyString=" "} )
 	end
 
+	-- Route BagSync data to the correct destination based on the Layer 2 result:
+	--   showExtTip = true  → write to the separate extTip frame.
+	--   showExtTip = false → write inline to objTooltip (owner tooltip).
+	--                        This is the Layer 2 inline fallback for secret-value situations.
 	if showExtTip then
 		self:AddTooltipUnits(extTip, unitList, BSYC.colors.total)
 	else
@@ -1522,6 +1547,9 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 
 	if showExtTip then
 		if #unitList > 0 then
+			-- ShowExtTipWithUnitInline makes extTip visible and calls UpdateAnchor to position it.
+			-- If UpdateAnchor returns false (Layer 3 fallback), the data is also written inline
+			-- to objTooltip so nothing is lost even if anchoring fails at this late stage.
 			self:ShowExtTipWithUnitInline(objTooltip, extTip, unitList, opts.enableTooltipSeparator and #unitList > 0, isBattlePet)
 		else
 			ExtTip:Hide()

@@ -11,7 +11,6 @@
 local BSYC = select(2, ...) --grab the addon namespace
 local Unit = BSYC:NewModule("Unit")
 
-local Debug = BSYC.DEBUG
 local wipe = _G.wipe
 local ipairs = _G.ipairs
 local strmatch = _G.strmatch
@@ -45,8 +44,8 @@ local GetVoidItemInfo = _G.GetVoidItemInfo
 local CanGuildBankRepair = _G.CanGuildBankRepair
 local Enum = _G.Enum
 
-local function DebugLog(level, ...)
-	if Debug then Debug(level, "Unit", ...) end
+local function Debug(level, ...)
+	if BSYC.DEBUG then BSYC.DEBUG(level, "Unit", ...) end
 end
 
 local BROKEN_REALMS = {
@@ -138,7 +137,7 @@ if C_PlayerInteractionManager and Enum and Enum.PlayerInteractionType then
 	local function HandleInteraction(eventName, winArg, isShow)
 		local interactInfo = INTERACT_TYPE_MAP[winArg]
 		if interactInfo then
-			DebugLog(BSYC_DL.DEBUG, eventName, winArg)
+			Debug(BSYC_DL.DEBUG, eventName, winArg)
 			SetLocationState(interactInfo.flag, interactInfo.msg, isShow)
 		end
 	end
@@ -237,7 +236,7 @@ function Unit:OnEnable()
 end
 
 function Unit:DoRealmCollection(source)
-	DebugLog(BSYC_DL.TRACE, "DoRealmCollection", source)
+	Debug(BSYC_DL.TRACE, "DoRealmCollection", source)
 
 	Realms = GetAutoCompleteRealms and GetAutoCompleteRealms() or nil
 	if not Realms or #Realms == 0 then
@@ -279,9 +278,9 @@ function Unit:DoRealmCollection(source)
 	tsort(Realms_LC)
 	Unit.lowerKey = (#Realms_LC > 0 and tconcat(Realms_LC, ";")) or "?"
 
-	DebugLog(BSYC_DL.TRACE, "DoRealmCollection-realmKey", Unit.realmKey)
-	DebugLog(BSYC_DL.TRACE, "DoRealmCollection-rwsKey", Unit.rwsKey)
-	DebugLog(BSYC_DL.TRACE, "DoRealmCollection-lowerKey", Unit.lowerKey)
+	Debug(BSYC_DL.TRACE, "DoRealmCollection-realmKey", Unit.realmKey)
+	Debug(BSYC_DL.TRACE, "DoRealmCollection-rwsKey", Unit.rwsKey)
+	Debug(BSYC_DL.TRACE, "DoRealmCollection-lowerKey", Unit.lowerKey)
 end
 
 function Unit:GetUnitAddress(unit)
@@ -336,7 +335,7 @@ function Unit:GetPlayerInfo(bypassDebug)
 	unit.lowerKey = Unit.lowerKey
 
 	if not bypassDebug then
-		DebugLog(BSYC_DL.TRACE, "GetPlayerInfo", playerName, realmName, faction, unit.class, unit.race, unit.guild, unit.guildrealm, guildRealm)
+		Debug(BSYC_DL.TRACE, "GetPlayerInfo", playerName, realmName, faction, unit.class, unit.race, unit.guild, unit.guildrealm, guildRealm)
 	end
 	return unit
 end

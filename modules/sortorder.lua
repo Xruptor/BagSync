@@ -141,14 +141,10 @@ local function SetupSortBoxHandlers(button)
 	button.SortBox.parentHandler = SortOrder
 	button.SortBox:SetScript("OnEscapePressed", function(self)
 		self:ClearFocus()
-		UI:CallHandler(self, "SortBox_OnEscapePressed", self:GetText(), self)
 	end)
 	button.SortBox:SetScript("OnEnterPressed", function(self)
 		self:ClearFocus()
 		UI:CallHandler(self, "SortBox_OnEnterPressed", self:GetText(), self)
-	end)
-	button.SortBox:SetScript("OnTextChanged", function(self, userInput)
-		UI:CallHandler(self, "SortBox_OnTextChanged", userInput, self)
 	end)
 	button.SortBox.__bsycHandlers = true
 end

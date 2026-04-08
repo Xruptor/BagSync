@@ -470,7 +470,7 @@ end
 -- ITEM SEARCH
 ------------------------------------------------------------
 
-local function ParseItemData(data, searchStr, checkList, atUserLoc)
+local function ParseItemData(data, compiled, checkList, atUserLoc)
 	local iCount = 0
 
 	for i = 1, #data do
@@ -486,10 +486,10 @@ local function ParseItemData(data, searchStr, checkList, atUserLoc)
 					local entry = cacheObj.speciesName or cacheObj.itemLink
 					local texture = cacheObj.speciesIcon or cacheObj.itemTexture
 					local itemName = cacheObj.speciesName or cacheObj.itemName
-					local testMatch = ItemScout:Find(entry, searchStr, cacheObj)
+					local testMatch = ItemScout:Find(entry, compiled, cacheObj)
 
 					if entry and (testMatch or atUserLoc) then
-						Debug(BSYC_DL.SL1, "FoundItem", searchStr, entry)
+						Debug(BSYC_DL.SL1, "FoundItem", entry)
 					end
 
 					checkList[link] = entry
@@ -515,7 +515,7 @@ local function ParseItemData(data, searchStr, checkList, atUserLoc)
 	return iCount
 end
 
-local function ProcessUnitTarget(unitObj, target, searchStr, checkList, atUserLoc)
+local function ProcessUnitTarget(unitObj, target, compiled, checkList, atUserLoc)
 	local total = 0
 
 	if not (unitObj.data[target] and BSYC.tracking[target]) then
@@ -524,35 +524,35 @@ local function ProcessUnitTarget(unitObj, target, searchStr, checkList, atUserLo
 
 	if target == "bag" or target == "bank" or target == "reagents" then
 		for _, bagData in pairs(unitObj.data[target] or {}) do
-			total = total + ParseItemData(bagData, searchStr, checkList, atUserLoc)
+			total = total + ParseItemData(bagData, compiled, checkList, atUserLoc)
 		end
 		if (target == "bag" or target == "bank") and unitObj.data.equipbags then
-			total = total + ParseItemData(unitObj.data.equipbags[target] or {}, searchStr, checkList, atUserLoc)
+			total = total + ParseItemData(unitObj.data.equipbags[target] or {}, compiled, checkList, atUserLoc)
 		end
 	elseif target == "auction" then
-		total = ParseItemData(unitObj.data[target].bag or {}, searchStr, checkList, atUserLoc)
+		total = ParseItemData(unitObj.data[target].bag or {}, compiled, checkList, atUserLoc)
 	elseif target == "equip" or target == "void" or target == "mailbox" then
-		total = ParseItemData(unitObj.data[target] or {}, searchStr, checkList, atUserLoc)
+		total = ParseItemData(unitObj.data[target] or {}, compiled, checkList, atUserLoc)
 	end
 
 	return total
 end
 
-function Search:CheckItems(searchStr, unitObj, target, checkList, atUserLoc)
+function Search:CheckItems(compiled, unitObj, target, checkList, atUserLoc)
 	if not unitObj or not target then return 0 end
-	searchStr = searchStr or ''
+	if not compiled then return 0 end
 
-	local total = ProcessUnitTarget(unitObj, target, searchStr, checkList, atUserLoc)
+	local total = ProcessUnitTarget(unitObj, target, compiled, checkList, atUserLoc)
 
 	if target == "guild" and BSYC.tracking.guild then
-		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
-			total = total + ParseItemData(tabData, searchStr, checkList, atUserLoc)
+		for _, tabData in pairs(unitObj.data.tabs or {}) do
+			total = total + ParseItemData(tabData, compiled, checkList, atUserLoc)
 		end
 	end
 
 	if target == "warband" and BSYC.tracking.warband then
-		for tabID, tabData in pairs(unitObj.data.tabs or {}) do
-			total = total + ParseItemData(tabData, searchStr, checkList, atUserLoc)
+		for _, tabData in pairs(unitObj.data.tabs or {}) do
+			total = total + ParseItemData(tabData, compiled, checkList, atUserLoc)
 		end
 	end
 
@@ -570,7 +570,7 @@ local function GetSearchTargetLocation(searchStr, allowList)
 	return atUserLoc
 end
 
-local function ProcessSearchIteration(searchStr, advUnitList, allowList, checkList, advAllowList)
+local function ProcessSearchIteration(compiled, advUnitList, allowList, checkList, advAllowList)
 	local warnTotal = 0
 	local warbandObj = Data:GetWarbandBankObj()
 
@@ -578,37 +578,37 @@ local function ProcessSearchIteration(searchStr, advUnitList, allowList, checkLi
 		if not unitObj.isGuild then
 			for k in pairs(allowList) do
 				if k ~= "guild" then
-					warnTotal = warnTotal + Search:CheckItems(searchStr, unitObj, k, checkList)
+					warnTotal = warnTotal + Search:CheckItems(compiled, unitObj, k, checkList)
 				end
 			end
 		else
 			if not advAllowList or advAllowList.guild then
-				warnTotal = warnTotal + Search:CheckItems(searchStr, unitObj, "guild", checkList)
+				warnTotal = warnTotal + Search:CheckItems(compiled, unitObj, "guild", checkList)
 			end
 		end
 	end
 
 	if warbandObj and allowList.warband then
-		warnTotal = warnTotal + Search:CheckItems(searchStr, warbandObj, "warband", checkList)
+		warnTotal = warnTotal + Search:CheckItems(compiled, warbandObj, "warband", checkList)
 	end
 
 	return warnTotal
 end
 
-local function ProcessPlayerLocationSearch(searchStr, atUserLoc, allowList, checkList, advAllowList)
+local function ProcessPlayerLocationSearch(compiled, atUserLoc, checkList, advAllowList)
 	local warnTotal = 0
 	local playerObj = Data:GetPlayerObj()
 	local warbandObj = Data:GetWarbandBankObj()
 
 	if atUserLoc == "warband" and warbandObj then
-		warnTotal = warnTotal + Search:CheckItems(searchStr, warbandObj, atUserLoc, checkList, true)
+		warnTotal = warnTotal + Search:CheckItems(compiled, warbandObj, atUserLoc, checkList, true)
 	elseif atUserLoc ~= "guild" then
-		warnTotal = warnTotal + Search:CheckItems(searchStr, playerObj, atUserLoc, checkList, true)
+		warnTotal = warnTotal + Search:CheckItems(compiled, playerObj, atUserLoc, checkList, true)
 	else
 		if playerObj.data.guild and (not advAllowList or advAllowList.guild) then
 			local guildObj = Data:GetPlayerGuildObj()
 			if guildObj then
-				warnTotal = warnTotal + Search:CheckItems(searchStr, guildObj, atUserLoc, checkList, true)
+				warnTotal = warnTotal + Search:CheckItems(compiled, guildObj, atUserLoc, checkList, true)
 			end
 		end
 	end
@@ -653,12 +653,13 @@ function Search:DoSearch(searchStr, advUnitList, advAllowList, isSearchFilters, 
 
 	local allowList = advAllowList or BSYC.DEFAULT_ALLOW_LIST
 	local atUserLoc = not isSearchFilters and GetSearchTargetLocation(searchStr, BSYC.DEFAULT_ALLOW_LIST)
+	local compiled = ItemScout:CompileSearch(searchStr)
 
 	Debug(BSYC_DL.INFO, "init:DoSearch", searchStr, atUserLoc, advUnitList, advAllowList, isSearchFilters, warnCount)
 
 	local warnTotal = atUserLoc
-		and ProcessPlayerLocationSearch(searchStr, atUserLoc, allowList, checkList, advAllowList)
-		or ProcessSearchIteration(searchStr, advUnitList, allowList, checkList, advAllowList)
+		and ProcessPlayerLocationSearch(compiled, atUserLoc, checkList, advAllowList)
+		or ProcessSearchIteration(compiled, advUnitList, allowList, checkList, advAllowList)
 
 	if DisplaySearchWarning(warnTotal, searchStr, advUnitList, advAllowList, isSearchFilters, warnCount) then
 		return

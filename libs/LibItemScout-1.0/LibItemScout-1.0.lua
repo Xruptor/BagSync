@@ -96,7 +96,7 @@ end
 
 --[[ Locals ]]--
 
-local tonumber, select, split, trim = tonumber, select, strsplit, strtrim
+local tonumber, select, trim = tonumber, select, strtrim
 local strfind, strlower, strsub, strlen = string.find, string.lower, string.sub, string.len
 local tinsert = table.insert
 local cache = {}
@@ -201,45 +201,6 @@ function Lib:ClearSearchCache()
 end
 
 
---[[ Top-Layer Processing ]]--
-
--- union search: <search>&&<search>
-function Lib:FindUnionSearch(item, ...)
-	for i = 1, select('#', ...) do
-		local search = select(i, ...)
-		search = dotrim(search)
-		--\038 ascii code for &
-		if useful(search) and self:FindIntersectSearch(item, split('\038\038', search)) then
-			return true
-		end
-	end
-end
-
-
--- intersect search: <search>||<search>
-function Lib:FindIntersectSearch(item, ...)
-	for i = 1, select('#', ...) do
-		local search = select(i, ...)
-		search = dotrim(search)
-		if useful(search) and not self:FindNegatableSearch(item, search) then
-			return false
-		end
-	end
-	return true
-end
-
-
--- negated search: !<search>
-function Lib:FindNegatableSearch(item, search)
-	local negatedSearch = search:match('^[!~][%s]*(.+)$')
-	if negatedSearch then
-		negatedSearch = dotrim(negatedSearch)
-		return not self:FindTypedSearch(item, negatedSearch)
-	end
-	return self:FindTypedSearch(item, search, true)
-end
-
-
 --[[
 Search Types:
 easly defined search types
@@ -294,60 +255,6 @@ local function parseOperator(text)
 	end
 
 	return nil, text
-end
-
-function Lib:FindTypedSearch(item, search, default)
-	if not useful(search) then
-		return default
-	end
-
-	local tag, rest = search:match('^[%s]*(%w+):(.*)$')
-	if tag then
-		if useful(rest) then
-			search = rest
-		else
-			return default
-		end
-	end
-
-	local operator
-	operator, search = parseOperator(search)
-	if not useful(search) then
-		return default
-	end
-
-	if tag then
-		tag = '^' .. tag
-		for _, searchType in pairs(self.searchTypes) do
-			if searchType.tags then
-				for _, value in pairs(searchType.tags) do
-					if value:find(tag) then
-						return self:UseTypedSearch(searchType, item, operator, search)
-					end
-				end
-			end
-		end
-	else
-		--onlyTag forces general searches to require the tags instead of doing a free for all search through all the filters
-		--so long as onlyTags is true, then the tag MUST exist in the search string
-		for _, searchType in pairs(self.searchTypes) do
-			if not searchType.onlyTags and self:UseTypedSearch(searchType, item, operator, search) then
-				return true
-			end
-		end
-		return false
-	end
-
-	return default
-end
-
-function Lib:UseTypedSearch(searchType, item, operator, search)
-	local capture1, capture2, capture3 = searchType:canSearch(operator, search)
-	if capture1 then
-		if searchType:findItem(item, operator, capture1, capture2, capture3) then
-			return true
-		end
-	end
 end
 
 function Lib:_RebuildIndex()
@@ -570,11 +477,11 @@ Lib:RegisterTypedSearch{
 	id = 'itemName',
 	tags = {'n', 'name'},
 
-	canSearch = function(self, operator, search)
+	canSearch = function(_, operator, search)
 		return not operator and search
 	end,
 
-	findItem = function(self, item, _, search)
+	findItem = function(_, item, _, search)
 		local name = cache.itemName or xGetItemNameByID(item) or item:match('%[(.+)%]') or (item and tostring(item))
 		return match(search, name)
 	end
@@ -590,7 +497,7 @@ Lib:RegisterTypedSearch{
 		return self.keywords[search]
 	end,
 
-	findItem = function(self, item, _, search)
+	findItem = function(_, item, _, search)
 		if not search then return false end
 		local bindType = cache.bindType or (xGetItemInfo and select(14, xGetItemInfo(item)))
 		if bindType == nil then return false end
@@ -637,11 +544,11 @@ Lib:RegisterTypedSearch{
 	tags = {'x', 'xpac', 'expansion'},
 	onlyTags = true,
 
-	canSearch = function(self, operator, search)
+	canSearch = function(_, operator, search)
 		return not operator and search
 	end,
 
-	findItem = function(self, item, _, search)
+	findItem = function(_, item, _, search)
 		local expacID = (cache.expacID or (xGetItemInfo and select(15, xGetItemInfo(item))))
 		local xPacName = expacID and _G["EXPANSION_NAME"..expacID]
 		return match(search, expacID and tostring(expacID), xPacName)
@@ -655,11 +562,11 @@ Lib:RegisterTypedSearch{
 	tags = {'t', 'type', 'slot'},
 	onlyTags = true,
 
-	canSearch = function(self, operator, search)
+	canSearch = function(_, operator, search)
 		return not operator and search
 	end,
 
-	findItem = function(self, item, _, search)
+	findItem = function(_, item, _, search)
 		local type, subType, equipSlot, classID, subclassID
 
 		if cache.itemType then
@@ -699,7 +606,7 @@ Lib:RegisterTypedSearch{
 	tags = {'q', 'quality'},
 	onlyTags = true,
 
-	canSearch = function(self, _, search)
+	canSearch = function(_, _, search)
 		for i, name in pairs(qualities) do
 			if name:find(search) then
 				return i
@@ -707,7 +614,7 @@ Lib:RegisterTypedSearch{
 		end
 	end,
 
-	findItem = function(self, link, operator, num)
+	findItem = function(_, link, operator, num)
 		local quality = (cache.itemQuality or (xGetItemInfo and select(3, xGetItemInfo(link))))
 		return compare(operator, quality, num)
 	end,
@@ -721,11 +628,11 @@ Lib:RegisterTypedSearch{
 	tags = {'l', 'level', 'lvl', 'ilvl'},
 	onlyTags = true,
 
-	canSearch = function(self, _, search)
+	canSearch = function(_, _, search)
 		return tonumber(search)
 	end,
 
-	findItem = function(self, link, operator, num)
+	findItem = function(_, link, operator, num)
 		local lvl = (cache.itemLevel or (xGetItemInfo and select(4, xGetItemInfo(link))))
 		if lvl then
 			return compare(operator, lvl, num)
@@ -740,11 +647,11 @@ Lib:RegisterTypedSearch{
 	tags = {'r', 'req', 'rl', 'reql', 'reqlvl'},
 	onlyTags = true,
 
-	canSearch = function(self, _, search)
+	canSearch = function(_, _, search)
 		return tonumber(search)
 	end,
 
-	findItem = function(self, link, operator, num)
+	findItem = function(_, link, operator, num)
 		local lvl = (cache.itemMinLevel or (xGetItemInfo and select(5, xGetItemInfo(link))))
 		if lvl then
 			return compare(operator, lvl, num)
@@ -827,7 +734,7 @@ link_FindSearchInTooltip = function(itemLink, search)
 	local result = false
 	local data = Lib.Tooltip.GetHyperlink(itemLink)
 	if data and isSafeTable(data) and data.lines and isSafeTable(data.lines) then
-		for i, line in ipairs(data.lines) do
+		for _, line in ipairs(data.lines) do
 			local text = getLineText(line)
 			if text then
 				text = stripColor(text)
@@ -855,7 +762,7 @@ Lib:RegisterTypedSearch{
 		return self.keywords[search]
 	end,
 
-	findItem = function(self, itemLink, _, search)
+	findItem = function(_, itemLink, _, search)
 		return search and link_FindSearchInTooltip(itemLink, search)
 	end,
 
@@ -891,23 +798,23 @@ Lib:RegisterTypedSearch{
 	tags = {'tt', 'tip', 'tooltip'},
 	onlyTags = true,
 
-	canSearch = function(self, _, search)
+	canSearch = function(_, _, search)
 		return search
 	end,
 
-	findItem = function(self, link, _, search)
-	local data = Lib.Tooltip.GetHyperlink(link)
-        if data then
-            for i, line in ipairs(data.lines) do
+	findItem = function(_, link, _, search)
+		local data = Lib.Tooltip.GetHyperlink(link)
+		if data then
+			for _, line in ipairs(data.lines) do
 				local text = getLineText(line)
 				if text then
 					text = stripColor(text)
 					if text and strlower(text):find(search, 1, true) then
-					return true
+						return true
 					end
 				end
-            end
-        end
+			end
+		end
 		return false
 	end,
 }
@@ -917,11 +824,11 @@ Lib:RegisterTypedSearch{
 	tags = {'c', 'class'},
 	onlyTags = true,
 
-	canSearch = function(self, _, search)
+	canSearch = function(_, _, search)
 		return search
 	end,
 
-	findItem = function(self, link, _, search)
+	findItem = function(_, link, _, search)
 		if link:find("battlepet") then return false end
 
 		local itemID = link:match('item:(%d+)')
@@ -937,9 +844,9 @@ Lib:RegisterTypedSearch{
 		local result = false
 		local pattern = string.gsub(ITEM_CLASSES_ALLOWED:lower(), "%%s", "(.+)")
 
-	local data = Lib.Tooltip.GetHyperlink(link)
-        if data then
-            for i, line in ipairs(data.lines) do
+		local data = Lib.Tooltip.GetHyperlink(link)
+		if data then
+			for _, line in ipairs(data.lines) do
 				local text = getLineText(line)
 				if text then
 					text = text:lower()
@@ -949,8 +856,8 @@ Lib:RegisterTypedSearch{
 						break
 					end
 				end
-            end
-        end
+			end
+		end
 
 		tooltipCache[search][itemID] = result
 		return result
@@ -968,7 +875,7 @@ local function ES_TrySetName(setName, search, exactMatch)
 end
 
 function ES_FindSets(setList, search, exactMatch)
-	for i, setID in pairs(C_EquipmentSet.GetEquipmentSetIDs()) do
+	for _, setID in pairs(C_EquipmentSet.GetEquipmentSetIDs()) do
 		local setName = C_EquipmentSet.GetEquipmentSetInfo(setID)
 		if setName and ES_TrySetName(setName, search, exactMatch) then
 			table.insert(setList, setID)
@@ -1000,11 +907,11 @@ Lib:RegisterTypedSearch{
 	tags = {'s', 'set'},
 	onlyTags = true,
 
-	canSearch = function(self, operator, search)
+	canSearch = function(_, operator, search)
 		return not operator and search
 	end,
 
-	findItem = function(self, itemLink, _, search)
+	findItem = function(_, itemLink, _, search)
 		--this is an item-set search and we know that the only items that can possibly match will be *equippable* items, so we'll short-circuit the response for non-equippable items to speed up searches.
 		if not IsEquippableItem(itemLink) then return false end
 

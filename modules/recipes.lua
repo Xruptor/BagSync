@@ -25,7 +25,6 @@ local format = _G.format
 local select = _G.select
 local GetItemInfo = _G.GetItemInfo
 local GetSpellLink = _G.GetSpellLink
-local GetSpellInfo = _G.GetSpellInfo
 local table_insert = _G.table.insert
 local table_sort = _G.table.sort
 local string_match = _G.string.match

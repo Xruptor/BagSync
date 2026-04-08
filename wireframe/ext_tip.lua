@@ -558,13 +558,21 @@ function ExtTip:SetAnchor(owner, anchor, extTip, anchorMode)
 	end
 end
 
---MAIN Entry Positioning function for ExtTip.  This is the parent that calls our the other functions.
+-- MAIN entry point for ExtTip visibility + anchor safety.
+-- Called from Tooltip:TallyUnits() and Tooltip:CurrencyTooltip() AFTER the owner tooltip
+-- has already passed the CanAccessObject() check (Layer 1 in tooltip.lua).
+--
+-- Returns true  → extTip is ready; caller should write BagSync data to it.
+-- Returns false → extTip cannot be safely shown or positioned; caller must fall back to
+--                 writing BagSync data inline on the owner tooltip instead (Layer 2 fallback).
 function ExtTip:Check(source, isBattlePet, owner)
 	local opts = BSYC.options
 	local shouldShow = (opts.enableExtTooltip or isBattlePet) and true or false
 
 	local extTip = self:EnsureTip()
 
+	-- If extTip is not enabled at all (and this is not a battle pet), skip it.
+	-- Returning false signals the caller to use inline output.
 	if not shouldShow then
 		self.__currentOwner = nil
 		extTip:Hide()
@@ -577,8 +585,14 @@ function ExtTip:Check(source, isBattlePet, owner)
 
 	self.__currentOwner = owner
 
-	-- Custom positioning bypasses auto-anchoring and any tooltip scans.
+	-- Custom anchor mode: user has pinned extTip to a fixed screen location, so we skip
+	-- the dynamic tooltip scan entirely and return true immediately. Positioning is applied
+	-- later by ExtTip:ApplyCustomPosition() inside UpdateAnchor().
 	if owner and not (opts and opts.extTT_CustomAnchorEnabled) then
+		-- Dynamic anchor scan: walk the visible tooltip stack (owner, shopping tooltips,
+		-- addon tooltips) looking for a safe frame to attach to. Each candidate is tested
+		-- with Utility:IsSecretFrame() — if accessing its coordinates would trigger a
+		-- Blizzard secret-value error the candidate is skipped.
 		-- If we cannot find a safe anchor (often due to Blizzard comparison tooltips
 		-- returning secret values), fall back to inline tooltip output. Any overlap
 		-- in that case is a Blizzard tooltip issue, not a BagSync one.
@@ -586,20 +600,27 @@ function ExtTip:Check(source, isBattlePet, owner)
 		-- but only when BagSync Debug is enabled.
 		local anchor = self:GetBottomAnchorCached(owner, opts and opts.extTT_Anchor)
 		if not anchor then
-			-- For battle pets, always try to use the owner as anchor since they don't have comparison tooltips
+			-- No safe anchor found. For non-battle-pet tooltips this means a secret-value
+			-- situation is blocking us. Hide extTip and return false so the caller (Layer 2)
+			-- writes BagSync data inline on the owner tooltip instead.
 			if not isBattlePet then
 				self.__currentOwner = nil
 				extTip:Hide()
 				return false
 			end
-			-- For battle pets, set the owner as initial anchor so the extTip is positioned correctly
-			-- UpdateAnchor will be called later to refine the position
+			-- Battle pets do not have comparison/shopping tooltips, so a missing anchor just
+			-- means the frame hasn't fully laid out yet. Use the owner as a temporary anchor;
+			-- UpdateAnchor() will refine the position once layout is complete.
 			if owner and CanAccessObject(owner) then
 				extTip:SetPoint("TOPLEFT", owner, "BOTTOMLEFT", 0, -2)
 			end
 		end
 	end
 
+	-- Safe to show extTip. The caller writes BagSync data to it, then calls
+	-- ShowExtTipWithUnitInline() which invokes UpdateAnchor() to do final positioning.
+	-- If UpdateAnchor() fails at that point the data is also written inline on the owner
+	-- tooltip as a last-resort failsafe (Layer 3 in tooltip.lua).
 	return true
 end
 

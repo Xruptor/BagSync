@@ -25,7 +25,6 @@ local table_insert = table.insert
 local table_sort = table.sort
 
 -- Cache frequently accessed BSYC references
-local db = BSYC.db
 local L = BSYC.L
 
 -- ============================================================================
@@ -219,7 +218,7 @@ function Profiles:DeleteUnit(entry)
 	local realmDB = BagSyncDB and BagSyncDB[entry.unitObj.realm]
 
 	if not entry.unitObj.isGuild then
-		if entry.unitObj.data == db.player then
+		if entry.unitObj.data == BSYC.db.player then
 			if RemoveFromRealmDB(realmDB, entry.unitObj) then
 				Data:FixDB()
 			end
