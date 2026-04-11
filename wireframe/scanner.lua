@@ -1507,6 +1507,7 @@ end
 local function CollectProfessionRecipes(parentIDSlot, catCheck)
 	Scanner.recipeIDs = Scanner.recipeIDs or {}
 	local recipesByCategory = {}
+	local seenRecipeIDs = {}
 	local recipeCount = 0
 
 	--store the recipes
@@ -1535,8 +1536,8 @@ local function CollectProfessionRecipes(parentIDSlot, catCheck)
 						}
 					end
 
-					if recipeData.recipeID and not recipesByCategory[recipeData.recipeID] then
-						recipesByCategory[recipeData.recipeID] = true
+					if recipeData.recipeID and not seenRecipeIDs[recipeData.recipeID] then
+						seenRecipeIDs[recipeData.recipeID] = true
 
 						local recipeList = recipesByCategory[categoryID]
 						if not recipeList then
