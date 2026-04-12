@@ -59,7 +59,6 @@ local HasKey = _G.HasKey
 local CanUseVoidStorage = _G.CanUseVoidStorage
 local ATTACHMENTS_MAX_RECEIVE = _G.ATTACHMENTS_MAX_RECEIVE
 local ATTACHMENTS_MAX_SEND = _G.ATTACHMENTS_MAX_SEND
-local tInvert = _G.tInvert
 
 local BagIndex = Enum and Enum.BagIndex
 local BankType = Enum and Enum.BankType
@@ -97,17 +96,6 @@ end or function(v)
 	return false
 end
 
-local function InvertArray(list)
-	if not list then return {} end
-	if tInvert then
-		return tInvert(list)
-	end
-	local inverted = {}
-	for k, v in pairs(list) do
-		inverted[v] = k
-	end
-	return inverted
-end
 
 local function PickCurrencyIcon(icon1, icon2)
 	--icon1 is extraCurrencyType on older APIs, but some clients pass iconFileID here.
@@ -1211,7 +1199,7 @@ function Scanner:SaveCurrency(showDebug, skipRetry)
 
 	local player = Unit:GetPlayerInfo(true)
 
-	if showDebug then Debug(BSYC_DL.INFO, "SaveCurrency", BSYC.tracking.currency, player and player.name, skipRetry) end --this function gets spammed like crazy sometimes, so only show debug when requested
+	if showDebug then Debug(BSYC_DL.INFO, "SaveCurrency", BSYC.tracking.currency, player and player.name, skipRetry, player and player.realm) end --this function gets spammed like crazy sometimes, so only show debug when requested
 	if not BSYC.tracking.currency then
 		return false
 	end
@@ -1574,7 +1562,6 @@ function Scanner:SaveProfessionsRetail(playerName)
 		recipeIDs = {}
 	end
 	Scanner.recipeIDs = recipeIDs
-	Scanner.invertedRecipeIDs = InvertArray(Scanner.recipeIDs)
 
 	local parentSkillLineID, parentSkillLineName = GetProfessionInfoWithFallback()
 

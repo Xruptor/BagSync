@@ -14,6 +14,7 @@ local hasMark = BSYC.hasMark
 local Unit = BSYC:GetModule("Unit")
 local L = BSYC.L
 local EMPTY = {}
+local currentPlayerRealm -- set during OnEnable, used by IterateUnits
 local type = type
 local tonumber = tonumber
 local tostring = tostring
@@ -246,6 +247,7 @@ function Data:OnEnable()
 
 	--realm DB
 	local realm = player.realm
+	currentPlayerRealm = realm
 	BagSyncDB[realm] = BagSyncDB[realm] or {}
 	BSYC.db.realm = BagSyncDB[realm]
 
@@ -1415,7 +1417,6 @@ function Data:IterateUnits(dumpAll, filterList)
 		currentFaction = (BSYC.db and BSYC.db.player and BSYC.db.player.faction) or UnitFactionGroup("player")
 	end
 	local db = BagSyncDB
-	local currentRealm = BSYC.realm
 	local wantXRGuild = (not dumpAll and not filterList and opts.trackingGuild and not opts.enableCR and not opts.enableBNET)
 	local player
 	local playerGuildRealm
@@ -1449,7 +1450,7 @@ function Data:IterateUnits(dumpAll, filterList)
 			end
 			realmMeta[realmKey] = {
 				isConnected = isConnected,
-				isCurrent   = (realmKey == currentRealm),
+				isCurrent   = (realmKey == currentPlayerRealm),
 				isXRGuild   = isXRGuild,
 			}
 		end
