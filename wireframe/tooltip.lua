@@ -730,6 +730,7 @@ local FIXED_RACE_ATLAS = {
 }
 
 -- Racial fallback icons for allied races (indexed by race name, returns table with male/female icons)
+-- Based on Total RP 3's approach for races without Achievement_Character icons: https://github.com/Total-RP/Total-RP-3/blob/c5d90a4ca40eb4eef300d633ddf522e77cfc84a5/totalRP3/Resources/InterfaceIcons.lua#L86
 local RACIAL_FALLBACK_ICONS = {
 	["darkirondwarf"] = {male = "ability_racial_fireblood", female = "ability_racial_foregedinflames"},
 	["goblin"] = "ability_racial_rocketjump",
@@ -853,13 +854,15 @@ function Tooltip:GetClassColor(unitObj, switch, bypass, altColor)
 	return altColor or BSYC.colors.first
 end
 
--- Build realm tag for display
+-- Build realm tag for cross-realm characters (BNET / Connected Realm / XR-guild).
+-- Same-realm display is handled by the enableCurrentRealmName toggle in ColorizeUnit, not here.
 local function BuildRealmTag(realm, opts, currentRealm, isXRGuild, isConnectedRealm, unitRealm)
 	local realmTag = ""
 	local delimiter = (realm ~= "" and " ") or ""
 
 	if not isXRGuild then
-		if (opts.enableBNET) and not isConnectedRealm then
+		-- unitRealm ~= currentRealm guard prevents same-realm chars from matching (not isConnectedRealm is also true for them)
+		if (opts.enableBNET) and not isConnectedRealm and unitRealm ~= currentRealm then
 			realmTag = (opts.enableRealmIDTags and L.TooltipBNET_Tag..delimiter) or ""
 			return realmTag, realm, BSYC.colors.bnet
 		end
@@ -873,6 +876,12 @@ local function BuildRealmTag(realm, opts, currentRealm, isXRGuild, isConnectedRe
 		realmTag = (opts.enableRealmIDTags and L.TooltipCR_Tag..delimiter) or ""
 		realm = (#realm > 1 and realm) or ""
 		return "+"..realmTag, realm, BSYC.colors.cr
+	end
+
+	-- Same-realm with no special tag: return empty so ColorizeUnit shows nothing.
+	-- Prevents realm name from always appearing when enableCurrentRealmName is off (issue #463).
+	if unitRealm == currentRealm then
+		return "", "", nil
 	end
 
 	return realmTag, realm, nil
@@ -943,6 +952,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 		end
 		addStr = self:HexColor(colors.currentrealm, "["..realm.."]")
 	else
+		--when enableCurrentRealmName is off just return empty, since we don't want the realms to always show when building the realm tag
 		local realmTag, realmValue, realmColor = BuildRealmTag(realm, opts, currentRealm, unitObj.isXRGuild, unitObj.isConnectedRealm, unitObj.realm)
 		if realmTag ~= "" or realmValue ~= "" then
 			addStr = self:HexColor(realmColor or colors.cr, "["..realmTag..realmValue.."]")
