@@ -1036,42 +1036,21 @@ function Data:PopulateItemCache(mode)
 		local professions = unitObj.data and unitObj.data.professions
 		if not professions then return end
 
-		local getRecipeInfo = BSYC.API and BSYC.API.GetRecipeInfo
-		local getRecipeItemLink = C_TradeSkillUI and C_TradeSkillUI.GetRecipeItemLink
-
 		for _, profData in pairs(professions) do
-			if profData and profData.categories then
+			-- Retail recipe IDs are spell IDs, not item IDs — they're already stored in the DB
+			-- and don't need to be resolved here. Only Classic stores actual item IDs (with an
+			-- ":item" type suffix), so only those belong in the item cache.
+			if profData and profData.isClassic and profData.categories then
 				for _, catData in pairs(profData.categories) do
 					local recipes = catData and catData.recipes
 					if recipes and type(recipes) == "string" then
-						-- Parse recipe string: "|id1|id2|..." or "|id1:type|id2:type|..."
+						-- Parse recipe string: "|id1:type|id2:type|..."
 						for recipeStr in string_gmatch(recipes, "|([^|]+)") do
 							if recipeStr and recipeStr ~= "" then
-								-- Check for Classic-style type suffix (e.g., "2304:item", "7276:enchant")
-								local numericID, typeStr = string_match(recipeStr, "^(%d+):(%w+)$")
-								local recipeID = numericID and tonumber(numericID) or tonumber(recipeStr)
-
-								if recipeID then
-									if profData.isClassic then
-										-- Classic: :item suffix means direct item ID, :enchant means spell ID (skip)
-										if typeStr == "item" then
-											pushLink(tostring(recipeID))
-										end
-										-- :enchant suffixes are spell IDs, not cacheable as items
-									else
-										-- Retail: recipeID is a spell/recipe ID, resolve to crafted item
-										if getRecipeInfo then
-											local recipeInfo = getRecipeInfo(recipeID)
-											if recipeInfo and recipeInfo.craftedItemID then
-												pushLink(tostring(recipeInfo.craftedItemID))
-											end
-										elseif getRecipeItemLink then
-											local itemLink = getRecipeItemLink(recipeID)
-											if itemLink then
-												pushLink(itemLink)
-											end
-										end
-									end
+								-- Only ":item" suffix entries are actual item IDs; ":enchant" etc. are spell IDs
+								local itemID, typeStr = string_match(recipeStr, "^(%d+):(%w+)$")
+								if typeStr == "item" and itemID then
+									pushLink(itemID)
 								end
 							end
 						end

@@ -509,8 +509,17 @@ local function FetchTooltipBattlePet(typeSlot, arg1, arg2)
 		return
 	end
 
-	local _, speciesID, level, breedQuality, maxHealth, power, speed, name = scannerTooltip:SetInboxItem(arg1)
-	scannerTooltip:Hide()
+	--SetInboxItem can be a protected function, use pcall before attempting to use the scanner tooltip
+	local ok, speciesID, level, breedQuality, maxHealth, power, speed, name = pcall(function()
+		local _, s, l, q, h, p, sp, n = scannerTooltip:SetInboxItem(arg1, arg2)
+		scannerTooltip:Hide()
+		return s, l, q, h, p, sp, n
+	end)
+	if not ok then
+		--SetInboxItem may be restricted; skip silently to avoid taint
+		scannerTooltip:Hide()
+		return
+	end
 	if speciesID and speciesID > 0 then
 		return speciesID, level, breedQuality, maxHealth, power, speed, name
 	end

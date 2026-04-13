@@ -5,7 +5,7 @@
 ## Notes-frFR: BagSync fait l'inventaire des objets de vos personnages et l'affiche dans des infobulles.
 ## Notes-deDE: BagSync verfolgt die Gegenstände Deiner Charaktere und zeigt sie in Tooltips an.
 ## Author: Xruptor
-## Version: 20.21
+## Version: 20.22
 ## IconTexture: Interface\AddOns\BagSync\media\icon
 ## X-Curse-Project-ID: 22067
 ## X-WoWI-ID: 15351
@@ -26,7 +26,10 @@
 
 libs\LibStub\LibStub.lua
 libs\LibItemScout-1.0\LibItemScout-1.0.lua
-libs\LibDBIcon-1.0\lib.xml
+
+libs\LibDBIcon-1.0\CallbackHandler-1.0\CallbackHandler-1.0.lua
+libs\LibDBIcon-1.0\LibDataBroker-1.1\LibDataBroker-1.1.lua
+libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 
 wireframe\wrapper.lua
 wireframe\utility.lua
