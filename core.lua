@@ -151,6 +151,8 @@ BSYC_DL = {
 	SL1 = 6,
 	SL2 = 7,
 	SL3 = 8,
+	SL4 = 9,
+	SL5 = 10,
 }
 
 local debugDefaults = {
@@ -164,6 +166,8 @@ local debugDefaults = {
 	SL1 = false,
 	SL2 = false,
 	SL3 = false,
+	SL4 = false,
+	SL5 = false,
 }
 
 if BSYC.isWarbandActive then

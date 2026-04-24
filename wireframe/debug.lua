@@ -25,6 +25,8 @@ local levels = {
 	"SL1",
 	"SL2",
 	"SL3",
+	"SL4",
+	"SL5",
 }
 
 -- Color lookup table for debug levels (eliminates 40+ line if-elseif chain)
@@ -37,6 +39,8 @@ local levelColors = {
 	[BSYC_DL.SL1] = "FFCF9FFF", -- light lavender
 	[BSYC_DL.SL2] = "FFFFD580", -- light orange
 	[BSYC_DL.SL3] = "FFd1d1d1", -- light gray
+	[BSYC_DL.SL4] = "FF7FDBFF", -- light sky blue
+	[BSYC_DL.SL5] = "FFC8F08F", -- light lime green
 }
 
 -- Cache C_AddOns API at module load (Retail 10.0+ vs Classic/Legacy compatibility)

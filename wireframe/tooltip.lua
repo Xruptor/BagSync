@@ -927,7 +927,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 	end
 
 	if bypass and (not forceRealm and not forceXRBNET) then
-		Debug(BSYC_DL.INFO, "ColorizeUnit-Bypass", tmpTag)
+		Debug(BSYC_DL.SL4, "ColorizeUnit-Bypass", tmpTag)
 		return tmpTag
 	end
 
@@ -1755,7 +1755,7 @@ function Tooltip:HookTooltip(objTooltip)
 	if hookedTooltips[objTooltip] then return end
 	hookedTooltips[objTooltip] = true
 
-	Debug(BSYC_DL.INFO, "HookTooltip", objTooltip)
+	Debug(BSYC_DL.INFO, "HookTooltip", objTooltip, objTooltip:GetName())
 
 	objTooltip:HookScript("OnHide", function(self)
 		self.__tooltipUpdated = false

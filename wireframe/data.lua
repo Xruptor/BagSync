@@ -239,7 +239,7 @@ function Data:OnEnable()
 	local player = Unit:GetPlayerInfo(true)
 
 	Debug(BSYC_DL.DEBUG, "UnitInfo-1", player.name, player.realm)
-	Debug(BSYC_DL.DEBUG, "UnitInfo-2", player.class, player.race, player.gender, player.faction)
+	Debug(BSYC_DL.DEBUG, "UnitInfo-2", player.class, player.race, player.gender, player.faction, player.class_id, player.race_id)
 	Debug(BSYC_DL.DEBUG, "UnitInfo-3", player.guild, player.guildrealm)
 	Debug(BSYC_DL.DEBUG, "RealmKey", player.realmKey)
 	Debug(BSYC_DL.DEBUG, "RealmKey_RWS", player.rwsKey)

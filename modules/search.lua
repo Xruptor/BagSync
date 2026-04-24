@@ -30,7 +30,6 @@ local DressUpLink = _G.DressUpLink
 local DressUpItemLink = _G.DressUpItemLink
 local DressUpBattlePet = _G.DressUpBattlePet
 local BattlePetTooltip = _G.BattlePetTooltip
-local BattlePetToolTip_Show = _G.BattlePetToolTip_Show
 local GameTooltip = _G.GameTooltip
 local ToggleDropDownMenu = _G.ToggleDropDownMenu
 local WOW_PROJECT_ID = _G.WOW_PROJECT_ID
@@ -757,8 +756,8 @@ local function SetupItemTooltip(btn, data, isBattlePet)
 	if isBattlePet then
 		GameTooltip:SetOwner(btn, "ANCHOR_BOTTOMRIGHT")
 		BattlePetTooltip.isBSYCSearch = true
-		if BattlePetToolTip_Show then
-			BattlePetToolTip_Show(tonumber(data.speciesID), 0, 0, 0, 0, 0, nil)
+		if _G.BattlePetToolTip_Show then
+			_G.BattlePetToolTip_Show(tonumber(data.speciesID), 0, 0, 0, 0, 0, nil)
 		end
 	else
 		GameTooltip.isBSYCSearch = true
