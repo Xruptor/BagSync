@@ -350,10 +350,13 @@ end
 function TooltipCandidateManager:AddTooltipTable(tooltips, startWeight)
 	if not tooltips then return end
 	local w = startWeight or 0
-	for _, tip in pairs(tooltips) do
-		w = w + 1
-		self:AddFixedTooltip(tip, w)
-	end
+	-- pcall guards against tainted execution trying to iterate protected Blizzard tooltip arrays
+	pcall(function()
+		for _, tip in pairs(tooltips) do
+			w = w + 1
+			self:AddFixedTooltip(tip, w)
+		end
+	end)
 end
 
 function TooltipCandidateManager:AddNumberedTooltip(pattern, maxNum, startWeight)
