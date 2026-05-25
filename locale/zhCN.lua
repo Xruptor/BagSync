@@ -300,10 +300,10 @@ L.ExtTipCustomAnchor_CenterBottom = "中下"
 L.ExtTipCustomAnchor_UseAnchor = "使用外部提示框锚点"
 L.ExtTipAnchorLabel = "BagSync 外部提示框锚点\n\n（右键点击保存位置）"
 L.ConfigFontSize = "字体大小"
-L.ConfigFontOutline = "描边"
+L.ConfigFontOutline = "轮廓"
 L.ConfigFontOutline_NONE = "无"
-L.ConfigFontOutline_OUTLINE = "描边"
-L.ConfigFontOutline_THICKOUTLINE = "粗描边"
+L.ConfigFontOutline_OUTLINE = "轮廓"
+L.ConfigFontOutline_THICKOUTLINE = "粗轮廓"
 L.ConfigFontMonochrome = "单色"
 L.ExtTooltipAnchor_Bottom = "底部"
 L.ExtTooltipAnchor_Left = "左侧"
@@ -353,7 +353,7 @@ L.CurrencySortFilters = {
 }
 ---------------------------------------
 --Localization Note:  Please be advised that the commands for the SearchHelp are english only, however the variables can be any language.  Example: class:<name of class in your locale>
---This includes name searches like name:<name in your locale>
+--This includes name searches like name:<name in your locale>  [EXPANSION 翻译应该是“资料片” 可是游戏内使用了 EXPANSION_FILTER_TEXT = "内容更新"; 应该是为了应对中国市场的特殊翻译，所以也使用"内容更新"]
 ---------------------------------------
 L.SearchHelpHeader = "搜索帮助"
 L.SearchHelp = [[
