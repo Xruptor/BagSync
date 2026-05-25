@@ -365,7 +365,7 @@ L.SearchHelp = [[
 @bank      （银行）
 @reagents  （材料）
 @equip     （装备）
-@mailbox   （邮件）
+@mailbox   （信箱）
 @void      （虚空）
 @auction   （拍卖）
 @guild     （公会）
