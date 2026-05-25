@@ -68,7 +68,7 @@ L.SearchFiltersInformation = "* 使用 BagSync 的 |cffff7d0a[连]|r 和 |cff358
 L.SearchFiltersLocationInformation = "* 不选择任何项则默认为全选。"
 L.Units = "角色："
 L.Locations = "位置："
-L.Profiles = "配置"
+L.Profiles = "角色"
 L.SortOrder = "排序"
 L.Professions = "专业"
 L.Currency = "货币"
@@ -117,7 +117,7 @@ L.KeybindWhitelist = "显示白名单窗口。"
 L.KeybindCurrency = "显示货币窗口。"
 L.KeybindGold = "显示金币窗口。"
 L.KeybindProfessions = "显示专业窗口。"
-L.KeybindProfiles = "显示配置窗口。"
+L.KeybindProfiles = "显示角色窗口。"
 L.KeybindSearch = "显示搜索窗口。"
 L.ObsoleteWarning = "\n\n注意：过时物品仍会显示为缺失。要解决此问题，请再次扫描您的角色以移除过时物品。\n（背包、银行、材料、虚空等）"
 L.DatabaseReset = "由于数据库变更，您的 BagSync 数据库已被重置。"
@@ -129,11 +129,11 @@ L.DefaultColors = "默认颜色"
 L.SlashItemName = "[物品名称]"
 L.SlashSearch = "搜索"
 L.SlashGold = "金币"
-L.SlashMoney = "金钱"
+L.SlashMoney = "金币"
 L.SlashConfig = "设置"
 L.SlashCurrency = "货币"
 L.SlashFixDB = "修复数据库"
-L.SlashProfiles = "配置"
+L.SlashProfiles = "角色"
 L.SlashProfessions = "专业"
 L.SlashBlacklist = "黑名单"
 L.SlashWhitelist = "白名单"
@@ -147,10 +147,10 @@ L.HelpSearchItemName = "快速搜索物品"
 L.HelpSearchWindow = "打开搜索窗口"
 L.HelpGoldTooltip = "显示每个角色的金币数量提示框。"
 L.HelpCurrencyWindow = "打开货币窗口。"
-L.HelpProfilesWindow = "打开配置窗口。"
+L.HelpProfilesWindow = "打开角色窗口。"
 L.HelpFixDB = "对 BagSync 执行数据库修复。"
 L.HelpResetDB = "重置整个 BagSync 数据库。"
-L.HelpConfigWindow = "打开 BagSync 配置窗口。"
+L.HelpConfigWindow = "打开 BagSync 设置窗口。"
 L.HelpProfessionsWindow = "打开专业窗口。"
 L.HelpBlacklistWindow = "打开黑名单窗口。"
 L.HelpWhitelistWindow = "打开白名单窗口。"
@@ -226,9 +226,9 @@ L.DisplaySortCurrencyByExpansionFirst = "在 BagSync 货币窗口中优先按资
 L.DisplaySorting = "提示框排序"
 L.DisplaySortInfo = "默认：提示框按服务器名称字母顺序排序，然后按角色名称排序。"
 L.SortMode = "排序模式"
-L.SortMode_RealmCharacter = "服务器再角色（默认）"
+L.SortMode_RealmCharacter = "先服务器再角色（默认）"
 L.SortMode_Character = "角色"
-L.SortMode_ClassCharacter = "职业再角色"
+L.SortMode_ClassCharacter = "先职业再角色"
 L.SortCurrentPlayerOnTop = "默认排序并将当前角色始终置顶。"
 L.SortTooltipByTotals = "按总量排序，而非字母顺序。"
 L.SortByCustomSortOrder = "按自定义排序顺序排序。"
@@ -251,7 +251,7 @@ L.ColorCurrentRealm = "BagSync [当前服务器]提示框颜色。"
 L.ColorCR = "BagSync [连]提示框颜色。"
 L.ColorBNET = "BagSync [战网]提示框颜色。"
 L.ColorItemID = "BagSync [物品ID]提示框颜色。"
-L.ColorExpansion = "BagSync [资料片]提示框颜色。"
+L.ColorExpansion = "BagSync [内容更新]提示框颜色。"
 L.ColorItemTypes = "BagSync [物品类型]提示框颜色。"
 L.ColorGuildTabs = "公会标签页[1、2、3等]提示框颜色。"
 L.ColorWarbandTabs = "战团标签页[1、2、3等]提示框颜色。"
@@ -328,7 +328,7 @@ L.TrackingModule_Void = "虚空银行"
 L.TrackingModule_Auction = "拍卖行"
 L.TrackingModule_Guild = "公会银行"
 L.TrackingModule_WarbandBank = "战团银行"
-L.TrackingModule_Professions = "专业 / 商业技能"
+L.TrackingModule_Professions = "专业/商业技能"
 L.TrackingModule_Currency = "货币"
 L.WarningItemSearch = "警告：共有 [|cFFFFFFFF%s|r] 件物品未被搜索！\n\nBagSync 仍在等待服务器/缓存响应。\n\n请按搜索或刷新按钮。"
 L.CachingItemData = "正在缓存物品数据...（剩余 %d 件）"
@@ -383,7 +383,7 @@ L.SearchHelp = [[
 
 |cff00ffff<需求等级>|r = |cFF99CC33r|r ; |cFF99CC33req|r ; |cFF99CC33rl|r ; |cFF99CC33reql|r ; |cFF99CC33reqlvl|r | |cFFFFD580req<运算符><数字>|r ; |cFFFFD580req<运算符><数字>|r （例如：req:>5 ; req:>=20）
 
-|cff00ffff<类型 / 栏位>|r = |cFF99CC33t|r ; |cFF99CC33type|r ; |cFF99CC33slot|r | |cFFFFD580t:<文本>|r （例如：slot:头部 ; t:战斗宠物 或 t:宠物笼 ; t:护甲 ; t:武器）
+|cff00ffff<类型/栏位>|r = |cFF99CC33t|r ; |cFF99CC33type|r ; |cFF99CC33slot|r | |cFFFFD580t:<文本>|r （例如：slot:头部 ; t:战斗宠物 或 t:宠物笼 ; t:护甲 ; t:武器）
 
 |cff00ffff<提示框文本>|r = |cFF99CC33tt|r ; |cFF99CC33tip|r ; |cFF99CC33tooltip|r | |cFFFFD580tt:<文本>|r （例如：tt:召唤）
 
@@ -423,7 +423,7 @@ L.FAQ_Question_1 = "使用提示框时遇到卡顿/掉帧/延迟。"
 L.FAQ_Question_1_p1 = [[
 此问题通常发生在数据库中存在旧数据或损坏数据，BagSync 无法解析时。当 BagSync 需要处理海量数据时也可能发生。如果您在多个角色中拥有数千件物品，这意味着每秒需要处理大量数据，可能导致客户端短暂卡顿。最后，使用极度老旧的电脑也可能导致此问题。老旧电脑在处理数千件物品和角色数据时会出现卡顿/掉帧。配备更快 CPU 和内存的新电脑通常不会有此问题。
 
-要解决此问题，您可以尝试重置数据库。这通常能解决问题。请使用以下斜杠命令：|cFF99CC33/bgs resetdb|r
+要解决此问题，您可以尝试重置数据库。这通常能解决问题。请使用以下斜杠命令：|cFF99CC33/bgs 重置数据库|r
 如果这未能解决您的问题，请在 GitHub 上为 BagSync 提交问题反馈。
 ]]
 L.FAQ_Question_2 = "在 |cFFDF2B2B单个|r |cff3587ff战网|r 账号下找不到我其他魔兽账号的物品数据。"
