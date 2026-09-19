@@ -1,39 +1,53 @@
 # description of this workflow, can be anything you want
 name: WOW Packager (WOWInterface/CurseForge/Wago.io)
 
+# Triggers:
+#   - Manually pushing a v* tag (your normal release flow)
+#   - workflow_dispatch from toc-update.yml (automatic TOC bump releases)
+#     In this case, toc-update passes the new version and this workflow
+#     creates the git tag itself before running the packager.
 on:
   push:
     tags:
       - '!v*.*.*-*'
       - '!v*.*-*'
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to tag and release (e.g. v20.32)'
+        required: true
 
-# a workflow is built up as jobs, and within these jobs are steps
 jobs:
-
-  # "release" is a job, you can name it anything you want
   release:
-
-    # we can run our steps on pretty much anything, but the "ubuntu-latest" image is a safe bet
     runs-on: ubuntu-latest
 
-    # specify the environment variables used by the packager, matching the secrets from the project on GitHub
     env:
       CF_API_KEY: ${{ secrets.CF_API_KEY }}
       WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}
       WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
       GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
-      # "GITHUB_TOKEN" is a secret always provided to the workflow
-      # for your own token, the name cannot start with "GITHUB_"
 
-    # "steps" holds a list of all the steps needed to package and release our AddOn
     steps:
-      # we first have to clone the AddOn project, this is a required step
       - name: Clone project
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # Package and release (auto-detects supported game versions from TOC)
+      # When triggered via workflow_dispatch, create the git tag on this
+      # commit so the packager sees a proper version instead of a git-describe
+      # string like "v20.28-9-g8ae6057".
+      - name: Create and push git tag (dispatch only)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          VERSION: ${{ github.event.inputs.version }}
+          RELEASE_PAT: ${{ secrets.RELEASE_PAT }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$VERSION"
+          git push "https://x-access-token:${RELEASE_PAT}@github.com/${GITHUB_REPOSITORY}.git" "$VERSION"
+          echo "Tagged current commit as $VERSION"
+
       - name: Package and release
         uses: BigWigsMods/packager@v2

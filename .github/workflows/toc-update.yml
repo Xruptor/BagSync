@@ -393,7 +393,7 @@ jobs:
               f.write(f"new_version={new_version if new_version else ''}\n")
           PYEOF
 
-      - name: Commit and push branch
+      - name: Commit and push
         if: steps.update.outputs.changed == 'true'
         env:
           NEW_VERSION: ${{ steps.update.outputs.new_version }}
@@ -408,14 +408,16 @@ jobs:
           fi
           git push
 
-      - name: Push tag via PAT to trigger release
+      - name: Dispatch release workflow
         if: steps.update.outputs.changed == 'true' && steps.update.outputs.new_version != ''
         env:
           NEW_VERSION: ${{ steps.update.outputs.new_version }}
-          RELEASE_PAT: ${{ secrets.RELEASE_PAT }}
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
         run: |
-          # Tag pushes via GITHUB_TOKEN do not trigger other workflows.
-          # Pushing the tag via PAT does — release.yml fires on the v* tag.
-          git tag "v${NEW_VERSION}"
-          git push "https://x-access-token:${RELEASE_PAT}@github.com/${GITHUB_REPOSITORY}.git" "v${NEW_VERSION}"
-          echo "Pushed tag v${NEW_VERSION} via PAT — release.yml will now trigger."
+          # Dispatch release.yml — it will create the git tag itself before
+          # running the packager, so the packager sees the correct version.
+          gh workflow run release.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref "$GITHUB_REF_NAME" \
+            --field version="v${NEW_VERSION}"
+          echo "Dispatched release.yml for v${NEW_VERSION}."
