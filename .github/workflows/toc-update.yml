@@ -3,20 +3,20 @@
 #   1. Updates ## Interface: in every .toc file (numbers never decrease)
 #   2. Bumps ## Version: by one decimal in the MAIN addon .toc only
 #      (the .toc whose filename matches the repo name, e.g. BagSync.toc)
-#   3. Commits everything, tags the commit as v{new_version}, and pushes —
-#      which triggers your existing release.yml packager automatically.
+#   3. Commits everything and dispatches release.yml to tag + package.
 #
 # Version format: X.Y where Y is a plain integer incremented by 1.
 #   20.28 → 20.29,  20.99 → 20.100,  12.5 → 12.6  (never rolls over)
 #
-# Sources (all attempted; take max per flavor group):
+# Sources (LIVE clients only — PTR/beta/alpha branches are excluded):
 #   1. warcraft.wiki.gg Template:LatestPatchInfo  — community-curated
-#   2. Gethe/wow-ui-source version.txt per branch — Blizzard's own source
+#   2. Gethe/wow-ui-source version.txt (live branches only, no ptr/ptr2)
 #   3. BigWigsMods/BigWigs BigWigs.toc            — well-maintained, all flavors
 #   4. DeadlyBossMods DBM-Core.toc               — secondary cross-check
 #
-# Interface number rule: only ever increases. The script never writes a number
-# lower than what is already in the TOC.
+# Interface number rule: numbers are REPLACED per flavor group each run.
+# The script trusts the authoritative live sources and will correct a
+# previously-written PTR number back down to the live value.
 #
 # Flavor groups and their interface number ranges:
 #   retail        120000-129999  (Midnight / standard)
@@ -85,14 +85,17 @@ jobs:
               return None  # outside known range → ignore
 
           # Groups to include in the final TOC line.
-          # Remove "forever" and "tww" from this set if you don't want them.
+          # "tww" (The War Within, 110000-119999) is intentionally excluded —
+          # those addons target retail (Midnight) only, not the old TWW client.
+          # "forever" is the Classic Forever beta — included here, remove if unwanted.
           INCLUDE_GROUPS = {"retail", "mop", "cata", "wrath_titan", "wrath", "tbc", "classic_era", "forever"}
 
-          # Maximum how far ahead the wiki is allowed to be vs the consensus
-          # of the other sources before we consider it suspect.
-          # Interface numbers increment by 1 per patch and 100 per minor version,
-          # so 100 allows the wiki to be up to one full minor version ahead.
-          WIKI_TRUST_DELTA = 100
+          # How far ahead the wiki is allowed to be vs the consensus of non-wiki
+          # sources before we consider it suspect (a PTR/beta entry).
+          # PTR patches are only +5 above live (e.g. 120105 vs 120100), so we
+          # must set this to 0 — wiki must exactly match consensus to be trusted.
+          # When wiki is ahead at all, we use the consensus (non-wiki) value.
+          WIKI_TRUST_DELTA = 0
 
           # Separate tracking: wiki numbers vs consensus (non-wiki) numbers
           wiki_best  = {}  # group → max number seen from wiki sources
@@ -111,9 +114,27 @@ jobs:
 
           # ------------------------------------------------------------------
           # Source 1: warcraft.wiki.gg — Template:LatestPatchInfo
-          # Each row: {{icon}}!!expansion!!version!!interface!!build!!date
-          # We want ONLY column 3 (interface number, 0-based index).
+          # Row format: !!expansion-type!!version!!interface!!build!!date
+          # The expansion-type column uses names like "midnight", "vanilla",
+          # "classic", "camelot" for LIVE builds, and appends "-test", "-beta",
+          # "-alpha", "-ptr", "-xptr" for non-live environments.
+          # We skip any row whose expansion type contains those suffixes.
           # ------------------------------------------------------------------
+          SKIP_KEYWORDS = {"test", "beta", "alpha", "ptr", "xptr"}
+
+          def is_live_wiki_row(expansion_type, iface_num=None):
+              """Return True only if this row represents a LIVE client build.
+              Any row whose type name contains a non-live keyword (test, beta,
+              alpha, ptr, xptr) as a word segment is skipped. This includes
+              'Forever Beta' — forever/camelot will be included once it goes
+              live and gets a clean entry without 'beta' in the name."""
+              slug = expansion_type.strip().lower()
+              segments = slug.replace(" ", "-").split("-")
+              for kw in SKIP_KEYWORDS:
+                  if kw in segments:
+                      return False
+              return True
+
           print("=== warcraft.wiki.gg / Template:LatestPatchInfo ===")
           wiki_url = (
               "https://warcraft.wiki.gg/api.php"
@@ -132,14 +153,26 @@ jobs:
                           if "\\!\\!" not in line:
                               continue
                           parts = line.split("\\!\\!")
-                          if len(parts) >= 4:
-                              iface_token = parts[3].strip()
-                              if re.fullmatch(r'\d{5,6}', iface_token):
-                                  record(int(iface_token), "wiki:LatestPatchInfo")
+                          # parts[0]=icon, parts[1]=expansion-type, parts[2]=version,
+                          # parts[3]=interface, parts[4]=build, parts[5]=date
+                          if len(parts) < 4:
+                              continue
+                          expansion_type = parts[1].strip()
+                          iface_token = parts[3].strip()
+                          if not re.fullmatch(r'\d{5,6}', iface_token):
+                              continue
+                          iface_num = int(iface_token)
+                          if not is_live_wiki_row(expansion_type, iface_num):
+                              print(f"  SKIP {iface_token} ({expansion_type}) — non-live build")
+                              continue
+                          record(iface_num, "wiki:LatestPatchInfo")
               except Exception as e:
                   print(f"  WARNING: {e}", file=sys.stderr)
 
-          # Also try Interface_version page (community-updated table)
+          # Interface_version page: each live row pairs an expansion label with
+          # its interface number. We look for lines that contain "Live" or have
+          # no test/beta/ptr/alpha marker. Since the page format may change,
+          # we skip lines whose text contains any non-live keyword.
           print("\n=== warcraft.wiki.gg / Interface_version ===")
           wiki_url2 = (
               "https://warcraft.wiki.gg/api.php"
@@ -154,8 +187,13 @@ jobs:
                   for page in pages2.values():
                       slots2 = (page.get("revisions") or [{}])[0].get("slots", {})
                       content2 = slots2.get("main", {}).get("*", "")
-                      for token in re.findall(r'\b(\d{5,6})\b', content2):
-                          record(int(token), "wiki:Interface_version")
+                      for line in content2.split("\n"):
+                          line_lower = line.lower()
+                          # Skip any line that mentions non-live environments
+                          if any(kw in line_lower for kw in SKIP_KEYWORDS):
+                              continue
+                          for token in re.findall(r'\b(\d{5,6})\b', line):
+                              record(int(token), "wiki:Interface_version")
               except Exception as e:
                   print(f"  WARNING: {e}", file=sys.stderr)
 
@@ -164,16 +202,15 @@ jobs:
           # Blizzard's own UI source mirror. No Cata Classic branch exists here.
           # ------------------------------------------------------------------
           print("\n=== Gethe/wow-ui-source (version.txt per branch) ===")
+          # LIVE branches only — ptr and ptr2 are excluded to avoid beta/PTR
+          # interface numbers (e.g. 120105) being mistaken for live retail.
+          # classic_ptr and classic_era_ptr are also excluded for the same reason.
           gethe_branches = [
-              "live",
-              "ptr",
-              "ptr2",
-              "classic",
-              "classic_ptr",
-              "classic_era",
-              "classic_era_ptr",
-              "classic_anniversary",
-              "classic_titan",
+              "live",           # retail live
+              "classic",        # MoP Classic live
+              "classic_era",    # Classic Era live
+              "classic_anniversary",  # TBC Anniversary live
+              "classic_titan",  # Wrath Titan Reforged live
           ]
           for branch in gethe_branches:
               url = f"https://raw.githubusercontent.com/Gethe/wow-ui-source/{branch}/version.txt"
@@ -203,7 +240,7 @@ jobs:
           # Source 4: DeadlyBossMods — secondary cross-check
           # ------------------------------------------------------------------
           print("\n=== DeadlyBossMods ===")
-          dbm_text = fetch("https://raw.githubusercontent.com/DeadlyBossMods/DeadlyBossMods/master/DBM-Core/DBM-Core.toc")
+          dbm_text = fetch("https://raw.githubusercontent.com/DeadlyBossMods/DBM-Retail/master/DBM-Core/DBM-Core.toc")
           for line in dbm_text.splitlines():
               if line.startswith("## Interface:"):
                   for token in line.split(":", 1)[1].split(","):
@@ -293,7 +330,13 @@ jobs:
               return "other"
 
           def safe_merge(existing_line, new_line):
-              """Keep the MAX per flavor group. Numbers never go down."""
+              """
+              Replace interface numbers per flavor group with the authoritative
+              live values from new_line. Numbers for groups NOT present in new_line
+              are preserved from existing_line (unknown/unsupported groups).
+              This means a PTR number (e.g. 120105) gets corrected back to the
+              live value (e.g. 120100) when the live sources agree on the lower one.
+              """
               def parse(line):
                   result = {}
                   for token in line.split(":", 1)[-1].split(","):
@@ -308,8 +351,12 @@ jobs:
               new_by_group = parse(new_line)
 
               merged = {}
-              for g in set(old_by_group) | set(new_by_group):
-                  merged[g] = max(old_by_group.get(g, 0), new_by_group.get(g, 0))
+              # Start with existing groups
+              for g, n in old_by_group.items():
+                  merged[g] = n
+              # Overwrite with authoritative live values (may go down for PTR fixes)
+              for g, n in new_by_group.items():
+                  merged[g] = n
 
               merged_nums = sorted(merged.values(), reverse=True)
               merged_line = "## Interface: " + ", ".join(str(n) for n in merged_nums)
