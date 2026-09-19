@@ -1,4 +1,4 @@
-## Interface: 120007, 50504, 40402, 38001, 30405, 20506, 11509
+## Interface: 120105, 59185, 40402, 38002, 30405, 20506, 16001, 11509
 ## Title: BagSync
 ## Notes: BagSync tracks your characters items and displays it within tooltips.
 ## Notes-zhCN: BagSync 是统计您角色内的物品数量并将其显示在鼠标提示中.
