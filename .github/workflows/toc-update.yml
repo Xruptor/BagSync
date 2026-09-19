@@ -393,31 +393,29 @@ jobs:
               f.write(f"new_version={new_version if new_version else ''}\n")
           PYEOF
 
-      - name: Commit, tag, and push
+      - name: Commit and push branch
         if: steps.update.outputs.changed == 'true'
         env:
           NEW_VERSION: ${{ steps.update.outputs.new_version }}
-          # Use PAT so the tag push triggers release.yml naturally.
-          # GITHUB_TOKEN pushes are intentionally blocked from triggering
-          # other workflows — PAT pushes are not.
-          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Reconfigure the remote to use the PAT so the push is authenticated
-          # as a user (not the built-in Actions bot), which allows it to trigger
-          # other workflows.
-          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add "*.toc"
-
           if [ -n "$NEW_VERSION" ]; then
             git commit -m "chore: update TOC interface numbers → v${NEW_VERSION}"
-            git tag "v${NEW_VERSION}"
-            git push origin HEAD
-            git push origin "v${NEW_VERSION}"
-            echo "Pushed commit and tag v${NEW_VERSION} — release.yml will trigger automatically."
           else
             git commit -m "chore: update TOC interface numbers"
-            git push origin HEAD
-            echo "Pushed commit (no version bump — release not triggered)."
           fi
+          git push
+
+      - name: Push tag via PAT to trigger release
+        if: steps.update.outputs.changed == 'true' && steps.update.outputs.new_version != ''
+        env:
+          NEW_VERSION: ${{ steps.update.outputs.new_version }}
+          RELEASE_PAT: ${{ secrets.RELEASE_PAT }}
+        run: |
+          # Tag pushes via GITHUB_TOKEN do not trigger other workflows.
+          # Pushing the tag via PAT does — release.yml fires on the v* tag.
+          git tag "v${NEW_VERSION}"
+          git push "https://x-access-token:${RELEASE_PAT}@github.com/${GITHUB_REPOSITORY}.git" "v${NEW_VERSION}"
+          echo "Pushed tag v${NEW_VERSION} via PAT — release.yml will now trigger."
