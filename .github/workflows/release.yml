@@ -1,21 +1,12 @@
 # description of this workflow, can be anything you want
 name: WOW Packager (WOWInterface/CurseForge/Wago.io)
 
-# Triggers:
-#   - Automatically when a v* tag is pushed manually
-#   - Via workflow_dispatch (called by toc-update.yml after a TOC bump)
 on:
   push:
     tags:
       - '!v*.*.*-*'
       - '!v*.*-*'
       - 'v*'
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version being released (e.g. v6.18) — informational only'
-        required: false
-        default: ''
 
 # a workflow is built up as jobs, and within these jobs are steps
 jobs:
