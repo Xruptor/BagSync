@@ -68,7 +68,7 @@ jobs:
           def flavor_group(n):
               """Bucket an interface number by game flavor."""
               if   120000 <= n <= 129999: return "retail"
-              if    50000 <= n <= 59999:  return "mop"
+              if    50000 <= n <= 50999:  return "mop"           # 5.x.x MoP Classic (50000-50999)
               if    40000 <= n <= 49999:  return "cata"
               if    38000 <= n <= 38999:  return "wrath_titan"   # 3.80.x Titan Reforged
               if    30000 <= n <= 37999:  return "wrath"         # 3.x.x standard Wrath
@@ -82,14 +82,24 @@ jobs:
           # Remove "forever" and "tww" from this set if you don't want them.
           INCLUDE_GROUPS = {"retail", "mop", "cata", "wrath_titan", "wrath", "tbc", "classic_era", "forever"}
 
-          best = {}  # flavor_group → max interface number found so far
+          # Maximum how far ahead the wiki is allowed to be vs the consensus
+          # of the other sources before we consider it suspect.
+          # Interface numbers increment by 1 per patch and 100 per minor version,
+          # so 100 allows the wiki to be up to one full minor version ahead.
+          WIKI_TRUST_DELTA = 100
+
+          # Separate tracking: wiki numbers vs consensus (non-wiki) numbers
+          wiki_best  = {}  # group → max number seen from wiki sources
+          other_best = {}  # group → max number seen from non-wiki sources
 
           def record(n, source):
               group = flavor_group(n)
               if group is None:
                   return
-              prev = best.get(group, 0)
-              best[group] = max(prev, n)
+              is_wiki = source.startswith("wiki:")
+              bucket = wiki_best if is_wiki else other_best
+              prev = bucket.get(group, 0)
+              bucket[group] = max(prev, n)
               marker = " ↑ new max" if n > prev else ""
               print(f"  {n} ({group}){marker}  [{source}]")
 
@@ -118,16 +128,20 @@ jobs:
                       # The wikitext uses \\!\\! as a column separator in each switch case.
                       # Each row looks like:
                       #   |standard|...={{icon}}\\!\\!Midnight\\!\\!12.1.0\\!\\!120100\\!\\!69814\\!\\!date
-                      # The interface number is the 4th \\!\\! segment (index 3, 0-based).
-                      # Strategy: split the whole content on \\!\\! and grab every token
-                      # that looks like a 5-6 digit interface number (skipping build numbers
-                      # which are always 5 digits starting with 6xxxx or 5xxxx build IDs).
-                      # More precisely: interface numbers we care about are in known ranges,
-                      # so flavor_group() will filter out build numbers automatically.
-                      for segment in content.split("\\!\\!"):
-                          segment = segment.strip()
-                          if re.fullmatch(r'\d{5,6}', segment):
-                              record(int(segment), "wiki:LatestPatchInfo")
+                      # Columns (0-based): 0=icon, 1=expansion, 2=version, 3=interface, 4=build, 5=date
+                      # We want ONLY column 3 (the interface number) from each row.
+                      # Rows are separated by newlines in the switch block; each row ends with the date.
+                      # Strategy: find each switch case line and extract the 4th \\!\\! token only.
+                      for line in content.split("\n"):
+                          if "\\!\\!" not in line:
+                              continue
+                          parts = line.split("\\!\\!")
+                          # parts[0] is the switch key + icon template, parts[1]=expansion,
+                          # parts[2]=version, parts[3]=interface, parts[4]=build, parts[5]=date
+                          if len(parts) >= 4:
+                              iface_token = parts[3].strip()
+                              if re.fullmatch(r'\d{5,6}', iface_token):
+                                  record(int(iface_token), "wiki:LatestPatchInfo")
               except Exception as e:
                   print(f"  WARNING: {e}", file=sys.stderr)
 
@@ -205,12 +219,51 @@ jobs:
                   break
 
           # ------------------------------------------------------------------
-          # Assemble final list — only included groups, sorted descending
+          # Assemble final list — hybrid wiki-first with consensus fallback.
+          #
+          # For each flavor group:
+          #   1. Get wiki_num  = best number the wiki reported (if any)
+          #   2. Get other_num = best number from Gethe + BigWigs + DBM (if any)
+          #   3. Decision:
+          #      - If wiki is within range [other_num, other_num + WIKI_TRUST_DELTA]
+          #        → use wiki_num (it's ahead by a reasonable amount, trust it)
+          #      - If wiki < other_num
+          #        → use other_num (wiki is stale, consensus wins)
+          #      - If wiki > other_num + WIKI_TRUST_DELTA
+          #        → use other_num (wiki is suspiciously far ahead, ignore it)
+          #      - If only wiki exists (no other sources for this group)
+          #        → use wiki_num with a warning
+          #      - If only other exists (wiki had nothing for this group)
+          #        → use other_num
           # ------------------------------------------------------------------
-          final_nums = sorted(
-              [v for g, v in best.items() if g in INCLUDE_GROUPS],
-              reverse=True
-          )
+          print("\n=== Final arbitration ===")
+          final_nums = []
+          all_groups = INCLUDE_GROUPS & (set(wiki_best) | set(other_best))
+          for group in all_groups:
+              wiki_num  = wiki_best.get(group, 0)
+              other_num = other_best.get(group, 0)
+
+              if wiki_num and other_num:
+                  if other_num <= wiki_num <= other_num + WIKI_TRUST_DELTA:
+                      winner = wiki_num
+                      reason = f"wiki {wiki_num} is within {wiki_num - other_num} of consensus {other_num} — trusting wiki"
+                  elif wiki_num < other_num:
+                      winner = other_num
+                      reason = f"wiki {wiki_num} is behind consensus {other_num} — using consensus"
+                  else:
+                      winner = other_num
+                      reason = f"wiki {wiki_num} is {wiki_num - other_num} ahead of consensus {other_num} (exceeds delta {WIKI_TRUST_DELTA}) — ignoring wiki"
+              elif wiki_num:
+                  winner = wiki_num
+                  reason = f"wiki only ({wiki_num}), no other sources for this group — unconfirmed"
+              else:
+                  winner = other_num
+                  reason = f"consensus only ({other_num}), wiki had nothing"
+
+              print(f"  {group}: {winner}  ({reason})")
+              final_nums.append(winner)
+
+          final_nums.sort(reverse=True)
 
           if not final_nums:
               print("\nERROR: no interface numbers collected from any source!", file=sys.stderr)
@@ -243,7 +296,7 @@ jobs:
 
           def flavor_group(n):
               if   120000 <= n <= 129999: return "retail"
-              if    50000 <= n <= 59999:  return "mop"
+              if    50000 <= n <= 50999:  return "mop"           # 5.x.x only (50000-50999)
               if    40000 <= n <= 49999:  return "cata"
               if    38000 <= n <= 38999:  return "wrath_titan"
               if    30000 <= n <= 37999:  return "wrath"
