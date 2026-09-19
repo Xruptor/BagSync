@@ -1,16 +1,21 @@
 # description of this workflow, can be anything you want
 name: WOW Packager (WOWInterface/CurseForge/Wago.io)
 
-# we need to let GitHub know _when_ we want to release, typically only when we create a new tag.
-# this will target only tags, and not all pushes to the master branch.
-# this part can be heavily customized to your liking, like targeting only tags that match a certain word,
-# other branches or even pullrequests.
+# Triggers:
+#   - Automatically when a v* tag is pushed manually
+#   - Via workflow_dispatch (called by toc-update.yml after a TOC bump)
 on:
   push:
     tags:
       - '!v*.*.*-*'
       - '!v*.*-*'
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version being released (e.g. v6.18) — informational only'
+        required: false
+        default: ''
 
 # a workflow is built up as jobs, and within these jobs are steps
 jobs:

@@ -1,12 +1,18 @@
 # Drop this file into .github/workflows/ in any of your WoW addon repos.
-# It runs daily and on manual dispatch, updates ## Interface: in every .toc
-# file if any number has increased, commits the change, then stops.
-# You pull → review → tag + push to trigger your existing release.yml.
+# It runs daily and on manual dispatch. When interface numbers have increased:
+#   1. Updates ## Interface: in every .toc file (numbers never decrease)
+#   2. Bumps ## Version: by one decimal in the MAIN addon .toc only
+#      (the .toc whose filename matches the repo name, e.g. BagSync.toc)
+#   3. Commits everything, tags the commit as v{new_version}, and pushes —
+#      which triggers your existing release.yml packager automatically.
+#
+# Version format: X.Y where Y is a plain integer incremented by 1.
+#   20.28 → 20.29,  20.99 → 20.100,  12.5 → 12.6  (never rolls over)
 #
 # Sources (all attempted; take max per flavor group):
-#   1. warcraft.wiki.gg Template:LatestPatchInfo  — community-curated, key=value wikitext
+#   1. warcraft.wiki.gg Template:LatestPatchInfo  — community-curated
 #   2. Gethe/wow-ui-source version.txt per branch — Blizzard's own source
-#   3. BigWigsMods/BigWigs BigWigs.toc            — well-maintained, covers all flavors
+#   3. BigWigsMods/BigWigs BigWigs.toc            — well-maintained, all flavors
 #   4. DeadlyBossMods DBM-Core.toc               — secondary cross-check
 #
 # Interface number rule: only ever increases. The script never writes a number
@@ -14,7 +20,7 @@
 #
 # Flavor groups and their interface number ranges:
 #   retail        120000-129999  (Midnight / standard)
-#   mop           50000-59999    (Mists of Pandaria Classic)
+#   mop           50000-50999    (Mists of Pandaria Classic)
 #   cata          40000-49999    (Cataclysm Classic)
 #   wrath_titan   38000-38999    (Classic Titan Reforged)
 #   wrath         30000-37999    (Wrath of the Lich King Classic)
@@ -33,7 +39,7 @@ jobs:
   update-toc:
     runs-on: ubuntu-latest
     permissions:
-      contents: write        # needed to push the commit
+      contents: write        # needed to push the commit and tag
 
     steps:
       - uses: actions/checkout@v4
@@ -105,11 +111,8 @@ jobs:
 
           # ------------------------------------------------------------------
           # Source 1: warcraft.wiki.gg — Template:LatestPatchInfo
-          # This template holds the canonical interface numbers used by the
-          # {{API_LatestInterface}} template. Its wikitext has key=value pairs:
-          #   | standard = 120100
-          #   | mists = 50504
-          # We parse those directly — much more reliable than scraping HTML.
+          # Each row: {{icon}}!!expansion!!version!!interface!!build!!date
+          # We want ONLY column 3 (interface number, 0-based index).
           # ------------------------------------------------------------------
           print("=== warcraft.wiki.gg / Template:LatestPatchInfo ===")
           wiki_url = (
@@ -125,19 +128,10 @@ jobs:
                   for page in pages.values():
                       slots = (page.get("revisions") or [{}])[0].get("slots", {})
                       content = slots.get("main", {}).get("*", "")
-                      # The wikitext uses \\!\\! as a column separator in each switch case.
-                      # Each row looks like:
-                      #   |standard|...={{icon}}\\!\\!Midnight\\!\\!12.1.0\\!\\!120100\\!\\!69814\\!\\!date
-                      # Columns (0-based): 0=icon, 1=expansion, 2=version, 3=interface, 4=build, 5=date
-                      # We want ONLY column 3 (the interface number) from each row.
-                      # Rows are separated by newlines in the switch block; each row ends with the date.
-                      # Strategy: find each switch case line and extract the 4th \\!\\! token only.
                       for line in content.split("\n"):
                           if "\\!\\!" not in line:
                               continue
                           parts = line.split("\\!\\!")
-                          # parts[0] is the switch key + icon template, parts[1]=expansion,
-                          # parts[2]=version, parts[3]=interface, parts[4]=build, parts[5]=date
                           if len(parts) >= 4:
                               iface_token = parts[3].strip()
                               if re.fullmatch(r'\d{5,6}', iface_token):
@@ -220,21 +214,6 @@ jobs:
 
           # ------------------------------------------------------------------
           # Assemble final list — hybrid wiki-first with consensus fallback.
-          #
-          # For each flavor group:
-          #   1. Get wiki_num  = best number the wiki reported (if any)
-          #   2. Get other_num = best number from Gethe + BigWigs + DBM (if any)
-          #   3. Decision:
-          #      - If wiki is within range [other_num, other_num + WIKI_TRUST_DELTA]
-          #        → use wiki_num (it's ahead by a reasonable amount, trust it)
-          #      - If wiki < other_num
-          #        → use other_num (wiki is stale, consensus wins)
-          #      - If wiki > other_num + WIKI_TRUST_DELTA
-          #        → use other_num (wiki is suspiciously far ahead, ignore it)
-          #      - If only wiki exists (no other sources for this group)
-          #        → use wiki_num with a warning
-          #      - If only other exists (wiki had nothing for this group)
-          #        → use other_num
           # ------------------------------------------------------------------
           print("\n=== Final arbitration ===")
           final_nums = []
@@ -278,25 +257,32 @@ jobs:
               f.write(f"nums={','.join(str(n) for n in final_nums)}\n")
           PYEOF
 
-      - name: Update TOC files (never decrease a number)
+      - name: Update TOC files and bump version
         id: update
         env:
           IFACE_LINE: ${{ steps.collect.outputs.iface_line }}
           NUMS: ${{ steps.collect.outputs.nums }}
+          # manual=true forces a version bump + release dispatch even if interface
+          # numbers didn't change — used to re-sync addons that got out of whack.
+          FORCE_RELEASE: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
         run: |
           python3 - <<'PYEOF'
           import re, glob, os, sys
 
           new_line = os.environ["IFACE_LINE"]
           new_nums = set(int(x) for x in os.environ["NUMS"].split(",") if x)
+          force_release = os.environ.get("FORCE_RELEASE", "false").strip().lower() == "true"
 
           if not new_nums:
               print("ERROR: no interface numbers — aborting", file=sys.stderr)
               sys.exit(1)
 
+          if force_release:
+              print("*** Manual run — version bump and release will fire even if TOC unchanged ***")
+
           def flavor_group(n):
               if   120000 <= n <= 129999: return "retail"
-              if    50000 <= n <= 50999:  return "mop"           # 5.x.x only (50000-50999)
+              if    50000 <= n <= 50999:  return "mop"
               if    40000 <= n <= 49999:  return "cata"
               if    38000 <= n <= 38999:  return "wrath_titan"
               if    30000 <= n <= 37999:  return "wrath"
@@ -307,10 +293,7 @@ jobs:
               return "other"
 
           def safe_merge(existing_line, new_line):
-              """
-              For each flavor group, keep the MAX of the existing TOC value
-              and the newly collected value. Numbers never go down.
-              """
+              """Keep the MAX per flavor group. Numbers never go down."""
               def parse(line):
                   result = {}
                   for token in line.split(":", 1)[-1].split(","):
@@ -332,33 +315,111 @@ jobs:
               merged_line = "## Interface: " + ", ".join(str(n) for n in merged_nums)
               return merged_line, (merged_line != existing_line)
 
+          def bump_version(version_str):
+              """
+              Increment the decimal part by 1.
+              '20.28' → '20.29',  '20.99' → '20.100',  '12.5' → '12.6'
+              Returns new version string, or None if unparseable.
+              """
+              version_str = version_str.strip()
+              m = re.fullmatch(r'(\d+)\.(\d+)', version_str)
+              if not m:
+                  return None
+              major = int(m.group(1))
+              minor = int(m.group(2))
+              return f"{major}.{minor + 1}"
+
+          # Determine the main addon TOC: the .toc whose stem matches the repo name.
+          # GITHUB_REPOSITORY is "owner/reponame" — we want just "reponame".
+          repo_name = os.environ.get("GITHUB_REPOSITORY", "").split("/")[-1]
+          main_toc_name = f"{repo_name}.toc" if repo_name else None
+          print(f"Repo: {repo_name}  →  main TOC: {main_toc_name}")
+
           any_changed = False
+          new_version = None
+          main_toc_text = None
+          main_toc_path = None
+
           for toc_path in glob.glob("**/*.toc", recursive=True):
+              toc_filename = os.path.basename(toc_path)
+              is_main = (main_toc_name and toc_filename.lower() == main_toc_name.lower())
+
               text = open(toc_path, encoding="utf-8").read()
-              match = re.search(r"^## Interface:.*", text, flags=re.MULTILINE)
-              if not match:
+
+              # --- Update ## Interface: (all TOC files) ---
+              iface_match = re.search(r"^## Interface:.*", text, flags=re.MULTILINE)
+              if not iface_match:
+                  print(f"Skipping {toc_path}: no ## Interface: line")
                   continue
-              existing_line = match.group(0)
-              merged_line, changed = safe_merge(existing_line, new_line)
-              if changed:
-                  updated = text[:match.start()] + merged_line + text[match.end():]
-                  open(toc_path, "w", encoding="utf-8").write(updated)
-                  print(f"Updated {toc_path}:")
-                  print(f"  was: {existing_line}")
-                  print(f"  now: {merged_line}")
+
+              existing_iface = iface_match.group(0)
+              merged_iface, iface_changed = safe_merge(existing_iface, new_line)
+
+              if iface_changed:
+                  text = text[:iface_match.start()] + merged_iface + text[iface_match.end():]
+                  print(f"Interface updated in {toc_path}:")
+                  print(f"  was: {existing_iface}")
+                  print(f"  now: {merged_iface}")
                   any_changed = True
               else:
-                  print(f"No change: {toc_path}")
+                  print(f"Interface no change: {toc_path}")
+
+              # --- Bump ## Version: (main TOC only) ---
+              # Cron: only if interface changed.
+              # Manual: always, even if interface was already current.
+              should_bump = is_main and (iface_changed or force_release)
+              if should_bump:
+                  ver_match = re.search(r"^## Version:\s*(.+)", text, flags=re.MULTILINE)
+                  if ver_match:
+                      old_ver = ver_match.group(1).strip()
+                      bumped = bump_version(old_ver)
+                      if bumped:
+                          new_version = bumped
+                          new_ver_line = f"## Version: {bumped}"
+                          text = text[:ver_match.start()] + new_ver_line + text[ver_match.end():]
+                          print(f"Version bumped in {toc_path}: {old_ver} → {bumped}")
+                          any_changed = True  # ensure commit step runs
+                      else:
+                          print(f"  WARNING: could not parse version '{old_ver}' — skipping version bump")
+                  else:
+                      print(f"  WARNING: no ## Version: line found in {toc_path} — skipping version bump")
+
+              # Write updated file if anything changed for this TOC
+              if iface_changed or (is_main and new_version):
+                  open(toc_path, "w", encoding="utf-8").write(text)
 
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write(f"changed={'true' if any_changed else 'false'}\n")
+              f.write(f"new_version={new_version if new_version else ''}\n")
           PYEOF
 
-      - name: Commit updated TOC files
+      - name: Commit and push
         if: steps.update.outputs.changed == 'true'
+        env:
+          NEW_VERSION: ${{ steps.update.outputs.new_version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add "*.toc"
-          git commit -m "chore: update TOC interface numbers"
+
+          if [ -n "$NEW_VERSION" ]; then
+            git commit -m "chore: update TOC interface numbers → v${NEW_VERSION}"
+          else
+            git commit -m "chore: update TOC interface numbers"
+          fi
           git push
+
+      - name: Trigger release workflow via API
+        if: steps.update.outputs.changed == 'true' && steps.update.outputs.new_version != ''
+        env:
+          NEW_VERSION: ${{ steps.update.outputs.new_version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Dispatch release.yml with the new version as the ref.
+          # workflow_dispatch on a branch ref will use the latest commit on that branch,
+          # which is the TOC-update commit we just pushed.
+          gh workflow run release.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref "$GITHUB_REF_NAME" \
+            --field version="v${NEW_VERSION}"
+          echo "Dispatched release.yml for v${NEW_VERSION} on branch ${GITHUB_REF_NAME}."
