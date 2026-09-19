@@ -413,7 +413,7 @@ jobs:
         if: steps.update.outputs.changed == 'true' && steps.update.outputs.new_version != ''
         env:
           NEW_VERSION: ${{ steps.update.outputs.new_version }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
         run: |
           # Dispatch release.yml with the new version as the ref.
           # workflow_dispatch on a branch ref will use the latest commit on that branch,
