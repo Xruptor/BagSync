@@ -97,16 +97,26 @@ jobs:
           # When wiki is ahead at all, we use the consensus (non-wiki) value.
           WIKI_TRUST_DELTA = 0
 
-          # Separate tracking: wiki numbers vs consensus (non-wiki) numbers
-          wiki_best  = {}  # group → max number seen from wiki sources
-          other_best = {}  # group → max number seen from non-wiki sources
+          # Three-tier tracking:
+          #   gethe_best  — Gethe/wow-ui-source LIVE branches only (Blizzard-authoritative)
+          #   wiki_best   — warcraft.wiki.gg (live rows only after filtering)
+          #   other_best  — BigWigs, DBM (may include PTR builds in their TOC)
+          gethe_best = {}  # group → number from Gethe live branch (authoritative)
+          wiki_best  = {}  # group → max from wiki live rows
+          other_best = {}  # group → max from BigWigs/DBM (cross-check only)
 
           def record(n, source):
               group = flavor_group(n)
               if group is None:
                   return
-              is_wiki = source.startswith("wiki:")
-              bucket = wiki_best if is_wiki else other_best
+              is_gethe = source.startswith("gethe:")
+              is_wiki  = source.startswith("wiki:")
+              if is_gethe:
+                  bucket = gethe_best
+              elif is_wiki:
+                  bucket = wiki_best
+              else:
+                  bucket = other_best
               prev = bucket.get(group, 0)
               bucket[group] = max(prev, n)
               marker = " ↑ new max" if n > prev else ""
@@ -250,31 +260,42 @@ jobs:
                   break
 
           # ------------------------------------------------------------------
-          # Assemble final list — hybrid wiki-first with consensus fallback.
+          # Assemble final list.
+          # Priority: Gethe live (Blizzard-authoritative) > wiki live rows > other
+          #
+          # Gethe live branches are Blizzard's own UI source mirror — they only
+          # ever reflect the actual live client, never PTR or beta. When Gethe
+          # has a number for a group it wins outright. BigWigs/DBM include PTR
+          # builds in their TOC so they are used only as a fallback when neither
+          # Gethe nor wiki have data for a group.
           # ------------------------------------------------------------------
           print("\n=== Final arbitration ===")
           final_nums = []
-          all_groups = INCLUDE_GROUPS & (set(wiki_best) | set(other_best))
+          all_groups = INCLUDE_GROUPS & (set(gethe_best) | set(wiki_best) | set(other_best))
           for group in all_groups:
+              gethe_num = gethe_best.get(group, 0)
               wiki_num  = wiki_best.get(group, 0)
               other_num = other_best.get(group, 0)
 
-              if wiki_num and other_num:
+              if gethe_num:
+                  winner = gethe_num
+                  reason = f"Gethe live authoritative ({gethe_num})"
+              elif wiki_num and other_num:
                   if other_num <= wiki_num <= other_num + WIKI_TRUST_DELTA:
                       winner = wiki_num
-                      reason = f"wiki {wiki_num} is within {wiki_num - other_num} of consensus {other_num} — trusting wiki"
+                      reason = f"wiki {wiki_num} matches consensus {other_num} — trusting wiki"
                   elif wiki_num < other_num:
                       winner = other_num
-                      reason = f"wiki {wiki_num} is behind consensus {other_num} — using consensus"
+                      reason = f"wiki {wiki_num} behind consensus {other_num} — using consensus"
                   else:
                       winner = other_num
-                      reason = f"wiki {wiki_num} is {wiki_num - other_num} ahead of consensus {other_num} (exceeds delta {WIKI_TRUST_DELTA}) — ignoring wiki"
+                      reason = f"wiki {wiki_num} ahead of consensus {other_num} — using consensus"
               elif wiki_num:
                   winner = wiki_num
-                  reason = f"wiki only ({wiki_num}), no other sources for this group — unconfirmed"
+                  reason = f"wiki only ({wiki_num}), no other sources"
               else:
                   winner = other_num
-                  reason = f"consensus only ({other_num}), wiki had nothing"
+                  reason = f"other sources only ({other_num}), no Gethe/wiki data"
 
               print(f"  {group}: {winner}  ({reason})")
               final_nums.append(winner)
