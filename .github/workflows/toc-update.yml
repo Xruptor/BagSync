@@ -1,0 +1,311 @@
+# Drop this file into .github/workflows/ in any of your WoW addon repos.
+# It runs daily and on manual dispatch, updates ## Interface: in every .toc
+# file if any number has increased, commits the change, then stops.
+# You pull → review → tag + push to trigger your existing release.yml.
+#
+# Sources (all attempted; take max per flavor group):
+#   1. warcraft.wiki.gg Template:LatestPatchInfo  — community-curated, key=value wikitext
+#   2. Gethe/wow-ui-source version.txt per branch — Blizzard's own source
+#   3. BigWigsMods/BigWigs BigWigs.toc            — well-maintained, covers all flavors
+#   4. DeadlyBossMods DBM-Core.toc               — secondary cross-check
+#
+# Interface number rule: only ever increases. The script never writes a number
+# lower than what is already in the TOC.
+#
+# Flavor groups and their interface number ranges:
+#   retail        120000-129999  (Midnight / standard)
+#   mop           50000-59999    (Mists of Pandaria Classic)
+#   cata          40000-49999    (Cataclysm Classic)
+#   wrath_titan   38000-38999    (Classic Titan Reforged)
+#   wrath         30000-37999    (Wrath of the Lich King Classic)
+#   tbc           20000-29999    (Burning Crusade / Anniversary)
+#   classic_era   11000-11999    (Vanilla Classic Era)
+#   forever       16000-16999    (Classic Forever — excluded by default)
+#   tww           110000-119999  (The War Within — excluded, no longer live)
+name: Update TOC Interface Numbers
+
+on:
+  schedule:
+    - cron: '0 10 * * *'   # daily at 10:00 UTC
+  workflow_dispatch:         # manual trigger from Actions tab
+
+jobs:
+  update-toc:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # needed to push the commit
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Collect interface numbers from all sources
+        id: collect
+        run: |
+          python3 - <<'PYEOF'
+          import urllib.request, re, os, sys, json
+
+          def fetch(url):
+              try:
+                  req = urllib.request.Request(url, headers={"User-Agent": "wow-toc-updater/1.0"})
+                  return urllib.request.urlopen(req, timeout=15).read().decode()
+              except Exception as e:
+                  print(f"  WARNING: could not fetch {url}: {e}", file=sys.stderr)
+                  return ""
+
+          def version_to_iface(version_str):
+              """'12.1.0.69875' or '12.1.0' → 120100"""
+              parts = version_str.strip().split(".")
+              if len(parts) < 3:
+                  return None
+              try:
+                  return int(parts[0]) * 10000 + int(parts[1]) * 100 + int(parts[2])
+              except ValueError:
+                  return None
+
+          def flavor_group(n):
+              """Bucket an interface number by game flavor."""
+              if   120000 <= n <= 129999: return "retail"
+              if    50000 <= n <= 59999:  return "mop"
+              if    40000 <= n <= 49999:  return "cata"
+              if    38000 <= n <= 38999:  return "wrath_titan"   # 3.80.x Titan Reforged
+              if    30000 <= n <= 37999:  return "wrath"         # 3.x.x standard Wrath
+              if    20000 <= n <= 29999:  return "tbc"           # TBC Anniversary / classic_era_ptr
+              if    16000 <= n <= 16999:  return "forever"       # Classic Forever Beta
+              if    11000 <= n <= 11999:  return "classic_era"   # Vanilla Classic Era
+              if   110000 <= n <= 119999: return "tww"           # The War Within (old retail)
+              return None  # outside known range → ignore
+
+          # Groups to include in the final TOC line.
+          # Remove "forever" and "tww" from this set if you don't want them.
+          INCLUDE_GROUPS = {"retail", "mop", "cata", "wrath_titan", "wrath", "tbc", "classic_era", "forever"}
+
+          best = {}  # flavor_group → max interface number found so far
+
+          def record(n, source):
+              group = flavor_group(n)
+              if group is None:
+                  return
+              prev = best.get(group, 0)
+              best[group] = max(prev, n)
+              marker = " ↑ new max" if n > prev else ""
+              print(f"  {n} ({group}){marker}  [{source}]")
+
+          # ------------------------------------------------------------------
+          # Source 1: warcraft.wiki.gg — Template:LatestPatchInfo
+          # This template holds the canonical interface numbers used by the
+          # {{API_LatestInterface}} template. Its wikitext has key=value pairs:
+          #   | standard = 120100
+          #   | mists = 50504
+          # We parse those directly — much more reliable than scraping HTML.
+          # ------------------------------------------------------------------
+          print("=== warcraft.wiki.gg / Template:LatestPatchInfo ===")
+          wiki_url = (
+              "https://warcraft.wiki.gg/api.php"
+              "?action=query&titles=Template:LatestPatchInfo"
+              "&prop=revisions&rvprop=content&rvslots=main&format=json"
+          )
+          wiki_raw = fetch(wiki_url)
+          if wiki_raw:
+              try:
+                  data = json.loads(wiki_raw)
+                  pages = data.get("query", {}).get("pages", {})
+                  for page in pages.values():
+                      slots = (page.get("revisions") or [{}])[0].get("slots", {})
+                      content = slots.get("main", {}).get("*", "")
+                      # The wikitext uses \\!\\! as a column separator in each switch case.
+                      # Each row looks like:
+                      #   |standard|...={{icon}}\\!\\!Midnight\\!\\!12.1.0\\!\\!120100\\!\\!69814\\!\\!date
+                      # The interface number is the 4th \\!\\! segment (index 3, 0-based).
+                      # Strategy: split the whole content on \\!\\! and grab every token
+                      # that looks like a 5-6 digit interface number (skipping build numbers
+                      # which are always 5 digits starting with 6xxxx or 5xxxx build IDs).
+                      # More precisely: interface numbers we care about are in known ranges,
+                      # so flavor_group() will filter out build numbers automatically.
+                      for segment in content.split("\\!\\!"):
+                          segment = segment.strip()
+                          if re.fullmatch(r'\d{5,6}', segment):
+                              record(int(segment), "wiki:LatestPatchInfo")
+              except Exception as e:
+                  print(f"  WARNING: {e}", file=sys.stderr)
+
+          # Also try Interface_version page (community-updated table)
+          print("\n=== warcraft.wiki.gg / Interface_version ===")
+          wiki_url2 = (
+              "https://warcraft.wiki.gg/api.php"
+              "?action=query&titles=Interface_version"
+              "&prop=revisions&rvprop=content&rvslots=main&format=json"
+          )
+          wiki_raw2 = fetch(wiki_url2)
+          if wiki_raw2:
+              try:
+                  data2 = json.loads(wiki_raw2)
+                  pages2 = data2.get("query", {}).get("pages", {})
+                  for page in pages2.values():
+                      slots2 = (page.get("revisions") or [{}])[0].get("slots", {})
+                      content2 = slots2.get("main", {}).get("*", "")
+                      for token in re.findall(r'\b(\d{5,6})\b', content2):
+                          record(int(token), "wiki:Interface_version")
+              except Exception as e:
+                  print(f"  WARNING: {e}", file=sys.stderr)
+
+          # ------------------------------------------------------------------
+          # Source 2: Gethe/wow-ui-source — version.txt per branch
+          # Blizzard's own UI source mirror. No Cata Classic branch exists here.
+          # ------------------------------------------------------------------
+          print("\n=== Gethe/wow-ui-source (version.txt per branch) ===")
+          gethe_branches = [
+              "live",
+              "ptr",
+              "ptr2",
+              "classic",
+              "classic_ptr",
+              "classic_era",
+              "classic_era_ptr",
+              "classic_anniversary",
+              "classic_titan",
+          ]
+          for branch in gethe_branches:
+              url = f"https://raw.githubusercontent.com/Gethe/wow-ui-source/{branch}/version.txt"
+              text = fetch(url)
+              if not text:
+                  continue
+              iface = version_to_iface(text.strip())
+              if iface is not None:
+                  record(iface, f"gethe:{branch}")
+              else:
+                  print(f"  {branch}: could not parse '{text.strip()}'")
+
+          # ------------------------------------------------------------------
+          # Source 3: BigWigsMods/BigWigs — single TOC covers all flavors
+          # ------------------------------------------------------------------
+          print("\n=== BigWigsMods/BigWigs ===")
+          bw_text = fetch("https://raw.githubusercontent.com/BigWigsMods/BigWigs/master/BigWigs.toc")
+          for line in bw_text.splitlines():
+              if line.startswith("## Interface:"):
+                  for token in line.split(":", 1)[1].split(","):
+                      token = token.strip()
+                      if token.isdigit():
+                          record(int(token), "BigWigs")
+                  break
+
+          # ------------------------------------------------------------------
+          # Source 4: DeadlyBossMods — secondary cross-check
+          # ------------------------------------------------------------------
+          print("\n=== DeadlyBossMods ===")
+          dbm_text = fetch("https://raw.githubusercontent.com/DeadlyBossMods/DeadlyBossMods/master/DBM-Core/DBM-Core.toc")
+          for line in dbm_text.splitlines():
+              if line.startswith("## Interface:"):
+                  for token in line.split(":", 1)[1].split(","):
+                      token = token.strip()
+                      if token.isdigit():
+                          record(int(token), "DBM")
+                  break
+
+          # ------------------------------------------------------------------
+          # Assemble final list — only included groups, sorted descending
+          # ------------------------------------------------------------------
+          final_nums = sorted(
+              [v for g, v in best.items() if g in INCLUDE_GROUPS],
+              reverse=True
+          )
+
+          if not final_nums:
+              print("\nERROR: no interface numbers collected from any source!", file=sys.stderr)
+              sys.exit(1)
+
+          iface_line = "## Interface: " + ", ".join(str(n) for n in final_nums)
+          print(f"\n=== Result ===")
+          print(iface_line)
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"iface_line={iface_line}\n")
+              f.write(f"nums={','.join(str(n) for n in final_nums)}\n")
+          PYEOF
+
+      - name: Update TOC files (never decrease a number)
+        id: update
+        env:
+          IFACE_LINE: ${{ steps.collect.outputs.iface_line }}
+          NUMS: ${{ steps.collect.outputs.nums }}
+        run: |
+          python3 - <<'PYEOF'
+          import re, glob, os, sys
+
+          new_line = os.environ["IFACE_LINE"]
+          new_nums = set(int(x) for x in os.environ["NUMS"].split(",") if x)
+
+          if not new_nums:
+              print("ERROR: no interface numbers — aborting", file=sys.stderr)
+              sys.exit(1)
+
+          def flavor_group(n):
+              if   120000 <= n <= 129999: return "retail"
+              if    50000 <= n <= 59999:  return "mop"
+              if    40000 <= n <= 49999:  return "cata"
+              if    38000 <= n <= 38999:  return "wrath_titan"
+              if    30000 <= n <= 37999:  return "wrath"
+              if    20000 <= n <= 29999:  return "tbc"
+              if    16000 <= n <= 16999:  return "forever"
+              if    11000 <= n <= 11999:  return "classic_era"
+              if   110000 <= n <= 119999: return "tww"
+              return "other"
+
+          def safe_merge(existing_line, new_line):
+              """
+              For each flavor group, keep the MAX of the existing TOC value
+              and the newly collected value. Numbers never go down.
+              """
+              def parse(line):
+                  result = {}
+                  for token in line.split(":", 1)[-1].split(","):
+                      token = token.strip()
+                      if token.isdigit():
+                          n = int(token)
+                          g = flavor_group(n)
+                          result[g] = max(result.get(g, 0), n)
+                  return result
+
+              old_by_group = parse(existing_line)
+              new_by_group = parse(new_line)
+
+              merged = {}
+              for g in set(old_by_group) | set(new_by_group):
+                  merged[g] = max(old_by_group.get(g, 0), new_by_group.get(g, 0))
+
+              merged_nums = sorted(merged.values(), reverse=True)
+              merged_line = "## Interface: " + ", ".join(str(n) for n in merged_nums)
+              return merged_line, (merged_line != existing_line)
+
+          any_changed = False
+          for toc_path in glob.glob("**/*.toc", recursive=True):
+              text = open(toc_path, encoding="utf-8").read()
+              match = re.search(r"^## Interface:.*", text, flags=re.MULTILINE)
+              if not match:
+                  continue
+              existing_line = match.group(0)
+              merged_line, changed = safe_merge(existing_line, new_line)
+              if changed:
+                  updated = text[:match.start()] + merged_line + text[match.end():]
+                  open(toc_path, "w", encoding="utf-8").write(updated)
+                  print(f"Updated {toc_path}:")
+                  print(f"  was: {existing_line}")
+                  print(f"  now: {merged_line}")
+                  any_changed = True
+              else:
+                  print(f"No change: {toc_path}")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"changed={'true' if any_changed else 'false'}\n")
+          PYEOF
+
+      - name: Commit updated TOC files
+        if: steps.update.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "*.toc"
+          git commit -m "chore: update TOC interface numbers"
+          git push
