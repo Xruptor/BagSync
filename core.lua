@@ -486,6 +486,21 @@ function BSYC:ParseItemLink(link, count)
 		return parsed
 	end
 
+	-- mythic keystone handling
+	-- Keystones are NOT item links.  Blizzard uses its own |Hkeystone: link type for them.
+	-- Example: |cffa335ee|Hkeystone:180653:507:10:10:9:160:0|h[Keystone: Ara-Kara, City of Echoes (10)]|h|r
+	-- (itemID:challengeModeID:level:affix1:affix2:affix3:affix4)
+	-- Without this, the link falls through to GetShortItemID() and we end up storing the entire
+	-- raw hyperlink in the DB as if it were an itemID, which nothing downstream can resolve.
+	if link:find("Hkeystone:", 1, true) or link:find("^keystone:") then
+		local parsed = self:CreateKeystoneID(link, count)
+		if parsed then
+			self.__parseCache[cacheKey] = parsed
+			self.__parseCacheSize = self.__parseCacheSize + 1
+			return parsed
+		end
+	end
+
 	local result = link:match("item:([%d:]+)")
 	local shortID = self:GetShortItemID(link)
 
@@ -541,6 +556,57 @@ function BSYC:ParseItemLink(link, count)
 	return link
 end
 
+
+--Returns the itemID and the keystone data string (challengeModeID:level:affix1:affix2:affix3:affix4)
+--https://warcraft.wiki.gg/wiki/Hyperlinks#keystone
+function BSYC:ParseKeystoneLink(link)
+	if not link then return end
+	if type(link) == "number" then return end
+
+	local data = link:match("Hkeystone:([%d:]+)") or link:match("^keystone:([%d:]+)")
+	if not data then return end
+
+	local itemID, keyData = data:match("^(%d+):(.+)$")
+	if not itemID then
+		itemID = data:match("^(%d+)")
+	end
+	if not itemID then return end
+
+	--strip any trailing colons so we don't store junk
+	if keyData then
+		keyData = keyData:gsub(":+$", "")
+		if keyData == "" then keyData = nil end
+	end
+
+	return itemID, keyData
+end
+
+function BSYC:IsKeystoneLink(link)
+	if not link or type(link) ~= "string" then return false end
+	return (link:find("Hkeystone:", 1, true) or link:find("^keystone:")) and true or false
+end
+
+--Store keystones the same way we store battle pets: a real itemID plus the extra data in the Opts blob.
+--This keeps the DB numeric (searchable, cacheable, tooltip friendly) while preserving the dungeon/level/affixes.
+function BSYC:CreateKeystoneID(link, count)
+	local itemID, keyData = self:ParseKeystoneLink(link)
+	if not itemID then return end
+	if not count or count < 1 then count = 1 end
+
+	Debug(BSYC_DL.INFO, "CreateKeystoneID", itemID, keyData, link)
+
+	if keyData then
+		local encodeStr = self:EncodeOpts({keystone=keyData})
+		if encodeStr then
+			return itemID..";"..count..";"..encodeStr
+		end
+	end
+
+	if count > 1 then
+		return itemID..";"..count
+	end
+	return itemID
+end
 
 function BSYC:CreateFakeID(link, count, speciesID, level, breedQuality, maxHealth, power, speed, name)
 	if not BattlePetTooltip then return end
@@ -608,10 +674,23 @@ function BSYC:GetShortItemID(link)
     if not link then return end
   end
 
-  return link:match("item:(%d+):")
+  --keystones use their own link type (|Hkeystone:itemID:...), so item:(%d+): will never match them
+  local keystoneID = link:match("Hkeystone:(%d+)") or link:match("^keystone:(%d+)")
+  if keystoneID then return keystoneID end
+
+  local shortID = link:match("item:(%d+):")
       or link:match("^(%d+):")
       or (strsplit(";", link))
       or link
+
+  --Never hand back a raw hyperlink as if it were an itemID.  If we get here with one it's a link
+  --type we don't understand yet, and letting it through poisons the DB and the item cache.
+  if type(shortID) == "string" and (shortID:find("|H", 1, true) or shortID:find("|c", 1, true)) then
+    Debug(BSYC_DL.WARN, "GetShortItemID-UnknownLinkType", link)
+    return
+  end
+
+  return shortID
 end
 
 function BSYC:GetShortCurrencyID(link)

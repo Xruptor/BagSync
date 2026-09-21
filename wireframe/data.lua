@@ -472,6 +472,80 @@ function Data:FixDB()
 		options.showGuildCurrentCharacter = nil
 	end
 
+	-- repair entries that were saved as raw hyperlinks instead of itemIDs.
+	-- Mythic Keystones use the |Hkeystone: link type, so before they were handled they went into
+	-- the DB as the entire hyperlink and could never be resolved, searched or tallied.
+	do
+		local repaired, dropped = 0, 0
+
+		local function FixList(list)
+			if type(list) ~= "table" then return end
+
+			local dirty = false
+			for i = 1, #list do
+				local entry = list[i]
+				if type(entry) == "string" and entry:find("|H", 1, true) then
+					dirty = true
+					break
+				end
+			end
+			if not dirty then return end
+
+			local fixed = {}
+			for i = 1, #list do
+				local entry = list[i]
+				if type(entry) == "string" and entry:find("|H", 1, true) then
+					local newEntry = BSYC:ParseItemLink(entry)
+					if newEntry and not tostring(newEntry):find("|H", 1, true) then
+						fixed[#fixed + 1] = newEntry
+						repaired = repaired + 1
+					else
+						dropped = dropped + 1
+					end
+				else
+					fixed[#fixed + 1] = entry
+				end
+			end
+
+			wipe(list)
+			for i = 1, #fixed do
+				list[i] = fixed[i]
+			end
+		end
+
+		local function FixBags(bucket)
+			if type(bucket) ~= "table" then return end
+			for _, bagData in pairs(bucket) do
+				FixList(bagData)
+			end
+		end
+
+		for unitObj in self:IterateUnits(true) do
+			local data = unitObj.data
+			if data then
+				if unitObj.isGuild then
+					FixBags(data.tabs)
+				else
+					FixBags(data.bag)
+					FixBags(data.bank)
+					FixBags(data.reagents)
+					if data.equipbags then
+						FixList(data.equipbags.bag)
+						FixList(data.equipbags.bank)
+					end
+					FixList(data.equip)
+					FixList(data.void)
+					FixList(data.mailbox)
+					if data.auction then FixList(data.auction.bag) end
+				end
+			end
+		end
+
+		if repaired > 0 or dropped > 0 then
+			Debug(BSYC_DL.INFO, "FixDB-RepairLinks", repaired, dropped)
+		end
+	end
+
 	local storeGuilds = {}
 	local guildUnits = {}
 	local storedUnitDBVersion = options.unitDBVersion

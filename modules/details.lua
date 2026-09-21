@@ -271,6 +271,20 @@ local function BuildItemInfoText(item, options, colors)
 		end
 	end
 
+	--check for mythic keystone (keystone=challengeModeID:level:affix1:affix2:affix3:affix4)
+	if item.qOpts and item.qOpts.keystone then
+		local challengeMapID, keyLevel = strsplit(":", item.qOpts.keystone)
+		challengeMapID, keyLevel = tonumber(challengeMapID), tonumber(keyLevel)
+
+		if keyLevel and keyLevel > 0 then
+			local mapName
+			if challengeMapID and C_ChallengeMode and C_ChallengeMode.GetMapUIInfo then
+				mapName = C_ChallengeMode.GetMapUIInfo(challengeMapID)
+			end
+			info = info.." "..Tooltip:HexColor(colors.second, (mapName and mapName.." " or "").."+"..keyLevel)
+		end
+	end
+
 	return info
 end
 
