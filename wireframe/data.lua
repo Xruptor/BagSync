@@ -288,6 +288,7 @@ function Data:OnEnable()
 	playerDB.local_race_name = player.local_race_name
 	playerDB.race = player.race
 	playerDB.race_id = player.race_id
+	playerDB.race_atlas = player.race_atlas
 	playerDB.gender = player.gender
 	playerDB.faction = player.faction
 	playerDB.guid = player.guid

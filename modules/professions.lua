@@ -27,7 +27,7 @@ local string_match = _G.string.match
 local table_insert = _G.table.insert
 local table_sort = _G.table.sort
 local format = _G.format
-local GetItemInfo = _G.GetItemInfo
+local GetItemInfo = BSYC.API.GetItemInfo
 
 -- Cached module reference (Recipes is optional)
 local Recipes

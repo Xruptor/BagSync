@@ -321,6 +321,14 @@ function Unit:GetPlayerInfo(bypassDebug)
 	unit.money = GetPlayerMoney()
 	unit.local_class_name, unit.class, unit.class_id = UnitClass("player")
 	unit.local_race_name, unit.race, unit.race_id = UnitRace("player")
+	--store Blizzard's own race icon atlas (same one the character-create screen uses) so races we can't
+	--resolve by name (new races like Forever's Skyborne) still get the correct icon on alts
+	if C_PlayerInfo and C_PlayerInfo.GetPlayerCharacterData then
+		local ok, charData = pcall(C_PlayerInfo.GetPlayerCharacterData)
+		if ok and type(charData) == "table" and type(charData.createScreenIconAtlas) == "string" and charData.createScreenIconAtlas ~= "" then
+			unit.race_atlas = charData.createScreenIconAtlas
+		end
+	end
 	unit.guid = UnitGUID("player")
 	unit.guild = guildName
 	if unit.guild then

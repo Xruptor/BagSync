@@ -140,7 +140,9 @@ function Scanner:GetBagSlots(bagType)
 
 	elseif bagType == "bank" then
 		if BSYC.IsBankTabsActive then
-			return BagIndex.CharacterBankTab_1, BagIndex.CharacterBankTab_6
+			--Retail: CharacterBankTab_1..6, WoW Forever: CharacterBankTab_1..9 (see BSYC.BankTabIndex in core.lua)
+			local tabIndex = BSYC.BankTabIndex
+			return (tabIndex and tabIndex.first) or BagIndex.CharacterBankTab_1, (tabIndex and tabIndex.last) or BagIndex.CharacterBankTab_6
 		else
 			--classic server bank bags start at 5 so these are off by one, the actual bank slot 5 is the reagentbank variable, so we have to use that
 			--that's because the classic bank slots are wrong, so all of them need to be subtracted by 1.

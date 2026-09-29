@@ -717,6 +717,8 @@ function Tooltip:GetIDFromRaceOrClass(unitObj, race, class)
 end
 
 -- Race icon atlas name fixes (Blizzard misnames some)
+-- Race icon atlas names (raceicon / raceicon64 / raceicon128) can be looked up here:
+-- https://wago.tools/db2/UiTextureAtlasMember?filter%5BCommittedName%5D=raceicon&page=1
 local FIXED_RACE_ATLAS = {
 	["highmountaintauren"] = "highmountain",
 	["lightforgeddraenei"] = "lightforged",
@@ -819,10 +821,17 @@ local function GetRaceIconFallback(raceID, race, gender, size, xOffset, yOffset)
 	return nil
 end
 
-function Tooltip:GetRaceIcon(raceID, origRace, sex, size, xOffset, yOffset, useHiRez)
+function Tooltip:GetRaceIcon(raceID, origRace, sex, size, xOffset, yOffset, useHiRez, raceAtlas)
 	-- Try atlas first (Retail)
 	local atlasResult = TryGetRaceIconAtlas(raceID, origRace, sex, size, xOffset, yOffset, useHiRez)
 	if atlasResult then return atlasResult end
+
+	-- Try the atlas Blizzard reported for this character (C_PlayerInfo.GetPlayerCharacterData), covers new races
+	-- whose clientFileString doesn't map to a raceicon atlas (e.g. Forever's Skyborne)
+	if raceAtlas and C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(raceAtlas) then
+		Debug(BSYC_DL.SL3, "GetRaceIcon-storedAtlas", raceID, origRace, sex, raceAtlas)
+		return CreateAtlasMarkup(raceAtlas, size or 16, size or 16, xOffset or 0, yOffset or 0)
+	end
 
 	-- Fall back to texture markup
 	local fallbackResult = GetRaceIconFallback(raceID, origRace, sex, size, xOffset, yOffset)
@@ -908,7 +917,7 @@ function Tooltip:ColorizeUnit(unitObj, bypass, forceRealm, forceXRBNET, tagAtEnd
 
 		if bypass or opts.showRaceIcons then
 			local raceID = unitObj.data.race_id or select(2, self:GetIDFromRaceOrClass(unitObj, unitObj.data.race, unitObj.data.class))
-			local raceIcon = self:GetRaceIcon(raceID, unitObj.data.race, unitObj.data.gender, 16, 0, 0)
+			local raceIcon = self:GetRaceIcon(raceID, unitObj.data.race, unitObj.data.gender, 16, 0, 0, nil, unitObj.data.race_atlas)
 			if raceIcon ~= "" then
 				tmpTag = raceIcon.." "..tmpTag
 			end
@@ -1031,7 +1040,9 @@ function Tooltip:AddItems(unitObj, itemID, target, countList)
 
 				if target == "bank" and BSYC.IsBankTabsActive and BSYC.options.showBankTabs and bTotal > 0 then
 					if not countList.btab then countList.btab = {} end
-					tinsert(countList.btab, bagID - 5)
+					--convert the bagID into a tab number (CharacterBankTab_1 = tab 1)
+					local firstTab = (BSYC.BankTabIndex and BSYC.BankTabIndex.first) or 6
+					tinsert(countList.btab, bagID - firstTab + 1)
 				end
 			end
 
@@ -1279,7 +1290,8 @@ end
 
 local function AddItemInfoLines(unitList, opts, shortID, isBattlePet, addSeparator)
 	if not isBattlePet and not BSYC:IsBattlePetFakeID(shortID) then
-		if BSYC.IsRetail and opts.enableSourceExpansion and shortID then
+		--WoW Forever only has original content, so every item would just say Classic
+		if BSYC.IsRetail and not BSYC.IsForever and opts.enableSourceExpansion and shortID then
 			local desc = Tooltip:HexColor(BSYC.colors.expansion, L.TooltipExpansion)
 			local expacID
 			if Data.__cache.items[shortID] then

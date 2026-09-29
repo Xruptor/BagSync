@@ -916,7 +916,8 @@ Lib:RegisterTypedSearch{
 
 	findItem = function(_, itemLink, _, search)
 		--this is an item-set search and we know that the only items that can possibly match will be *equippable* items, so we'll short-circuit the response for non-equippable items to speed up searches.
-		if not IsEquippableItem(itemLink) then return false end
+		local isEquippable = (C_Item and C_Item.IsEquippableItem) or IsEquippableItem
+		if isEquippable and not isEquippable(itemLink) then return false end
 
 		--default to matching *all* equipment sets if no set name has been provided yet
 		if search == '' then search = '*' end

@@ -28,6 +28,13 @@ BSYC.IsRetail = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
 BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 BSYC.IsWLK_C = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
 
+--WoW Forever (internal game type "camelot") runs the retail client, so WOW_PROJECT_ID reports MAINLINE and IsRetail is true.
+--Retail interface numbers are 6 digits (12.1.0 = 120100) while Forever is 1.x (1.60.1 = 16001), so a retail project ID with a
+--sub-100000 interface can only be Forever.  Classic Era (11509) is excluded by the IsRetail check.
+--Use IsForever only for game-content differences.  For API differences, check the function/enum exists instead.
+local TOC_VERSION = select(4, GetBuildInfo())
+BSYC.IsForever = (BSYC.IsRetail and TOC_VERSION and TOC_VERSION < 100000) or false
+
 BSYC.DEFAULT_FONT_NAME = BSYC.DEFAULT_FONT_NAME or "Friz Quadrata TT"
 BSYC.TOOLTIP_CACHE_MAX = BSYC.TOOLTIP_CACHE_MAX or 1000
 BSYC.DEFAULT_ALLOW_LIST = BSYC.DEFAULT_ALLOW_LIST or {
@@ -112,6 +119,9 @@ BSYC.API.GetAddOnMetadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOn
 BSYC.API.IsAddOnLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded) or IsAddOnLoaded
 BSYC.API.GetItemInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
 BSYC.API.GetItemCount = (C_Item and C_Item.GetItemCount) or GetItemCount
+-- WoW Forever (16001) runs the 12.x API without the deprecation fallbacks, so the old globals are nil there
+BSYC.API.GetItemQualityColor = (C_Item and C_Item.GetItemQualityColor) or GetItemQualityColor
+BSYC.API.IsEquippableItem = (C_Item and C_Item.IsEquippableItem) or IsEquippableItem
 BSYC.API.GetSpellInfo = (C_Spell and C_Spell.GetSpellInfo) or GetSpellInfo
 BSYC.API.GetSpellLink = (C_Spell and C_Spell.GetSpellLink) or GetSpellLink
 BSYC.API.GetRecipeInfo = (C_TradeSkillUI and C_TradeSkillUI.GetRecipeInfo) or nil
@@ -133,6 +143,30 @@ BSYC.API.GetContainerItemLinkCount = function(bagID, slotID)
 end
 
 BSYC.IsBankTabsActive = Enum.BagIndex.CharacterBankTab_1 ~= nil
+
+--Collect every numbered BagIndex entry for a prefix (CharacterBankTab_1..N, AccountBankTab_1..N).
+--The tab counts differ per client: Retail has 6 character / 5 warband tabs, WoW Forever has 9 character / 8 warband tabs.
+--Reading them from the Enum means we never hardcode the count and pick up any future tabs automatically.
+local function CollectBagIndexTabs(prefix)
+	local list = {}
+	local bagIndex = Enum and Enum.BagIndex
+	if not bagIndex then return list end
+	local i = 1
+	while bagIndex[prefix..i] do
+		list[i] = bagIndex[prefix..i]
+		i = i + 1
+	end
+	return list
+end
+
+if BSYC.IsBankTabsActive then
+	local bankTabs = CollectBagIndexTabs("CharacterBankTab_")
+	BSYC.BankTabIndex = {
+		first = bankTabs[1],
+		last = bankTabs[#bankTabs],
+		count = #bankTabs,
+	}
+end
 BSYC.IsReagentBagActive = (Constants.InventoryConstants.NumReagentBagSlots or 0) > 0
 
 --since FetchPurchasedBankTabData supports Guilds, it's possible in the future they will put it on a classic server with no Warband support.  So lets do it as last resort
@@ -171,21 +205,15 @@ local debugDefaults = {
 }
 
 if BSYC.isWarbandActive then
+	--Retail: AccountBankTab_1..5, WoW Forever: AccountBankTab_1..8
+	local warbandTabs = CollectBagIndexTabs("AccountBankTab_")
+	local warbandBags = {}
+	for tabID, bagID in ipairs(warbandTabs) do
+		warbandBags[bagID] = tabID
+	end
 	BSYC.WarbandIndex = {
-		tabs = {
-			Enum.BagIndex.AccountBankTab_1,
-			Enum.BagIndex.AccountBankTab_2,
-			Enum.BagIndex.AccountBankTab_3,
-			Enum.BagIndex.AccountBankTab_4,
-			Enum.BagIndex.AccountBankTab_5,
-		},
-		bags = {
-			[Enum.BagIndex.AccountBankTab_1] = 1,
-			[Enum.BagIndex.AccountBankTab_2] = 2,
-			[Enum.BagIndex.AccountBankTab_3] = 3,
-			[Enum.BagIndex.AccountBankTab_4] = 4,
-			[Enum.BagIndex.AccountBankTab_5] = 5,
-		},
+		tabs = warbandTabs,
+		bags = warbandBags,
 	}
 end
 

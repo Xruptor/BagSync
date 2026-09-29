@@ -25,7 +25,7 @@ local BattlePetTooltip = BattlePetTooltip
 local BattlePetToolTip_Show = BattlePetToolTip_Show
 local BreakUpLargeNumbers = BreakUpLargeNumbers
 local strsplit = strsplit
-local GetItemQualityColor = GetItemQualityColor
+local GetItemQualityColor = BSYC.API.GetItemQualityColor
 local LEVEL = LEVEL
 local STANDARD_TEXT_FONT = STANDARD_TEXT_FONT
 

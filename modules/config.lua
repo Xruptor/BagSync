@@ -590,7 +590,7 @@ local displayTable = {
 					type = "toggle",
 					label = L.DisplaySourceExpansion,
 					bind = { "opt", "enableSourceExpansion" },
-					hidden = function() return not BSYC.IsRetail end,
+					hidden = function() return not BSYC.IsRetail or BSYC.IsForever end,
 					dirty = "tooltips",
 				},
 				{ type = "toggle", label = L.DisplayItemTypes, bind = { "opt", "enableItemTypes" }, dirty = "tooltips" },
