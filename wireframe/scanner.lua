@@ -748,6 +748,7 @@ function Scanner:SaveWarbandBank(bagID)
 end
 
 function Scanner:SaveWarbandBankMoney()
+	if not BSYC.isWarbandActive then return end
 	if not BSYC.tracking.warband then return end
 	if not Unit.atWarbandBank and not Unit.atBank then return end
 	if not C_Bank or not C_Bank.FetchDepositedMoney then return end

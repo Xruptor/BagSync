@@ -32,8 +32,6 @@ local DressUpBattlePet = _G.DressUpBattlePet
 local BattlePetTooltip = _G.BattlePetTooltip
 local GameTooltip = _G.GameTooltip
 local ToggleDropDownMenu = _G.ToggleDropDownMenu
-local WOW_PROJECT_ID = _G.WOW_PROJECT_ID
-local WOW_PROJECT_MAINLINE = _G.WOW_PROJECT_MAINLINE
 
 local STANDARD_TEXT_FONT = _G.STANDARD_TEXT_FONT
 local ChatFontNormal = _G.ChatFontNormal
@@ -213,7 +211,7 @@ local function SetupModulesButton(searchFrame)
 	local modulesButtonBG = UI:CreateTexture(modulesButton, { layer = "BACKGROUND" })
 	local modulesButtonIcon = UI:CreateTexture(modulesButton, { layer = "ARTWORK" })
 
-	if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
+	if BSYC.IsRetail then --mainline minimap-style button art (also Forever, which uses the mainline UI)
 		modulesButtonOverlay:SetSize(50, 50)
 		modulesButtonOverlay:SetTexture(136430)
 		modulesButtonOverlay:SetPoint("TOPLEFT", modulesButton, "TOPLEFT", 0, 0)

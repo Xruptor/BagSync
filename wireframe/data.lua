@@ -253,6 +253,9 @@ function Data:OnEnable()
 
 	--player DB
 	local name = player.name
+	if BSYC.IsForever then
+		self:MigrateForeverPlayerKey(BSYC.db.realm, name, player.guid)
+	end
 	BSYC.db.realm[name] = BSYC.db.realm[name] or {}
 
 	local playerDB = BSYC.db.realm[name]
@@ -317,6 +320,25 @@ function Data:OnEnable()
 		BSYC:Print(L.DebugWarning)
 		C_Timer.After(6, function() BSYC:Print(L.DebugWarning) end)
 	end
+end
+
+--WoW Forever (ticket #479): BagSync used to store Forever characters under their first name only, so alts sharing a
+--first name overwrote one another.  Characters are now keyed by "FirstName Surname".  Move the old first-name-only entry
+--to the new key, but only when its stored GUID proves it belongs to this character; otherwise leave it for the
+--character it does belong to (it will be migrated when they log in, or can be removed in /bgs profiles).
+function Data:MigrateForeverPlayerKey(realmDB, fullName, guid)
+	if not realmDB or not fullName or not guid then return end
+	if realmDB[fullName] then return end
+
+	local legacyName = Unit:GetLegacyPlayerName()
+	if not legacyName or legacyName == "" or legacyName == fullName then return end
+
+	local legacyData = realmDB[legacyName]
+	if type(legacyData) ~= "table" or legacyData.guid ~= guid then return end
+
+	realmDB[fullName] = legacyData
+	realmDB[legacyName] = nil
+	Debug(BSYC_DL.INFO, "MigrateForeverPlayerKey", legacyName, "->", fullName)
 end
 
 function Data:ShowInfoWindow()
@@ -1353,7 +1375,9 @@ function Data:GetPlayerCurrencyObj(player, realm, GUID)
 	if not BSYC.tracking.currency then return end
 	Debug(BSYC_DL.TRACE, "GetPlayerCurrencyObj", player, realm)
 
-	if BagSyncDB[realm] and BagSyncDB[realm][player] then
+	--on WoW Forever, name/realm from GetPlayerInfoByGUID() may not carry the surname that is now part of our DB key
+	--(and a first-name-only legacy entry could belong to a different alt), so the GUID is authoritative there.
+	if not (BSYC.IsForever and GUID) and BagSyncDB[realm] and BagSyncDB[realm][player] then
 		return BagSyncDB[realm][player].currency
 	end
 	if GUID then
@@ -1371,6 +1395,7 @@ function Data:GetPlayerCurrencyObj(player, realm, GUID)
 end
 
 function Data:GetWarbandBankObj()
+	if not BSYC.isWarbandActive then return end
 	if not BSYC.tracking.warband then return end
 	if not BagSyncDB["warband§"] then return end
 	Debug(BSYC_DL.TRACE, "GetWarbandBankObj")

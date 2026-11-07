@@ -22,6 +22,7 @@ local tsort = _G.table.sort
 local GetAutoCompleteRealms = _G.GetAutoCompleteRealms
 local GetRealmName = _G.GetRealmName
 local UnitName = _G.UnitName
+local GetUnitName = _G.GetUnitName
 local UnitFactionGroup = _G.UnitFactionGroup
 local UnitClass = _G.UnitClass
 local UnitRace = _G.UnitRace
@@ -102,6 +103,30 @@ local function NormalizeRealmSingle(realm)
 	return cor, rws, lc
 end
 
+--WoW Forever gives characters a first name AND a surname, and only the combination is unique (see ticket #479).
+--On Forever UnitName("player") returns firstName, surname (the 2nd return is NOT a realm like on Retail/Classic),
+--so keying the DB on UnitName() alone made every character sharing a first name overwrite the same entry.
+--GetUnitName("player") returns the complete "FirstName Surname" string that the default UI displays, so use that.
+--Retail/Classic keep using UnitName("player") so existing SavedVariables keys are unchanged there.
+local function GetPlayerName()
+	local name, surname = UnitName("player")
+	if not BSYC.IsForever then
+		return name
+	end
+
+	if GetUnitName then
+		local ok, fullName = pcall(GetUnitName, "player", false)
+		if ok and type(fullName) == "string" and fullName ~= "" and fullName ~= _G.UNKNOWNOBJECT then
+			return fullName
+		end
+	end
+
+	if type(surname) == "string" and surname ~= "" and name then
+		return name .. " " .. surname
+	end
+	return name
+end
+
 local function GetPlayerMoney()
 	local money = GetMoney and GetMoney() or 0
 	local cursorMoney = GetCursorMoney and GetCursorMoney() or 0
@@ -130,7 +155,7 @@ if C_PlayerInteractionManager and Enum and Enum.PlayerInteractionType then
 		[InteractType.VoidStorageBanker] = { flag = "atVoidBank", msg = "BAGSYNC_EVENT_VOIDBANK" },
 		[InteractType.GuildBanker] = { flag = "atGuildBank", msg = "BAGSYNC_EVENT_GUILDBANK" },
 	}
-	if BSYC.isWarbandActive then
+	if BSYC.hasWarbandAPI then --scanners check isWarbandActive, which can change at runtime (see BSYC:RefreshWarbandState)
 		INTERACT_TYPE_MAP[InteractType.AccountBanker] = { flag = "atWarbandBank", msg = "BAGSYNC_EVENT_WARBANDBANK" }
 	end
 
@@ -283,11 +308,20 @@ function Unit:DoRealmCollection(source)
 	Debug(BSYC_DL.TRACE, "DoRealmCollection-lowerKey", Unit.lowerKey)
 end
 
+function Unit:GetPlayerName()
+	return GetPlayerName()
+end
+
+--the name BagSync used as the DB key before ticket #479 (first name only on Forever, unchanged elsewhere)
+function Unit:GetLegacyPlayerName()
+	return (UnitName("player"))
+end
+
 function Unit:GetUnitAddress(unit)
 	if not Unit.realmKey then Unit:DoRealmCollection("GetUnitAddress") end
 
 	local realmName = GetRealmName()
-	local playerName = UnitName("player")
+	local playerName = GetPlayerName()
 
 	if not unit then
 		return realmName, playerName
@@ -310,7 +344,7 @@ function Unit:GetPlayerInfo(bypassDebug)
 	if not Unit.realmKey then Unit:DoRealmCollection("GetPlayerInfo") end
 
 	local realmName = GetRealmName()
-	local playerName = UnitName("player")
+	local playerName = GetPlayerName()
 	local faction = UnitFactionGroup("player")
 	local guildName, _, _, guildRealm = GetGuildInfo("player")
 

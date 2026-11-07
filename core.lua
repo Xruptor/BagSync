@@ -14,6 +14,7 @@ local WOW_PROJECT_ID = _G.WOW_PROJECT_ID
 local WOW_PROJECT_MAINLINE = _G.WOW_PROJECT_MAINLINE
 local WOW_PROJECT_CLASSIC = _G.WOW_PROJECT_CLASSIC
 local WOW_PROJECT_WRATH_CLASSIC = _G.WOW_PROJECT_WRATH_CLASSIC
+local WOW_PROJECT_CAMELOT = _G.WOW_PROJECT_CAMELOT --WoW Forever (18), added in Forever 1.60.1; nil on every other client
 
 --Get TOC version
 --/dump select(4, GetBuildInfo())
@@ -24,16 +25,39 @@ local WOW_PROJECT_WRATH_CLASSIC = _G.WOW_PROJECT_WRATH_CLASSIC
 
 --Dump tables DevTools_Dump({ table }) or DevTools_Dump(table)
 
-BSYC.IsRetail = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
+--WoW Forever (internal game type "camelot") runs the retail (mainline) client and UI.
+--Detection is layered so one Blizzard change can't silently turn Forever into "Classic" again.  Any one signal is enough:
+--  1) Live Forever (1.60.1, launched 2026-11-04) reports its own project ID: WOW_PROJECT_ID == WOW_PROJECT_CAMELOT.
+--  2) The literal project ID 18, in case WOW_PROJECT_CAMELOT is ever renamed/removed (Blizzard said "Camelot" was an internal
+--     name).  18 is assigned to Forever in Blizzard's ProjectConstants.lua and is not used by any other client.
+--  3) A Forever-only API (warcraft.wiki.gg Category:Exclusive_API/forever) on a non-retail interface number.  Covers a future
+--     project ID renumber.  The interface guard (retail 12.x = 120100+, Forever 1.60.1 = 16001) keeps retail from ever matching
+--     if Blizzard later shares one of these APIs; Classic never has them.
+--  4) Early Forever beta builds (before ~1.60.1.70205) reported WOW_PROJECT_MAINLINE; a mainline project ID with a sub-100000
+--     interface can only be Forever.
+local TOC_VERSION = select(4, GetBuildInfo())
+local function DetectForever()
+	if WOW_PROJECT_CAMELOT ~= nil and WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then return true end
+	if WOW_PROJECT_ID == 18 then return true end
+
+	local isRetailInterface = type(TOC_VERSION) ~= "number" or TOC_VERSION >= 100000
+	if isRetailInterface then return false end
+
+	local C_GameRules, C_PlayerInfo = _G.C_GameRules, _G.C_PlayerInfo
+	if (C_GameRules and type(C_GameRules.GetForeverExperiencePreset) == "function")
+		or (C_PlayerInfo and type(C_PlayerInfo.ShouldDisplaySurname) == "function") then
+		return true
+	end
+
+	return WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
+end
+BSYC.IsForever = DetectForever()
+
+--IsRetail means "retail client/API family" throughout BagSync, so it stays true on Forever.
+--Use IsForever only for game-content differences.  For API differences, check the function/enum exists instead.
+BSYC.IsRetail = (WOW_PROJECT_ID == WOW_PROJECT_MAINLINE) or BSYC.IsForever
 BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 BSYC.IsWLK_C = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
-
---WoW Forever (internal game type "camelot") runs the retail client, so WOW_PROJECT_ID reports MAINLINE and IsRetail is true.
---Retail interface numbers are 6 digits (12.1.0 = 120100) while Forever is 1.x (1.60.1 = 16001), so a retail project ID with a
---sub-100000 interface can only be Forever.  Classic Era (11509) is excluded by the IsRetail check.
---Use IsForever only for game-content differences.  For API differences, check the function/enum exists instead.
-local TOC_VERSION = select(4, GetBuildInfo())
-BSYC.IsForever = (BSYC.IsRetail and TOC_VERSION and TOC_VERSION < 100000) or false
 
 BSYC.DEFAULT_FONT_NAME = BSYC.DEFAULT_FONT_NAME or "Friz Quadrata TT"
 BSYC.TOOLTIP_CACHE_MAX = BSYC.TOOLTIP_CACHE_MAX or 1000
@@ -170,7 +194,42 @@ end
 BSYC.IsReagentBagActive = (Constants.InventoryConstants.NumReagentBagSlots or 0) > 0
 
 --since FetchPurchasedBankTabData supports Guilds, it's possible in the future they will put it on a classic server with no Warband support.  So lets do it as last resort
-BSYC.isWarbandActive = (C_Container and C_Container.SortAccountBankBags) and (Enum and Enum.BagIndex and Enum.BagIndex.AccountBankTab_1) and (C_Bank and C_Bank.FetchPurchasedBankTabData)
+--hasWarbandAPI = the client ships the warband/account bank system (APIs + bag indexes).  It does NOT mean the feature is usable.
+BSYC.hasWarbandAPI = (C_Container and C_Container.SortAccountBankBags and Enum and Enum.BagIndex and Enum.BagIndex.AccountBankTab_1
+	and C_Bank and C_Bank.FetchPurchasedBankTabData) and true or false
+
+--WoW Forever ships the retail account bank code, so every API/Enum above exists, but the feature is locked off: Blizzard's own
+--Forever bank frame (Blizzard_UIPanels_Game/Camelot/BankFrame.lua) only adds account bank pages when
+--C_Bank.CanViewBank(Enum.BankType.Account) is true, and hides the purchase button while 0 account tabs are owned.
+--Mirror that check so we don't scan/display an account bank Forever doesn't have, and so it turns on by itself if Blizzard
+--ever enables account banks on Forever.  Retail/Classic are unchanged (isWarbandActive == hasWarbandAPI there).
+local function IsAccountBankUsable()
+	local accountType = Enum and Enum.BankType and Enum.BankType.Account
+	if not accountType or not C_Bank then return false end
+	if C_Bank.CanViewBank then
+		local ok, canView = pcall(C_Bank.CanViewBank, accountType)
+		if ok and canView == true then return true end
+	end
+	if C_Bank.FetchNumPurchasedBankTabs then
+		local ok, numTabs = pcall(C_Bank.FetchNumPurchasedBankTabs, accountType)
+		if ok and type(numTabs) == "number" and numTabs > 0 then return true end
+	end
+	return false
+end
+
+--Re-evaluated at login and whenever the bank is opened, since bank data may not be ready when the addon first loads.
+function BSYC:RefreshWarbandState(source)
+	local active = self.hasWarbandAPI
+	if active and self.IsForever then
+		active = IsAccountBankUsable()
+	end
+	if active ~= self.isWarbandActive and self.DEBUG then
+		self.DEBUG(BSYC_DL and BSYC_DL.INFO or 2, "Core", "RefreshWarbandState", source, active)
+	end
+	self.isWarbandActive = active
+	return active
+end
+BSYC:RefreshWarbandState("load")
 
 --increment forceDBReset to reset the ENTIRE db forcefully
 local forceDBReset = 3
@@ -204,7 +263,8 @@ local debugDefaults = {
 	SL5 = false,
 }
 
-if BSYC.isWarbandActive then
+--built whenever the client has the warband system (not only when it's active) so isWarbandActive can turn on later in the session
+if BSYC.hasWarbandAPI then
 	--Retail: AccountBankTab_1..5, WoW Forever: AccountBankTab_1..8
 	local warbandTabs = CollectBagIndexTabs("AccountBankTab_")
 	local warbandBags = {}

@@ -235,11 +235,17 @@ function Events:OnEnable()
 	end
 
 	--check to see if warband banks are even enabled on server
-	if BSYC.isWarbandActive then
+	--hasWarbandAPI: the client has the system.  isWarbandActive: it's actually usable (WoW Forever ships the API but keeps the
+	--account bank locked).  The scanners check isWarbandActive, so registering the events is harmless when it's locked, and lets
+	--warband tracking start on its own if the account bank is ever enabled.  Only force tracking off when the system doesn't exist.
+	BSYC:RefreshWarbandState("login")
+	if BSYC.hasWarbandAPI then
 		RegisterScannerEventHandler(self, "PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED", "SaveWarbandBank")
 		RegisterScannerEventHandler(self, "ACCOUNT_MONEY", "SaveWarbandBankMoney")
 	else
 		if BSYC.tracking then BSYC.tracking.warband = false end
+	end
+	if not BSYC.isWarbandActive then
 		Debug(BSYC_DL.WARN, "Module-Inactive", "warband")
 	end
 
@@ -295,7 +301,7 @@ function Events:BAGSYNC_EVENT_BANK(_, isOpen)
 	if isOpen then
 		ScannerSaveBank(Scanner)
 
-		if BSYC.isWarbandActive then
+		if BSYC:RefreshWarbandState("bank") then
 			ScannerSaveWarbandBank(Scanner)
 			ScannerSaveWarbandBankMoney(Scanner)
 		end
