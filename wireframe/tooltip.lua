@@ -256,7 +256,7 @@ local function GetDefaultAllowKeys()
 	return DEFAULT_ALLOW_KEYS
 end
 
--- Tooltip signature option mapping (eliminates 48-line repetitive function)
+-- options that change what the tooltip shows, used to build the tooltip cache signature
 local TOOLTIP_SIG_OPTIONS = {
 	-- Count-affecting options
 	enableShowUniqueItemsTotals = true,
@@ -302,7 +302,6 @@ local function BuildTooltipSignature(self, opts, allowSig, advUnitList, showExtT
 	parts[#parts + 1] = doCurrentPlayerOnly and "1" or "0"
 	parts[#parts + 1] = skipTally and "1" or "0"
 
-	-- Use TOOLTIP_SIG_OPTIONS mapping to eliminate 30+ lines of repetition
 	for option in pairs(TOOLTIP_SIG_OPTIONS) do
 		parts[#parts + 1] = opts[option] and "1" or "0"
 	end
@@ -475,7 +474,8 @@ local function AddCurrentPlayer(self, ctx, advPlayerChk)
 		if allowReagents then playerTotal = playerTotal + self:AddItems(playerObj, ctx.link, "reagents", ctx.countList) end
 	else
 		if allowAnyBags then
-			local carryCount, bagCount, bankCount, regCount = 0, 0, 0, 0
+			local carryCount, bagCount, bankCount, regCount
+			regCount = 0
 
 			ctx.carriedCount = ctx.carriedCount or ((ctx.GetItemCount and ctx.GetItemCount(ctx.origLink)) or 0)
 
@@ -1093,7 +1093,7 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 	local total = 0
 	local tallyCount = WipeTable(self.__scratchTallyCount or {})
 	self.__scratchTallyCount = tallyCount
-	local dispType = ""
+	local dispType
 	local opts = BSYC.options
 	local colors = BSYC.colors
 	local colorType = self:GetClassColor(unitObj, 2)
@@ -1114,10 +1114,10 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 	if ((countList["bank"] or 0) > 0) then
 		total = total + countList["bank"]
 
-		local bTabStr = ""
+		local bTabStr
 
 		if BSYC.IsBankTabsActive and opts.showBankTabs and countList["btab"] and #countList["btab"] > 0 then
-			tsort(countList["btab"], function(a, b) return a < b end)
+			tsort(countList["btab"])
 			bTabStr = ConcatNumeric(countList["btab"], ",")
 
 			if str_len(bTabStr) > 0 then
@@ -1154,7 +1154,7 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 		local gTabStr = ""
 
 		if opts.showGuildTabs and countList["gtab"] and #countList["gtab"] > 0 then
-			tsort(countList["gtab"], function(a, b) return a < b end)
+			tsort(countList["gtab"])
 			gTabStr = ConcatNumeric(countList["gtab"], ",")
 
 			if str_len(gTabStr) > 0 then
@@ -1170,7 +1170,7 @@ function Tooltip:UnitTotals(unitObj, countList, unitList, advUnitList)
 		local wTabStr = ""
 
 		if opts.showWarbandTabs and countList["wtab"] and #countList["wtab"] > 0 then
-			tsort(countList["wtab"], function(a, b) return a < b end)
+			tsort(countList["wtab"])
 			wTabStr = ConcatNumeric(countList["wtab"], ",")
 
 			if str_len(wTabStr) > 0 then
@@ -1310,7 +1310,7 @@ local function AddItemInfoLines(unitList, opts, shortID, isBattlePet, addSeparat
 		end
 
 		if opts.enableItemTypes and shortID then
-			local itemType, itemSubType, _, _, _, _, classID, subclassID
+			local itemType, itemSubType, classID, subclassID
 			if Data.__cache.items[shortID] then
 				itemType = Data.__cache.items[shortID].itemType
 				itemSubType = Data.__cache.items[shortID].itemSubType
@@ -1519,7 +1519,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		tinsert(unitList, 1, { colorized="|cffff7d0a["..L.Blacklist.."]|r", tallyString=" "} )
 	end
 
-	local desc, value = "", ""
+	local desc, value
 	local addSeparator = false
 
 	if not skipTally and opts.showTotal and grandTotal > 0 and #unitList > 1 then
@@ -1543,7 +1543,7 @@ function Tooltip:TallyUnits(objTooltip, link, source, isBattlePet)
 		tinsert(unitList, 1, { colorized=desc, tallyString=value} )
 	end
 
-	addSeparator = AddItemInfoLines(unitList, opts, shortID, isBattlePet, addSeparator)
+	AddItemInfoLines(unitList, opts, shortID, isBattlePet, addSeparator)
 
 	-- Separator is only prepended for inline output; extTip manages its own spacing.
 	if not showExtTip and opts.enableTooltipSeparator and #unitList > 0 then
@@ -1626,7 +1626,7 @@ function Tooltip:CurrencyTooltip(objTooltip, currencyName, currencyIcon, currenc
 	local tenderCheck = currencyID == 2032 or false
 
 	for unitObj in Data:IterateUnits() do
-		if not unitObj.isGuild and unitObj.data.currency and unitObj.data.currency[currencyID] and unitObj.data.currency[currencyID].count > 0 then
+		if not unitObj.isGuild and unitObj.data.currency and unitObj.data.currency[currencyID] and (unitObj.data.currency[currencyID].count or 0) > 0 then
 			local doTender = (tenderCheck and unitObj.data == BSYC.db.player) or false
 
 			if not tenderCheck or doTender then
@@ -1835,7 +1835,7 @@ function Tooltip:HookTooltip(objTooltip)
 	if not isBattlePet then
 		objTooltip:HookScript("OnTooltipSetItem", function(self)
 			if self.__tooltipUpdated then return end
-			local name, link = self:GetItem()
+			local _, link = self:GetItem()
 			if link then
 				local linkName = str_match(link, "|h%[(.-)%]|h")
 				if not linkName or str_len(linkName) < 1 then return nil end
@@ -1885,7 +1885,6 @@ function Tooltip:HookTooltip(objTooltip)
 	if objTooltip.SetCraftItem then
 		hooksecurefunc(objTooltip, "SetCraftItem", function(self, index, reagent)
 			if self.__tooltipUpdated then return end
-			local _, _, count = _G.GetCraftReagentInfo(index, reagent)
 			local link = _G.GetCraftReagentItemLink(index, reagent)
 			if link then
 				Tooltip:TallyUnits(self, link, "SetCraftItem")

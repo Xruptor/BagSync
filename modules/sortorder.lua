@@ -13,7 +13,6 @@ local SortOrder = BSYC:NewModule("SortOrder")
 local Data = BSYC:GetModule("Data")
 local Tooltip = BSYC:GetModule("Tooltip")
 
--- Cache global API references to eliminate repeated _G lookups
 local HybridScrollFrame_GetButtons = _G.HybridScrollFrame_GetButtons
 local HybridScrollFrame_GetOffset = _G.HybridScrollFrame_GetOffset
 local HybridScrollFrame_SetOffset = _G.HybridScrollFrame_SetOffset

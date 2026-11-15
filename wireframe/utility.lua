@@ -24,8 +24,7 @@ local secretAPIs = {
 	canaccessallvalues = _G.canaccessallvalues,
 }
 
--- Unified helper for calling secret APIs safely (replaced 30+ lines of duplicated code)
--- All 5 secret API functions followed the exact same pattern: get function, check type, pcall, boolean convert
+-- call a secret value API safely, returns nil when the API doesn't exist on this client
 local function CallSecretAPI(apiName, ...)
 	local fn = secretAPIs[apiName]
 	if type(fn) ~= "function" then
@@ -62,7 +61,6 @@ end
 
 -- Safe type checker that handles secret values on Retail 12.0+
 -- Calling type() on a secret value will throw an error, so we use pcall
--- Removed redundant _G.type reference - type() is always available
 local function SafeType(v)
 	local ok, result = pcall(type, v)
 	if ok then return result end
@@ -70,7 +68,7 @@ local function SafeType(v)
 	return nil
 end
 
--- Shared helper for number validation (eliminates duplication between IsSafeNumber and IsSecretNumber)
+-- Returns isNumber, isSecret, canAccess
 -- Returns: isNumber (bool), isSecret (bool), canAccess (bool)
 local function CheckNumberAccess(self, v)
 	local t = SafeType(v)
@@ -101,7 +99,6 @@ end
 
 function Utility:GetFrameLabel(frame)
 	if not frame then return "<nil>" end
-	-- Removed redundant checks - if GetName/GetObjectType don't exist, we'll get nil which is handled
 	local name = frame.GetName and frame:GetName()
 	local objType = frame.GetObjectType and frame:GetObjectType()
 
@@ -117,7 +114,7 @@ function Utility:IsBlizzardFrameName(name)
 	if name:find("^GameTooltip") or name:find("^ShoppingTooltip") or name:find("^ItemRef") then
 		return true
 	end
-	return name == "UIParent" -- Removed explicit return false for consistency
+	return name == "UIParent"
 end
 
 -- Cache of loaded addon names - stored on module instance to allow invalidation if needed
@@ -182,7 +179,6 @@ function Utility:WarnSecretValue(moduleName, owner, frame, context, valueName, f
 	local ownerLabel = self:GetFrameLabel(owner)
 	local frameLabel = self:GetFrameLabel(frame)
 
-	-- Use table.concat instead of repeated string concatenation (more efficient for multiple parts)
 	local key = table.concat({
 		ownerLabel,
 		frameLabel,
@@ -204,7 +200,7 @@ function Utility:WarnSecretValue(moduleName, owner, frame, context, valueName, f
 	BSYC:Print(msg)
 end
 
--- Helper to check if a frame contains secret values (consolidates duplicate secret checks)
+-- check if a frame's coordinates are secret values
 local function CheckFrameSecrets(self, moduleName, frame, owner, context, funcName)
 	if self:IsSecretTable(frame) then
 		self:WarnSecretValue(moduleName, owner or frame, frame, context, "frame", funcName)

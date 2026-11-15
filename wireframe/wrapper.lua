@@ -18,6 +18,11 @@ local GameTooltip = _G.GameTooltip
 local ColorPickerFrame = _G.ColorPickerFrame
 local NOT_BOUND = _G.NOT_BOUND
 
+--errors inside handlers go to the error handler (BugSack, etc) instead of being swallowed, without stopping the other handlers
+local securecallfunction = _G.securecallfunction or function(func, ...)
+	return xpcall(func, _G.geterrorhandler(), ...)
+end
+
 -- ---------------------------------------------------------------------------
 -- Locale (AceLocale replacement)
 -- ---------------------------------------------------------------------------
@@ -59,10 +64,14 @@ function BSYC:GetLocale()
 	return L
 end
 
--- Cache locale lookup to avoid repeated GetLocale calls
+--strings are copied into L the first time they're used, so every lookup after that is a plain table read
 BSYC.L = BSYC.L or setmetatable({}, {
-	__index = function(_, key)
-		return BSYC:GetLocale()[key]
+	__index = function(self, key)
+		local value = BSYC:GetLocale()[key]
+		if value ~= nil then
+			rawset(self, key, value)
+		end
+		return value
 	end,
 })
 
@@ -125,27 +134,14 @@ end
 BSYC._modulesByName = BSYC._modulesByName or {}
 BSYC._modulesByOrder = BSYC._modulesByOrder or {}
 
--- Use metatable instead of individual closure assignments
-local moduleMeta = {}
-local MODULE_METHODS = {
-	RegisterEvent = true,
-	UnregisterEvent = true,
-	UnregisterAllEvents = true,
-	RegisterMessage = true,
-	UnregisterMessage = true,
-	UnregisterAllMessages = true,
-	SendMessage = true,
-}
-
-function moduleMeta:__index(method)
-	if not MODULE_METHODS[method] then return nil end
-	return function(self, ...)
-		local func = BSYC[method]
-		if type(func) == "function" then
-			return func(self, ...)
-		end
+--modules share the event/message methods through their metatable
+local moduleMethods = {}
+for _, method in ipairs({ "RegisterEvent", "UnregisterEvent", "UnregisterAllEvents", "RegisterMessage", "UnregisterMessage", "UnregisterAllMessages", "SendMessage" }) do
+	moduleMethods[method] = function(self, ...)
+		return BSYC[method](self, ...)
 	end
 end
+local moduleMeta = { __index = moduleMethods }
 
 function BSYC:NewModule(name)
 	if type(name) ~= "string" or name == "" then return nil end
@@ -277,7 +273,7 @@ function BSYC:SendMessage(messageName, ...)
 	local handlers = BSYC._messageHandlers[messageName]
 	if not handlers then return end
 	for _, handler in pairs(handlers) do
-		pcall(handler, messageName, ...)
+		securecallfunction(handler, messageName, ...)
 	end
 end
 
@@ -285,7 +281,7 @@ eventFrame:SetScript("OnEvent", function(_, eventName, ...)
 	local handlers = BSYC._eventHandlers[eventName]
 	if not handlers then return end
 	for _, handler in pairs(handlers) do
-		pcall(handler, eventName, ...)
+		securecallfunction(handler, eventName, ...)
 	end
 end)
 
@@ -595,7 +591,6 @@ local function applyFontPreview(dropdownFrame, fontPath)
 	end
 end
 
--- Helper to refresh all widgets (eliminates 12+ duplicate loops)
 local function refreshAllWidgets(widgets)
 	for _, w in ipairs(widgets) do
 		w.refresh()
@@ -795,7 +790,7 @@ local function getSelectEntries(values)
 	return entries, labels
 end
 
--- Type-specific render helpers (extracted from renderItems)
+-- render helpers for each option type
 local function renderToggle(parent, item, widgets, y)
 	local label = resolveText(item.label or item.name) or ""
 	local cb, cbY = createCheckbox(parent, label, y)
@@ -1148,6 +1143,7 @@ local function renderItems(parent, items, widgets, y)
 					box:SetHeight(math.max(40, topOffset + contentHeight + 10))
 					y = y - box:GetHeight() - 10
 				else
+					local _
 					_, y = createTitle(parent, title, y, item.titleColor)
 					y = renderItems(parent, item.items, widgets, y)
 				end
@@ -1245,6 +1241,7 @@ function BSYC.ConfigDialog:AddToBlizOptions(appName, name, parentName)
 		end
 		panel._built = true
 
+		local _
 		local y = -12
 		local title = resolveText(optionsTable.title or optionsTable.name) or ""
 		if title ~= "" then
@@ -1278,7 +1275,7 @@ eventFrame:HookScript("OnEvent", function(_, eventName, arg1)
 		if arg1 ~= ADDON_NAME or coreEnabled then return end
 		coreEnabled = true
 		if BSYC.OnEnable then
-			pcall(BSYC.OnEnable, BSYC)
+			securecallfunction(BSYC.OnEnable, BSYC)
 		end
 		return
 	end
@@ -1289,12 +1286,12 @@ eventFrame:HookScript("OnEvent", function(_, eventName, arg1)
 
 		if not coreEnabled and BSYC.OnEnable then
 			coreEnabled = true
-			pcall(BSYC.OnEnable, BSYC)
+			securecallfunction(BSYC.OnEnable, BSYC)
 		end
 
 		for _, module in BSYC:IterateModules() do
 			if module.OnEnable then
-				pcall(module.OnEnable, module)
+				securecallfunction(module.OnEnable, module)
 			end
 		end
 	end

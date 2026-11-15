@@ -29,7 +29,6 @@ local GetItemQualityColor = BSYC.API.GetItemQualityColor
 local LEVEL = LEVEL
 local STANDARD_TEXT_FONT = STANDARD_TEXT_FONT
 
--- Display type lookup table (eliminates if-chain)
 local DISPLAY_TYPE_MAP = {
 	singleCharLocations = "TooltipSmall_",
 	useIconLocations = "TooltipIcon_",
@@ -46,7 +45,6 @@ local function GetDisplayType(options)
 	return DISPLAY_TYPE_MAP.default
 end
 
--- Optimized comma value function (removed redundant tonumber)
 local function comma_value(n)
 	if not n or not tonumber(n) then return "?" end
 	return tostring(BreakUpLargeNumbers(n))
@@ -79,7 +77,7 @@ local function parseItems(data, tab, equipped, usrData, unitObj, target, itemID,
 	end
 end
 
--- Helper to process tabular data (guild/warband) - eliminates duplication
+-- tabbed storage (guild/warband)
 local function ProcessTabularData(unitObj, usrData, target, itemID, colorized, options)
 	for tabID, tabData in pairs(unitObj.data.tabs or {}) do
 		parseItems(tabData, tabID, false, usrData, unitObj, target, itemID, colorized, options)
@@ -244,11 +242,10 @@ end
 
 -- Helper to build item info text
 local function BuildItemInfoText(item, options, colors)
-	local info = ""
 	local dispType = GetDisplayType(options)
 
 	local colorType = Tooltip:GetClassColor(item.unitObj, 2)
-	info = Tooltip:HexColor(colors.second, comma_value(item.count))
+	local info = Tooltip:HexColor(colors.second, comma_value(item.count))
 	info = info.." ("..Tooltip:HexColor(colorType, L[dispType..item.target]).." "
 
 	if item.tab then

@@ -39,7 +39,7 @@ local Print = BSYC.Print
 
 local UnitGetPlayerInfo = Unit.GetPlayerInfo
 
--- Cache Scanner method references for hot path optimization
+-- Scanner methods used by the event handlers
 local ScannerSaveBag = Scanner.SaveBag
 local ScannerSaveWarbandBank = Scanner.SaveWarbandBank
 local ScannerSaveWarbandBankMoney = Scanner.SaveWarbandBankMoney
@@ -58,9 +58,10 @@ local function Debug(level, ...)
 	if BSYC.DEBUG then BSYC.DEBUG(level, "Events", ...) end
 end
 
--- Generic helper to register a one-time hook, eliminating duplication
+-- register a hook only once, and only if the function exists on this client
 local function GenericHook(self, hookKey, targetTable, funcName, handler)
 	if self[hookKey] or not hooksecurefunc then return end
+	if type((targetTable or _G)[funcName]) ~= "function" then return end
 	self[hookKey] = true
 
 	if targetTable then
@@ -70,7 +71,6 @@ local function GenericHook(self, hookKey, targetTable, funcName, handler)
 	end
 end
 
--- Optimized ProcessQueuedBag using cached Scanner methods (no Scanner parameter needed)
 local function ProcessQueuedBag(bagid)
 	if Scanner.IsBackpack(Scanner, bagid) or Scanner.IsBackpackBag(Scanner, bagid) or
 	   Scanner.IsKeyring(Scanner, bagid) or Scanner.IsReagentBag(Scanner, bagid) then
@@ -139,13 +139,15 @@ local cachedBagMin, cachedBagMax
 local function QueueBagUpdates()
 	Debug(BSYC_DL.SL3, "QueueBagUpdates", "Queueing bag updates for rescan")
 
-	-- Cache bag slot bounds to avoid repeated GetBagSlots calls
 	if not cachedBagMin or not cachedBagMax then
 		cachedBagMin, cachedBagMax = ScannerGetBagSlots(Scanner, "bag")
 	end
 
 	for i = cachedBagMin, cachedBagMax do
 		Events:BAG_UPDATE(nil, i)
+	end
+	if BSYC.IsReagentBagActive then
+		Events:BAG_UPDATE(nil, Enum.BagIndex.ReagentBag)
 	end
 end
 
@@ -194,6 +196,10 @@ function Events:OnEnable()
 	end)
 
 	registerEvent(self, "PLAYERBANKSLOTS_CHANGED")
+	if BSYC.IsBankTabsActive then
+		registerEvent(self, "BAG_CONTAINER_UPDATE", "QueueBankRescan")
+		registerEvent(self, "BANK_TABS_CHANGED", "QueueBankRescan")
+	end
 
 	--register our custom Event Handlers
 	registerMessage(self, "BAGSYNC_EVENT_MAILBOX")
@@ -205,11 +211,9 @@ function Events:OnEnable()
 
 	--check to see if the ReagentBank is even enabled on server
 	if IsReagentBankUnlocked then
-		-- Use consolidated helper for one-liner event handlers
 		RegisterScannerEventHandler(self, "PLAYERREAGENTBANKSLOTS_CHANGED", "SaveReagents")
 		RegisterScannerEventHandler(self, "REAGENTBANK_PURCHASED", "SaveReagents")
 	else
-		-- Inlined DisableTracking logic (was only used here)
 		if BSYC.tracking then BSYC.tracking.reagents = false end
 		if BSYC.db and BSYC.db.player then BSYC.db.player.reagents = nil end
 		Debug(BSYC_DL.WARN, "Module-Inactive", "reagents")
@@ -234,10 +238,7 @@ function Events:OnEnable()
 		Debug(BSYC_DL.WARN, "Module-Inactive", "guild")
 	end
 
-	--check to see if warband banks are even enabled on server
-	--hasWarbandAPI: the client has the system.  isWarbandActive: it's actually usable (WoW Forever ships the API but keeps the
-	--account bank locked).  The scanners check isWarbandActive, so registering the events is harmless when it's locked, and lets
-	--warband tracking start on its own if the account bank is ever enabled.  Only force tracking off when the system doesn't exist.
+	--check to see if warband banks are even enabled on server, the scanners check isWarbandActive themselves
 	BSYC:RefreshWarbandState("login")
 	if BSYC.hasWarbandAPI then
 		RegisterScannerEventHandler(self, "PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED", "SaveWarbandBank")
@@ -258,12 +259,12 @@ function Events:OnEnable()
 			registerEvent(self, "CURRENCY_TRANSFER_LOG_UPDATE")
 			GenericHook(self, "_currencyTransferHooked", C_CurrencyInfo, "RequestCurrencyFromAccountCharacter",
 				function(sourceGUID, currencyID, transferAmt)
-					-- Get the transfer cost if the API is available
-					local transferCost = 0
+					--the cost is the total taken from the source character (amount + transfer fee)
+					local transferCost = transferAmt or 0
 					if type(C_CurrencyInfo.GetCostToTransferCurrency) == "function" then
-						transferCost = C_CurrencyInfo.GetCostToTransferCurrency(currencyID, transferAmt) or 0
+						transferCost = C_CurrencyInfo.GetCostToTransferCurrency(currencyID, transferAmt) or transferCost
 					end
-					ScannerProcessCurrencyTransfer(Scanner, false, sourceGUID, currencyID, transferAmt, transferCost)
+					ScannerProcessCurrencyTransfer(Scanner, false, sourceGUID, currencyID, transferCost)
 				end
 			)
 		end
@@ -296,15 +297,22 @@ function Events:BAGSYNC_EVENT_MAILBOX(_, isOpen)
 	end
 end
 
+--scan on open and again on close, the bank isn't always loaded yet when it first opens (WoW Forever)
 function Events:BAGSYNC_EVENT_BANK(_, isOpen)
 	Debug(BSYC_DL.DEBUG, "BAGSYNC_EVENT_BANK", isOpen)
-	if isOpen then
-		ScannerSaveBank(Scanner)
+	StopTimer(BSYC, "BankRescan")
+	ScannerSaveBank(Scanner)
 
-		if BSYC:RefreshWarbandState("bank") then
-			ScannerSaveWarbandBank(Scanner)
-			ScannerSaveWarbandBankMoney(Scanner)
-		end
+	if BSYC:RefreshWarbandState("bank") then
+		ScannerSaveWarbandBank(Scanner)
+		ScannerSaveWarbandBankMoney(Scanner)
+	end
+end
+
+--bank tab sockets (WoW Forever) and purchased tabs can change without a BAG_UPDATE for the container
+function Events:QueueBankRescan()
+	if Unit.atBank then
+		StartTimer(BSYC, "BankRescan", 0.5, Scanner, "SaveBank")
 	end
 end
 
@@ -346,7 +354,12 @@ function Events:MAIL_SEND_SUCCESS()
 end
 
 function Events:PLAYERBANKSLOTS_CHANGED()
-	ScannerSaveBank(Scanner, true)
+	--bank tabs have no root container, on Forever this fires when a bag is put in or taken out of a bank tab
+	if BSYC.IsBankTabsActive then
+		self:QueueBankRescan()
+	else
+		ScannerSaveBank(Scanner, true)
+	end
 end
 
 function Events:GUILDBANKBAGSLOTS_CHANGED()
@@ -457,7 +470,6 @@ function Events:GuildBank_Open()
 	if not BSYC.tracking.guild then return end
 
 	--I used to do one query per server response, but honestly it wasn't much of a difference then just spamming them all
-	-- Removed redundant nil checks on GetNumGuildBankTabs/GetGuildBankTabInfo/QueryGuildBankTab (verified at OnEnable)
 	local numTabs = GetNumGuildBankTabs and GetNumGuildBankTabs() or 0
 	if GetGuildBankTabInfo and QueryGuildBankTab then
 		for tab = 1, numTabs do
@@ -512,7 +524,6 @@ function Events:CURRENCY_DISPLAY_UPDATE()
 		return
 	end
 
-	-- Use dedicated reset helper instead of inline loop
 	ResetCurrencyRetryCounters()
 
 	-- Pass skipRetry=true to force save regardless of listSize state
@@ -523,7 +534,6 @@ end
 function Events:PLAYER_REGEN_ENABLED()
 	Debug(BSYC_DL.FINE, "PLAYER_REGEN_ENABLED ENTRY - doCurrencyUpdate:", self.doCurrencyUpdate)
 
-	-- Removed redundant combat check - this event only fires when leaving combat
 
 	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
 	self.doCurrencyUpdate = nil

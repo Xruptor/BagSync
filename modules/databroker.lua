@@ -26,7 +26,6 @@ local CreateFrame = _G.CreateFrame
 local ToggleDropDownMenu = _G.ToggleDropDownMenu
 local SOUNDKIT = _G.SOUNDKIT
 
--- Helper to ensure minimap DB structure exists (eliminates duplication across 4 functions)
 local function EnsureMinimapDB()
 	BSYC.options = BSYC.options or {}
 	BSYC.options.minimap = BSYC.options.minimap or {}
@@ -53,14 +52,12 @@ function DataBroker:BuildMinimapDropdown()
 		UIDropDownMenu_AddButton(info, level)
 	end
 
-	-- Data-driven menu items (eliminates 12 repetitive addButton calls)
 	bgsMinimapDD.initialize = function(_, level)
 		if level == 1 then
 			if SOUNDKIT and SOUNDKIT.GS_TITLE_OPTION_EXIT then
 				_G.PlaySound(SOUNDKIT.GS_TITLE_OPTION_EXIT)
 			end
 
-			-- Cache module references to avoid repeated GetModule calls
 			local Search = BSYC:GetModule("Search")
 			local Currency = BSYC:CanDoCurrency() and BSYC:GetModule("Currency")
 			local Professions = BSYC:CanDoProfessions() and BSYC:GetModule("Professions")

@@ -20,7 +20,6 @@ local pairs, ipairs = pairs, ipairs
 local tinsert, tconcat = table.insert, table.concat
 local strtrim = _G.strtrim
 local strmatch = string.match
-local strfind = string.find
 local time = _G.time
 local CreateFrame = _G.CreateFrame
 local UIParent = _G.UIParent
@@ -86,7 +85,6 @@ local function Debug(level, ...)
 	if BSYC.DEBUG then BSYC.DEBUG(level, "Scanner", ...) end
 end
 
--- Cache IsSafeTable function reference to avoid repeated module checks
 local isSafeTable = Utility and Utility.IsSafeTable and function(v)
 	return Utility:IsSafeTable(v)
 end or function(v)
@@ -309,18 +307,23 @@ function Scanner:SaveEquippedBags(bagtype)
 	local minCnt, maxCnt
 
 	if bagtype == "bag" then
-		-- equipped bag containers are 1..4; backpack (0) is NOT an equipped bag slot
+		-- equipped bag containers are 1..4 (plus the reagent bag); backpack (0) is NOT an equipped bag slot
 		minCnt, maxCnt = BagIndex.Bag_1, BagIndex.Bag_4
+		if BSYC.IsReagentBagActive then maxCnt = BagIndex.ReagentBag end
 	else
 		-- bank equip bags stay based on GetBagSlots()
 		minCnt, maxCnt = self:GetBagSlots(bagtype)
 	end
 
 	-- sanity range for equipped bag inventory slots (Bag0Slot..Bag3Slot)
-	local bagInvMin, bagInvMax
+	local bagInvMin, bagInvMax, reagentInvID
 	if bagtype == "bag" and GetInventorySlotInfo then
 		bagInvMin = GetInventorySlotInfo("Bag0Slot")
 		bagInvMax = GetInventorySlotInfo("Bag3Slot")
+		if BSYC.IsReagentBagActive then
+			local ok, slotID = pcall(GetInventorySlotInfo, "ReagentBag0Slot")
+			reagentInvID = ok and slotID or nil
+		end
 	end
 
 	for i = minCnt, maxCnt do
@@ -328,7 +331,7 @@ function Scanner:SaveEquippedBags(bagtype)
 
 		-- OPTIONAL HARDENING: ensure this invID is actually a bag slot
 		if bagtype == "bag" then
-			if not (invID and bagInvMin and bagInvMax and invID >= bagInvMin and invID <= bagInvMax) then
+			if not (invID and ((bagInvMin and bagInvMax and invID >= bagInvMin and invID <= bagInvMax) or invID == reagentInvID)) then
 				invID = nil
 			end
 		end
@@ -411,6 +414,25 @@ function Scanner:SaveBank(rootOnly)
 		return
 	end
 
+	local minCnt, maxCnt = self:GetBagSlots("bank")
+
+	--bank tabs load after the bank opens, if none of them have slots yet keep what we already have instead of wiping it
+	if BSYC.IsBankTabsActive and minCnt and maxCnt then
+		local getNumSlots = BSYC.API.GetContainerNumSlots
+		local hasSlots = false
+		for i = minCnt, maxCnt do
+			local numSlots = getNumSlots(i)
+			if numSlots and numSlots > 0 then
+				hasSlots = true
+				break
+			end
+		end
+		if not hasSlots then
+			Debug(BSYC_DL.INFO, "SaveBank", "TabsNotReady")
+			return
+		end
+	end
+
 	--lets refresh the bank database, especially if the bagids got changed or we are using bank tabs now
 	if BSYC.db.player.bank then BSYC.db.player.bank = {} end
 
@@ -419,7 +441,6 @@ function Scanner:SaveBank(rootOnly)
 		self:SaveBag("bank", BagIndex.Bank)
 	end
 
-	local minCnt, maxCnt = self:GetBagSlots("bank")
 	if minCnt and maxCnt then
 		for i = minCnt, maxCnt do
 			self:SaveBag("bank", i)
@@ -480,7 +501,7 @@ local function HideBattlePetTooltips()
 	if floatingBattlePetTooltip then floatingBattlePetTooltip:Hide() end
 end
 
--- Consolidated helper to fetch battle pet info from tooltip APIs
+-- fetch battle pet info from the tooltip APIs
 local function FetchTooltipBattlePet(typeSlot, arg1, arg2)
 	if typeSlot == "guild" then
 		--MOP Classic and a few other classic servers don't have C_TooltipInfo implemented for some stupid reason. So check for that.  *facepalm*
@@ -576,10 +597,10 @@ local function findBattlePet(iconTexture, petName, typeSlot, arg1, arg2)
 
 		if numPets > 0 and C_PetJournal.GetPetInfoByIndex then
 			for index = 1, numPets do
-				local _, speciesID, _, _, _, _, _, _, icon = C_PetJournal.GetPetInfoByIndex(index)
+				local _, petSpeciesID, _, _, _, _, _, _, icon = C_PetJournal.GetPetInfoByIndex(index)
 				if icon == iconTexture then
-					petCacheByIcon[iconTexture] = speciesID
-					return speciesID
+					petCacheByIcon[iconTexture] = petSpeciesID
+					return petSpeciesID
 				end
 			end
 		end
@@ -640,9 +661,8 @@ function Scanner:SaveGuildBank(tabID)
 					end
 				end
 			end
+			guildDB.tabs[tab] = slotItems
 		end
-
-		guildDB.tabs[tab] = slotItems
 	end
 
 	local player = Unit:GetPlayerInfo()
@@ -708,29 +728,29 @@ function Scanner:SaveWarbandBank(bagID)
 			local slotItems = {}
 			if not warbandDB.tabs then warbandDB.tabs = {} end
 
-			local tabBagID = BSYC.WarbandIndex.tabs[tabID]
-			if tabBagID then
-				local numSlots = getNumSlots(tabBagID)
-				Debug(BSYC_DL.INFO, "SaveWarbandBank", tabID, tabBagID, numSlots, tabData)
+			local tabBagID = tabData.ID or BSYC.WarbandIndex.tabs[tabID]
+			local numSlots = tabBagID and getNumSlots(tabBagID) or 0
+			Debug(BSYC_DL.INFO, "SaveWarbandBank", tabID, tabBagID, numSlots)
 
+			--a purchased tab always has slots, zero means it hasn't loaded yet so keep what we have
+			if numSlots > 0 then
 				for slotID = 1, numSlots do
 					local link = ParseWarbandSlot(getContainerLinkCount, tabBagID, slotID)
 					if link then
 						slotItems[#slotItems + 1] = link
 					end
 				end
+				warbandDB.tabs[tabID] = slotItems
 			end
-
-			warbandDB.tabs[tabID] = slotItems
 		end
 	else
 		--scan specific bag/tab
 		local slotItems = {}
 		local tabID = BSYC.WarbandIndex.bags[bagID]
 
-		if tabID then
+		local numSlots = tabID and getNumSlots(bagID) or 0
+		if numSlots > 0 then
 			if not warbandDB.tabs then warbandDB.tabs = {} end
-			local numSlots = getNumSlots(bagID)
 			Debug(BSYC_DL.INFO, "SaveWarbandBank", tabID, bagID, numSlots)
 
 			for slotID = 1, numSlots do
@@ -812,6 +832,29 @@ function Scanner:SaveMailbox(isShow)
 	self:ResetTooltips()
 end
 
+--mail recipients are typed in by hand, so match the name regardless of case and resolve a realm given as Name-Realm
+local function FindMailRecipient(mailTo)
+	local mailRealm = GetRealmName()
+	local target, realm = strmatch(mailTo, "^(.-)%-(.+)$")
+	if target and target ~= "" then
+		mailTo, mailRealm = target, Unit:GetTrueRealmName(realm)
+	end
+	mailTo = strtrim and strtrim(mailTo) or mailTo
+
+	local realmDB = BagSyncDB[mailRealm]
+	if not realmDB then return end
+	if realmDB[mailTo] then
+		return realmDB[mailTo], mailTo, mailRealm
+	end
+
+	local lowerName = mailTo:lower()
+	for unitKey, unitData in pairs(realmDB) do
+		if type(unitData) == "table" and not BSYC.hasMark(unitKey, "©") and unitKey:lower() == lowerName then
+			return unitData, unitKey, mailRealm
+		end
+	end
+end
+
 function Scanner:SendMail(mailTo, addMail)
 	Debug(BSYC_DL.INFO, "SendMail", mailTo, addMail)
 	if not BSYC.tracking.mailbox then return end
@@ -852,30 +895,23 @@ function Scanner:SendMail(mailTo, addMail)
 		mailTo = Scanner.pendingMail.mailTo
 		local mailItems = Scanner.pendingMail.items
 
-		local mailRealm = GetRealmName() --get current realm, we will replace if sending to another realm
-		if strfind(mailTo, "%-") then --check for another realm
-			local target, realm = strmatch(mailTo, "(.+)-(.+)") --strip the realm
-			if target and realm then
-				mailTo, mailRealm = target, realm
-			end
-		end
-		if strtrim then
-			mailTo = strtrim(mailTo) --strip any spaces/characters just in case
-		end
-
 		--grab our DB entry for the recipient if they even exist, if they don't then ignore
-		if not BagSyncDB[mailRealm] then return end
-		if not BagSyncDB[mailRealm][mailTo] then return end
-		local unitObj = BagSyncDB[mailRealm][mailTo]
+		local unitObj, mailRealm
+		unitObj, mailTo, mailRealm = FindMailRecipient(mailTo)
+		if not unitObj then return end
 
 		if not unitObj.mailbox then unitObj.mailbox = {} end
 
 		for i=1, #mailItems do
 			local entry = mailItems[i]
-			tinsert(unitObj.mailbox, entry.link)
-			--check the cache and remove it to refresh that item
-			Data:RemoveTooltipCacheLink(entry.sendLink)
+			if entry.link then
+				tinsert(unitObj.mailbox, entry.link)
+			end
 			Debug(BSYC_DL.FINE, "SendMail-Add", mailTo, mailRealm, entry.name, entry.itemID, entry.link)
+		end
+		--another character's items changed, so the cached tooltip totals for them are stale
+		if #mailItems > 0 then
+			Data:ResetTooltipCache()
 		end
 
 		Scanner.pendingMail.mailTo = nil
@@ -1244,7 +1280,7 @@ function Scanner:SaveCurrency(showDebug, skipRetry)
 		if showDebug then Debug(BSYC_DL.INFO, "SaveCurrency", "skipRetry=true, proceeding to save") end
 	else
 		-- Check API readiness and handle retries
-		local listSize, status = InitializeCurrencyScan(getCurrencyListSize, getCurrencyListInfo)
+		local _, status = InitializeCurrencyScan(getCurrencyListSize, getCurrencyListInfo)
 
 		if status ~= "READY" then
 			local retryReason = status == "API_NOT_READY" and "API not ready yet" or "listSize not ready yet"
@@ -1564,7 +1600,6 @@ function Scanner:SaveProfessionsRetail(playerName)
 		return
 	end
 
-	local tmpRecipe = {}
 	local catCheck = {}
 	local orderIndex = 0
 
@@ -1625,8 +1660,6 @@ end
 
 -- Helper: Find profession skill line from GetProfessions
 local function FindProfessionSkillLine(professionName, numTradeSkills)
-	local professionSkillLine, professionRank, professionMaxRank
-
 	local prof1, prof2 = GetProfessions()
 	if not prof1 and not prof2 then
 		return nil, nil, nil
@@ -1660,7 +1693,6 @@ local function FindProfessionSkillLine(professionName, numTradeSkills)
 					end
 				end
 			end
-			if professionSkillLine then break end
 		end
 	end
 

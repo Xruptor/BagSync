@@ -11,7 +11,6 @@ local BSYC = select(2, ...) --grab the addon namespace
 local UI = BSYC:GetModule("UI")
 local Profiles = BSYC:NewModule("Profiles")
 local Data = BSYC:GetModule("Data")
-local Unit = BSYC:GetModule("Unit")
 local Tooltip = BSYC:GetModule("Tooltip")
 
 -- Cache global API references

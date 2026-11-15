@@ -10,7 +10,6 @@
 local BSYC = select(2, ...)
 local UI = BSYC:GetModule("UI")
 local Recipes = BSYC:NewModule("Recipes")
-local Tooltip = BSYC:GetModule("Tooltip")
 local Professions = BSYC:GetModule("Professions")
 
 local L = BSYC.L
@@ -24,7 +23,6 @@ local GameTooltip = _G.GameTooltip
 local format = _G.format
 local select = _G.select
 local GetItemInfo = BSYC.API.GetItemInfo
-local GetSpellLink = _G.GetSpellLink
 local table_insert = _G.table.insert
 local table_sort = _G.table.sort
 local string_match = _G.string.match

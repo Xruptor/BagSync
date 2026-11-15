@@ -38,7 +38,6 @@ local FakePetCode = BSYC.FakePetCode
 -- Helper Functions
 -- ============================================================================
 
--- Reset tooltip cache (consolidated from 3 duplicate blocks)
 local function ResetTooltipCache()
 	Tooltip:ResetCache()
 	Tooltip:ResetLastLink()

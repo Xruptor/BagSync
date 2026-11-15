@@ -14,7 +14,7 @@ local WOW_PROJECT_ID = _G.WOW_PROJECT_ID
 local WOW_PROJECT_MAINLINE = _G.WOW_PROJECT_MAINLINE
 local WOW_PROJECT_CLASSIC = _G.WOW_PROJECT_CLASSIC
 local WOW_PROJECT_WRATH_CLASSIC = _G.WOW_PROJECT_WRATH_CLASSIC
-local WOW_PROJECT_CAMELOT = _G.WOW_PROJECT_CAMELOT --WoW Forever (18), added in Forever 1.60.1; nil on every other client
+local WOW_PROJECT_CAMELOT = _G.WOW_PROJECT_CAMELOT
 
 --Get TOC version
 --/dump select(4, GetBuildInfo())
@@ -25,16 +25,8 @@ local WOW_PROJECT_CAMELOT = _G.WOW_PROJECT_CAMELOT --WoW Forever (18), added in 
 
 --Dump tables DevTools_Dump({ table }) or DevTools_Dump(table)
 
---WoW Forever (internal game type "camelot") runs the retail (mainline) client and UI.
---Detection is layered so one Blizzard change can't silently turn Forever into "Classic" again.  Any one signal is enough:
---  1) Live Forever (1.60.1, launched 2026-11-04) reports its own project ID: WOW_PROJECT_ID == WOW_PROJECT_CAMELOT.
---  2) The literal project ID 18, in case WOW_PROJECT_CAMELOT is ever renamed/removed (Blizzard said "Camelot" was an internal
---     name).  18 is assigned to Forever in Blizzard's ProjectConstants.lua and is not used by any other client.
---  3) A Forever-only API (warcraft.wiki.gg Category:Exclusive_API/forever) on a non-retail interface number.  Covers a future
---     project ID renumber.  The interface guard (retail 12.x = 120100+, Forever 1.60.1 = 16001) keeps retail from ever matching
---     if Blizzard later shares one of these APIs; Classic never has them.
---  4) Early Forever beta builds (before ~1.60.1.70205) reported WOW_PROJECT_MAINLINE; a mainline project ID with a sub-100000
---     interface can only be Forever.
+--WoW Forever runs the retail client, but has its own project ID (WOW_PROJECT_CAMELOT = 18).
+--Checked a few different ways in case Blizzard renames or renumbers it.  Early beta builds reported MAINLINE with a 1.x interface.
 local TOC_VERSION = select(4, GetBuildInfo())
 local function DetectForever()
 	if WOW_PROJECT_CAMELOT ~= nil and WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then return true end
@@ -53,8 +45,7 @@ local function DetectForever()
 end
 BSYC.IsForever = DetectForever()
 
---IsRetail means "retail client/API family" throughout BagSync, so it stays true on Forever.
---Use IsForever only for game-content differences.  For API differences, check the function/enum exists instead.
+--IsRetail means the retail client/API, so it stays true on Forever.  Use IsForever only for game content differences.
 BSYC.IsRetail = (WOW_PROJECT_ID == WOW_PROJECT_MAINLINE) or BSYC.IsForever
 BSYC.IsClassic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 BSYC.IsWLK_C = WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC
@@ -71,10 +62,7 @@ BSYC.DEFAULT_ALLOW_LIST = BSYC.DEFAULT_ALLOW_LIST or {
 	auction = true,
 	warband = true,
 }
--- NOTE: Keep this ordered list for UI and filter displays. It preserves the
--- legacy, user-facing order that was previously defined inline in modules.
--- We still support additional keys via DEFAULT_ALLOW_LIST; any extra keys
--- will be appended by GetDefaultAllowListKeys().
+--the order storage locations are shown in the UI and filters, any extra keys in DEFAULT_ALLOW_LIST get added to the end
 BSYC.DEFAULT_ALLOW_LIST_ORDER = BSYC.DEFAULT_ALLOW_LIST_ORDER or {
 	"bag",
 	"bank",
@@ -168,9 +156,7 @@ end
 
 BSYC.IsBankTabsActive = Enum.BagIndex.CharacterBankTab_1 ~= nil
 
---Collect every numbered BagIndex entry for a prefix (CharacterBankTab_1..N, AccountBankTab_1..N).
---The tab counts differ per client: Retail has 6 character / 5 warband tabs, WoW Forever has 9 character / 8 warband tabs.
---Reading them from the Enum means we never hardcode the count and pick up any future tabs automatically.
+--grab every numbered BagIndex entry (CharacterBankTab_1..N), retail and Forever have a different amount of tabs
 local function CollectBagIndexTabs(prefix)
 	local list = {}
 	local bagIndex = Enum and Enum.BagIndex
@@ -193,16 +179,11 @@ if BSYC.IsBankTabsActive then
 end
 BSYC.IsReagentBagActive = (Constants.InventoryConstants.NumReagentBagSlots or 0) > 0
 
---since FetchPurchasedBankTabData supports Guilds, it's possible in the future they will put it on a classic server with no Warband support.  So lets do it as last resort
---hasWarbandAPI = the client ships the warband/account bank system (APIs + bag indexes).  It does NOT mean the feature is usable.
+--hasWarbandAPI means the client has the warband bank system, isWarbandActive means it can actually be used.
+--WoW Forever has the whole account bank API but it's locked, Blizzard only shows it when CanViewBank(Account) is true.
 BSYC.hasWarbandAPI = (C_Container and C_Container.SortAccountBankBags and Enum and Enum.BagIndex and Enum.BagIndex.AccountBankTab_1
 	and C_Bank and C_Bank.FetchPurchasedBankTabData) and true or false
 
---WoW Forever ships the retail account bank code, so every API/Enum above exists, but the feature is locked off: Blizzard's own
---Forever bank frame (Blizzard_UIPanels_Game/Camelot/BankFrame.lua) only adds account bank pages when
---C_Bank.CanViewBank(Enum.BankType.Account) is true, and hides the purchase button while 0 account tabs are owned.
---Mirror that check so we don't scan/display an account bank Forever doesn't have, and so it turns on by itself if Blizzard
---ever enables account banks on Forever.  Retail/Classic are unchanged (isWarbandActive == hasWarbandAPI there).
 local function IsAccountBankUsable()
 	local accountType = Enum and Enum.BankType and Enum.BankType.Account
 	if not accountType or not C_Bank then return false end
@@ -217,7 +198,7 @@ local function IsAccountBankUsable()
 	return false
 end
 
---Re-evaluated at login and whenever the bank is opened, since bank data may not be ready when the addon first loads.
+--checked again at login and when the bank opens, the bank data isn't always ready when we first load
 function BSYC:RefreshWarbandState(source)
 	local active = self.hasWarbandAPI
 	if active and self.IsForever then
@@ -263,9 +244,7 @@ local debugDefaults = {
 	SL5 = false,
 }
 
---built whenever the client has the warband system (not only when it's active) so isWarbandActive can turn on later in the session
 if BSYC.hasWarbandAPI then
-	--Retail: AccountBankTab_1..5, WoW Forever: AccountBankTab_1..8
 	local warbandTabs = CollectBagIndexTabs("AccountBankTab_")
 	local warbandBags = {}
 	for tabID, bagID in ipairs(warbandTabs) do
@@ -373,7 +352,7 @@ end
 --if you are using table.insert() or tables that are indexed with numbers then use # instead for table length.  #table as example
 function BSYC:GetHashTableLen(tbl)
 	local count = 0
-	for _, __ in pairs(tbl) do
+	for _ in pairs(tbl) do
 		count = count + 1
 	end
 	return count
@@ -591,24 +570,28 @@ function BSYC:ParseItemLink(link, count)
 
 	local result = link:match("item:([%d:]+)")
 	local shortID = self:GetShortItemID(link)
+	local skipCache = false
 
-	-- profession frame bug workaround
+	-- profession frame bug workaround, the old TradeSkillFrame sometimes hands out item:0 links
 	if shortID and tonumber(shortID) == 0 and TradeSkillFrame then
+		--item:0 is the same for every broken link, so never cache what we resolve it to
+		skipCache = true
 		local focusObj = self.GMF and self.GMF()
 		local focus = (focusObj and focusObj.GetName and focusObj:GetName()) or nil
+		local recipeIndex = TradeSkillFrame.selectedSkill
+		local fixedLink
 
 		if focus == "TradeSkillSkillIcon" then
-			if C_TradeSkillUI and C_TradeSkillUI.GetRecipeItemLink then
-				link = C_TradeSkillUI.GetRecipeItemLink(TradeSkillFrame.selectedSkill)
-			end
+			local getItemLink = _G.GetTradeSkillItemLink or (C_TradeSkillUI and C_TradeSkillUI.GetRecipeItemLink)
+			fixedLink = getItemLink and recipeIndex and getItemLink(recipeIndex)
 		else
-			local i = type(focus) == "string" and focus:match("TradeSkillReagent(%d+)")
-			if i and C_TradeSkillUI and C_TradeSkillUI.GetRecipeReagentItemLink then
-				link = C_TradeSkillUI.GetRecipeReagentItemLink(TradeSkillFrame.selectedSkill, tonumber(i))
-			end
+			local reagentIndex = type(focus) == "string" and tonumber(focus:match("TradeSkillReagent(%d+)"))
+			local getReagentLink = _G.GetTradeSkillReagentItemLink or (C_TradeSkillUI and C_TradeSkillUI.GetRecipeReagentItemLink)
+			fixedLink = reagentIndex and getReagentLink and recipeIndex and getReagentLink(recipeIndex, reagentIndex)
 		end
 
-		if link then
+		if fixedLink then
+			link = fixedLink
 			result = link:match("item:([%d:]+)")
 			shortID = self:GetShortItemID(link)
 		end
@@ -633,13 +616,16 @@ function BSYC:ParseItemLink(link, count)
 	end
 
 	link = result or shortID
+	if not link then return end
 
 	if count > 1 then
 		link = link .. ";" .. count
 	end
 
-	self.__parseCache[cacheKey] = link
-	self.__parseCacheSize = self.__parseCacheSize + 1
+	if not skipCache then
+		self.__parseCache[cacheKey] = link
+		self.__parseCacheSize = self.__parseCacheSize + 1
+	end
 
 	return link
 end
@@ -706,7 +692,7 @@ function BSYC:CreateFakeID(link, count, speciesID, level, breedQuality, maxHealt
 	local petData
 
 	if link and not speciesID then
-		local linkType, linkOptions, petName = LinkUtil.ExtractLink(link)
+		local linkType, linkOptions = LinkUtil.ExtractLink(link)
 		if linkType ~= "battlepet" then return end
 		--speciesID, level, breedQuality, maxHealth, power, speed, name
 		speciesID = linkOptions:match("(%d+):")
@@ -983,7 +969,7 @@ function BSYC:CreateFonts()
 	end
 	BSYC.__fontFlags = flags
 
-	local fontObject = CreateFont("BagSyncExtTT_Font")
+	local fontObject = BSYC.__font or CreateFont("BagSyncExtTT_Font")
 
 	local fontName = BSYC.options.extTT_Font or BSYC.DEFAULT_FONT_NAME
 	if not BSYC:GetFontPathOrNil(fontName) then

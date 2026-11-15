@@ -452,7 +452,6 @@ function Search:ShowSearchFilters(visible)
 end
 
 -- Get the current active search frame (main or search filters)
--- This replaces 3 duplicate GetModule patterns throughout the file
 local function GetCurrentSearchFrame()
 	local searchFilters = BSYC:GetModule("SearchFilters", true)
 	-- Use rawget to bypass metatable when accessing .frame
@@ -943,7 +942,7 @@ function Search:SavedSearch_RefreshList()
 end
 
 function Search:SavedSearch_AddItem()
-	local frame, isSearchFilters = GetCurrentSearchFrame()
+	local frame = GetCurrentSearchFrame()
 	local storeText = frame.SearchBox:GetText()
 
 	if not storeText or #storeText < 1 then
@@ -990,7 +989,7 @@ function Search:SavedSearch_Item_OnEnter(btn)
 	GameTooltip:AddLine("|cFFFFFFFF"..L.SavedSearch.."|r")
 
 	local list = splitByChunk(btn.data.value, 45)
-	for i, v in ipairs(list) do
+	for _, v in ipairs(list) do
 		GameTooltip:AddLine(v)
 	end
 

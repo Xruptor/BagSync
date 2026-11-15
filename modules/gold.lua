@@ -148,7 +148,7 @@ function Gold:CreateList()
 
 	--add warband
 	local warbandObj = Data:GetWarbandBankObj()
-	if warbandObj then
+	if warbandObj and (warbandObj.data.money or 0) > 0 then
 		goldList[#goldList + 1] = BuildGoldEntry(warbandObj, {false, false})
 	end
 
@@ -160,9 +160,8 @@ function Gold:CreateList()
 			total = total + entry.count
 			entry.moneyString = CustomMoneyString(entry.count, true, BSYC.options.enable_GSC_Display)
 		end
-
-		Gold.frame.totalText:SetText("|cFFF4A460"..L.TooltipTotal.."|r  "..GetMoneyString(total, true))
 	end
+	Gold.frame.totalText:SetText("|cFFF4A460"..L.TooltipTotal.."|r  "..GetMoneyString(total, true))
 
 	Gold.goldList = goldList
 end

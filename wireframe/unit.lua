@@ -76,10 +76,19 @@ local RealmChk_COR = {}
 local RealmChk_RWS = {}
 local RealmChk_LC = {}
 
+--only normalized realm names (no spaces, ex: AeriePeak) need their spacing put back, otherwise "Realm 5 PvE" becomes "Realm 5 Pv E"
 local function ApplyBrokenSpacing(realm)
 	if not realm then return realm end
 	realm = BROKEN_REALMS[realm] or realm
-	return strgsub(realm, REALM_SPACE_PATTERN, '%1 %2')
+	if realm:find(" ", 1, true) then return realm end
+	return (strgsub(realm, REALM_SPACE_PATTERN, '%1 %2'))
+end
+
+--the old spacing fix that was applied to every realm name, used to find data that was saved under a mangled realm
+function Unit:GetLegacyRealmName(realm)
+	if not realm then return realm end
+	realm = BROKEN_REALMS[realm] or realm
+	return (strgsub(realm, REALM_SPACE_PATTERN, '%1 %2'))
 end
 
 local function StripRealm(realm)
@@ -94,7 +103,6 @@ local function NormalizeRealmForCompare(realm)
 end
 
 -- Helper to normalize a realm name and return all three forms (COR, RWS, LC)
--- Used to avoid redundant transformations in CheckConnectedRealm and GetTrueRealmName
 local function NormalizeRealmSingle(realm)
 	if not realm then return nil, nil, nil end
 	local cor = ApplyBrokenSpacing(realm)
@@ -103,11 +111,7 @@ local function NormalizeRealmSingle(realm)
 	return cor, rws, lc
 end
 
---WoW Forever gives characters a first name AND a surname, and only the combination is unique (see ticket #479).
---On Forever UnitName("player") returns firstName, surname (the 2nd return is NOT a realm like on Retail/Classic),
---so keying the DB on UnitName() alone made every character sharing a first name overwrite the same entry.
---GetUnitName("player") returns the complete "FirstName Surname" string that the default UI displays, so use that.
---Retail/Classic keep using UnitName("player") so existing SavedVariables keys are unchanged there.
+--WoW Forever characters have a first name and a surname (UnitName returns them separately), only the full name is unique
 local function GetPlayerName()
 	local name, surname = UnitName("player")
 	if not BSYC.IsForever then
@@ -134,12 +138,14 @@ local function GetPlayerMoney()
 	return money - cursorMoney - tradeMoney
 end
 
+--send the close message before the flag drops so we can do one last scan, the server can fire the close events more than once
 local function SetLocationState(flagKey, message, isOpen)
-	Unit[flagKey] = isOpen and true or false
 	if isOpen then
+		Unit[flagKey] = true
 		Unit:SendMessage(message, true)
-	else
-		Unit:SendMessage(message)
+	elseif Unit[flagKey] then
+		Unit:SendMessage(message, false)
+		Unit[flagKey] = false
 	end
 end
 
@@ -147,7 +153,6 @@ if C_PlayerInteractionManager and Enum and Enum.PlayerInteractionType then
 	local InteractType = Enum.PlayerInteractionType
 
 	-- Lookup table mapping interaction types to their state flags and messages
-	-- Replaces 6 duplicate if-blocks with O(1) lookup
 	local INTERACT_TYPE_MAP = {
 		[InteractType.MailInfo] = { flag = "atMailbox", msg = "BAGSYNC_EVENT_MAILBOX" },
 		[InteractType.Banker] = { flag = "atBank", msg = "BAGSYNC_EVENT_BANK" },
@@ -155,7 +160,7 @@ if C_PlayerInteractionManager and Enum and Enum.PlayerInteractionType then
 		[InteractType.VoidStorageBanker] = { flag = "atVoidBank", msg = "BAGSYNC_EVENT_VOIDBANK" },
 		[InteractType.GuildBanker] = { flag = "atGuildBank", msg = "BAGSYNC_EVENT_GUILDBANK" },
 	}
-	if BSYC.hasWarbandAPI then --scanners check isWarbandActive, which can change at runtime (see BSYC:RefreshWarbandState)
+	if BSYC.hasWarbandAPI then
 		INTERACT_TYPE_MAP[InteractType.AccountBanker] = { flag = "atWarbandBank", msg = "BAGSYNC_EVENT_WARBANDBANK" }
 	end
 
@@ -263,23 +268,37 @@ end
 function Unit:DoRealmCollection(source)
 	Debug(BSYC_DL.TRACE, "DoRealmCollection", source)
 
+	local realmName = GetRealmName()
 	Realms = GetAutoCompleteRealms and GetAutoCompleteRealms() or nil
 	if not Realms or #Realms == 0 then
-		Realms = { GetRealmName() }
+		Realms = { realmName }
 	end
 
-	-- Clear realm caches to avoid stale entries on refresh
-	-- Dead code removed: wipe is always available in WoW Lua, no nil check needed
 	wipe(Realms_RWS)
 	wipe(Realms_LC)
 	wipe(RealmChk_COR)
 	wipe(RealmChk_RWS)
 	wipe(RealmChk_LC)
 
+	--GetRealmName() is always spelled properly, so use it for our own realm instead of rebuilding it from a normalized name
+	local playerRWS = StripRealm(realmName)
+	local hasPlayerRealm = false
+	for i = 1, #Realms do
+		if StripRealm(ApplyBrokenSpacing(Realms[i])) == playerRWS then
+			hasPlayerRealm = true
+			break
+		end
+	end
+	if not hasPlayerRealm then
+		Realms[#Realms + 1] = realmName
+	end
+
 	for i, realm in ipairs(Realms) do
-		-- Cache all transformations to avoid redundant ApplyBrokenSpacing/StripRealm calls
 		local cor = ApplyBrokenSpacing(realm)
 		local rws = StripRealm(cor)
+		if rws == playerRWS then
+			cor = realmName
+		end
 		local lc = strlower(rws)
 
 		Realms[i] = cor
@@ -312,7 +331,7 @@ function Unit:GetPlayerName()
 	return GetPlayerName()
 end
 
---the name BagSync used as the DB key before ticket #479 (first name only on Forever, unchanged elsewhere)
+--first name only, what Forever characters used to be saved under
 function Unit:GetLegacyPlayerName()
 	return (UnitName("player"))
 end
@@ -331,7 +350,6 @@ function Unit:GetUnitAddress(unit)
 	local value = name or unit
 	local guildName
 
-	-- Removed redundant type check - string.find works on strings, and value is always a string here
 	local pos = value:find(GUILD_MARK, 1, true)
 	if pos and pos > 1 then
 		guildName = value:sub(1, pos - 1)
@@ -355,8 +373,7 @@ function Unit:GetPlayerInfo(bypassDebug)
 	unit.money = GetPlayerMoney()
 	unit.local_class_name, unit.class, unit.class_id = UnitClass("player")
 	unit.local_race_name, unit.race, unit.race_id = UnitRace("player")
-	--store Blizzard's own race icon atlas (same one the character-create screen uses) so races we can't
-	--resolve by name (new races like Forever's Skyborne) still get the correct icon on alts
+	--store Blizzard's race icon atlas so races we can't look up by name (Forever's Skyborne) still get an icon
 	if C_PlayerInfo and C_PlayerInfo.GetPlayerCharacterData then
 		local ok, charData = pcall(C_PlayerInfo.GetPlayerCharacterData)
 		if ok and type(charData) == "table" and type(charData.createScreenIconAtlas) == "string" and charData.createScreenIconAtlas ~= "" then
@@ -428,14 +445,11 @@ function Unit:CompareRealms(sourceRealm, targetRealm)
 	if not sourceRealm or not targetRealm then return false end
 	if sourceRealm == targetRealm then return true end
 
-	-- Cache lowercase results to avoid redundant strlower calls
 	local sourceLC = strlower(sourceRealm)
 	local targetLC = strlower(targetRealm)
 
 	if sourceLC == targetLC then return true end
 
-	-- NormalizeRealmForCompare will call strlower again, but we've already cached the result above
-	-- This is fine - the function does more than just lowercase
 	return NormalizeRealmForCompare(sourceRealm) == NormalizeRealmForCompare(targetRealm)
 end
 

@@ -26,7 +26,6 @@ local function CanAccessObject(obj)
 	return issecure() or not obj:IsForbidden()
 end
 
--- DEAD CODE REMOVED: Manual wipe fallback (lines 25-28 in original)
 -- wipe is always available in WoW Lua environment; the else branch was unreachable
 
 function ExtTip:EnsureTip()
@@ -91,7 +90,7 @@ function ExtTip:ApplyFont()
 	end
 end
 
--- NORMALIZATION HELPERS - Consolidated with lookup tables
+-- NORMALIZATION HELPERS
 local ANCHOR_MODE_LOOKUP = {
 	LEFT = "LEFT", RIGHT = "RIGHT", BOTTOM = "BOTTOM",
 }
@@ -112,7 +111,7 @@ local function NormalizeCustomLocation(mode)
 	return LOCATION_LOOKUP[tostring(mode or ""):upper()] or DEFAULT_LOCATION
 end
 
--- LOCATION LOOKUP TABLE for ApplyCustomPosition - O(1) instead of O(n) if-elseif chain
+-- LOCATION LOOKUP TABLE for ApplyCustomPosition
 local LOCATION_POINT_MAP = {
 	TOPLEFT = { point = "TOPLEFT", relPoint = "TOPLEFT", x = 16, y = -16 },
 	TOPRIGHT = { point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -16, y = -16 },
@@ -261,10 +260,8 @@ local function IsRelatedTooltipFrame(frame, owner)
 	return false
 end
 
--- DEAD CODE REMOVED: FrameAnchoredTo function (was defined but never called)
 -- IsRelatedTooltipFrame performs its own anchor checking inline
 
--- OPTIMIZED: Replaced if-elseif chain with lookup table (O(n) → O(1))
 function ExtTip:ApplyCustomPosition(extTip)
 	local opts = BSYC.options
 	if not opts or not opts.extTT_CustomAnchorEnabled then return false end
@@ -303,7 +300,6 @@ local function IsOffscreen(frame)
 end
 
 -- TOOLTIP CANDIDATE MANAGER - Centralizes tooltip scanning logic
--- This eliminates massive duplication across GetBottomAnchor and GetBottomAnchorCached
 local TooltipCandidateManager = {}
 TooltipCandidateManager.__index = TooltipCandidateManager
 
@@ -503,9 +499,7 @@ function ExtTip:GetBottomAnchorCached(owner, anchorMode)
 	return bestFrame
 end
 
--- DUPLICATION REMOVED: GetBottomAnchor removed (180 lines)
 -- GetBottomAnchorCached now handles all cases using TooltipCandidateManager
--- The separate GetBottomAnchor function was 95% duplicate and is now obsolete
 
 -- EXTRACTED: place function from SetAnchor (avoids closure creation on every call)
 local function PlaceTooltip(extTip, anchor, mode, ownerX, ownerY, vhalfOverride)

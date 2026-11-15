@@ -29,7 +29,7 @@ local levels = {
 	"SL5",
 }
 
--- Color lookup table for debug levels (eliminates 40+ line if-elseif chain)
+-- Color lookup table for debug levels
 local levelColors = {
 	[BSYC_DL.DEBUG] = "FF4DD827", -- fel green
 	[BSYC_DL.INFO] = "FFffff00", -- yellow
@@ -50,7 +50,6 @@ local IsAddOnLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded) or _G.IsAddOnLoaded
 local IsAddOnEnabled = (C_AddOns and C_AddOns.IsAddOnEnabled) or _G.IsAddOnEnabled
 
 local function unescape(str)
-	-- Removed redundant local reassignment - operate directly on str parameter
 	str = string.gsub(str, "|T.-|t", "") -- textures
 	str = string.gsub(str, "|H.-|h(.-)|h", "%1") -- links
 	str = string.gsub(str, "{.-}", "") -- raid icons
@@ -74,7 +73,6 @@ local function IsLevelEnabled(level)
 end
 
 -- Helper: Count items in a category (bag, bank, reagents, etc.)
--- Dead code removed: Previously inline with duplicated #v or 0 patterns
 local function CountItemsForCategory(k, v)
 	if k == "bag" or k == "bank" or k == "reagents" then
 		local total = 0
@@ -92,7 +90,6 @@ local function CountItemsForCategory(k, v)
 end
 
 -- Helper: Process a unit for dump totals
--- Dead code removed: Previously nested deeply in dumpTotals function
 local function ProcessUnit(unitObj, totalItems, allowList)
 	local count = 0
 	for k, v in pairs(unitObj.data) do
@@ -475,7 +472,6 @@ function Debug:RefreshList()
 
 	local offset = HybridScrollFrame_GetOffset(Debug.scrollFrame)
 
-	-- Removed unnecessary local 'items' variable - use Debug.debugItems directly
 	for buttonIndex = 1, #buttons do
 		local button = buttons[buttonIndex]
 		UI:AttachListItemHandlers(button, Debug)
@@ -540,7 +536,6 @@ function Debug:AddMessage(level, sName, ...)
 		return
 	end
 
-	-- Replaced 8 if statements with single lookup table check
 	if not IsLevelEnabled(level) then
 		return
 	end

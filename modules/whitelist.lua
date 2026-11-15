@@ -27,7 +27,6 @@ local L = BSYC.L
 
 -------------------- Helper Functions --------------------
 
--- Clear editbox text and reset it (eliminates 6 duplicate blocks)
 local function ClearAndResetEditBox(editBox)
 	editBox:ClearFocus()
 	editBox:SetText("")

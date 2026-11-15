@@ -212,7 +212,7 @@ local function GetCacheRemaining(run)
 	if run.queue then
 		local curRemaining = #run.queue - (run.pos or 1) + 1
 		if curRemaining < 0 then curRemaining = 0 end
-		remaining = curRemaining + (#run.nextQueue or 0)
+		remaining = curRemaining + (run.nextQueue and #run.nextQueue or 0)
 	end
 	return remaining
 end
@@ -248,6 +248,7 @@ function Data:OnEnable()
 	--realm DB
 	local realm = player.realm
 	currentPlayerRealm = realm
+	self:MigrateLegacyRealm(realm)
 	BagSyncDB[realm] = BagSyncDB[realm] or {}
 	BSYC.db.realm = BagSyncDB[realm]
 
@@ -322,10 +323,8 @@ function Data:OnEnable()
 	end
 end
 
---WoW Forever (ticket #479): BagSync used to store Forever characters under their first name only, so alts sharing a
---first name overwrote one another.  Characters are now keyed by "FirstName Surname".  Move the old first-name-only entry
---to the new key, but only when its stored GUID proves it belongs to this character; otherwise leave it for the
---character it does belong to (it will be migrated when they log in, or can be removed in /bgs profiles).
+--Forever characters used to be saved under their first name only, so alts with the same first name overwrote each other.
+--Move the old entry to the full name, but only if the GUID says it belongs to this character.
 function Data:MigrateForeverPlayerKey(realmDB, fullName, guid)
 	if not realmDB or not fullName or not guid then return end
 	if realmDB[fullName] then return end
@@ -339,6 +338,53 @@ function Data:MigrateForeverPlayerKey(realmDB, fullName, guid)
 	realmDB[fullName] = legacyData
 	realmDB[legacyName] = nil
 	Debug(BSYC_DL.INFO, "MigrateForeverPlayerKey", legacyName, "->", fullName)
+end
+
+--older versions saved some realms with a bad space in them ("Realm 5 PvE" as "Realm 5 Pv E"), move that data back to the real realm
+function Data:MigrateLegacyRealm(realm)
+	local legacyRealm = Unit:GetLegacyRealmName(realm)
+	if not legacyRealm or legacyRealm == realm then return end
+
+	local legacyDB = BagSyncDB[legacyRealm]
+	if type(legacyDB) ~= "table" then return end
+
+	local realmDB = BagSyncDB[realm] or {}
+	BagSyncDB[realm] = realmDB
+	for unitKey, unitData in pairs(legacyDB) do
+		if realmDB[unitKey] == nil then
+			realmDB[unitKey] = unitData
+		end
+	end
+	BagSyncDB[legacyRealm] = nil
+
+	--characters point to their guild by realm, FixDB removes any guild nobody points to
+	for realmKey, units in pairs(BagSyncDB) do
+		if type(units) == "table" and not hasMark(realmKey, "§") then
+			for unitKey, unitData in pairs(units) do
+				if type(unitData) == "table" and unitData.guildrealm == legacyRealm and not hasMark(unitKey, "©") then
+					unitData.guildrealm = realm
+				end
+			end
+		end
+	end
+
+	--guild blacklist entries are keyed by guild..realm
+	local blacklist = BSYC.db.blacklist
+	if blacklist then
+		local legacyLen = #legacyRealm
+		local renamed = {}
+		for key, value in pairs(blacklist) do
+			if type(key) == "string" and hasMark(key, "©") and key:sub(-legacyLen) == legacyRealm then
+				renamed[key:sub(1, -legacyLen - 1)..realm] = value
+				blacklist[key] = nil
+			end
+		end
+		for key, value in pairs(renamed) do
+			blacklist[key] = value
+		end
+	end
+
+	Debug(BSYC_DL.INFO, "MigrateLegacyRealm", legacyRealm, "->", realm)
 end
 
 function Data:ShowInfoWindow()
@@ -1375,8 +1421,7 @@ function Data:GetPlayerCurrencyObj(player, realm, GUID)
 	if not BSYC.tracking.currency then return end
 	Debug(BSYC_DL.TRACE, "GetPlayerCurrencyObj", player, realm)
 
-	--on WoW Forever, name/realm from GetPlayerInfoByGUID() may not carry the surname that is now part of our DB key
-	--(and a first-name-only legacy entry could belong to a different alt), so the GUID is authoritative there.
+	--on Forever the name from GetPlayerInfoByGUID() doesn't include the surname, so go by GUID
 	if not (BSYC.IsForever and GUID) and BagSyncDB[realm] and BagSyncDB[realm][player] then
 		return BagSyncDB[realm][player].currency
 	end

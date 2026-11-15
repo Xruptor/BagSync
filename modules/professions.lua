@@ -426,10 +426,10 @@ function Professions:SearchAllRecipes()
 	for unitObj in Data:IterateUnits() do
 		if not unitObj.isGuild and unitObj.data.professions then
 			-- Iterate over all professions for this character
-			for skillID, skillData in pairs(unitObj.data.professions) do
+			for _, skillData in pairs(unitObj.data.professions) do
 				if skillData and skillData.categories then
 					-- Iterate over all categories for this profession
-					for tierID, category in pairs(skillData.categories) do
+					for _, category in pairs(skillData.categories) do
 						if category.recipes and category.recipes ~= "" then
 							-- Parse the recipe list
 							local recipeList = {strsplit("|", category.recipes)}
