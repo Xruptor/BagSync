@@ -996,7 +996,7 @@ end
 function Tooltip:GetEquipBags(target, unitObj, itemID, countList)
 	if not target or not unitObj or not itemID then return 0 end
 	if not unitObj.data.equipbags or not unitObj.data.equipbags[target] then return 0 end
-	if target == "bank" and BSYC.IsBankTabsActive then return 0 end
+	if target == "bank" and BSYC.IsBankTabsActive and not BSYC.IsBankBagSlotsActive then return 0 end
 
 	local useUniqueTotals = BSYC.options.enableShowUniqueItemsTotals
 
@@ -1319,6 +1319,7 @@ local function AddItemInfoLines(unitList, opts, shortID, isBattlePet, addSeparat
 			else
 				local getItemInfo = BSYC.API and BSYC.API.GetItemInfo
 				if getItemInfo then
+					local _
 					itemType, itemSubType, _, _, _, _, classID, subclassID = select(6, getItemInfo(shortID))
 				end
 			end

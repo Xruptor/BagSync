@@ -30,6 +30,8 @@ local C_PetJournal = _G.C_PetJournal
 local C_TradeSkillUI = _G.C_TradeSkillUI
 local C_AuctionHouse = _G.C_AuctionHouse
 local C_Bank = _G.C_Bank
+local C_Item = _G.C_Item
+local ItemLocation = _G.ItemLocation
 local GetInventoryItemLink = _G.GetInventoryItemLink
 local GetInventoryItemCount = _G.GetInventoryItemCount
 local GetInventorySlotInfo = _G.GetInventorySlotInfo
@@ -291,6 +293,9 @@ function Scanner:SaveEquippedBags(bagtype)
 
 	--don't save bank bags if tabs is enabled, because they are using bank tabs instead
 	if bagtype == "bank" and BSYC.IsBankTabsActive then
+		if BSYC.IsBankBagSlotsActive and C_Bank.ShouldUsePlayerBagsInBank() then
+			return self:SaveBankTabBags()
+		end
 		if BSYC.db.player.equipbags and BSYC.db.player.equipbags.bank then BSYC.db.player.equipbags.bank = nil end
 		return
 	end
@@ -354,6 +359,36 @@ function Scanner:SaveEquippedBags(bagtype)
 	self:ResetTooltips()
 end
 
+--WoW Forever uses actual bags for the bank tabs.  The first tab is the bank itself, so the bags start at slot 2.
+function Scanner:SaveBankTabBags()
+	if not C_Item or not C_Item.DoesItemExist or not C_Item.GetItemLink or not ItemLocation then return end
+
+	local ok, tabData = pcall(C_Bank.FetchPurchasedBankTabData, BankType.Character)
+	--keep what we have if the tabs haven't loaded yet
+	if not ok or type(tabData) ~= "table" or #tabData == 0 then return end
+
+	local firstTab = (BSYC.BankTabIndex and BSYC.BankTabIndex.first) or BagIndex.CharacterBankTab_1
+	local slotItems = {}
+
+	for slot = 2, #tabData do
+		local location = ItemLocation:CreateFromBagAndSlot(BagIndex.Characterbanktab, slot)
+		if C_Item.DoesItemExist(location) then
+			local parseLink = BSYC:ParseItemLink(C_Item.GetItemLink(location))
+			if parseLink then
+				--save the bag under its bank tab container, the same as the bank tab items
+				local encodeStr = BSYC:EncodeOpts({bagslot=firstTab + slot - 1}, parseLink)
+				if encodeStr then
+					slotItems[#slotItems + 1] = encodeStr
+				end
+			end
+		end
+	end
+
+	if not BSYC.db.player.equipbags then BSYC.db.player.equipbags = {} end
+	BSYC.db.player.equipbags.bank = slotItems
+	self:ResetTooltips()
+end
+
 function Scanner:SaveEquipment()
 	Debug(BSYC_DL.INFO, "SaveEquipment", BSYC.tracking.equip)
 	if not BSYC.tracking.equip then return end
@@ -401,6 +436,15 @@ end
 function Scanner:SaveBank(rootOnly)
 	Debug(BSYC_DL.INFO, "SaveBank", rootOnly, Unit.atBank, BSYC.tracking.bank, BSYC.IsBankTabsActive)
 	if not Unit.atBank or not BSYC.tracking.bank then return end
+
+	--a warband (account) banker opens the bank window too, but the character bank can't be viewed there
+	if BSYC.IsBankTabsActive and C_Bank and C_Bank.CanViewBank and Enum.BankType then
+		local ok, canView = pcall(C_Bank.CanViewBank, Enum.BankType.Character)
+		if ok and canView == false then
+			Debug(BSYC_DL.INFO, "SaveBank", "CannotViewCharacterBank")
+			return
+		end
+	end
 
 	--save bank bags
 	self:SaveEquippedBags("bank")

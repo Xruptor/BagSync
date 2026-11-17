@@ -155,7 +155,6 @@ if C_PlayerInteractionManager and Enum and Enum.PlayerInteractionType then
 	-- Lookup table mapping interaction types to their state flags and messages
 	local INTERACT_TYPE_MAP = {
 		[InteractType.MailInfo] = { flag = "atMailbox", msg = "BAGSYNC_EVENT_MAILBOX" },
-		[InteractType.Banker] = { flag = "atBank", msg = "BAGSYNC_EVENT_BANK" },
 		[InteractType.Auctioneer] = { flag = "atAuction", msg = "BAGSYNC_EVENT_AUCTION" },
 		[InteractType.VoidStorageBanker] = { flag = "atVoidBank", msg = "BAGSYNC_EVENT_VOIDBANK" },
 		[InteractType.GuildBanker] = { flag = "atGuildBank", msg = "BAGSYNC_EVENT_GUILDBANK" },
@@ -187,8 +186,6 @@ else
 	local LEGACY_EVENT_MAP = {
 		MAIL_SHOW = { flag = "atMailbox", msg = "BAGSYNC_EVENT_MAILBOX", open = true },
 		MAIL_CLOSED = { flag = "atMailbox", msg = "BAGSYNC_EVENT_MAILBOX", open = false },
-		BANKFRAME_OPENED = { flag = "atBank", msg = "BAGSYNC_EVENT_BANK", open = true },
-		BANKFRAME_CLOSED = { flag = "atBank", msg = "BAGSYNC_EVENT_BANK", open = false },
 		AUCTION_HOUSE_SHOW = { flag = "atAuction", msg = "BAGSYNC_EVENT_AUCTION", open = true },
 		AUCTION_HOUSE_CLOSED = { flag = "atAuction", msg = "BAGSYNC_EVENT_AUCTION", open = false },
 	}
@@ -201,8 +198,6 @@ else
 
 	Unit:RegisterEvent("MAIL_SHOW", "LEGACY_INTERACTION_EVENT")
 	Unit:RegisterEvent("MAIL_CLOSED", "LEGACY_INTERACTION_EVENT")
-	Unit:RegisterEvent("BANKFRAME_OPENED", "LEGACY_INTERACTION_EVENT")
-	Unit:RegisterEvent("BANKFRAME_CLOSED", "LEGACY_INTERACTION_EVENT")
 	Unit:RegisterEvent("AUCTION_HOUSE_SHOW", "LEGACY_INTERACTION_EVENT")
 	Unit:RegisterEvent("AUCTION_HOUSE_CLOSED", "LEGACY_INTERACTION_EVENT")
 
@@ -232,6 +227,19 @@ else
 		Unit:RegisterEvent("GUILDBANKFRAME_CLOSED")
 	end
 end
+
+--the bank window opens for more than one kind of banker (Banker, CharacterBanker and AccountBanker), so go by the
+--bank window events instead of the interaction type.  These fire on every client.
+function Unit:BANKFRAME_OPENED()
+	SetLocationState("atBank", "BAGSYNC_EVENT_BANK", true)
+end
+
+function Unit:BANKFRAME_CLOSED()
+	SetLocationState("atBank", "BAGSYNC_EVENT_BANK", false)
+end
+
+Unit:RegisterEvent("BANKFRAME_OPENED")
+Unit:RegisterEvent("BANKFRAME_CLOSED")
 
 -- Auction house data processing handlers
 if C_AuctionHouse then

@@ -241,7 +241,7 @@ function Events:OnEnable()
 	--check to see if warband banks are even enabled on server, the scanners check isWarbandActive themselves
 	BSYC:RefreshWarbandState("login")
 	if BSYC.hasWarbandAPI then
-		RegisterScannerEventHandler(self, "PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED", "SaveWarbandBank")
+		registerEvent(self, "PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED", "QueueWarbandScan")
 		RegisterScannerEventHandler(self, "ACCOUNT_MONEY", "SaveWarbandBankMoney")
 	else
 		if BSYC.tracking then BSYC.tracking.warband = false end
@@ -303,9 +303,12 @@ function Events:BAGSYNC_EVENT_BANK(_, isOpen)
 	StopTimer(BSYC, "BankRescan")
 	ScannerSaveBank(Scanner)
 
-	if BSYC:RefreshWarbandState("bank") then
-		ScannerSaveWarbandBank(Scanner)
-		ScannerSaveWarbandBankMoney(Scanner)
+	if isOpen then
+		self:QueueWarbandScan()
+	else
+		--the bank flags drop right after this, so the closing scan can't wait on the timer
+		StopTimer(BSYC, "WarbandScan")
+		self:WarbandScan()
 	end
 end
 
@@ -314,6 +317,19 @@ function Events:QueueBankRescan()
 	if Unit.atBank then
 		StartTimer(BSYC, "BankRescan", 0.5, Scanner, "SaveBank")
 	end
+end
+
+--the bank window and the warband banker can both report the warband bank opening, so only scan it once
+function Events:QueueWarbandScan()
+	if Unit.atBank or Unit.atWarbandBank then
+		StartTimer(BSYC, "WarbandScan", 0.5, Events, "WarbandScan")
+	end
+end
+
+function Events:WarbandScan()
+	if not BSYC:RefreshWarbandState("bank") then return end
+	ScannerSaveWarbandBank(Scanner)
+	ScannerSaveWarbandBankMoney(Scanner)
 end
 
 function Events:BAGSYNC_EVENT_AUCTION(_, isOpen, isReady)
@@ -340,8 +356,7 @@ end
 function Events:BAGSYNC_EVENT_WARBANDBANK(_, isOpen)
 	Debug(BSYC_DL.DEBUG, "BAGSYNC_EVENT_WARBANDBANK", isOpen)
 	if isOpen then
-		ScannerSaveWarbandBank(Scanner)
-		ScannerSaveWarbandBankMoney(Scanner)
+		self:QueueWarbandScan()
 	end
 end
 

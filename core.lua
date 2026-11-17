@@ -176,6 +176,8 @@ if BSYC.IsBankTabsActive then
 		last = bankTabs[#bankTabs],
 		count = #bankTabs,
 	}
+	--WoW Forever puts actual bags into the bank tab slots (Characterbanktab), retail bank tabs are not bags
+	BSYC.IsBankBagSlotsActive = (Enum.BagIndex.Characterbanktab and C_Bank and C_Bank.ShouldUsePlayerBagsInBank) and true or false
 end
 BSYC.IsReagentBagActive = (Constants.InventoryConstants.NumReagentBagSlots or 0) > 0
 
